@@ -25,12 +25,7 @@ shape = SubResource("RectangleShape2D_homing_shot_body")
 [node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
 rect = Rect2(-10, -10, 20, 20)
 
-[node name="LifetimeTimer" type="Timer" parent="."]
-unique_name_in_owner = true
-one_shot = true
-
 [connection signal="area_entered" from="." to="." method="_on_area_entered"]
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
-[connection signal="timeout" from="LifetimeTimer" to="." method="_on_lifetime_timer_timeout"]

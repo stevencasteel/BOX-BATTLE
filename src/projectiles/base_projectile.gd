@@ -9,15 +9,27 @@ extends Area2D
 # --- Public Properties ---
 @export var speed: float = 400.0
 @export var damage: int = 1
-var direction: Vector2 = Vector2.RIGHT
+@export var lifespan: float = 5.0 # Default max lifetime for all projectiles
+@export var direction: Vector2 = Vector2.RIGHT
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
-var _combat_utils: CombatUtils
+var _combat_utils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
+var _lifetime_timer: Timer
 
 # --- Godot Lifecycle ---
+func _ready() -> void:
+	# Programmatically create a timer for every projectile instance.
+	# This avoids duplicating the node in every projectile scene.
+	_lifetime_timer = Timer.new()
+	_lifetime_timer.name = "LifetimeTimer"
+	_lifetime_timer.one_shot = true
+	add_child(_lifetime_timer)
+	_lifetime_timer.timeout.connect(_on_lifetime_timer_timeout)
+
+
 func _physics_process(delta: float) -> void:
 	if not _is_active:
 		return
@@ -26,6 +38,10 @@ func _physics_process(delta: float) -> void:
 # --- Virtual Hooks ---
 func _move(delta: float) -> void:
 	global_position += direction * speed * delta
+
+## A safe "hook" for child classes to add logic without overriding the main function.
+func _screen_entered_hook() -> void:
+	pass
 
 # --- IPoolable Contract ---
 func activate(p_dependencies: Dictionary) -> void:
@@ -38,6 +54,8 @@ func activate(p_dependencies: Dictionary) -> void:
 	visible = true
 	_is_active = true
 	process_mode = PROCESS_MODE_INHERIT
+	_lifetime_timer.start(lifespan)
+	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = false
 
@@ -45,6 +63,8 @@ func deactivate() -> void:
 	visible = false
 	_is_active = false
 	process_mode = PROCESS_MODE_DISABLED
+	_lifetime_timer.stop()
+	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
 	_object_pool = null
@@ -75,6 +95,7 @@ func _on_lifetime_timer_timeout() -> void:
 
 func _on_screen_entered() -> void:
 	_has_been_on_screen = true
+	_screen_entered_hook()
 
 func _on_screen_exited() -> void:
 	if not _is_active or not _has_been_on_screen:

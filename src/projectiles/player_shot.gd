@@ -1,12 +1,13 @@
 # res://src/projectiles/player_shot.gd
 class_name PlayerShot
-extends "res://src/projectiles/base_projectile.gd"
+extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
 
 
 func _ready() -> void:
+	super._ready()
 	# Visual only; movement & collision handled by BaseProjectile.
 	if is_instance_valid(visual):
 		visual.color = Palette.COLOR_PLAYER_PROJECTILE

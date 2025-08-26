@@ -3,7 +3,7 @@
 class_name HitSpark
 extends GPUParticles2D
 
-var _services: ServiceLocator
+var _services
 
 
 # --- Godot Lifecycle Methods ---

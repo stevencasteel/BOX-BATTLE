@@ -29,6 +29,17 @@
 
 
 
+fix(Build): Resolve projectile inheritance and script parse errors
+
+This commit resolves a critical, project-wide script parsing issue that was preventing projectile classes from inheriting from their base class.
+
+The root cause was identified as a name collision between autoload singletons (e.g., `ServiceLocator`) and `class_name` declarations using the same name. This prevented the base projectile script from compiling because its type hints for these singletons could not be resolved.
+
+- Removed conflicting `class_name` declarations from autoload scripts (`ServiceLocator`, `CombatUtils`).
+- Removed the corresponding invalid type hints from dependent scripts to allow them to compile.
+- With the base script now compiling, `BaseProjectile` is correctly registered as a global class, allowing all derived projectile scripts (`PlayerShot`, `BossShot`, etc.) to inherit from it successfully.
+- Centralized the `LifetimeTimer` creation into `base_projectile.gd` to clean up derived scenes and scripts.
+
 
 
 

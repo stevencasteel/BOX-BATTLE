@@ -1,9 +1,10 @@
 # res://src/projectiles/boss_shot.gd
 class_name BossShot
-extends "res://src/projectiles/base_projectile.gd"
+extends BaseProjectile
 
 
 func _ready() -> void:
+	super._ready()
 	visual.color = Palette.COLOR_HAZARD_PRIMARY
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
 

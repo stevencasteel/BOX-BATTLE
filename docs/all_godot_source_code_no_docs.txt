@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Aug 26 09:53:35 CDT 2025
+Generated on: Tue Aug 26 10:40:18 CDT 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -4477,10 +4477,10 @@ const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
 # --- Service References ---
 @onready var fx_manager: IFXManager = get_node("/root/FXManagerAdapter")
 @onready var object_pool: IObjectPool = get_node("/root/ObjectPoolAdapter")
-@onready var event_bus: EventBus = get_node("/root/EventBus")
-@onready var sequencer: Sequencer = get_node("/root/Sequencer")
-@onready var combat_utils: CombatUtils = get_node("/root/CombatUtils")
-@onready var grid_utils: GridUtils = get_node("/root/GridUtils")
+@onready var event_bus = get_node("/root/EventBus")
+@onready var sequencer = get_node("/root/Sequencer")
+@onready var combat_utils = get_node("/root/CombatUtils")
+@onready var grid_utils = get_node("/root/GridUtils")
 
 # --- Public Properties ---
 var combat_config: CombatConfig = COMBAT_CONFIG
@@ -7368,7 +7368,7 @@ FILE: ./src/vfx/hit_spark.gd
 class_name HitSpark
 extends GPUParticles2D
 
-var _services: ServiceLocator
+var _services
 
 
 # --- Godot Lifecycle Methods ---
@@ -7814,26 +7814,27 @@ FILE: ./src/projectiles/turret_shot.gd
 =====================================
 # res://src/projectiles/turret_shot.gd
 class_name TurretShot
-extends "res://src/projectiles/base_projectile.gd"
+extends BaseProjectile
 
 
 func _ready() -> void:
+	super._ready()
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
 	visual.color = Palette.COLOR_UI_ACCENT_PRIMARY
-
 
 =====================================
 FILE: ./src/projectiles/player_shot.gd
 =====================================
 # res://src/projectiles/player_shot.gd
 class_name PlayerShot
-extends "res://src/projectiles/base_projectile.gd"
+extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
 
 
 func _ready() -> void:
+	super._ready()
 	# Visual only; movement & collision handled by BaseProjectile.
 	if is_instance_valid(visual):
 		visual.color = Palette.COLOR_PLAYER_PROJECTILE
@@ -7864,10 +7865,11 @@ FILE: ./src/projectiles/boss_shot.gd
 =====================================
 # res://src/projectiles/boss_shot.gd
 class_name BossShot
-extends "res://src/projectiles/base_projectile.gd"
+extends BaseProjectile
 
 
 func _ready() -> void:
+	super._ready()
 	visual.color = Palette.COLOR_HAZARD_PRIMARY
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
 
@@ -7909,28 +7911,17 @@ shape = SubResource("RectangleShape2D_homing_shot_body")
 [node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
 rect = Rect2(-10, -10, 20, 20)
 
-[node name="LifetimeTimer" type="Timer" parent="."]
-unique_name_in_owner = true
-one_shot = true
-
 [connection signal="area_entered" from="." to="." method="_on_area_entered"]
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
-[connection signal="timeout" from="LifetimeTimer" to="." method="_on_lifetime_timer_timeout"]
 
 =====================================
 FILE: ./src/projectiles/homing_boss_shot.gd
 =====================================
 # src/projectiles/homing_boss_shot.gd
 class_name HomingBossShot
-extends "res://src/projectiles/base_projectile.gd"
-
-# --- Node References ---
-@onready var lifetime_timer: Timer = $LifetimeTimer
-
-# --- Exposed config
-@export var lifespan: float = 3.0
+extends BaseProjectile
 
 # --- Private Member Variables ---
 var _player_ref: WeakRef
@@ -7941,13 +7932,14 @@ const FALLBACK_WAIT_SECONDS := 0.05
 
 
 func _ready() -> void:
+	super._ready() # Important to call the parent's _ready to create the timer.
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
 	visual.color = Palette.COLOR_HAZARD_PRIMARY
 
 
 func _move(delta: float) -> void:
 	if not _player_ref or not _player_ref.get_ref():
-		global_position += transform.x * speed * delta
+		super._move(delta) # Default non-homing movement
 		return
 
 	var player_node: Node = _player_ref.get_ref()
@@ -7958,13 +7950,9 @@ func _move(delta: float) -> void:
 
 func activate(p_dependencies: Dictionary) -> void:
 	super.activate(p_dependencies)
-
+	
 	_player_ref = p_dependencies.get("player_ref")
 	assert(is_instance_valid(_player_ref), "HomingBossShot requires a 'player_ref' dependency.")
-
-
-	if is_instance_valid(lifetime_timer):
-		lifetime_timer.start(lifespan)
 
 	if is_instance_valid(_active_tween):
 		_active_tween.kill()
@@ -7973,7 +7961,7 @@ func activate(p_dependencies: Dictionary) -> void:
 	visual.scale = Vector2.ONE
 	collision_shape.scale = Vector2.ONE
 
-	call_deferred("_maybe_schedule_shrink", lifespan)
+	call_deferred("_maybe_schedule_shrink")
 
 
 func deactivate() -> void:
@@ -7989,7 +7977,13 @@ func deactivate() -> void:
 	super.deactivate()
 
 
-func _maybe_schedule_shrink(p_lifespan: float) -> void:
+func _screen_entered_hook() -> void:
+	if _pending_start_on_screen:
+		_pending_start_on_screen = false
+		_start_shrink_tween()
+
+
+func _maybe_schedule_shrink() -> void:
 	if not _is_active:
 		return
 
@@ -7999,7 +7993,7 @@ func _maybe_schedule_shrink(p_lifespan: float) -> void:
 		return
 
 	if _has_been_on_screen:
-		_start_shrink_tween(p_lifespan)
+		_start_shrink_tween()
 		return
 
 	_pending_start_on_screen = true
@@ -8009,10 +8003,10 @@ func _maybe_schedule_shrink(p_lifespan: float) -> void:
 
 	if _pending_start_on_screen and _is_active:
 		_pending_start_on_screen = false
-		_start_shrink_tween(p_lifespan)
+		_start_shrink_tween()
 
 
-func _start_shrink_tween(p_lifespan: float) -> void:
+func _start_shrink_tween() -> void:
 	if not _is_active:
 		return
 
@@ -8021,23 +8015,8 @@ func _start_shrink_tween(p_lifespan: float) -> void:
 
 	_active_tween = create_tween()
 	_active_tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
-	_active_tween.tween_property(visual, "scale", Vector2.ZERO, p_lifespan)
-	_active_tween.tween_property(collision_shape, "scale", Vector2.ZERO, p_lifespan)
-
-
-func _on_lifetime_timer_timeout() -> void:
-	if not _is_active:
-		return
-	if is_instance_valid(_object_pool):
-		_object_pool.return_instance.call_deferred(self)
-
-
-func _on_screen_entered() -> void:
-	super._on_screen_entered()
-
-	if _pending_start_on_screen:
-		_pending_start_on_screen = false
-		_start_shrink_tween(lifespan)
+	_active_tween.tween_property(visual, "scale", Vector2.ZERO, lifespan)
+	_active_tween.tween_property(collision_shape, "scale", Vector2.ZERO, lifespan)
 
 
 =====================================
@@ -8054,15 +8033,27 @@ extends Area2D
 # --- Public Properties ---
 @export var speed: float = 400.0
 @export var damage: int = 1
-var direction: Vector2 = Vector2.RIGHT
+@export var lifespan: float = 5.0 # Default max lifetime for all projectiles
+@export var direction: Vector2 = Vector2.RIGHT
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
-var _combat_utils: CombatUtils
+var _combat_utils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
+var _lifetime_timer: Timer
 
 # --- Godot Lifecycle ---
+func _ready() -> void:
+	# Programmatically create a timer for every projectile instance.
+	# This avoids duplicating the node in every projectile scene.
+	_lifetime_timer = Timer.new()
+	_lifetime_timer.name = "LifetimeTimer"
+	_lifetime_timer.one_shot = true
+	add_child(_lifetime_timer)
+	_lifetime_timer.timeout.connect(_on_lifetime_timer_timeout)
+
+
 func _physics_process(delta: float) -> void:
 	if not _is_active:
 		return
@@ -8071,6 +8062,10 @@ func _physics_process(delta: float) -> void:
 # --- Virtual Hooks ---
 func _move(delta: float) -> void:
 	global_position += direction * speed * delta
+
+## A safe "hook" for child classes to add logic without overriding the main function.
+func _screen_entered_hook() -> void:
+	pass
 
 # --- IPoolable Contract ---
 func activate(p_dependencies: Dictionary) -> void:
@@ -8083,6 +8078,8 @@ func activate(p_dependencies: Dictionary) -> void:
 	visible = true
 	_is_active = true
 	process_mode = PROCESS_MODE_INHERIT
+	_lifetime_timer.start(lifespan)
+	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = false
 
@@ -8090,6 +8087,8 @@ func deactivate() -> void:
 	visible = false
 	_is_active = false
 	process_mode = PROCESS_MODE_DISABLED
+	_lifetime_timer.stop()
+	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
 	_object_pool = null
@@ -8120,6 +8119,7 @@ func _on_lifetime_timer_timeout() -> void:
 
 func _on_screen_entered() -> void:
 	_has_been_on_screen = true
+	_screen_entered_hook()
 
 func _on_screen_exited() -> void:
 	if not _is_active or not _has_been_on_screen:
@@ -8491,7 +8491,7 @@ var _is_dead: bool = false
 
 # --- Private Member Variables ---
 var _components_initialized: bool = false
-var _services: ServiceLocator
+var _services
 var _components: Dictionary = {}
 var _components_by_interface: Dictionary = {}
 var _player: CharacterBody2D
@@ -8527,7 +8527,7 @@ func require_component(type: Script) -> IComponent:
 	return c
 
 
-func inject_dependencies(p_services: ServiceLocator) -> void:
+func inject_dependencies(p_services) -> void:
 	_services = p_services
 
 

@@ -12,7 +12,7 @@ var _is_dead: bool = false
 
 # --- Private Member Variables ---
 var _components_initialized: bool = false
-var _services: ServiceLocator
+var _services
 var _components: Dictionary = {}
 var _components_by_interface: Dictionary = {}
 var _player: CharacterBody2D
@@ -48,7 +48,7 @@ func require_component(type: Script) -> IComponent:
 	return c
 
 
-func inject_dependencies(p_services: ServiceLocator) -> void:
+func inject_dependencies(p_services) -> void:
 	_services = p_services
 
 
