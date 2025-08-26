@@ -18,6 +18,14 @@ func find_entity_root(from_node: Node) -> BaseEntity:
 ## Finds the IDamageable component on a target node by first finding the
 ## target's entity root, then asking for the component.
 func find_damageable(from_node: Node) -> IDamageable:
+	if not is_instance_valid(from_node):
+		return null
+	
+	# If the collision starts on a sensor, we should never treat it as damageable.
+	# This prevents projectiles that pass through a sensor from damaging the owner.
+	if from_node.is_in_group(Identifiers.Groups.SENSORS):
+		return null
+
 	var entity: BaseEntity = find_entity_root(from_node)
 	if is_instance_valid(entity):
 		return entity.get_component(IDamageable)

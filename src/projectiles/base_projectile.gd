@@ -1,4 +1,4 @@
-# res://src/projectiles/base_projectile.gd
+# res/src/projectiles/base_projectile.gd
 class_name BaseProjectile
 extends Area2D
 
@@ -48,16 +48,13 @@ func deactivate() -> void:
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
-	# Ignore AI sensor Areas by name (RangeDetector, MeleeRangeDetector, etc.)
-	if target is Area2D:
-		var lname := target.name.to_lower()
-		if lname.find("range") != -1 or lname.find("detector") != -1:
-			return
+	# Ignore AI sensor Areas by checking their group.
+	if target.is_in_group(Identifiers.Groups.SENSORS):
+		return
 
-	# Resolve damageable (uses your ServiceLocator/combat_utils)
+	# Resolve damageable
 	var damageable = null
 	if is_instance_valid(_services):
-		# services.combat_utils.find_damageable(...) was used previously in your project
 		if _services.combat_utils:
 			damageable = _services.combat_utils.find_damageable(target)
 
@@ -69,14 +66,12 @@ func _handle_collision(target: Node) -> void:
 		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		damageable.apply_damage(damage_info)
 
-	# Return to pool safely (deferred to avoid physics callback issues)
+	# Return to pool safely
 	if is_instance_valid(_services) and _services.object_pool:
 		_services.object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:
-	# If you have a Timer node named "LifetimeTimer" in the projectile scene
-	# and connected its "timeout" signal here, this will be called even without a member var.
 	if not _is_active:
 		return
 	if is_instance_valid(_services) and _services.object_pool:

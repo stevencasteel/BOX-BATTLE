@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Mon Aug 25 22:03:49 CDT 2025
+Generated on: Tue Aug 26 09:39:50 CDT 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -1000,7 +1000,7 @@ config_version=5
 [application]
 
 config/name="BOX BATTLE"
-config/version="0.17.2"
+config/version="0.18.0"
 run/main_scene="res://src/scenes/main/main.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
@@ -1132,6 +1132,8 @@ debug_toggle_invincibility={
 2d_physics/layer_7="player_hurtbox"
 2d_physics/layer_8="solid_world"
 2d_physics/layer_9="hitbox"
+2d_physics/layer_10="sensors"
+2d_physics/layer_11="player_projectile"
 
 [rendering]
 
@@ -4442,6 +4444,14 @@ func find_entity_root(from_node: Node) -> BaseEntity:
 ## Finds the IDamageable component on a target node by first finding the
 ## target's entity root, then asking for the component.
 func find_damageable(from_node: Node) -> IDamageable:
+	if not is_instance_valid(from_node):
+		return null
+	
+	# If the collision starts on a sensor, we should never treat it as damageable.
+	# This prevents projectiles that pass through a sensor from damaging the owner.
+	if from_node.is_in_group(Identifiers.Groups.SENSORS):
+		return null
+
 	var entity: BaseEntity = find_entity_root(from_node)
 	if is_instance_valid(entity):
 		return entity.get_component(IDamageable)
@@ -4673,6 +4683,8 @@ class Groups:
 	const ONEWAY_PLATFORMS = "oneway_platforms"
 	const PLAYER_PROJECTILE = "player_projectile"
 	const ENEMY_PROJECTILE = "enemy_projectile"
+	const SENSORS = "sensors"
+	const DAMAGEABLE = "damageable"
 
 
 ## A container for all ObjectPool keys.
@@ -7697,7 +7709,7 @@ FILE: ./src/projectiles/player_shot.tscn
 size = Vector2(40, 40)
 
 [node name="PlayerShot" type="Area2D" groups=["player_projectile"]]
-collision_layer = 0
+collision_layer = 1024
 collision_mask = 148
 script = ExtResource("1_4wg7x")
 metadata/pool_name = &"player_shots"
@@ -8030,7 +8042,7 @@ func _on_screen_entered() -> void:
 =====================================
 FILE: ./src/projectiles/base_projectile.gd
 =====================================
-# res://src/projectiles/base_projectile.gd
+# res/src/projectiles/base_projectile.gd
 class_name BaseProjectile
 extends Area2D
 
@@ -8080,16 +8092,13 @@ func deactivate() -> void:
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
-	# Ignore AI sensor Areas by name (RangeDetector, MeleeRangeDetector, etc.)
-	if target is Area2D:
-		var lname := target.name.to_lower()
-		if lname.find("range") != -1 or lname.find("detector") != -1:
-			return
+	# Ignore AI sensor Areas by checking their group.
+	if target.is_in_group(Identifiers.Groups.SENSORS):
+		return
 
-	# Resolve damageable (uses your ServiceLocator/combat_utils)
+	# Resolve damageable
 	var damageable = null
 	if is_instance_valid(_services):
-		# services.combat_utils.find_damageable(...) was used previously in your project
 		if _services.combat_utils:
 			damageable = _services.combat_utils.find_damageable(target)
 
@@ -8101,14 +8110,12 @@ func _handle_collision(target: Node) -> void:
 		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		damageable.apply_damage(damage_info)
 
-	# Return to pool safely (deferred to avoid physics callback issues)
+	# Return to pool safely
 	if is_instance_valid(_services) and _services.object_pool:
 		_services.object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:
-	# If you have a Timer node named "LifetimeTimer" in the projectile scene
-	# and connected its "timeout" signal here, this will be called even without a member var.
 	if not _is_active:
 		return
 	if is_instance_valid(_services) and _services.object_pool:
@@ -11308,14 +11315,14 @@ shape = SubResource("RectangleShape2D_minionbody")
 [node name="AttackTimer" type="Timer" parent="."]
 one_shot = true
 
-[node name="RangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="RangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RangeDetector"]
 shape = SubResource("CircleShape2D_meleetrigger")
 
-[node name="MeleeRangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="MeleeRangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeRangeDetector"]
 shape = SubResource("CircleShape2D_meleetrigger")
@@ -11367,8 +11374,8 @@ shape = SubResource("RectangleShape2D_minionbody")
 wait_time = 2.0
 one_shot = true
 
-[node name="RangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="RangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 collision_mask = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RangeDetector"]
@@ -11416,8 +11423,8 @@ shape = SubResource("RectangleShape2D_minionbody")
 wait_time = 2.5
 one_shot = true
 
-[node name="RangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="RangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 collision_mask = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RangeDetector"]

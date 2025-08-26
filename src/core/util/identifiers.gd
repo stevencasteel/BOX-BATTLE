@@ -16,6 +16,8 @@ class Groups:
 	const ONEWAY_PLATFORMS = "oneway_platforms"
 	const PLAYER_PROJECTILE = "player_projectile"
 	const ENEMY_PROJECTILE = "enemy_projectile"
+	const SENSORS = "sensors"
+	const DAMAGEABLE = "damageable"
 
 
 ## A container for all ObjectPool keys.

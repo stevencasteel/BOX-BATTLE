@@ -34,14 +34,14 @@ shape = SubResource("RectangleShape2D_minionbody")
 [node name="AttackTimer" type="Timer" parent="."]
 one_shot = true
 
-[node name="RangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="RangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RangeDetector"]
 shape = SubResource("CircleShape2D_meleetrigger")
 
-[node name="MeleeRangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+[node name="MeleeRangeDetector" type="Area2D" parent="." groups=["sensors"]]
+collision_layer = 512
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeRangeDetector"]
 shape = SubResource("CircleShape2D_meleetrigger")

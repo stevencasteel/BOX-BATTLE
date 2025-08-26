@@ -14,10 +14,30 @@
 ║                                                                              ║
 ║                                                                              ║
 ║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██     [0.18.0] - UNTITLED AND UNDETERMINED TITLE STILL - 08/XX/2025    ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+
+
+
+
+
+
+Refactor: Harden projectile collision and sensor detection
+
+Implements the AI audit's primary recommendation to fix projectiles being destroyed by AI sensor areas.
+
+- Adds a dedicated `sensors` physics layer (10) and a corresponding `SENSORS` group identifier.
+- Moves all minion `RangeDetector` and `MeleeRangeDetector` Area2Ds to this new layer and group, preventing unintended physics interactions.
+- Replaces fragile, name-based heuristics in `base_projectile.gd` and `combat_utils.gd` with a robust `is_in_group()` check for better code safety.
+- Fixes a bug where player projectiles could collide with the player by adding a dedicated `player_projectile` physics layer (11) and assigning the player shot scene to it.
+
+
+
 ║                                                                              ║
 ║                                                                              ║
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██     [0.17.0] - UNTITLED AND UNDETERMINED TITLE STILL - 08/XX/2025    ██  ║
+║  ██     [0.17.0] - UNTITLED AND UNDETERMINED TITLE STILL - 08/25/2025    ██  ║
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
 ║                                                                              ║
 
