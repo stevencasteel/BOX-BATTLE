@@ -22,7 +22,7 @@ var _hazard_knockback_speed: float
 var _invincibility_tokens: Dictionary = {}
 var _next_token_id: int = 1
 var _fx_manager: IFXManager
-var _event_bus: EventBus
+var _event_bus
 var _hit_spark_effect: VFXEffect
 
 # --- Godot Lifecycle Methods ---

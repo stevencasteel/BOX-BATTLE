@@ -13,8 +13,8 @@ var owner_node: CharacterBody2D
 var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
-var _combat_utils: CombatUtils
-var _services: ServiceLocator
+var _combat_utils
+var _services
 
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
