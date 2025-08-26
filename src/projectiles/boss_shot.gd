@@ -10,17 +10,6 @@ func _ready() -> void:
 
 # --- Overridden Signal Handlers ---
 
-
-func _on_body_entered(_body: Node) -> void:
-	if not _is_active:
-		return
-	# This projectile is destroyed by solid world geometry.
-	if is_instance_valid(_services):
-		_services.object_pool.return_instance.call_deferred(self)
-
-
-func _on_area_entered(area: Area2D) -> void:
-	if not _is_active:
-		return
-	# Standard collision for player hurtbox, etc.
-	_handle_collision(area)
+# By removing the _on_body_entered and _on_area_entered functions from this script,
+# we allow the parent BaseProjectile class to handle them. The parent class now contains
+# the correct logic that uses the new dependency injection system.

@@ -12,7 +12,8 @@ extends Area2D
 var direction: Vector2 = Vector2.RIGHT
 
 # --- Private Member Variables ---
-var _services: ServiceLocator = null
+var _object_pool: IObjectPool
+var _combat_utils: CombatUtils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
 
@@ -27,9 +28,11 @@ func _move(delta: float) -> void:
 	global_position += direction * speed * delta
 
 # --- IPoolable Contract ---
-func activate(p_services: ServiceLocator) -> void:
-	_services = p_services
-	assert(is_instance_valid(_services), "%s requires a ServiceLocator dependency." % [self.get_class()])
+func activate(p_dependencies: Dictionary) -> void:
+	_object_pool = p_dependencies.get("object_pool")
+	_combat_utils = p_dependencies.get("combat_utils")
+	assert(is_instance_valid(_object_pool), "BaseProjectile requires an IObjectPool dependency.")
+	assert(is_instance_valid(_combat_utils), "BaseProjectile requires a CombatUtils dependency.")
 
 	_has_been_on_screen = false
 	visible = true
@@ -44,20 +47,15 @@ func deactivate() -> void:
 	process_mode = PROCESS_MODE_DISABLED
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
-	_services = null
+	_object_pool = null
+	_combat_utils = null
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
-	# Ignore AI sensor Areas by checking their group.
 	if target.is_in_group(Identifiers.Groups.SENSORS):
 		return
 
-	# Resolve damageable
-	var damageable = null
-	if is_instance_valid(_services):
-		if _services.combat_utils:
-			damageable = _services.combat_utils.find_damageable(target)
-
+	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var damage_info := DamageInfo.new()
 		damage_info.amount = damage
@@ -66,27 +64,23 @@ func _handle_collision(target: Node) -> void:
 		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		damageable.apply_damage(damage_info)
 
-	# Return to pool safely
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	_object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:
 	if not _is_active:
 		return
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 func _on_screen_entered() -> void:
 	_has_been_on_screen = true
 
 func _on_screen_exited() -> void:
-	if not _is_active:
+	if not _is_active or not _has_been_on_screen:
 		return
-	if not _has_been_on_screen:
-		return
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 # --- Signal Handlers ---
 func _on_body_entered(body: Node) -> void:

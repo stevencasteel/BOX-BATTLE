@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Aug 26 09:39:50 CDT 2025
+Generated on: Tue Aug 26 09:53:35 CDT 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -6810,6 +6810,10 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		return
 
 	var object_pool: IObjectPool = owner._services.object_pool
+	var player_node: Node = owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	if not is_instance_valid(player_node):
+		return # Cannot fire homing shots without a player to home in on.
+	
 	var angle_step = TAU / projectile_count
 	for i in range(projectile_count):
 		var shot: HomingBossShot = object_pool.get_instance(Identifiers.Pools.HOMING_BOSS_SHOTS)
@@ -6823,7 +6827,13 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		var angle = i * angle_step
 		shot.rotation = angle
 		shot.global_position = owner.global_position
-		shot.activate(owner._services)
+		
+		var dependencies = {
+			"object_pool": owner._services.object_pool,
+			"combat_utils": owner._services.combat_utils,
+			"player_ref": weakref(player_node)
+		}
+		shot.activate(dependencies)
 
 =====================================
 FILE: ./src/tests/unit/test_input_component.gd
@@ -7830,9 +7840,9 @@ func _ready() -> void:
 
 
 # Ensure the speed is set every time this instance is (re)activated by the pool.
-func activate(p_services: ServiceLocator) -> void:
+func activate(p_dependencies: Dictionary) -> void:
 	# First let the base class do its activation
-	super.activate(p_services)
+	super.activate(p_dependencies)
 	# Then apply player-shot-specific runtime defaults so they apply on reuse.
 	speed = default_speed
 
@@ -7842,8 +7852,8 @@ func _on_area_entered(area: Area2D) -> void:
 		return
 	# Player shots can destroy enemy projectiles on contact.
 	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-		if is_instance_valid(_services):
-			_services.object_pool.return_instance.call_deferred(area)
+		if is_instance_valid(_object_pool):
+			_object_pool.return_instance.call_deferred(area)
 
 	# Then proceed with the base collision handling.
 	super._on_area_entered(area)
@@ -7864,20 +7874,9 @@ func _ready() -> void:
 
 # --- Overridden Signal Handlers ---
 
-
-func _on_body_entered(_body: Node) -> void:
-	if not _is_active:
-		return
-	# This projectile is destroyed by solid world geometry.
-	if is_instance_valid(_services):
-		_services.object_pool.return_instance.call_deferred(self)
-
-
-func _on_area_entered(area: Area2D) -> void:
-	if not _is_active:
-		return
-	# Standard collision for player hurtbox, etc.
-	_handle_collision(area)
+# By removing the _on_body_entered and _on_area_entered functions from this script,
+# we allow the parent BaseProjectile class to handle them. The parent class now contains
+# the correct logic that uses the new dependency injection system.
 
 
 =====================================
@@ -7957,11 +7956,12 @@ func _move(delta: float) -> void:
 	global_position += transform.x * speed * delta
 
 
-func activate(p_services: ServiceLocator) -> void:
-	super.activate(p_services)
+func activate(p_dependencies: Dictionary) -> void:
+	super.activate(p_dependencies)
 
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
-	_player_ref = weakref(player_node)
+	_player_ref = p_dependencies.get("player_ref")
+	assert(is_instance_valid(_player_ref), "HomingBossShot requires a 'player_ref' dependency.")
+
 
 	if is_instance_valid(lifetime_timer):
 		lifetime_timer.start(lifespan)
@@ -7985,6 +7985,7 @@ func deactivate() -> void:
 	collision_shape.scale = Vector2.ONE
 
 	_pending_start_on_screen = false
+	_player_ref = null
 	super.deactivate()
 
 
@@ -8027,8 +8028,8 @@ func _start_shrink_tween(p_lifespan: float) -> void:
 func _on_lifetime_timer_timeout() -> void:
 	if not _is_active:
 		return
-	if is_instance_valid(_services):
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 
 func _on_screen_entered() -> void:
@@ -8056,7 +8057,8 @@ extends Area2D
 var direction: Vector2 = Vector2.RIGHT
 
 # --- Private Member Variables ---
-var _services: ServiceLocator = null
+var _object_pool: IObjectPool
+var _combat_utils: CombatUtils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
 
@@ -8071,9 +8073,11 @@ func _move(delta: float) -> void:
 	global_position += direction * speed * delta
 
 # --- IPoolable Contract ---
-func activate(p_services: ServiceLocator) -> void:
-	_services = p_services
-	assert(is_instance_valid(_services), "%s requires a ServiceLocator dependency." % [self.get_class()])
+func activate(p_dependencies: Dictionary) -> void:
+	_object_pool = p_dependencies.get("object_pool")
+	_combat_utils = p_dependencies.get("combat_utils")
+	assert(is_instance_valid(_object_pool), "BaseProjectile requires an IObjectPool dependency.")
+	assert(is_instance_valid(_combat_utils), "BaseProjectile requires a CombatUtils dependency.")
 
 	_has_been_on_screen = false
 	visible = true
@@ -8088,20 +8092,15 @@ func deactivate() -> void:
 	process_mode = PROCESS_MODE_DISABLED
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
-	_services = null
+	_object_pool = null
+	_combat_utils = null
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
-	# Ignore AI sensor Areas by checking their group.
 	if target.is_in_group(Identifiers.Groups.SENSORS):
 		return
 
-	# Resolve damageable
-	var damageable = null
-	if is_instance_valid(_services):
-		if _services.combat_utils:
-			damageable = _services.combat_utils.find_damageable(target)
-
+	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var damage_info := DamageInfo.new()
 		damage_info.amount = damage
@@ -8110,27 +8109,23 @@ func _handle_collision(target: Node) -> void:
 		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		damageable.apply_damage(damage_info)
 
-	# Return to pool safely
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	_object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:
 	if not _is_active:
 		return
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 func _on_screen_entered() -> void:
 	_has_been_on_screen = true
 
 func _on_screen_exited() -> void:
-	if not _is_active:
+	if not _is_active or not _has_been_on_screen:
 		return
-	if not _has_been_on_screen:
-		return
-	if is_instance_valid(_services) and _services.object_pool:
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 # --- Signal Handlers ---
 func _on_body_entered(body: Node) -> void:
@@ -8612,7 +8607,11 @@ func fire_shot_at_player() -> void:
 
 	shot.direction = (_player.global_position - global_position).normalized()
 	shot.global_position = global_position
-	shot.activate(_services)
+	var dependencies = {
+		"object_pool": _services.object_pool,
+		"combat_utils": _services.combat_utils
+	}
+	shot.activate(dependencies)
 
 
 # --- Protected Virtual Methods (for children to override) ---
@@ -9926,7 +9925,12 @@ func fire_shot() -> void:
 
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)
-	shot.activate(_services)
+	
+	var dependencies = {
+		"object_pool": _object_pool,
+		"combat_utils": _combat_utils
+	}
+	shot.activate(dependencies)
 
 
 ## Handles a melee hitbox collision.

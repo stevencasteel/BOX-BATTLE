@@ -128,7 +128,11 @@ func fire_shot_at_player() -> void:
 
 	shot.direction = (_player.global_position - global_position).normalized()
 	shot.global_position = global_position
-	shot.activate(_services)
+	var dependencies = {
+		"object_pool": _services.object_pool,
+		"combat_utils": _services.combat_utils
+	}
+	shot.activate(dependencies)
 
 
 # --- Protected Virtual Methods (for children to override) ---

@@ -21,6 +21,10 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		return
 
 	var object_pool: IObjectPool = owner._services.object_pool
+	var player_node: Node = owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	if not is_instance_valid(player_node):
+		return # Cannot fire homing shots without a player to home in on.
+	
 	var angle_step = TAU / projectile_count
 	for i in range(projectile_count):
 		var shot: HomingBossShot = object_pool.get_instance(Identifiers.Pools.HOMING_BOSS_SHOTS)
@@ -34,4 +38,10 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		var angle = i * angle_step
 		shot.rotation = angle
 		shot.global_position = owner.global_position
-		shot.activate(owner._services)
+		
+		var dependencies = {
+			"object_pool": owner._services.object_pool,
+			"combat_utils": owner._services.combat_utils,
+			"player_ref": weakref(player_node)
+		}
+		shot.activate(dependencies)

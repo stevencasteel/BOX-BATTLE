@@ -32,11 +32,12 @@ func _move(delta: float) -> void:
 	global_position += transform.x * speed * delta
 
 
-func activate(p_services: ServiceLocator) -> void:
-	super.activate(p_services)
+func activate(p_dependencies: Dictionary) -> void:
+	super.activate(p_dependencies)
 
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
-	_player_ref = weakref(player_node)
+	_player_ref = p_dependencies.get("player_ref")
+	assert(is_instance_valid(_player_ref), "HomingBossShot requires a 'player_ref' dependency.")
+
 
 	if is_instance_valid(lifetime_timer):
 		lifetime_timer.start(lifespan)
@@ -60,6 +61,7 @@ func deactivate() -> void:
 	collision_shape.scale = Vector2.ONE
 
 	_pending_start_on_screen = false
+	_player_ref = null
 	super.deactivate()
 
 
@@ -102,8 +104,8 @@ func _start_shrink_tween(p_lifespan: float) -> void:
 func _on_lifetime_timer_timeout() -> void:
 	if not _is_active:
 		return
-	if is_instance_valid(_services):
-		_services.object_pool.return_instance.call_deferred(self)
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
 
 
 func _on_screen_entered() -> void:

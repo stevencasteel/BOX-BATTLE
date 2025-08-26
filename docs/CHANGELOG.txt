@@ -23,6 +23,29 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+Refactor(Combat): Harden projectile collisions and dependencies
+
+Implements key recommendations from the AI audit to improve the robustness and architecture of the projectile system.
+
+- Decouples projectiles from the global ServiceLocator by having them receive specific dependencies (IObjectPool, CombatUtils) upon activation. This makes them easier to unit test.
+- Establishes a dedicated `sensors` physics layer and group. All minion detector Area2Ds are moved to this layer, preventing them from physically interacting with projectiles.
+- Replaces fragile, name-based heuristics for ignoring sensors with a reliable `is_in_group()` check.
+- Adds a `player_projectile` physics layer to prevent player shots from colliding with the player.
+- Corrects an inheritance issue in `BossShot` that was causing a parse error after the initial refactor.
+
+
+
+
 Refactor: Harden projectile collision and sensor detection
 
 Implements the AI audit's primary recommendation to fix projectiles being destroyed by AI sensor areas.

@@ -59,7 +59,12 @@ func fire_shot() -> void:
 
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)
-	shot.activate(_services)
+	
+	var dependencies = {
+		"object_pool": _object_pool,
+		"combat_utils": _combat_utils
+	}
+	shot.activate(dependencies)
 
 
 ## Handles a melee hitbox collision.
