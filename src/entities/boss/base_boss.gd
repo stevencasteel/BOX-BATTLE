@@ -57,14 +57,12 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	if not is_on_floor():
+		# UPDATE: world_config.gravity
 		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
-	
-	# The specific patrol wall-flip logic has been removed.
-	# It is now handled by PatrolMovementLogic.
 
 
-# --- Internal Build Logic (Moved from EntityBuilder) ---
+# --- Internal Build Logic ---
 func _on_build() -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
@@ -154,13 +152,17 @@ func _die() -> void:
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
+	
 	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
 		fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 
-	_services.event_bus.emit(EventCatalog.BOSS_DIED, {"boss_node": self})
+	# UPDATE: Use typed event
+	var ev = BossDiedEvent.new()
+	ev.boss_node = self
+	_services.event_bus.emit(EventCatalog.BOSS_DIED, ev)
 
 
 func _initialize_data() -> void:
@@ -176,7 +178,6 @@ func _initialize_data() -> void:
 	entity_data.config = _services.enemy_config
 	entity_data.world_config = _services.world_config
 	
-	# UPDATE: Inject behavior and services so MovementLogic can work
 	entity_data.behavior = behavior
 	entity_data.services = _services
 	
@@ -225,9 +226,11 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 		_services.fx_manager.request_hit_stop(
 			entity_data.world_config.hit_stop_boss_phase_change
 		)
-		_services.event_bus.emit(
-			EventCatalog.BOSS_PHASE_CHANGED, {"phases_remaining": phases_remaining}
-		)
+		
+		# UPDATE: Use typed event
+		var ev = BossPhaseChangedEvent.new()
+		ev.phases_remaining = phases_remaining
+		_services.event_bus.emit(EventCatalog.BOSS_PHASE_CHANGED, ev)
 
 
 func _on_cooldown_timer_timeout() -> void:

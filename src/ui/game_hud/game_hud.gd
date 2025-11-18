@@ -1,8 +1,5 @@
 # src/ui/game_hud/game_hud.gd
 ## Manages the in-game heads-up display.
-##
-## Subscribes to [EventBus] events to keep the player health, boss health,
-## and phase indicators updated in real-time.
 extends CanvasLayer
 
 # --- Constants ---
@@ -72,7 +69,6 @@ func _initialize_ui_state() -> void:
 	_empty_phase_style.border_color = Color.WHITE
 	
 	# --- Initialize Rest of UI ---
-	# UPDATE: Use PLAYER_CONFIG
 	var max_health = PLAYER_CONFIG.max_health
 	player_health_value.text = "%d / %d" % [max_health, max_health]
 	player_heal_charges_value.text = "0"
@@ -81,7 +77,6 @@ func _initialize_ui_state() -> void:
 	health_bar_style.bg_color = Palette.COLOR_PLAYER_PROJECTILE
 	boss_health_bar.add_theme_stylebox_override("fill", health_bar_style)
 
-	# UPDATE: Use ENEMY_CONFIG
 	boss_health_bar.max_value = ENEMY_CONFIG.boss_health
 	boss_health_bar.value = boss_health_bar.max_value
 
@@ -124,9 +119,9 @@ func on_boss_health_changed(payload: BossHealthChangedEvent) -> void:
 	boss_health_bar.value = payload.current_health
 
 
-func on_boss_phase_changed(payload: Dictionary) -> void:
-	var phases_remaining = payload.get("phases_remaining", 1)
-	_update_phase_visuals(phases_remaining)
+func on_boss_phase_changed(payload: BossPhaseChangedEvent) -> void:
+	# UPDATE: Typed property access
+	_update_phase_visuals(payload.phases_remaining)
 
 
 func on_boss_died(_payload) -> void:

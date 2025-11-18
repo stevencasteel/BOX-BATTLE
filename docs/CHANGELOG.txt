@@ -23,18 +23,18 @@
 ║      ░ ■ Removed `EntityBuilder`. Entities now self-assemble via `build_entity()`.║
 ║      ░ ■ Genericized States: Created `StateEntityPatrol` and `StateEntityIdle` base classes.║
 ║      ░ ■ Split `PlayerAbilityComponent` into atomic Jump/Dash/Heal/Charge components.║
-
+║      ░ ■ Enforced typed events for Boss Death and Phase Changes (removed dictionary payloads).║
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.19.0] - CONTEXT HYGIENE - 11/18/2025             ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║                                                                              ║
-║   █  Documentation Refactor                                                  ║
-║      ░ ■ Archived legacy logs and creative docs to `docs/archive/`.          ║
-║      ░ ■ Abridged `CHANGELOG`, `TODO`, and `ARCHITECTURE` for token limits.  ║
-║      ░ ■ Fixed source code generator to exclude archive/addons.              ║
-║                                                                              ║
+║                                                                                ║
+║   █  Documentation Refactor                                                    ║
+║      ░ ■ Archived legacy logs and creative docs to `docs/archive/`.            ║
+║      ░ ■ Abridged `CHANGELOG`, `TODO`, and `ARCHITECTURE` for token limits.    ║
+║      ░ ■ Fixed source code generator to exclude archive/addons.                ║
+║                                                                                ║
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.18.0] - SYSTEM HARDENING - 08/26/2025            ██   ║

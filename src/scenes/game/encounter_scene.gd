@@ -1,8 +1,5 @@
 # src/scenes/game/encounter_scene.gd
 ## The main game scene controller.
-##
-## Responsible for orchestrating the level build, running intro sequences,
-## managing the game camera, and handling victory/defeat sequences.
 class_name EncounterScene
 extends ISceneController
 
@@ -119,7 +116,6 @@ func _initialize_debug_inspector() -> void:
 	add_child(_debug_overlay)
 	_debug_overlay.visible = false
 
-	# Initial population. _cycle_debug_target will refresh this list live.
 	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
 	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
 
@@ -128,12 +124,9 @@ func _initialize_debug_inspector() -> void:
 
 
 func _cycle_debug_target() -> void:
-	# This is the fix. We re-query the scene tree every time we cycle.
 	_inspectable_entities.clear()
 	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
 	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
-
-	# Filter out any nulls just in case
 	_inspectable_entities = _inspectable_entities.filter(func(e): return is_instance_valid(e))
 
 	if _inspectable_entities.is_empty():
@@ -155,9 +148,6 @@ func _deactivate_all_minions() -> void:
 # --- Signal Handlers ---
 
 func _on_spawn_boss_requested(_payload) -> void:
-	# This function is now responsible for the action.
-	# We don't await here because this is a fire-and-forget event.
-	# The ArenaBuilder's function is async, so it will complete in the background.
 	ArenaBuilder.spawn_boss_async()
 
 
@@ -165,11 +155,13 @@ func _on_player_died() -> void:
 	SceneManager.go_to_game_over()
 
 
-func _on_boss_died(payload: Dictionary) -> void:
+func _on_boss_died(payload: BossDiedEvent) -> void:
 	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.set_physics_process(false)
-	var boss_node: Node = payload.get("boss_node")
+	
+	# UPDATE: Using typed payload property
+	var boss_node: Node = payload.boss_node
 
 	_deactivate_all_minions()
 
