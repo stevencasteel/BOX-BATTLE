@@ -1,16 +1,15 @@
 # src/entities/minions/movement_logic/movement_logic.gd
 @tool
-## The abstract base class for all minion movement strategies.
-## Defines the contract for how a minion's velocity is calculated each frame.
+## The abstract base class for all entity movement strategies.
+## Defines the contract for how an entity's velocity is calculated each frame.
 class_name MovementLogic
 extends Resource
 
-## Calculates and returns the minion's velocity for the current physics frame.
-## This is the core method to be implemented by all concrete movement strategies.
+## Calculates and returns the entity's velocity for the current physics frame.
 ## @param delta: The time elapsed since the last physics frame.
-## @param minion: A reference to the Minion node executing this logic.
-## @param state_data: The shared state data resource for the minion.
+## @param entity: A reference to the BaseEntity executing this logic.
+## @param data: The shared state data resource (BossStateData or MinionStateData).
 ## @return: The calculated velocity vector for the current frame.
-func execute(_delta: float, _minion: Minion, _state_data: MinionStateData) -> Vector2:
+func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
 	push_warning("MovementLogic.execute() was called but not overridden by the implementer.")
 	return Vector2.ZERO

@@ -57,17 +57,11 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	if not is_on_floor():
-		# UPDATE: world_config.gravity
 		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
-
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if (
-		is_instance_valid(sm) and is_instance_valid(sm.current_state)
-		and sm.current_state == sm.states[Identifiers.BossStates.PATROL]
-		and is_on_wall()
-	):
-		entity_data.facing_direction *= -1.0
+	
+	# The specific patrol wall-flip logic has been removed.
+	# It is now handled by PatrolMovementLogic.
 
 
 # --- Internal Build Logic (Moved from EntityBuilder) ---
@@ -160,7 +154,6 @@ func _die() -> void:
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
-	# UPDATE: world_config.hit_stop_boss_death
 	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
 	var fc: FXComponent = get_component(FXComponent)
@@ -180,9 +173,12 @@ func _initialize_data() -> void:
 	if not _services:
 		_services = ServiceLocator
 
-	# UPDATE: Inject new configs
 	entity_data.config = _services.enemy_config
 	entity_data.world_config = _services.world_config
+	
+	# UPDATE: Inject behavior and services so MovementLogic can work
+	entity_data.behavior = behavior
+	entity_data.services = _services
 	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
@@ -226,7 +222,6 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 		if is_instance_valid(phase_change_shake_effect):
 			_services.fx_manager.request_screen_shake(phase_change_shake_effect)
 		
-		# UPDATE: world_config.hit_stop_boss_phase_change
 		_services.fx_manager.request_hit_stop(
 			entity_data.world_config.hit_stop_boss_phase_change
 		)

@@ -1,28 +1,29 @@
 # src/entities/minions/states/state_minion_patrol.gd
-## The state where a minion actively moves according to its movement logic.
+## A specialized patrol state for Minions.
+## Inherits generic movement but adds specific AI interrupts.
 class_name MinionStatePatrol
-extends BaseState
+extends StateEntityPatrol
 
 var _minion: Minion
 
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	_minion = owner as Minion
 
-func enter(_msg := {}) -> void:
-	self._minion = owner as Minion
-
-
-func process_physics(delta: float) -> void:
+func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
-		return
+		return false
 
 	# --- Priority 1: Melee Interrupt ---
-	# If player gets too close, this action takes precedence over everything.
 	if state_data.is_player_in_melee_range:
-		_minion.velocity = Vector2.ZERO
-		_minion.attack_timer.stop() 
-		state_machine.change_state("melee")
-		return
+		# Guard: Only switch if the minion actually has a MeleeComponent
+		if _minion.get_component(MeleeComponent):
+			_minion.velocity = Vector2.ZERO
+			_minion.attack_timer.stop() 
+			state_machine.change_state("melee")
+			return true
 
-	# --- Priority 2: Ranged Attack (while continuing to patrol) ---
+	# --- Priority 2: Ranged Attack ---
 	if (
 		state_data.is_player_in_range
 		and _minion.attack_timer.is_stopped()
@@ -37,10 +38,8 @@ func process_physics(delta: float) -> void:
 			var attack_command: Callable = pattern.logic.execute(_minion, pattern)
 			if attack_command.is_valid():
 				attack_command.call()
-
-	# --- Default Action: Always Execute Movement ---
-	if is_instance_valid(state_data.behavior.movement_logic):
-		var new_velocity: Vector2 = state_data.behavior.movement_logic.execute(
-			delta, _minion, state_data
-		)
-		_minion.velocity = new_velocity
+		
+		# Note: We stay in Patrol state to allow moving while firing (if logic allows),
+		# unless we explicitly want to stop.
+	
+	return false

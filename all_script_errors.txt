@@ -172,6 +172,8 @@ Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
 Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
 Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
 Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.gd
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
+Loading resource: res://src/entities/minions/movement_logic/patrol_movement_logic.gd
 Shader pre-warming complete.
 Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
 Loading resource: res://materials/entity_hit_flash_material.tres
@@ -201,6 +203,7 @@ Loading resource: res://src/combat/attack_logic/lunge_logic.tres
 Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
 Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
 Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
 Loading resource: res://src/data/layouts/layout_00.tres
 Loading resource: res://src/entities/minions/turret.tscn
 Loading resource: res://src/entities/archetypes/minion_archetype.tres
@@ -213,7 +216,6 @@ Loading resource: res://src/entities/spawners/spawner.gd
 Loading resource: res://src/entities/minions/patrolling_lancer.tscn
 Loading resource: res://src/entities/minions/data/patrolling_lancer_behavior.tres
 Loading resource: res://src/entities/minions/movement_logic/patrol_movement.tres
-Loading resource: res://src/entities/minions/movement_logic/patrol_movement_logic.gd
 Loading resource: res://src/entities/minions/flying_patroller.tscn
 Loading resource: res://src/entities/minions/data/flying_patroller_behavior.tres
 Loading resource: res://src/entities/minions/movement_logic/flying_patrol.tres
@@ -245,9 +247,9 @@ XR: Removed interface "Native mobile"
 XR: Removed interface "OpenXR"
 Leaked instance: GDScriptNativeClass:9223372049974559412
 Leaked instance: GDScript:9223372081129850270 - Resource path: res://src/core/building/terrain_builder.gd
-Leaked instance: Node:140072978658 - Node path: 
-Leaked instance: SceneTreeTimer:9223372215397911394
-Leaked instance: Node:159165451167 - Node path: 
+Leaked instance: SceneTreeTimer:9223372121613273300
+Leaked instance: Node:136717535501 - Node path: 
+Leaked instance: Node:155793230764 - Node path: 
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
 Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
 Orphan StringName: _enter_tree (static: 0, total: 2)

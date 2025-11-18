@@ -4,6 +4,9 @@ class_name BossStateData
 extends Resource
 
 # --- Configuration References ---
+# UPDATE: Added behavior and services for MovementLogic compatibility
+var behavior: BossBehavior
+var services: ServiceLocator
 var config: EnemyConfig
 var world_config: WorldConfig
 

@@ -21,7 +21,7 @@
 ║      ░ ■ Implemented granular `PlayerConfig`, `EnemyConfig`, and `WorldConfig`.║
 ║      ░ ■ Refactored all Entities and Systems to use specific config injection. ║
 ║      ░ ■ Removed `EntityBuilder`. Entities now self-assemble via `build_entity()`.║
-
+║      ░ ■ Genericized States: Created `StateEntityPatrol` and `StateEntityIdle` base classes.║
 
 
 
