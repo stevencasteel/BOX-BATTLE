@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="PoolManifest" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/core/systems/pooling/pool_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/systems/pooling/pool_manifest.gd" id="2_man"]
+[ext_resource type="PackedScene" path="res://src/projectiles/player_shot.tscn" id="3_player_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/boss_shot.tscn" id="4_boss_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/turret_shot.tscn" id="5_minion_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
+[ext_resource type="PackedScene" path="res://src/vfx/hit_spark.tscn" id="7_spark"]
+
+[sub_resource type="Resource" id="Resource_player"]
+script = ExtResource("1_def")
+pool_key = &"player_shots"
+scene = ExtResource("3_player_shot")
+initial_size = 15
+
+[sub_resource type="Resource" id="Resource_boss"]
+script = ExtResource("1_def")
+pool_key = &"boss_shots"
+scene = ExtResource("4_boss_shot")
+initial_size = 30
+
+[sub_resource type="Resource" id="Resource_minion"]
+script = ExtResource("1_def")
+pool_key = &"minion_shots"
+scene = ExtResource("5_minion_shot")
+initial_size = 20
+
+[sub_resource type="Resource" id="Resource_homing"]
+script = ExtResource("1_def")
+pool_key = &"homing_boss_shots"
+scene = ExtResource("6_homing")
+initial_size = 40
+
+[sub_resource type="Resource" id="Resource_spark"]
+script = ExtResource("1_def")
+pool_key = &"hit_sparks"
+scene = ExtResource("7_spark")
+initial_size = 25
+
+[resource]
+script = ExtResource("2_man")
+pools = Array[ExtResource("1_def")]([
+    SubResource("Resource_player"),
+    SubResource("Resource_boss"),
+    SubResource("Resource_minion"),
+    SubResource("Resource_homing"),
+    SubResource("Resource_spark")
+])

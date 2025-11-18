@@ -1,9 +1,9 @@
 # src/core/systems/object_pool.gd
 ## An autoloaded singleton that manages pools of reusable nodes.
-##
-## This system prevents performance degradation (stutter) from frequent
-## instantiation and deletion of nodes like projectiles and visual effects.
 extends Node
+
+# --- Constants ---
+const MANIFEST_PATH = "res://src/data/default_pool_manifest.tres"
 
 # --- Private Member Variables ---
 var _pools: Dictionary = {}
@@ -32,11 +32,23 @@ func _exit_tree() -> void:
 func initialize() -> void:
 	if _is_initialized:
 		return
-	_create_pool_from_path(Identifiers.Pools.PLAYER_SHOTS, AssetPaths.SCENE_PLAYER_SHOT, 15)
-	_create_pool_from_path(Identifiers.Pools.BOSS_SHOTS, AssetPaths.SCENE_BOSS_SHOT, 30)
-	_create_pool_from_path(Identifiers.Pools.MINION_SHOTS, AssetPaths.SCENE_MINION_SHOT, 20)
-	_create_pool_from_path(Identifiers.Pools.HOMING_BOSS_SHOTS, AssetPaths.SCENE_HOMING_BOSS_SHOT, 40)
-	_create_pool_from_path(Identifiers.Pools.HIT_SPARKS, AssetPaths.SCENE_HIT_SPARK, 25)
+	
+	# UPDATE: Data-Driven Initialization
+	if not FileAccess.file_exists(MANIFEST_PATH):
+		push_error("ObjectPool: Manifest not found at %s" % MANIFEST_PATH)
+		return
+		
+	var manifest: PoolManifest = load(MANIFEST_PATH)
+	if not manifest:
+		push_error("ObjectPool: Failed to load PoolManifest resource.")
+		return
+		
+	for def in manifest.pools:
+		if def.scene == null:
+			push_warning("ObjectPool: Pool definition for '%s' has no scene." % def.pool_key)
+			continue
+		_create_pool_for_scene(def.pool_key, def.scene, def.initial_size)
+		
 	_is_initialized = true
 
 
@@ -98,15 +110,6 @@ func return_instance(p_instance: Node) -> void:
 
 
 # --- Private Methods ---
-
-func _create_pool_from_path(p_pool_name: StringName, p_scene_path: String, p_initial_size: int) -> void:
-	var scene: PackedScene = load(p_scene_path)
-
-	if not is_instance_valid(scene):
-		push_error("ObjectPool: Failed to load scene for pool '%s' at path: %s" % [p_pool_name, p_scene_path])
-		return
-
-	_create_pool_for_scene(p_pool_name, scene, p_initial_size)
 
 
 func _create_pool_for_scene(

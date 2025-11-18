@@ -80,7 +80,6 @@ func _on_build() -> void:
 		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
 		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
 		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
-		# UPDATE: Use Constant
 		Identifiers.CommonStates.MELEE: state_melee_script.new(self, sm, entity_data),
 	}
 
@@ -101,12 +100,10 @@ func _on_build() -> void:
 	setup_components(shared_deps, per_component_deps)
 
 	if hc:
-		if not hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.connect(_on_health_component_health_changed)
-		if not hc.died.is_connected(_on_health_component_died):
-			hc.died.connect(_on_health_component_died)
 		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.connect(_on_health_threshold_reached)
+	
+	# Note: died and health_changed are handled by BaseEntity now
 
 
 # --- Public Methods ---
@@ -114,10 +111,6 @@ func teardown() -> void:
 	set_physics_process(false)
 	var hc: HealthComponent = get_component(HealthComponent)
 	if is_instance_valid(hc):
-		if hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.disconnect(_on_health_component_health_changed)
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
 		if hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.disconnect(_on_health_threshold_reached)
 
@@ -129,6 +122,17 @@ func get_health_thresholds() -> Array[float]:
 	if is_instance_valid(behavior):
 		return [behavior.phase_2_threshold, behavior.phase_3_threshold]
 	return []
+
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
+
+func _on_health_changed(current: int, max_val: int) -> void:
+	var ev := BossHealthChangedEvent.new()
+	ev.current_health = current
+	ev.max_health = max_val
+	_services.event_bus.emit(EventCatalog.BOSS_HEALTH_CHANGED, ev)
 
 
 # --- Private Methods ---
@@ -242,14 +246,3 @@ func _on_patrol_timer_timeout() -> void:
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.PATROL]:
 		sm.change_state(Identifiers.BossStates.IDLE)
-
-
-func _on_health_component_health_changed(current: int, max_val: int) -> void:
-	var ev := BossHealthChangedEvent.new()
-	ev.current_health = current
-	ev.max_health = max_val
-	_services.event_bus.emit(EventCatalog.BOSS_HEALTH_CHANGED, ev)
-
-
-func _on_health_component_died() -> void:
-	_die()

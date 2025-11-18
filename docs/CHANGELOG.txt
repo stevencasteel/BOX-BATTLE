@@ -25,7 +25,8 @@
 ║      ░ ■ Split `PlayerAbilityComponent` into atomic Jump/Dash/Heal/Charge components.║
 ║      ░ ■ Enforced typed events for Boss Death and Phase Changes (removed dictionary payloads).║
 ║      ░ ■ Replaced magic state strings ("melee", "patrol") with `Identifiers.CommonStates`.║
-
+║      ░ ■ Deduplicated entity lifecycle: `BaseEntity` auto-wires Health signals.      ║
+║      ░ ■ Implemented `PoolManifest`: Object pooling is now fully data-driven.        ║
 
 
 

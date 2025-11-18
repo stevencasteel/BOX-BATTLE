@@ -63,11 +63,7 @@ func _notification(what: int) -> void:
 
 # --- Public Methods ---
 func teardown() -> void:
-	var hc: HealthComponent = get_component(HealthComponent)
-	if is_instance_valid(hc):
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
-
+	# Note: Health signals handled by BaseEntity
 	super.teardown()
 	entity_data = null
 
@@ -110,7 +106,6 @@ func _on_build() -> void:
 		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
 		Identifiers.MinionStates.FALL:
 		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
-		# UPDATE: Use Constants
 		Identifiers.CommonStates.MELEE:
 		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
 		Identifiers.CommonStates.PATROL:
@@ -133,8 +128,7 @@ func _on_build() -> void:
 
 	setup_components(shared_deps, per_component_deps)
 	
-	if is_instance_valid(hc):
-		hc.died.connect(_on_health_component_died)
+	# Note: health signals handled by BaseEntity
 
 
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
@@ -142,6 +136,10 @@ func _safe_script(script_ref: Script, fallback_path: String) -> Script:
 		return script_ref
 	return load(fallback_path)
 
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
 
 # --- Private Methods ---
 func _die() -> void:
@@ -210,7 +208,3 @@ func _on_melee_range_detector_body_entered(body: Node) -> void:
 func _on_melee_range_detector_body_exited(body: Node) -> void:
 	if is_instance_valid(entity_data) and body is Player:
 		entity_data.is_player_in_melee_range = false
-
-
-func _on_health_component_died() -> void:
-	_die()

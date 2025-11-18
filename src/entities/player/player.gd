@@ -53,7 +53,7 @@ func _ready() -> void:
 	# Setup Data
 	entity_data = PlayerStateData.new()
 	
-	# Trigger internal build (replaces EntityBuilder)
+	# Trigger internal build
 	build_entity()
 
 	# Post-Build Init
@@ -69,9 +69,8 @@ func _physics_process(delta: float) -> void:
 	_update_timers(delta)
 
 
-# --- Internal Build Logic (Moved from EntityBuilder) ---
+# --- Internal Build Logic ---
 func _on_build() -> void:
-	# Ensure services are available
 	if not _services:
 		_services = ServiceLocator
 
@@ -139,11 +138,7 @@ func _on_build() -> void:
 	if hurtbox.area_entered.get_connections().is_empty():
 		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 
-	if hc:
-		if not hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.connect(_on_health_component_health_changed)
-		if not hc.died.is_connected(_on_health_component_died):
-			hc.died.connect(_on_health_component_died)
+	# Note: hc wiring is now handled by BaseEntity
 
 	if cc and rc:
 		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
@@ -163,12 +158,7 @@ func _on_build() -> void:
 
 # --- Public Methods ---
 func teardown() -> void:
-	var hc: HealthComponent = get_component(HealthComponent)
-	if is_instance_valid(hc):
-		if hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.disconnect(_on_health_component_health_changed)
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
+	# Note: HealthComponent teardown is now handled by BaseEntity
 
 	var cc: CombatComponent = get_component(CombatComponent)
 	if is_instance_valid(cc):
@@ -191,6 +181,18 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
+
+func _on_health_changed(current: int, max_val: int) -> void:
+	var ev = PlayerHealthChangedEvent.new()
+	ev.current_health = current
+	ev.max_health = max_val
+	_services.event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
+	health_changed.emit(current, max_val)
 
 
 # --- Private Methods ---
@@ -298,20 +300,8 @@ func _on_healing_timer_timeout() -> void:
 	if sm.current_state == sm.states[Identifiers.PlayerStates.HEAL]:
 		entity_data.health += 1
 		get_component(PlayerResourceComponent).consume_healing_charge()
-		_on_health_component_health_changed(entity_data.health, entity_data.max_health)
+		_on_health_changed(entity_data.health, entity_data.max_health)
 		sm.change_state(Identifiers.PlayerStates.MOVE)
-
-
-func _on_health_component_health_changed(current: int, max_val: int) -> void:
-	var ev = PlayerHealthChangedEvent.new()
-	ev.current_health = current
-	ev.max_health = max_val
-	_services.event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
-	health_changed.emit(current, max_val)
-
-
-func _on_health_component_died() -> void:
-	_die()
 
 
 func _on_pogo_bounce_requested() -> void:

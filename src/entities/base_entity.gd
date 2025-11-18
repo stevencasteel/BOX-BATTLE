@@ -31,11 +31,8 @@ func _ready() -> void:
 # --- Public Methods ---
 
 ## The main entry point for self-construction.
-## Replaces the external EntityBuilder.
 func build_entity() -> void:
-	_services = ServiceLocator # Get singleton reference directly here if not injected
-	
-	# Child classes override this to configure data and components
+	_services = ServiceLocator
 	_on_build() 
 
 
@@ -60,11 +57,17 @@ func require_component(type: Script) -> IComponent:
 
 func inject_dependencies(p_services) -> void:
 	_services = p_services
-	# If we are built via spawner/builder, we might get services here.
-	# If not built yet, we hold them.
 
 
 func teardown() -> void:
+	# Auto-disconnect HealthComponent signals to prevent memory leaks
+	var hc = get_component(HealthComponent)
+	if is_instance_valid(hc):
+		if hc.died.is_connected(_on_entity_died):
+			hc.died.disconnect(_on_entity_died)
+		if hc.health_changed.is_connected(_on_health_changed):
+			hc.health_changed.disconnect(_on_health_changed)
+
 	for child in get_children():
 		if child is IComponent:
 			child.teardown()
@@ -112,6 +115,14 @@ func setup_components(
 		if child.has_method("setup"):
 			child.setup(self, merged_deps)
 
+	# NEW: Auto-wire common components after setup
+	var hc = get_component(HealthComponent)
+	if is_instance_valid(hc):
+		if not hc.died.is_connected(_on_entity_died):
+			hc.died.connect(_on_entity_died)
+		if not hc.health_changed.is_connected(_on_health_changed):
+			hc.health_changed.connect(_on_health_changed)
+
 	_components_initialized = true
 
 
@@ -152,12 +163,18 @@ func fire_shot_at_player() -> void:
 
 # --- Protected Virtual Methods (for children to override) ---
 
-## Override this to define entity-specific build logic (states, data, etc)
 func _on_build() -> void:
 	pass
 
 func _update_player_tracking() -> void:
 	pass 
+
+# NEW: Virtual signal handlers
+func _on_entity_died() -> void:
+	pass
+
+func _on_health_changed(_current: int, _max: int) -> void:
+	pass
 
 
 # --- Private Methods ---
