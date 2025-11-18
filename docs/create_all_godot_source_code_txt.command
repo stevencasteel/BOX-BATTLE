@@ -1,15 +1,19 @@
 #!/bin/bash
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 # Change to the parent directory (BOX BATTLE root)
 cd "$SCRIPT_DIR/.."
+
 # Define the output file path
 OUTPUT_FILE="docs/all_godot_source_code.txt"
+
 echo "🎮 BOX BATTLE Source Code Generator"
 echo "=================================="
 echo "Working directory: $(pwd)"
 echo "Output file: $OUTPUT_FILE"
 echo ""
+
 # Step 1: Create the file and write the header
 echo "+---------------------------------+" > "$OUTPUT_FILE"
 echo "|       B O X  B A T T L E        |" >> "$OUTPUT_FILE"
@@ -17,15 +21,18 @@ echo "|  Godot Project Source Context   |" >> "$OUTPUT_FILE"
 echo "+---------------------------------+" >> "$OUTPUT_FILE"
 echo "Generated on: $(date)" >> "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
+
 # Step 2: Add directory tree structure
 echo "=====================================" >> "$OUTPUT_FILE"
 echo "PROJECT DIRECTORY STRUCTURE:" >> "$OUTPUT_FILE"
 echo "=====================================" >> "$OUTPUT_FILE"
+
 if command -v tree >/dev/null 2>&1; then
-    # Use tree command if available (excludes common non-essential directories and files, but shows addons directory)
-    tree -I 'assets|.git|.godot|.tmp|*.uid|*.import' >> "$OUTPUT_FILE"
+    # Use tree command if available
+    # EXCLUDES: assets, git, godot, tmp, addons, archive, build artifacts
+    tree -I 'assets|.git|.godot|.tmp|addons|archive|*.uid|*.import' >> "$OUTPUT_FILE"
 else
-    # Fallback to find command if tree is not available
+    # Fallback to find command
     echo "Note: 'tree' command not found, using find as fallback" >> "$OUTPUT_FILE"
     echo "" >> "$OUTPUT_FILE"
     find . -type d \
@@ -33,12 +40,16 @@ else
         -not -path "./.git*" \
         -not -path "./.godot*" \
         -not -path "./.tmp*" \
+        -not -path "./addons*" \
+        -not -path "./docs/archive*" \
         | sed 's|[^/]*/|  |g; s|  \([^/]*\)$|-- \1/|' >> "$OUTPUT_FILE"
 fi
+
 echo "" >> "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
 echo "📁 Collecting project files..."
-# Step 3: Find all the project files and append them to the file (excluding addons directory files)
+
+# Step 3: Find files and append content
 find . -type f \( \
   -name "*.gd" -o \
   -name "*.tscn" -o \
@@ -51,13 +62,11 @@ find . -type f \( \
   -name "*.txt" \
 \) \
 -not -path "./assets/*" \
--not -path "./addons/*" \
 -not -path "./.git/*" \
 -not -path "./.godot/*" \
--not -path "./docs/all_godot_source_code.txt" \
--not -path "./docs/all_godot_source_code_no_docs.txt" \
--not -name "all_godot_source_code.txt" \
--not -name "all_godot_source_code_no_docs.txt" \
+-not -path "./addons/*" \
+-not -path "./docs/archive/*" \
+-not -path "./$OUTPUT_FILE" \
 -not -name "*.uid" \
 -not -name "*.import" \
 -not -name "LICENSE.txt" \
@@ -71,6 +80,7 @@ find . -type f \( \
   echo ""
   echo ""
 ' _ {} \; >> "$OUTPUT_FILE"
+
 echo "✅ Success! File created: $OUTPUT_FILE"
 echo ""
 echo "📄 You can now find your combined source code at:"

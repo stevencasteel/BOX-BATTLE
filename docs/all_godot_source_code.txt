@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Aug 26 10:40:18 CDT 2025
+Generated on: Tue Nov 18 11:39:52 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -10,164 +10,25 @@ PROJECT DIRECTORY STRUCTURE:
 .
 ├── LICENSE
 ├── README.md
-├── addons
-│   └── gut
-│       ├── GutScene.gd
-│       ├── GutScene.tscn
-│       ├── LICENSE.md
-│       ├── UserFileViewer.gd
-│       ├── UserFileViewer.tscn
-│       ├── autofree.gd
-│       ├── awaiter.gd
-│       ├── cli
-│       │   ├── change_project_warnings.gd
-│       │   ├── gut_cli.gd
-│       │   └── optparse.gd
-│       ├── collected_script.gd
-│       ├── collected_test.gd
-│       ├── comparator.gd
-│       ├── compare_result.gd
-│       ├── diff_formatter.gd
-│       ├── diff_tool.gd
-│       ├── double_templates
-│       │   ├── function_template.txt
-│       │   ├── init_template.txt
-│       │   └── script_template.txt
-│       ├── double_tools.gd
-│       ├── doubler.gd
-│       ├── dynamic_gdscript.gd
-│       ├── fonts
-│       │   ├── AnonymousPro-Bold.ttf
-│       │   ├── AnonymousPro-BoldItalic.ttf
-│       │   ├── AnonymousPro-Italic.ttf
-│       │   ├── AnonymousPro-Regular.ttf
-│       │   ├── CourierPrime-Bold.ttf
-│       │   ├── CourierPrime-BoldItalic.ttf
-│       │   ├── CourierPrime-Italic.ttf
-│       │   ├── CourierPrime-Regular.ttf
-│       │   ├── LobsterTwo-Bold.ttf
-│       │   ├── LobsterTwo-BoldItalic.ttf
-│       │   ├── LobsterTwo-Italic.ttf
-│       │   ├── LobsterTwo-Regular.ttf
-│       │   └── OFL.txt
-│       ├── gui
-│       │   ├── BottomPanelShortcuts.gd
-│       │   ├── BottomPanelShortcuts.tscn
-│       │   ├── GutBottomPanel.gd
-│       │   ├── GutBottomPanel.tscn
-│       │   ├── GutControl.gd
-│       │   ├── GutControl.tscn
-│       │   ├── GutRunner.gd
-│       │   ├── GutRunner.tscn
-│       │   ├── GutSceneTheme.tres
-│       │   ├── MinGui.tscn
-│       │   ├── NormalGui.tscn
-│       │   ├── OutputText.gd
-│       │   ├── OutputText.tscn
-│       │   ├── ResizeHandle.gd
-│       │   ├── ResizeHandle.tscn
-│       │   ├── ResultsTree.gd
-│       │   ├── ResultsTree.tscn
-│       │   ├── RunAtCursor.gd
-│       │   ├── RunAtCursor.tscn
-│       │   ├── RunResults.gd
-│       │   ├── RunResults.tscn
-│       │   ├── Settings.tscn
-│       │   ├── ShortcutButton.gd
-│       │   ├── ShortcutButton.tscn
-│       │   ├── arrow.png
-│       │   ├── editor_globals.gd
-│       │   ├── gut_config_gui.gd
-│       │   ├── gut_gui.gd
-│       │   ├── gut_user_preferences.gd
-│       │   ├── panel_controls.gd
-│       │   ├── play.png
-│       │   ├── run_from_editor.gd
-│       │   ├── run_from_editor.tscn
-│       │   └── script_text_editor_controls.gd
-│       ├── gut.gd
-│       ├── gut_cmdln.gd
-│       ├── gut_config.gd
-│       ├── gut_loader.gd
-│       ├── gut_loader_the_scene.tscn
-│       ├── gut_plugin.gd
-│       ├── gut_to_move.gd
-│       ├── gut_vscode_debugger.gd
-│       ├── hook_script.gd
-│       ├── icon.png
-│       ├── images
-│       │   ├── Folder.svg
-│       │   ├── Script.svg
-│       │   ├── green.png
-│       │   ├── red.png
-│       │   └── yellow.png
-│       ├── inner_class_registry.gd
-│       ├── input_factory.gd
-│       ├── input_sender.gd
-│       ├── junit_xml_export.gd
-│       ├── lazy_loader.gd
-│       ├── logger.gd
-│       ├── method_maker.gd
-│       ├── one_to_many.gd
-│       ├── orphan_counter.gd
-│       ├── parameter_factory.gd
-│       ├── parameter_handler.gd
-│       ├── plugin.cfg
-│       ├── printers.gd
-│       ├── result_exporter.gd
-│       ├── script_parser.gd
-│       ├── signal_watcher.gd
-│       ├── source_code_pro.fnt
-│       ├── spy.gd
-│       ├── strutils.gd
-│       ├── stub_params.gd
-│       ├── stubber.gd
-│       ├── summary.gd
-│       ├── test.gd
-│       ├── test_collector.gd
-│       ├── thing_counter.gd
-│       ├── utils.gd
-│       ├── version_conversion.gd
-│       ├── version_numbers.gd
-│       └── warnings_manager.gd
 ├── default_bus_layout.tres
 ├── docs
 │   ├── ARCHITECTURE.txt
-│   ├── ARENA_CONCEPTS.txt
 │   ├── ASSETS.txt
-│   ├── BRAINSTORM.txt
 │   ├── BUGS.txt
 │   ├── CHANGELOG.txt
-│   ├── DEPRECATION.md
 │   ├── DESIGN.txt
-│   ├── DOCS_PROTOCOL.txt
 │   ├── HOW_TO_ADD_AN_EFFECT.md
-│   ├── PLAYTESTING.txt
-│   ├── ROADMAP.txt
 │   ├── TODO.txt
-│   ├── all_godot_source_code_no_docs.txt
-│   ├── all_script_errors.txt
+│   ├── all_godot_source_code.txt
 │   ├── create_all_addons_collector.sh
 │   ├── create_all_godot_source_code_txt.command
 │   ├── create_all_godot_source_code_txt.sh
 │   ├── create_all_godot_source_code_txt_no_docs.command
 │   ├── last_commit_command.txt
-│   └── sprint_0_audit
-│       ├── ADR-002_Communication_Patterns.md
-│       ├── ADR.md
-│       ├── ADR.mdADR-001_Service_Locator_Pattern.md
-│       ├── ARCH-001_Refactoring_Principles.md
-│       ├── ARCH-002_Acceptance_Criteria.md
-│       ├── EVENT-001_Event_Flow_Map.md
-│       ├── FSM-001_Entity_State_Flows.md
-│       ├── STYLE-001_GDScript_Style_Guide.md
-│       ├── TEST-001_Baseline_Metrics.md
-│       ├── TEST-002_Smoke_Tests.md
-│       ├── TEST-003_Regression_Checklist.md
-│       ├── config_usage.txt
-│       ├── event_usage.txt
-│       ├── singleton_map.txt
-│       └── state_machine_flow.md
+│   └── standards
+│       ├── ADR-001_Service_Locator.md
+│       ├── ADR-002_Communication.md
+│       └── STYLE-001_GDScript.md
 ├── export_presets.cfg
 ├── icon.svg
 ├── materials
@@ -497,7 +358,7 @@ PROJECT DIRECTORY STRUCTURE:
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-92 directories, 397 files
+85 directories, 265 files
 
 
 =====================================
@@ -729,6 +590,536 @@ FILE: ./materials/entity_hit_flash_material.tres
 shader = ExtResource("1_shader")
 shader_parameter/fx_progress = 0.0
 shader_parameter/tint_color = Color(1, 0, 0, 1)
+
+=====================================
+FILE: ./docs/TODO.txt
+=====================================
+╔═════════════════════════════════════════════════════════════════════════════════╗
+║   ████████╗ ██████╗ ██████╗  ██████╗                                            ║
+║   ╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗                                           ║
+║      ██║   ██║   ██║██║  ██║██║   ██║                                           ║
+║      ██║   ██║   ██║██║  ██║██║   ██║                                           ║
+║      ██║   ╚██████╔╝██████╔╝╚██████╔╝                                           ║
+║      ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝                                            ║
+╔═════════════════════════════════════════════════════════════════════════════════╗
+║                        Strategic Development Plan & Backlog                     ║
+╚═════════════════════════════════════════════════════════════════════════════════╝
+
+█  IMMEDIATE REFACTORING (The "Gemini v3" Diet)
+   Goal: Reduce boilerplate, token usage, and coupling.
+
+   □  Split 'God Config' (CombatConfig):
+      - Create PlayerConfig, WorldConfig, and EnemyConfig resources.
+      - Update components to request specific configs, not the monolith.
+   □  Genericize State Machine:
+      - Create src/entities/common_states/ (StateIdle, StatePatrol).
+      - Delete specific implementations (StateBossPatrol, StateMinionIdle).
+   □  Remove EntityBuilder:
+      - Hydrate BaseEntity directly from EntityArchetype + ServiceLocator.
+      - Remove hardcoded _build_player/_build_boss logic.
+
+█  PHASE 2: GAME LOOP & PROGRESSION
+   Goal: Turn the encounter prototype into a playable loop.
+
+   □  Persistence:
+      - Create SaveManager (ConfigFile).
+      - Create WorldState resource (track defeated bosses).
+   □  Meta-Game UI:
+      - Implement Stage Select Screen.
+      - Connect Boss Death -> Victory -> Stage Select flow.
+
+█  PHASE 3: POLISH & JUICE
+   Goal: Production-quality feel and accessibility.
+
+   □  Advanced Shaders:
+      - Implement Fullscreen Shockwave effect.
+      - Add chromatic aberration/distortion for heavy impacts.
+   □  Accessibility:
+      - Localization support (tr keys).
+      - Control Remapping implementation in Settings.
+   □  Combat Depth:
+      - Implement Stun/Poise system for Bosses.
+
+█  FUTURE / WISHLIST
+   ░  Fast-Fall mechanics.
+   ░  Boss Rush Mode.
+   ░  Diegetic UI elements.
+
+=====================================
+FILE: ./docs/last_commit_command.txt
+=====================================
+git reset --hard origin/main
+
+=====================================
+FILE: ./docs/DESIGN.txt
+=====================================
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   ██████╗ ███████╗███████╗██╗ ██████╗ ███╗   ██╗                             ║
+║   ██╔══██╗██╔════╝██╔════╝██║██╔════╝ ████╗  ██║                             ║
+║   ██║  ██║█████╗  ███████╗██║██║  ███╗██╔██╗ ██║                             ║
+║   ██║  ██║██╔══╝  ╚════██║██║██║   ██║██║╚██╗██║                             ║
+║   ██████╔╝███████╗███████║██║╚██████╔╝██║ ╚████║                             ║
+║   ╚═════╝ ╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝                             ║
+║                                                                              ║
+║      The official documentation for game mechanics and design philosophy.    ║
+║                                                                              ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+
+# CORE GAMEPLAY DESIGN RULES
+
+## Movement Mechanics
+*   **Jump:** Variable height (button release dampening).
+*   **Coyote Time:** 0.1s window to jump after leaving ledge.
+*   **Jump Buffer:** 0.1s window to queue jump input before landing.
+*   **Wall Interaction:** Wall slide (reduced gravity) + Wall Jump (X/Y force).
+
+## Combat Mechanics
+*   **Hit Detection:** Damage routed through `CombatUtils.apply_damage(target, info)`.
+*   **Pogo:** Down-attack on enemy/projectile/hazard.
+    *   *Result:* Refreshes Dash + Double Jump. Bounces player up.
+*   **Healing (Determination):**
+    *   Dealing damage fills `determination_counter`.
+    *   Full counter = +1 Healing Charge.
+    *   Input `Down + Jump` (grounded) to consume charge and heal.
+
+## Entity Rules
+*   **Invincibility:** Token-based system in `HealthComponent`.
+*   **Contact Damage:** Enemies/Hazards deal damage on touch unless Player is Invincible or Dashing (if upgraded).
+
+=====================================
+FILE: ./docs/BUGS.txt
+=====================================
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   ██████╗ ██╗   ██╗ ██████╗ ███████╗                                         ║
+║   ██╔══██╗██║   ██║██╔════╝ ██╔════╝                                         ║
+║   ██████╔╝██║   ██║██║  ███╗███████╗                                         ║
+║   ██╔══██╗██║   ██║██║   ██║╚════██║                                         ║
+║   ██████╔╝╚██████╔╝╚██████╔╝███████║                                         ║
+║   ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝                                         ║
+║                                                                              ║
+║             A tracker for all known issues, their status, and solutions.     ║
+║                                                                              ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██                             OPEN ISSUES                              ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║                                                                              ║
+║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██                             FIXED ISSUES                             ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║                                                                              ║
+║   ■  [BUG-MEM001] ObjectDB instances leaked on exit.                         ║
+║      ░  FIXED: 2025-08-18                                                    ║
+║      ░  SOLUTION: Implemented a formal `scene_exiting()` contract via an     ║
+║      ░  `ISceneController` interface. The `SceneManager` now calls this      ║
+║      ░  method on the outgoing scene, allowing entities like Player and      ║
+║      ░  Boss to run their explicit `teardown()` logic. This breaks the       ║
+║      ░  dangling references held by global singletons (e.g., EventBus)       ║
+║      ░  that were preventing garbage collection.                             ║
+║                                                                              ║
+║   ■  [BUG-F007] Intermittent major hitch on first run or debug mode toggle.  ║
+║      ░  FIXED: 2025-08-07                                                    ║
+║      ░  SOLUTION: Implemented a shader pre-warming system in `LoadingScreen`.║
+║                                                                              ║
+║   ■  [BUG-F006] Significant stutter/hitch occurred on arena load.            ║
+║      ░  FIXED: 2025-08-07                                                    ║
+║      ░  SOLUTION: Replaced synchronous level generation with a new asynchronous║
+║      ░  system in `ArenaBuilder.gd`.                                         ║
+║                                                                              ║
+║   ■  [BUG-F005] Player death caused a physics crash.                         ║
+║      ░  FIXED: 2025-08-07                                                    ║
+║      ░  SOLUTION: Scene changes now use `call_deferred()` to prevent deleting║
+║      ░  a physics body during a physics callback.                            ║
+║                                                                              ║
+║   ■  [BUG-F004] Hazard tiles did not deal contact damage.                    ║
+║      ░  FIXED: 2025-08-07                                                    ║
+║      ░  SOLUTION: Corrected collision layer and group setup in `ArenaBuilder`.║
+║                                                                              ║
+║   ■  [BUG-F003] Drop-through platforms ("-") were not functioning.           ║
+║      ░  FIXED: 2025-08-06                                                    ║
+║      ░  SOLUTION: Re-implemented Down+Jump logic in `state_move`.            ║
+║                                                                              ║
+║   ■  [BUG-F002] Player pogo attack was not working correctly on all surfaces.║
+║      ░  FIXED: 2025-08-05                                                    ║
+║      ░  SOLUTION: Re-implemented the physics query to handle all surfaces.   ║
+║                                                                              ║
+║   ■  [BUG-F001] Player was not taking contact damage from boss/hazards.      ║
+║      ░  FIXED: 2025-08-05                                                    ║
+║      ░  SOLUTION: Corrected the player's `collision_mask` in `player.tscn`.  ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+=====================================
+FILE: ./docs/ARCHITECTURE.txt
+=====================================
+╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                  ║
+║  █████╗ ██████╗  ██████╗██╗  ██╗██╗████████╗███████╗ ██████╗████████╗██╗   ██╗██████╗ ███████╗   ║
+║ ██╔══██╗██╔══██╗██╔════╝██║  ██║██║╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝   ║
+║ ███████║██████╔╝██║     ███████║██║   ██║   █████╗  ██║        ██║   ██║   ██║██████╔╝█████╗     ║
+║ ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
+║ ██║  ██║██║  ██║╚██████╗██║  ██║██║   ██║   ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║███████╗   ║
+║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝   ║
+║                                                                                                  ║
+║                     A high-level summary of the project's technical patterns.                    ║
+║                                                                                                  ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
+
+# PROJECT ARCHITECTURE
+
+## 1. Core Pattern: Service Locator + Autoloads
+*   **Global Access:** Managed via `ServiceLocator` singleton (Autoload).
+*   **Services:** `FXManager`, `ObjectPool`, `EventBus`, `AudioManager`.
+*   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
+
+## 2. Entity Pattern: Composition + Archetypes
+*   **BaseEntity:** Generic shell (`CharacterBody2D`).
+*   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
+*   **EntityBuilder:** Static utility that hydrates the entity, instantiates components, and wires dependencies.
+*   **Components:** Single-responsibility nodes (Health, Input, Physics).
+
+## 3. Logic Pattern: State Machines & Strategy
+*   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
+*   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
+
+## 4. Data Pattern: Resource-Driven
+*   **Config:** All tuning numbers live in `CombatConfig.tres` (soon to be split).
+*   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
+
+## 5. Communication Rules
+*   **Local (Parent<->Child):** Use Godot Signals.
+*   **Global (System<->System):** Use `EventBus` (e.g., UI updates, achievements).
+
+=====================================
+FILE: ./docs/ASSETS.txt
+=====================================
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║    █████╗ ███████╗███████╗███████╗████████╗███████╗                          ║
+║   ██╔══██╗██╔════╝██╔════╝██╔════╝╚══██╔══╝██╔════╝                          ║
+║   ███████║███████╗███████╗███████╗   ██║   ███████╗                          ║
+║   ██╔══██║╚════██║╚════██║██╔════╝   ██║   ╚════██║                          ║
+║   ██║  ██║███████║███████║███████╗   ██║   ███████║                          ║
+║   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝   ╚═╝   ╚══════╝                          ║
+║                                                                              ║
+║        A registry for asset sources, licenses, and style guidelines.         ║
+║                                                                              ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██                            STYLE GUIDE                               ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║                                                                              ║
+║   █  Visual Style                                                            ║
+║      ░  Overall: Clean, minimalist, and geometric.                           ║
+║      ░  Color Palette: High-contrast grayscale for placeholders.             ║
+║      ░  Shape Language: A strict adherence to square-based geometry.         ║
+║      ░  Rectangles are only permitted for static environmental elements.     ║
+║                                                                              ║
+║   █  Audio Style                                                             ║
+║      ░  Music: Chiptune-inspired, melodic, and loopable tracks.              ║
+║      ░  Sound Effects: Crisp, digital, and immediately recognizable SFX.     ║
+║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██                           ASSET SOURCES                              ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║                                                                              ║
+║   █  Graphics                                                                ║
+║      ░  Source: All current visual assets (sprites, icons) are original      ║
+║      ░  creations for this project.                                          ║
+║      ░  License: N/A (Internal)                                              ║
+║                                                                              ║
+║   █  Audio                                                                   ║
+║      ░  Source: All audio assets were generated by the project creator using ║
+║      ░  paid subscriptions to ElevenLabs (SFX) and Udio (Music).             ║
+║      ░  License: CC0 1.0 Universal (Public Domain).                          ║
+║                                                                              ║
+║   █  Fonts                                                                   ║
+║      ░  Source: "M PLUS Rounded 1c" by the M+ FONTS PROJECT.                 ║
+║      ░  License: SIL Open Font License (OFL).                                ║
+║      ░  Source Link: `https://fonts.google.com/specimen/M+PLUS+Rounded+1c`   ║
+║                                                                              ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ██                      ATTRIBUTION REQUIREMENTS                        ██  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║                                                                              ║
+║   Per the CC0 license for audio and original creation for graphics, no       ║
+║   attribution is required for any asset. It is good practice to keep the     ║
+║   OFL.txt for the font with the project files.                               ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+=====================================
+FILE: ./docs/CHANGELOG.txt
+=====================================
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║   ██████╗██╗  ██╗ █████╗ ███╗   ██╗ ██████╗ ███████╗██╗      ██████╗  ██████╗  ║
+║  ██╔════╝██║  ██║██╔══██╗████╗  ██║██╔════╝ ██╔════╝██║     ██╔═══██╗██╔════╝  ║
+║  ██║     ███████║███████║██╔██╗ ██║██║  ███╗█████╗  ██║     ██║   ██║██║  ███╗ ║
+║  ██║     ██╔══██║██╔══██║██║╚██╗██║██║   ██║██╔══╝  ██║     ██║   ██║██║   ██║ ║
+║  ╚██████╗██║  ██║██║  ██║██║ ╚████║╚██████╔╝███████╗███████╗╚██████╔╝╚██████╔╝ ║
+║   ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚═════╝  ║
+║                                                                                ║
+║                  A log of all notable changes to the project.                  ║
+║                                                                                ║
+╠════════════════════════════════════════════════════════════════════════════════╣
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.19.0] - IN PROGRESS - 11/XX/2025                 ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.18.0] - SYSTEM HARDENING - 08/26/2025            ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Projectile & Sensor Architecture                                          ║
+║      ░ ■ Implemented `BaseProjectile` inheritance for all shot types.          ║
+║      ░ ■ Added `SENSORS` physics layer to prevent AI detection zones from      ║
+║      ░   blocking shots.                                                       ║
+║      ░ ■ Resolved `class_name` conflict in `ServiceLocator`.                   ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.17.0] - MINION INTELLIGENCE - 08/25/2025         ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  AI & Behaviors                                                            ║
+║      ░ ■ Added `FlyingPatroller` enemy with gravity-defying movement logic.    ║
+║      ░ ■ Implemented reactive Melee attacks for Patrolling Lancers.            ║
+║      ░ ■ Refactored Minion FSM to support concurrent movement and combat.      ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.16.0] - SPAWNERS & GRAVITY - 08/24/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Entity Systems                                                            ║
+║      ░ ■ Created generic `Spawner` system for infinite enemy waves.            ║
+║      ░ ■ Unified gravity logic into `StateEntityFall` for all non-player units.║
+║      ░ ■ Fixed physics bugs regarding stationary minions getting pushed.       ║
+║                                                                                ║
+║.  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.15.0] - UNIT TESTING - 08/23/2025                ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Quality Assurance                                                         ║
+║      ░ ■ Integrated GUT framework. Added tests for Input, Health, and Resource ║
+║      ░   components.                                                           ║
+║      ░ ■ Implemented "Autoload Swapping" pattern for safe singleton testing.   ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.14.0] - SERVICE LOCATOR - 08/22/2025             ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture                                                              ║
+║      ░ ■ Implemented `ServiceLocator` to centralize global dependencies.       ║
+║      ░ ■ Refactored UI menus into reusable, self-contained Components.         ║
+║      ░ ■ Centralized jump logic into `PlayerJumpHelper`.                       ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.13.0] - DISSOLVE & SHADERS - 08/21/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Visual Effects                                                            ║
+║      ░ ■ Added procedural `Dissolve` shader for entity death.                  ║
+║      ░ ■ Refactored `FXManager` to be fully data-driven via `ShaderEffect`     ║
+║      ░   resources.                                                            ║
+║      ░ ■ Added `HomingBossShot` with complex tweening behavior.                ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.12.0] - ENTITY ARCHETYPES - 08/20/2025           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Entity Architecture                                                       ║
+║      ░ ■ Created `BaseEntity` to unify Player, Boss, and Minions.              ║
+║      ░ ■ Implemented `EntityArchetype` resources to define component composition.║
+║      ░ ■ Added robust `DependencyValidator` for component requirements.        ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.11.0] - VFX POOLING - 08/18/2025                 ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Performance & Juice                                                       ║
+║      ░ ■ Implemented pooling for VFX particles (`HitSpark`).                   ║
+║      ░ ■ Added `ScreenShakeEffect` resource and `CameraShaker` system.         ║
+║      ░ ■ Hardened scene teardown to prevent memory leaks.                      ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.10.0] - CI/CD & AUTOMATION - 08/18/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  DevOps                                                                    ║
+║      ░ ■ Setup GitHub Actions for automated cross-platform builds.             ║
+║      ░ ■ Created initial integration test suite.                               ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.9.0] - STANDARDIZATION - 08/15/2025              ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Code Quality                                                              ║
+║      ░ ■ Enforced `gdformat` and strict script headers project-wide.           ║
+║      ░ ■ Decoupled `Input` singleton via `InputComponent` buffering.           ║
+║      ░ ■ Added in-game Debug Overlay (F1).                                     ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.8.0] - UI OVERHAUL - 08/14/2025                  ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  User Interface                                                            ║
+║      ░ ■ Migrated UI to scene-based architecture (no procedural generation).   ║
+║      ░ ■ Created `MenuManager` for keyboard/mouse navigation.                  ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.7.0] - DATA DRIVEN CONFIG - 08/13/2025           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Systems                                                                   ║
+║      ░ ■ Consolidated tuning into `CombatConfig` resource.                     ║
+║      ░ ■ Implemented distance-based melee damage logic.                        ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║.  ██                  [0.6.0] - DYNAMIC ENCOUNTERS - 08/11/2025           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Gameplay                                                                  ║
+║      ░ ■ Implemented Multi-Phase Boss Logic.                                   ║
+║      ░ ■ Added first Minion type (`Turret`).                                   ║
+║      ░ ■ Updated display to 16:9 Widescreen.                                   ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.5.0] - UNIFICATION - 08/10/2025                  ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture                                                              ║
+║      ░ ■ Unified Player and Boss under `BaseStateMachine`.                     ║
+║      ░ ■ Defined `IDamageable` and `IComponent` contracts.                     ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.4.0] - COMPONENT REFACTOR - 08/09/2025           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Refactor                                                                  ║
+║      ░ ■ Broke Player into `Health`, `Combat`, and `Input` components.         ║
+║      ░ ■ Implemented `ObjectPool` for projectiles.                             ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.3.0] - VISUAL FOUNDATION - 08/08/2025            ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Core Systems                                                              ║
+║      ░ ■ Added `EventBus`, `Palette`, `Sequencer`.                             ║
+║      ░ ■ Implemented `GameHUD` driven by events.                               ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.2.0] - ARCHITECTURAL REFACTOR - 08/07/2025       ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Optimization                                                              ║
+║      ░ ■ Async Level Loading in `ArenaBuilder`.                                ║
+║      ░ ■ Shader Pre-warming to prevent hitching.                               ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.1.0] - MIGRATION - 08/05/2025                    ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Initial Commit                                                            ║
+║      ░ ■ Migrated logic from Kaplay prototype to Godot.                        ║
+║      ░ ■ Basic Player controller, Boss FSM, and Tilemap.                       ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+=====================================
+FILE: ./docs/HOW_TO_ADD_AN_EFFECT.md
+=====================================
+# How to Add a New Effect
+
+## TODO: Write a step-by-step guide for designers.
+1. Create a new ShaderEffect resource...
+2. Configure the shader and parameters...
+3. Link it to an event in FXManager...
+
+
+=====================================
+FILE: ./docs/standards/ADR-002_Communication.md
+=====================================
+# ADR-002: Communication Patterns
+
+**Decision:** Strict separation between Local (Signal) and Global (EventBus) communication.
+
+## 1. Local: Godot Signals
+**Scope:** Inside a single scene (`.tscn`) or Parent-Child relationship.
+*   **Child -> Parent:** Component emits signal (`hit_confirmed`), Parent listens.
+*   **Parent -> Child:** Parent calls method on Child (`component.activate()`).
+*   **Rule:** If they share a scene file, use Signals.
+
+## 2. Global: EventBus
+**Scope:** Between decoupled systems that should not reference each other.
+*   **Entity -> UI:** Player emits `health_changed`, HUD listens.
+*   **System -> System:** Encounter emits `boss_spawned`, MusicManager listens.
+*   **Rule:** If the sender doesn't know the receiver exists, use EventBus.
+
+## Litmus Test
+*   Is `node_a` a child of `node_b`? -> **Signal/Method Call**.
+*   Is `node_a` communicating with a singleton or a totally different scene? -> **EventBus**.
+
+=====================================
+FILE: ./docs/standards/ADR-001_Service_Locator.md
+=====================================
+# ADR-001: Global Service Access
+
+**Decision:** Use Godot **Autoloads** as a Service Locator for global systems.
+
+## The Pattern
+1.  **Global Registry:** Core systems (`EventBus`, `ObjectPool`, `FXManager`) are registered as Autoloads in `project.godot`.
+2.  **Central Access:** A `ServiceLocator` autoload provides typed access to these systems.
+3.  **Injection:** Entities and Components **MUST NOT** call autoloads directly (e.g., `EventBus.emit`).
+    *   **Entities** receive the `ServiceLocator` via `EntityBuilder` or `Spawner`.
+    *   **Components** receive dependencies via `setup(owner, dependencies)`.
+
+## Rationale
+*   **Pros:** Idiomatic to Godot, performant, avoids complex DI frameworks.
+*   **Cons:** Hidden dependencies if not injected.
+*   **Mitigation:** Strict adherence to the "Owner-Driven Injection" pattern.
+
+=====================================
+FILE: ./docs/standards/STYLE-001_GDScript.md
+=====================================
+# STYLE-001: GDScript Style Guide
+
+**Decision:** Strict adherence to Godot Style Guide + Static Typing + Docstrings.
+
+## File Structure
+1.  **Header:** `# res://path/to/script.gd`
+2.  **Docstring:** `## High-level purpose of class.`
+3.  **Definition:** `class_name MyClass extends BaseClass`
+4.  **Members:**
+    *   Signals
+    *   Enums
+    *   Constants (`UPPER_SNAKE_CASE`)
+    *   Export Vars (`@export_group` required)
+    *   Public Vars
+    *   Private Vars (`_snake_case`)
+5.  **Methods:**
+    *   `_init` / `_ready` / `_process`
+    *   Public Methods (`snake_case`)
+    *   Private Methods (`_snake_case`)
+    *   Signal Handlers (`_on_signal_name`)
+
+## Rules
+1.  **Static Typing:** ALL variables and functions must have types.
+    *   `func my_func(a: int) -> void:`
+    *   `var health: int = 10`
+2.  **Private Prefix:** Internal variables/functions must start with `_`.
+3.  **Documentation:** Use `##` for class and public function documentation (Tooltip support).
+4.  **No Magic Numbers:** Move literals to `CombatConfig` or `Constants`.
 
 =====================================
 FILE: ./README.md
@@ -9879,8 +10270,8 @@ var owner_node: CharacterBody2D
 var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
-var _combat_utils: CombatUtils
-var _services: ServiceLocator
+var _combat_utils
+var _services
 
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
@@ -10072,7 +10463,7 @@ var _hazard_knockback_speed: float
 var _invincibility_tokens: Dictionary = {}
 var _next_token_id: int = 1
 var _fx_manager: IFXManager
-var _event_bus: EventBus
+var _event_bus
 var _hit_spark_effect: VFXEffect
 
 # --- Godot Lifecycle Methods ---

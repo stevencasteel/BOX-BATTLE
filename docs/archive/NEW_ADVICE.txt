@@ -1,0 +1,11 @@
+Here’s concise, high-impact advice after reviewing the full Box Battle codebase (as of Aug 2025):
+
+1. **You’re already 90 % “pro-grade”**  
+   Component + data-driven + strategy pattern + service locator + event bus + pooling + tests is textbook modern Godot architecture. Very few solo/indie projects reach this level of cleanliness.
+
+2. **Biggest remaining risks / quick wins**
+   - ServiceLocator is a hidden global and will bite you during testing and scene hot-reloading. Replace the few critical look-ups (FXManager, ObjectPool, EventBus) with proper @GlobalScope autoloads or explicit node references passed at entity build time. You’ll thank yourself in 6 months.
+   - PlayerAbilityComponent has grown into a god-class (handles jump, dash, heal, attack, charge, pogo). Split into dedicated components (JumpComponent, DashComponent, HealComponent, ChargeAttackComponent) → each with its own tiny _physics_process that only runs when relevant.
+   - Minion states are still mostly duplicated logic (patrol → attack transitions almost identical in every minion). Extract a generic MinionBrain or shared MinionAttackSelector state.
+   - Too many timers as float counters in state_data. Move every timer that belongs to a specific ability into its own component (DashComponent owns dash_duration_timer & dash_cooldown_timer, etc.). Cleaner and avoids timer creep.
+   - FXComponent.setup() is called manually in several places (including the FXPlayground tool scene). Make it auto-setup in _ready() by pulling from ServiceLocator if missing — removes boilerplate everywhere.

@@ -1,257 +1,50 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║   ████████╗ ██████╗ ██████╗  ██████╗                                         ║
-║   ╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗                                        ║
-║      ██║   ██║   ██║██║  ██║██║   ██║                                        ║
-║      ██║   ██║   ██║██║  ██║██║   ██║                                        ║
-║      ██║   ╚██████╔╝██████╔╝╚██████╔╝                                        ║
-║      ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝                                         ║
-║                                                                              ║
-║                    Strategic Development Plan & Actionable Tasks             ║
-║                                                                              ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██              PHASE 1: FORTIFICATION & PRODUCTION PIPELINES           ██  ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║                                                                              ║
-║   Goal: Build the safety net. Harden the project against regressions and     ║
-║   streamline core workflows to enable rapid, confident development.          ║
-║                                                                              ║
-║   █ Architecture & Testing                                                   ║
-║   ░ Implement the Automated Testing Framework (GUT) to safeguard all         ║
-║   ░ future work. This is the highest priority architectural task.            ║
-║   ░                                                                          ║
-║   ░ □ Integrate the Godot Unit Test (GUT) framework into src/tests/.         ║
-║   ░ □ Write initial unit tests for critical, non-visual components:          ║
-║   ░   - HealthComponent: Damage application, invincibility, death signal.    ║
-║   ░   - PlayerResourceComponent: Determination-to-charge conversion.         ║
-║   ░   - ObjectPool: get_instance/return_instance lifecycle.                  ║
-║   ░ □ Create a headless integration test to run an encounter for 600         ║
-║   ░   frames and assert that no errors are thrown.                           ║
-║   ░ □ Update the GitHub Actions CI workflow to run all tests on push.        ║
-║                                                                              ║
-║   █ Production & Tooling                                                     ║
-║   ░ Establish professional-grade tooling for debugging and UI management.    ║
-║   ░                                                                          ║
-║   ░ □ Implement a Centralized Logging System (LogManager.gd autoload)        ║
-║   ░   to replace all print() calls with structured, leveled logging.         ║
-║   ░ □ Create a central main_theme.tres resource to unify all UI fonts,       ║
-║   ░   colors, and styles, pulling values from Palette.gd.                    ║
-║                                                                              ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██            PHASE 2: CONTENT EXPANSION & VISUAL IDENTITY              ██  ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║                                                                              ║
-║   Goal: Build out the core game experience and implement the signature       ║
-║   "Aesthetic Maximalism" visual identity through shaders and feedback.       ║
-║                                                                              ║
-║   █ Gameplay & Design                                                        ║
-║   ░ Transform the single encounter into a playable game loop.                ║
-║   ░                                                                          ║
-║   ░ □ Implement the Core Game Loop:                                          ║
-║   ░   - Create WorldState.tres to track defeated bosses.                     ║
-║   ░   - Create a SaveManager using ConfigFile to save/load progress.         ║
-║   ░   - Build a functional "Stage Select" screen.                            ║
-║   ░ □ Generalize the Boss Attack System to empower design:                   ║
-║   ░   - Expand AttackPattern.gd with an AttackType enum and more data.       ║
-║   ░   - Refactor StateBossAttack into a generic executor.                    ║
-║                                                                              ║
-║   █ Juice & Feedback (Game Feel) - CURRENT FOCUS                             ║
-║   ░ The focus is now on tangible "game feel" to make interactions satisfying.║
-║   ░                                                                          ║
-║   ░ □ Implement Screen Shake via FXManager for player damage and boss attacks║
-║   ░ □ Implement Hit-Stop via FXManager for close-range melee hits on boss.   ║
-║   ░ □ Create and pool a basic "hit spark" particle effect via VFXManager.    ║
-║   ░ □ Implement the Full Shader Strategy:                                    ║
-║   ░   - Develop an "FX Cookbook" registry in FXManager.                      ║
-║   ░   - Implement entity shaders (Hit-Flash, Dissolve).                      ║
-║   ░   - Implement fullscreen shaders (Shockwave).                            ║
-║                                                                              ║
-║   █ Systems & Narrative                                                      ║
-║   ░ Flesh out supporting systems required for a complete experience.         ║
-║   ░                                                                          ║
-║   ░ □ Implement the basic functionality for the DialogueManager and          ║
-║   ░   DialogueBox to enable storytelling.                                    ║
-║                                                                              ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██              PHASE 3: POLISHING & PROFESSIONALIZATION                ██  ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║                                                                              ║
-║   Goal: Add the features that elevate the project from a great prototype to  ║
-║   a shippable, high-quality product, focusing on accessibility and depth.    ║
-║                                                                              ║
-║   █ Accessibility & Internationalization                                     ║
-║   ░ Ensure the game is playable by the widest possible audience.             ║
-║   ░                                                                          ║
-║   ░ □ Abstract all user-facing text for localization using tr("KEY").        ║
-║   ░ □ Implement Control Remapping in the Controls Screen.                    ║
-║   ░ □ Implement Colorblind Modes via Palette texture swapping.               ║
-║                                                                              ║
-║   █ Advanced Mechanics & Game Feel                                           ║
-║   ░ Add mechanical depth and a final layer of authored polish.               ║
-║   ░                                                                          ║
-║   ░ □ Develop a Stun/Poise System for the boss to reward aggression.         ║
-║   ░ □ Refactor key moments (player attack, boss intros) to be driven by      ║
-║   ░   AnimationPlayer for more authored, cinematic sequences.                ║
-║                                                                              ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██                    FUTURE CONSIDERATIONS & DEFERRED TASKS            ██  ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║                                                                              ║
-║   A list of lower-priority goals for future consideration.                   ║
-║                                                                              ║
-║   ░ Fast-Fall: Holding 'Down' in the air increases gravity.                  ║
-║   ░ Diegetic UI Implementation (UI integrated into the game world).          ║
-║   ░ Advanced Boss AI (Adaptive tactics, environmental interaction).          ║
-║   ░ Player Loadout System (Alternative weapons or abilities).                ║
-║   ░ Special Game Modes (Boss Rush, Time Attack).                             ║
-║   ░ Automated Component Dependency Injection (reduce entity setup boilerplate).║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-
-
-Add dust on landing, walking, touching wall, and jumping from wall.
-
-
-Understood. I misinterpreted the request. I will now provide the requested audit and plan without implementing any code.
-
-Audit and Assessment
-
-The provided checklist (items 1-37) is comprehensive, well-structured, and remains entirely valid. It addresses the key architectural and systemic needs of a growing Godot project. The items are concrete, have clear acceptance criteria, and align with professional game development practices.
-
-The accompanying "ChatGPT-5" analysis serves as a strong validation of your list. The risks it identifies are already solved by specific items in your plan:
-
-Risk: Shared ShaderMaterial mutation.
-
-Your Solution: Item #17 (material.duplicate() enforcement) and Item #9 (reliable material binding/restoring).
-
-Risk: Shader compile hitches on mobile.
-
-Your Solution: Item #5 (shader prewarm/stagger routine) and Item #33 (performance profiling harness).
-
-Risk: Hidden dependencies and testability friction from autoloads.
-
-Your Solution: Item #23 (dependency injection pattern), Item #31 (GUT tests with fakes), and Item #35 (weak-binding helpers).
-
-Risk: Event storms and lack of FX budgeting.
-
-Your Solution: Item #12 (budget tracking and degrade policy).
-
-The list requires no distillation. It is an actionable, high-quality backlog. The proposed "PR / delivery plan" is also a logical and effective way to sequence the work.
-
-Phased Implementation Plan
-
-This is the strategic plan to resolve the checklist, following your proposed PR-based phasing. Each phase represents a group of related tasks that can be developed, tested, and merged as a coherent unit.
-
-Phase 1: Shader Foundation (PR A)
-
-Goal: Establish a robust, reusable, and enforceable shader architecture. This is the bedrock for all future visual effects work.
-
-Tasks:
-
-#1: Create res://shaders/includes/ with .gdshaderinc files.
-
-#2: Convert hit-flash and pulse VisualShaders to text .gdshader.
-
-#3: Enforce shader header and sampler hints (shader_type, : source_color).
-
-#15: Add lint script to validate required uniforms (fx_progress, fx_intensity).
-
-#16: Standardize and document the shader parameter contract.
-
-Phase 2: Data-Driven FX System (PR B)
-
-Goal: Build the core runtime system for managing shader effects, decoupling FX logic from game logic.
-
-Tasks:
-
-#7: Create the ShaderEffect Resource.
-
-#8: Implement FXManager.play_shader() and prewarm_shaders().
-
-#9: Implement scope-specific material bindings (EntityShaderBinding, etc.).
-
-#10: Unify ShaderEffect with other FX contracts.
-
-#11: Implement ObjectPool for ShaderMaterial instances.
-
-#12: Add FXManager budget tracking and backpressure policy.
-
-#13: Create the fx_playground.tscn testbed scene.
-
-#14: Hook EventBus events to the FXManager.
-
-#5: Implement the shader prewarm routine using the FXManager.
-
-#34: Add FXManager.get_budget_status() debug overlay.
-
-Phase 3: Audio Pipeline (PR C)
-
-Goal: Implement a professional-grade audio system with proper mixing, voice management, and data-driven playback.
-
-Tasks:
-
-#18: Implement the audio bus layout (Master, SFX, UI, Music) with a master limiter.
-
-#19: Implement the AudioManager with player pools and voice management.
-
-#20: Add import presets and AudioStreamRandomizer support.
-
-Phase 4: Gameplay Loop - Progression (PR D)
-
-Goal: Build the core save/load and stage progression systems.
-
-Tasks:
-
-#24: Implement the SaveManager with atomic writes and versioning.
-
-#25: Implement the EncounterRegistry.tres and data-driven Stage Select screen.
-
-#26: Connect boss defeat events to the SaveManager.
-
-Phase 5: Narrative Systems (PR E)
-
-Goal: Harden the dialogue system into a flexible, resource-driven narrative engine.
-
-Tasks:
-
-#27: Refactor DialogueManager to run on DialogueData resources.
-
-#28: Implement inline tags ([fx], [sfx]) in dialogue.
-
-#29: Add IWorldQuery abstraction for conditional branching.
-
-#30: Polish typewriter effect (variable speed, instant reveal, etc.).
-
-Phase 6: CI & Testing (PR F)
-
-Goal: Automate quality control, ensuring stability and preventing regressions.
-
-Tasks:
-
-#31: Integrate GUT tests for critical systems (FX, Save, Events).
-
-#32: Add a CI job for shader linting and resource checking.
-
-#33: Add performance/QA harness for shader profiling.
-
-#36: Automate fx_playground.tscn as a CI smoke test.
-
-Phase 7: Refinement & Documentation (PR G)
-
-Goal: Clean up technical debt, enforce conventions, and create developer-facing documentation.
-
-Tasks:
-
-#21: Rename/deprecate legacy vfx_manager.gd.
-
-#22: Enforce project directory conventions.
-
-#23: Expand DI patterns across components.
-
-#35: Add EventBus.bind_weak() helper.
-
-#37: Write "How to add a ShaderEffect" and mobile shader checklist documents.
-
+╔═════════════════════════════════════════════════════════════════════════════════╗
+║   ████████╗ ██████╗ ██████╗  ██████╗                                            ║
+║   ╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗                                           ║
+║      ██║   ██║   ██║██║  ██║██║   ██║                                           ║
+║      ██║   ██║   ██║██║  ██║██║   ██║                                           ║
+║      ██║   ╚██████╔╝██████╔╝╚██████╔╝                                           ║
+║      ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝                                            ║
+╔═════════════════════════════════════════════════════════════════════════════════╗
+║                        Strategic Development Plan & Backlog                     ║
+╚═════════════════════════════════════════════════════════════════════════════════╝
+
+█  IMMEDIATE REFACTORING (The "Gemini v3" Diet)
+   Goal: Reduce boilerplate, token usage, and coupling.
+
+   □  Split 'God Config' (CombatConfig):
+      - Create PlayerConfig, WorldConfig, and EnemyConfig resources.
+      - Update components to request specific configs, not the monolith.
+   □  Genericize State Machine:
+      - Create src/entities/common_states/ (StateIdle, StatePatrol).
+      - Delete specific implementations (StateBossPatrol, StateMinionIdle).
+   □  Remove EntityBuilder:
+      - Hydrate BaseEntity directly from EntityArchetype + ServiceLocator.
+      - Remove hardcoded _build_player/_build_boss logic.
+
+█  PHASE 2: GAME LOOP & PROGRESSION
+   Goal: Turn the encounter prototype into a playable loop.
+
+   □  Persistence:
+      - Create SaveManager (ConfigFile).
+      - Create WorldState resource (track defeated bosses).
+   □  Meta-Game UI:
+      - Implement Stage Select Screen.
+      - Connect Boss Death -> Victory -> Stage Select flow.
+
+█  PHASE 3: POLISH & JUICE
+   Goal: Production-quality feel and accessibility.
+
+   □  Advanced Shaders:
+      - Implement Fullscreen Shockwave effect.
+      - Add chromatic aberration/distortion for heavy impacts.
+   □  Accessibility:
+      - Localization support (tr keys).
+      - Control Remapping implementation in Settings.
+   □  Combat Depth:
+      - Implement Stun/Poise system for Bosses.
+
+█  FUTURE / WISHLIST
+   ░  Fast-Fall mechanics.
+   ░  Boss Rush Mode.
+   ░  Diegetic UI elements.

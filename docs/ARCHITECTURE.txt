@@ -1,49 +1,37 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ╚═════════════════╗
-║  █████╗ ██████╗  ██████╗██╗  ██╗██╗████████╗███████╗ ██████╗████████╗██╗   ██╗██████╗ ███████╗ ║
-║ ██╔══██╗██╔══██╗██╔════╝██║  ██║██║╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝ ║
-║ ███████║██████╔╝██║     ███████║██║   ██║   █████╗  ██║        ██║   ██║   ██║██████╔╝█████╗   ║
-║ ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝   ║
-║ ██║  ██║██║  ██║╚██████╗██║  ██║██║   ██║   ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║███████╗ ║
-║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝ ║
-║                                                                              ╔═════════════════╝
-║          A high-level summary of the project's technical patterns.           ║
-║                                                                              ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║  ██                       KEY ARCHITECTURAL PATTERNS                     ██  ║
-║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-║                                                                              ║
-║   █  Singleton-Driven Core (Service Locator)                                 ║
-║      ░ Global systems (e.g., `AudioManager`, `ObjectPool`, `EventBus`) are   ║
-║      ░ managed by Autoload singletons for universal, easy access.            ║
-║                                                                              ║
-║   █  Component-Based Entities                                                ║
-║      ░ Entities (Player, Boss) are orchestrators for a collection of         ║
-║      ░ single-responsibility components (e.g., `HealthComponent`). All       ║
-║      ░ components extend the `IComponent` interface contract.                ║
-║                                                                              ║
-║   █  State Pattern for Logic                                                 ║
-║      ░ Complex entity behavior is managed by a `BaseStateMachine`. Each state║
-║      ░ (e.g., `StateMove`, `StateAttack`) is its own class, encapsulating    ║
-║      ░ logic for a single behavior.                                          ║
-║                                                                              ║
-║   █  Data-Driven Design via Resources                                        ║
-║      ░ All tunable gameplay values (damage, health, cooldowns) are defined   ║
-║      ░ in custom `Resource` files (`.tres`), primarily `combat_config.tres`. ║
-║      ░ This decouples game balance from code and allows for rapid tuning.    ║
-║                                                                              ║
-║   █  Owner-Driven Dependency Injection                                       ║
-║      ░ This is the official DI pattern. An owner node (like `player.gd`) is  ║
-║      ░ responsible for gathering its dependencies (child nodes, global configs)║
-║      ░ in its `_ready()` function and injecting them into its components via ║
-║      ░ their `setup()` method. Components NEVER call singletons directly.    ║
-║                                                                              ║
-║   █  Communication Patterns                                                  ║
-║      ░ ■ Godot Signals: Used for **local**, intra-scene communication,       ║
-║      ░   typically between a component and its owner or a child and parent.  ║
-║      ░ ■ EventBus: Used for **global**, cross-system communication between   ║
-║      ░   decoupled parts of the game (e.g., `Player` -> `GameHUD`).          ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                  ║
+║  █████╗ ██████╗  ██████╗██╗  ██╗██╗████████╗███████╗ ██████╗████████╗██╗   ██╗██████╗ ███████╗   ║
+║ ██╔══██╗██╔══██╗██╔════╝██║  ██║██║╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝   ║
+║ ███████║██████╔╝██║     ███████║██║   ██║   █████╗  ██║        ██║   ██║   ██║██████╔╝█████╗     ║
+║ ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
+║ ██║  ██║██║  ██║╚██████╗██║  ██║██║   ██║   ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║███████╗   ║
+║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝   ║
+║                                                                                                  ║
+║                     A high-level summary of the project's technical patterns.                    ║
+║                                                                                                  ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
+
+# PROJECT ARCHITECTURE
+
+## 1. Core Pattern: Service Locator + Autoloads
+*   **Global Access:** Managed via `ServiceLocator` singleton (Autoload).
+*   **Services:** `FXManager`, `ObjectPool`, `EventBus`, `AudioManager`.
+*   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
+
+## 2. Entity Pattern: Composition + Archetypes
+*   **BaseEntity:** Generic shell (`CharacterBody2D`).
+*   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
+*   **EntityBuilder:** Static utility that hydrates the entity, instantiates components, and wires dependencies.
+*   **Components:** Single-responsibility nodes (Health, Input, Physics).
+
+## 3. Logic Pattern: State Machines & Strategy
+*   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
+*   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
+
+## 4. Data Pattern: Resource-Driven
+*   **Config:** All tuning numbers live in `CombatConfig.tres` (soon to be split).
+*   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
+
+## 5. Communication Rules
+*   **Local (Parent<->Child):** Use Godot Signals.
+*   **Global (System<->System):** Use `EventBus` (e.g., UI updates, achievements).
