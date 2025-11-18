@@ -10,21 +10,32 @@
 ║                  A log of all notable changes to the project.                  ║
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
+
+
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
+║  ██                  [0.20.0] - CONFIG DECOUPLING - 11/XX/2025           ██    ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
+║                                                                                ║
+║   █  Architecture                                                              ║
+║      ░ ■ Dismantled the monolithic `CombatConfig`.                             ║
+║      ░ ■ Implemented granular `PlayerConfig`, `EnemyConfig`, and `WorldConfig`.║
+║      ░ ■ Refactored all Entities and Systems to use specific config injection. ║
+║                                                                                ║
+
+
+
+
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.19.0] - CONTEXT HYGIENE - 11/18/2025             ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-
-
 ║                                                                              ║
 ║   █  Documentation Refactor                                                  ║
 ║      ░ ■ Archived legacy logs and creative docs to `docs/archive/`.          ║
 ║      ░ ■ Abridged `CHANGELOG`, `TODO`, and `ARCHITECTURE` for token limits.  ║
 ║      ░ ■ Fixed source code generator to exclude archive/addons.              ║
 ║                                                                              ║
-
-
-
-
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.18.0] - SYSTEM HARDENING - 08/26/2025            ██   ║

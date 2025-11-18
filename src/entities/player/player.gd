@@ -122,10 +122,12 @@ func _enable_melee_hitbox(is_enabled: bool, is_up_attack: bool = false) -> void:
 	var shape_node: CollisionShape2D = melee_hitbox.get_node("CollisionShape2D")
 	if is_enabled:
 		if is_up_attack:
-			shape_node.shape = entity_data.config.player_upward_attack_shape
+			# UPDATE: config.upward_attack_shape
+			shape_node.shape = entity_data.config.upward_attack_shape
 			shape_node.position = Vector2(0, -40)
 		else:
-			shape_node.shape = entity_data.config.player_forward_attack_shape
+			# UPDATE: config.forward_attack_shape
+			shape_node.shape = entity_data.config.forward_attack_shape
 			shape_node.position = Vector2(entity_data.facing_direction * 60, 0)
 	shape_node.set_deferred("disabled", not is_enabled)
 
@@ -215,10 +217,12 @@ func _on_health_component_died() -> void:
 
 
 func _on_pogo_bounce_requested() -> void:
-	velocity.y = -entity_data.config.player_pogo_force
+	# UPDATE: config.pogo_force
+	velocity.y = -entity_data.config.pogo_force
 	position.y -= 1
 	entity_data.can_dash = true
-	entity_data.air_jumps_left = entity_data.config.player_max_air_jumps
+	# UPDATE: config.max_air_jumps
+	entity_data.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
 
 

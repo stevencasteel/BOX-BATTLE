@@ -5,10 +5,11 @@ extends GutTest
 const HealthComponent = preload("res://src/entities/components/health_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/api/combat/damage_info.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
 const IFXManager = preload("res://src/api/interfaces/IFXManager.gd")
+const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _health_component: HealthComponent
@@ -35,10 +36,12 @@ func before_each() -> void:
 
 	# 3. Setup test subject
 	_mock_owner = CharacterBody2D.new()
+	# UPDATE: Add to player group so HealthComponent logic works correctly with PlayerConfig
+	_mock_owner.add_to_group(Identifiers.Groups.PLAYER)
 	add_child_autofree(_mock_owner)
 
 	_player_data = PlayerStateData.new()
-	_player_data.config = CombatConfig
+	_player_data.config = PlayerConfig # UPDATE
 	_player_data.max_health = 10
 	_player_data.health = 10
 
@@ -50,7 +53,7 @@ func before_each() -> void:
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": CombatConfig,
+		"config": PlayerConfig, # UPDATE
 		"services": _fake_services,
 		"hit_spark_effect": vfx
 	}

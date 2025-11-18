@@ -10,13 +10,15 @@ func enter(_msg := {}):
 	_health = owner.get_component(HealthComponent)
 
 	state_data.can_dash = false
-	state_data.dash_duration_timer = state_data.config.player_dash_duration
-	state_data.dash_cooldown_timer = state_data.config.player_dash_cooldown
+	# UPDATE: config.dash_duration, config.dash_cooldown
+	state_data.dash_duration_timer = state_data.config.dash_duration
+	state_data.dash_cooldown_timer = state_data.config.dash_cooldown
 
 	_invincibility_token = _health.grant_invincibility(self)
 
 	_dash_direction = _get_dash_direction()
-	owner.velocity = _dash_direction * state_data.config.player_dash_speed
+	# UPDATE: config.dash_speed
+	owner.velocity = _dash_direction * state_data.config.dash_speed
 
 
 func exit():

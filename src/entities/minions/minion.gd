@@ -44,8 +44,9 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	# Only apply gravity if the entity is not anchored (i.e., it's a ground unit).
+	# UPDATE: world_config.gravity
 	if not entity_data.behavior.is_anchored and not is_on_floor():
-		velocity.y += entity_data.services.combat_config.gravity * delta
+		velocity.y += entity_data.world_config.gravity * delta
 		
 	move_and_slide()
 
@@ -115,6 +116,9 @@ func _initialize_data() -> void:
 	entity_data.max_health = behavior.max_health
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 	entity_data.services = _services
+	# UPDATE: Inject new configs
+	entity_data.config = _services.enemy_config
+	entity_data.world_config = _services.world_config
 
 
 func _update_player_tracking() -> void:

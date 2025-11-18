@@ -3,8 +3,9 @@
 class_name BossStateData
 extends Resource
 
-# --- Configuration Reference ---
-var config: CombatConfig
+# --- Configuration References ---
+var config: EnemyConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 30

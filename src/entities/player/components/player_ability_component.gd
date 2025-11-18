@@ -1,9 +1,6 @@
 # src/entities/player/components/player_ability_component.gd
 @tool
 ## Governs the activation logic for player abilities.
-##
-## Reads the input buffer and game state to determine if an action (like
-## dashing or healing) can be performed, then directly commands the state machine.
 class_name PlayerAbilityComponent
 extends IComponent
 
@@ -13,7 +10,7 @@ const JumpHelper = preload("res://src/entities/player/components/player_jump_hel
 # --- Member Variables ---
 var owner_node: Player
 var p_data: PlayerStateData
-var _state_machine: BaseStateMachine # Direct reference to the FSM
+var _state_machine: BaseStateMachine
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
@@ -59,7 +56,8 @@ func _physics_process(_delta: float) -> void:
 
 	if input_component.buffer.get("attack_released"):
 		if p_data.is_charging:
-			if p_data.charge_timer >= p_data.config.player_charge_time:
+			# UPDATE: config.charge_time
+			if p_data.charge_timer >= p_data.config.charge_time:
 				owner_node.get_component(CombatComponent).fire_shot()
 			elif input_component.buffer.get("down"):
 				_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
@@ -79,7 +77,6 @@ func _physics_process(_delta: float) -> void:
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as Player
 	self.p_data = p_dependencies.get("data_resource")
-	# Get a direct, permanent reference to the state machine.
 	self._state_machine = owner_node.get_component(BaseStateMachine)
 	assert(is_instance_valid(_state_machine), "PlayerAbilityComponent could not find the StateMachine.")
 

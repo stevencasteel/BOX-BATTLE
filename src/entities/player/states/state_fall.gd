@@ -32,5 +32,6 @@ func process_physics(delta: float) -> void:
 func _apply_gravity(delta: float) -> void:
 	var gravity_multiplier = 1.0
 	if _input.buffer.get("down"):
-		gravity_multiplier = state_data.config.player_fast_fall_gravity_multiplier
+		# UPDATE: config.fast_fall_gravity_multiplier
+		gravity_multiplier = state_data.config.fast_fall_gravity_multiplier
 	_physics.apply_gravity(delta, gravity_multiplier)

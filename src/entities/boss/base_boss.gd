@@ -51,15 +51,12 @@ func _ready() -> void:
 	EntityBuilder.build(self)
 
 
-func _exit_tree() -> void:
-	teardown()
-
-
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	if not is_on_floor():
-		velocity.y += entity_data.config.gravity * delta
+		# UPDATE: world_config.gravity
+		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
 
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
@@ -115,7 +112,8 @@ func _die() -> void:
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
-	_services.fx_manager.request_hit_stop(entity_data.config.boss_death_hit_stop_duration)
+	# UPDATE: world_config.hit_stop_boss_death
+	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
@@ -131,7 +129,11 @@ func _initialize_data() -> void:
 		current_attack_patterns = behavior.phase_1_patterns
 	entity_data = BossStateData.new()
 	assert(is_instance_valid(_services), "BaseBoss requires a ServiceLocator.")
-	entity_data.config = _services.combat_config
+	
+	# UPDATE: Inject new configs
+	entity_data.config = _services.enemy_config
+	entity_data.world_config = _services.world_config
+	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
 
@@ -173,8 +175,10 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 				current_attack_patterns = behavior.phase_3_patterns
 		if is_instance_valid(phase_change_shake_effect):
 			_services.fx_manager.request_screen_shake(phase_change_shake_effect)
+		
+		# UPDATE: world_config.hit_stop_boss_phase_change
 		_services.fx_manager.request_hit_stop(
-			entity_data.config.boss_phase_change_hit_stop_duration
+			entity_data.world_config.hit_stop_boss_phase_change
 		)
 		_services.event_bus.emit(
 			EventCatalog.BOSS_PHASE_CHANGED, {"phases_remaining": phases_remaining}

@@ -14,7 +14,7 @@ var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
 var _combat_utils
-var _services
+var _services: ServiceLocator
 
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
@@ -43,7 +43,8 @@ func teardown() -> void:
 
 ## Fires a player projectile from the object pool.
 func fire_shot() -> void:
-	p_data.attack_cooldown_timer = p_data.config.player_attack_cooldown
+	# UPDATE: config.attack_cooldown
+	p_data.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
 	if not shot:
@@ -79,7 +80,9 @@ func trigger_melee_attack(target_body: Node) -> void:
 		var damage_info = DamageInfo.new()
 		damage_info.source_node = owner_node
 		var distance = owner_node.global_position.distance_to(target_body.global_position)
-		var is_close_range = distance <= p_data.config.player_close_range_threshold
+		
+		# UPDATE: config.close_range_threshold
+		var is_close_range = distance <= p_data.config.close_range_threshold
 		damage_info.amount = 5 if is_close_range else 1
 		damage_info.impact_position = target_body.global_position
 		damage_info.impact_normal = (target_body.global_position - owner_node.global_position).normalized()
@@ -88,8 +91,9 @@ func trigger_melee_attack(target_body: Node) -> void:
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 			if is_close_range:
+				# UPDATE: world_config.hit_stop_player_melee_close
 				_fx_manager.request_hit_stop(
-					p_data.config.player_melee_close_range_hit_stop_duration
+					p_data.world_config.hit_stop_player_melee_close
 				)
 
 

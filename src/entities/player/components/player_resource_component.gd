@@ -26,11 +26,11 @@ func teardown() -> void:
 
 ## Called when the player successfully deals damage to an enemy.
 func on_damage_dealt() -> void:
-	if p_data.healing_charges >= p_data.config.player_max_healing_charges:
+	if p_data.healing_charges >= p_data.config.max_healing_charges:
 		return
 
 	p_data.determination_counter += 1
-	if p_data.determination_counter >= p_data.config.player_determination_per_charge:
+	if p_data.determination_counter >= p_data.config.determination_per_charge:
 		p_data.determination_counter = 0
 		p_data.healing_charges += 1
 		_emit_healing_charges_changed_event()

@@ -11,10 +11,12 @@ func execute(delta: float, minion: Minion, state_data: MinionStateData) -> Vecto
 
 	# This logic is now responsible for applying gravity to itself.
 	if not minion.is_on_floor():
-		new_velocity.y += state_data.services.combat_config.gravity * delta
+		# UPDATE: world_config
+		new_velocity.y += state_data.world_config.gravity * delta
 	
 	if minion.is_on_wall():
 		state_data.facing_direction *= -1.0
 
-	new_velocity.x = state_data.facing_direction * state_data.services.combat_config.boss_patrol_speed
+	# UPDATE: config (EnemyConfig)
+	new_velocity.x = state_data.facing_direction * state_data.config.boss_patrol_speed
 	return new_velocity

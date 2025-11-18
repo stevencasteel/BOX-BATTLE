@@ -1,7 +1,6 @@
 # src/entities/entity_builder.gd
 ## A stateless utility responsible for the construction and dependency wiring
-## of all component-based entities. This separates the "setup" logic from
-## the entity's "runtime" logic.
+## of all component-based entities.
 class_name EntityBuilder
 extends RefCounted
 
@@ -22,7 +21,8 @@ static func build(entity: BaseEntity) -> void:
 static func _build_player(player: Player) -> void:
 	player.entity_data = PlayerStateData.new()
 	assert(is_instance_valid(player._services), "Player requires a ServiceLocator.")
-	player.entity_data.config = player._services.combat_config
+	player.entity_data.config = player._services.player_config
+	player.entity_data.world_config = player._services.world_config
 
 	var hc: HealthComponent = player.get_component(HealthComponent)
 	var sm: BaseStateMachine = player.get_component(BaseStateMachine)
@@ -143,7 +143,7 @@ static func _build_minion(minion: Minion) -> void:
 
 	var shared_deps := {
 		"data_resource": minion.entity_data,
-		"config": minion._services.combat_config,
+		"config": minion.entity_data.config, # UPDATE: Using enemy_config
 		"services": minion._services
 	}
 

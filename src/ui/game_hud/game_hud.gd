@@ -6,7 +6,8 @@
 extends CanvasLayer
 
 # --- Constants ---
-const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
+const PLAYER_CONFIG = preload("res://src/data/player_config.tres")
+const ENEMY_CONFIG = preload("res://src/data/enemy_config.tres")
 
 # --- Node References ---
 @onready var player_info: VBoxContainer = %PlayerInfo
@@ -71,7 +72,8 @@ func _initialize_ui_state() -> void:
 	_empty_phase_style.border_color = Color.WHITE
 	
 	# --- Initialize Rest of UI ---
-	var max_health = COMBAT_CONFIG.player_max_health
+	# UPDATE: Use PLAYER_CONFIG
+	var max_health = PLAYER_CONFIG.max_health
 	player_health_value.text = "%d / %d" % [max_health, max_health]
 	player_heal_charges_value.text = "0"
 
@@ -79,7 +81,8 @@ func _initialize_ui_state() -> void:
 	health_bar_style.bg_color = Palette.COLOR_PLAYER_PROJECTILE
 	boss_health_bar.add_theme_stylebox_override("fill", health_bar_style)
 
-	boss_health_bar.max_value = COMBAT_CONFIG.boss_health
+	# UPDATE: Use ENEMY_CONFIG
+	boss_health_bar.max_value = ENEMY_CONFIG.boss_health
 	boss_health_bar.value = boss_health_bar.max_value
 
 	phase_indicators.add_theme_constant_override("separation", 5)

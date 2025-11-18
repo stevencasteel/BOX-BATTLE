@@ -3,9 +3,11 @@
 class_name MinionStateData
 extends Resource
 
-# --- Configuration Reference ---
+# --- Configuration References ---
 var behavior: MinionBehavior
 var services: ServiceLocator
+var config: EnemyConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 3

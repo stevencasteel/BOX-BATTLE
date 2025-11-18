@@ -10,7 +10,8 @@ func enter(_msg := {}):
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	_input = owner.get_component(InputComponent)
 	state_data.can_dash = true
-	state_data.air_jumps_left = state_data.config.player_max_air_jumps
+	# UPDATE: config.max_air_jumps
+	state_data.air_jumps_left = state_data.config.max_air_jumps
 
 
 func exit():
@@ -19,8 +20,10 @@ func exit():
 
 
 func process_physics(delta: float):
-	var gravity = state_data.config.gravity
-	var wall_slide_speed = state_data.config.player_wall_slide_speed
+	# UPDATE: world_config.gravity
+	var gravity = state_data.world_config.gravity
+	# UPDATE: config.wall_slide_speed
+	var wall_slide_speed = state_data.config.wall_slide_speed
 	owner.velocity.y = min(owner.velocity.y + gravity * delta, wall_slide_speed)
 
 	state_data.facing_direction = sign(-state_data.last_wall_normal.x)

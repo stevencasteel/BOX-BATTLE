@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="WorldConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/world_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+gravity = 1200.0
+hit_stop_player_melee_close = 0.025
+hit_stop_player_hurt = 0.04
+hit_stop_boss_phase_change = 0.1
+hit_stop_boss_death = 0.1

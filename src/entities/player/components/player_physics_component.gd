@@ -1,10 +1,6 @@
 # src/entities/player/components/player_physics_component.gd
 @tool
 ## Manages all direct physics interactions for the player character.
-##
-## Handles gravity, movement, collision detection, and applying velocity via
-## move_and_slide(). It serves as the single point of contact with the
-## Godot physics engine for the player.
 class_name PlayerPhysicsComponent
 extends IComponent
 
@@ -16,24 +12,21 @@ var p_data: PlayerStateData
 
 
 func _ready() -> void:
-	# Run before other components to ensure move_and_slide() is called
-	# before any physics state checks like is_on_floor().
 	process_priority = -50
 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(owner_node):
-		return  # Guard against post-teardown calls
+		return
 
 	owner_node.move_and_slide()
 	_check_for_contact_damage()
 
-	# GUARD: The owner may have been freed by the contact damage check.
 	if not is_instance_valid(owner_node):
 		return
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
-		p_data.wall_coyote_timer = p_data.config.player_wall_coyote_time
+		p_data.wall_coyote_timer = p_data.config.wall_coyote_time
 		p_data.last_wall_normal = owner_node.get_wall_normal()
 
 
@@ -56,13 +49,15 @@ func apply_horizontal_movement() -> void:
 	if not is_instance_valid(input_component):
 		return
 	var move_axis = input_component.buffer.get("move_axis", 0.0)
-	owner_node.velocity.x = move_axis * p_data.config.player_speed
+	# UPDATE: config.move_speed
+	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
 		p_data.facing_direction = sign(move_axis)
 
 
 func apply_gravity(delta: float, multiplier: float = 1.0) -> void:
-	owner_node.velocity.y += p_data.config.gravity * multiplier * delta
+	# UPDATE: world_config.gravity
+	owner_node.velocity.y += p_data.world_config.gravity * multiplier * delta
 
 
 ## Checks if the conditions for performing a wall slide are met.
@@ -81,8 +76,9 @@ func can_wall_slide() -> bool:
 
 ## Applies the velocity and resets timers for a wall jump.
 func perform_wall_jump() -> void:
-	owner_node.velocity.y = -p_data.config.player_wall_jump_force_y
-	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.player_wall_jump_force_x
+	# UPDATE: config.wall_jump_force_...
+	owner_node.velocity.y = -p_data.config.wall_jump_force_y
+	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.wall_jump_force_x
 	p_data.coyote_timer = 0
 	p_data.wall_coyote_timer = 0
 

@@ -31,6 +31,7 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		if not is_instance_valid(shot):
 			continue
 
+		# config is now EnemyConfig
 		shot.damage = owner.entity_data.config.homing_shot_damage
 		shot.speed = owner.entity_data.config.homing_shot_speed
 		shot.lifespan = owner.entity_data.config.homing_shot_lifespan

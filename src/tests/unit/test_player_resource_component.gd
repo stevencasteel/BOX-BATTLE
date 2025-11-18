@@ -4,7 +4,7 @@ extends GutTest
 # --- Constants ---
 const PlayerResourceComponent = preload("res://src/entities/player/components/player_resource_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const EventCatalog = preload("res://src/core/events/event_catalog.gd")
 
 # --- Test Internals ---
@@ -29,7 +29,7 @@ func before_each():
 	var mock_owner = Node.new()
 	add_child_autofree(mock_owner)
 	_player_data = PlayerStateData.new()
-	_player_data.config = CombatConfig
+	_player_data.config = PlayerConfig # UPDATE
 	# Explicitly set max charges for clarity in tests
 	_player_data.max_healing_charges = 3
 
@@ -49,7 +49,8 @@ func test_on_damage_dealt_increments_determination():
 
 func test_healing_charge_gained_at_threshold():
 	_player_data.healing_charges = 0
-	_player_data.determination_counter = CombatConfig.player_determination_per_charge - 1
+	# UPDATE: determination_per_charge (removed player_ prefix)
+	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
 
@@ -61,13 +62,14 @@ func test_healing_charge_gained_at_threshold():
 
 func test_healing_charges_are_capped():
 	_player_data.healing_charges = _player_data.max_healing_charges
-	_player_data.determination_counter = CombatConfig.player_determination_per_charge - 1
+	# UPDATE: determination_per_charge
+	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
 	assert_eq(_player_data.healing_charges, _player_data.max_healing_charges, "Charges should not exceed max.")
 	assert_eq(
 		_player_data.determination_counter,
-		CombatConfig.player_determination_per_charge - 1,
+		PlayerConfig.determination_per_charge - 1,
 		"Determination should not increment if charges are max."
 	)
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))

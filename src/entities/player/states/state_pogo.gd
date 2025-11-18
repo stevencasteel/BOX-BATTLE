@@ -11,7 +11,8 @@ var _physics: PlayerPhysicsComponent
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	state_data.is_pogo_attack = true
-	state_data.attack_duration_timer = state_data.config.player_attack_duration
+	# UPDATE: config.attack_duration
+	state_data.attack_duration_timer = state_data.config.attack_duration
 	state_machine.pogo_hitbox_toggled.emit(true)
 
 

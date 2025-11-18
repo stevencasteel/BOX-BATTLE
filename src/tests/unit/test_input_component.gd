@@ -4,7 +4,7 @@ extends GutTest
 # --- Constants ---
 const InputComponent = preload("res://src/entities/components/input_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const GutInputSender = preload("res://addons/gut/input_sender.gd")
 
 # --- Test Internals ---
@@ -26,7 +26,7 @@ func before_each():
 
 	var dependencies = {
 		"data_resource": PlayerStateData.new(),
-		"config": CombatConfig
+		"config": PlayerConfig # UPDATE
 	}
 	_input_component.setup(_mock_owner, dependencies)
 

@@ -11,8 +11,9 @@ var _input: InputComponent
 func enter(_msg := {}) -> void:
 	_input = owner.get_component(InputComponent)
 	state_data.hit_targets_this_swing.clear()
-	state_data.attack_duration_timer = state_data.config.player_attack_duration
-	state_data.attack_cooldown_timer = state_data.config.player_attack_cooldown
+	# UPDATE: config.attack_duration, config.attack_cooldown
+	state_data.attack_duration_timer = state_data.config.attack_duration
+	state_data.attack_cooldown_timer = state_data.config.attack_cooldown
 	var is_up_attack = _input.buffer.get("up", false)
 	state_machine.melee_hitbox_toggled.emit(true, is_up_attack)
 
@@ -23,7 +24,8 @@ func exit() -> void:
 
 
 func process_physics(delta: float) -> void:
-	var friction = state_data.config.player_attack_friction
+	# UPDATE: config.attack_friction
+	var friction = state_data.config.attack_friction
 	owner.velocity = owner.velocity.move_toward(Vector2.ZERO, friction * delta)
 
 	if state_data.attack_duration_timer <= 0:

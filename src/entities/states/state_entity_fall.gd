@@ -14,8 +14,8 @@ func process_physics(delta: float) -> void:
 	if not is_instance_valid(_entity):
 		return
 
-	# Apply gravity
-	var gravity: float = _entity._services.combat_config.gravity
+	# UPDATE: gravity comes from world_config
+	var gravity: float = _entity._services.world_config.gravity
 	_entity.velocity.y += gravity * delta
 	
 	# Apply horizontal friction/drag

@@ -35,7 +35,7 @@ func _notification(what: int) -> void:
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
     self.owner_node = p_owner as CharacterBody2D
     self.entity_data = p_dependencies.get("data_resource")
-    var cfg: CombatConfig = p_dependencies.get("config")
+    var cfg = p_dependencies.get("config") # Type is Variant (PlayerConfig or EnemyConfig)
     
     self._fx_manager = p_dependencies.get("fx_manager")
     self._event_bus = p_dependencies.get("event_bus")
@@ -46,12 +46,20 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
         return
 
     _max_health = entity_data.max_health
+    
+    # UPDATE: Handle polymorphic config logic
     if owner_node.is_in_group(Identifiers.Groups.PLAYER):
-        _invincibility_duration = cfg.player_invincibility_duration
-        _knockback_speed = cfg.player_knockback_speed
-        _hazard_knockback_speed = cfg.player_hazard_knockback_speed
+        # cfg is PlayerConfig
+        _invincibility_duration = cfg.invincibility_duration
+        _knockback_speed = cfg.knockback_speed
+        _hazard_knockback_speed = cfg.hazard_knockback_speed
     else:
-        _invincibility_duration = cfg.boss_invincibility_duration
+        # cfg is EnemyConfig (or old CombatConfig for minion transiently)
+        if cfg.get("boss_invincibility_duration") != null:
+            _invincibility_duration = cfg.boss_invincibility_duration
+        else:
+            _invincibility_duration = 0.0
+            
         _knockback_speed = 0
         _hazard_knockback_speed = 0
 

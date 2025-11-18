@@ -4,8 +4,9 @@
 class_name PlayerStateData
 extends Resource
 
-# --- Configuration Reference ---
-var config: CombatConfig
+# --- Configuration References ---
+var config: PlayerConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 5

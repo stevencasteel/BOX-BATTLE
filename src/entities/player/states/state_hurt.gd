@@ -7,7 +7,8 @@ var _physics: PlayerPhysicsComponent
 
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
-	state_data.knockback_timer = state_data.config.player_knockback_duration
+	# UPDATE: config.knockback_duration
+	state_data.knockback_timer = state_data.config.knockback_duration
 	state_data.is_charging = false
 	owner._cancel_heal()
 

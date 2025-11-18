@@ -1,11 +1,12 @@
 # src/core/util/service_locator.gd
 ## A central, autoloaded singleton that provides clean, type-safe access
-## to all other core systems (services). This avoids passing around messy
-## dictionaries for dependency injection.
+## to all other core systems (services).
 extends Node
 
 # --- Constants ---
-const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
+const PLAYER_CONFIG = preload("res://src/data/player_config.tres")
+const ENEMY_CONFIG = preload("res://src/data/enemy_config.tres")
+const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 
 # --- Service References ---
 @onready var fx_manager: IFXManager = get_node("/root/FXManagerAdapter")
@@ -16,4 +17,6 @@ const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
 @onready var grid_utils = get_node("/root/GridUtils")
 
 # --- Public Properties ---
-var combat_config: CombatConfig = COMBAT_CONFIG
+var player_config: PlayerConfig = PLAYER_CONFIG
+var enemy_config: EnemyConfig = ENEMY_CONFIG
+var world_config: WorldConfig = WORLD_CONFIG

@@ -42,7 +42,7 @@ func test_health_component_fulfills_contract():
 	data.max_health = 10
 	var deps = {
 		"data_resource": data,
-		"config": preload("res://src/data/combat_config.tres"),
+		"config": preload("res://src/data/player_config.tres"), # UPDATE
 		"services": _fake_services,
 		"hit_spark_effect": preload("res://src/core/data/effects/player_hit_spark_effect.tres")
 	}

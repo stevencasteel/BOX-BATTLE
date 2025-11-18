@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+boss_health = 30
+boss_patrol_speed = 100.0
+boss_invincibility_duration = 0.1
+boss_lunge_speed = 1200.0
+homing_shot_damage = 1
+homing_shot_speed = 250.0
+homing_shot_lifespan = 10.0

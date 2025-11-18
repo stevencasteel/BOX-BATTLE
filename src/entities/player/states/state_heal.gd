@@ -5,7 +5,8 @@ extends BaseState
 
 func enter(_msg := {}):
 	owner.velocity = Vector2.ZERO
-	owner.healing_timer.start(state_data.config.player_heal_duration)
+	# UPDATE: config.heal_duration
+	owner.healing_timer.start(state_data.config.heal_duration)
 
 
 func exit():

@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/player_config.gd" id="1_script"]
+[ext_resource type="Shape2D" path="res://src/entities/player/data/forward_attack_shape.tres" id="2_shape"]
+[ext_resource type="Shape2D" path="res://src/entities/player/data/upward_attack_shape.tres" id="3_shape"]
+
+[resource]
+script = ExtResource("1_script")
+max_health = 5
+max_healing_charges = 1
+heal_duration = 2.0
+determination_per_charge = 10
+invincibility_duration = 1.5
+knockback_speed = 400.0
+knockback_duration = 0.1
+hazard_knockback_speed = 400.0
+move_speed = 450.0
+jump_force = 680.0
+jump_release_dampener = 0.4
+coyote_time = 0.1
+jump_buffer = 0.1
+fast_fall_gravity_multiplier = 1.4
+max_air_jumps = 1
+wall_slide_speed = 120.0
+wall_coyote_time = 0.05
+wall_jump_force_x = 1650.0
+wall_jump_force_y = 680.0
+dash_speed = 1400.0
+dash_duration = 0.15
+dash_cooldown = 0.5
+forward_attack_shape = ExtResource("2_shape")
+upward_attack_shape = ExtResource("3_shape")
+attack_cooldown = 0.12
+attack_duration = 0.1
+attack_friction = 2000.0
+charge_time = 0.35
+pogo_force = 450.0
+close_range_threshold = 75.0

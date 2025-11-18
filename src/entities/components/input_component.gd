@@ -1,17 +1,13 @@
 # src/entities/components/input_component.gd
 @tool
 ## A component that centralizes all raw input polling.
-##
-## It reads from Godot's Input singleton each frame and populates a buffer
-## dictionary. Other components and states read from this buffer, decoupling
-## them from the global Input singleton.
 class_name InputComponent
 extends IComponent
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
 var p_data: PlayerStateData
-var _config: CombatConfig  # Internal reference to the injected config
+var _config # Type removed for refactor compatibility
 
 ## A buffer dictionary populated each frame with the current input state.
 var buffer: Dictionary = {}
@@ -20,32 +16,23 @@ var buffer: Dictionary = {}
 
 
 func _ready() -> void:
-	# A lower number runs earlier in the physics step.
-	# This ensures the buffer is populated before other components try to read it.
 	process_priority = -100
 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(owner_node):
-		return  # Guard against post-teardown calls
+		return
 
-	# 1. Clear the buffer at the start of the frame.
 	buffer.clear()
-
-	# 2. Populate the buffer with the current input state.
 	buffer["move_axis"] = Input.get_axis("ui_left", "ui_right")
-
 	buffer["up"] = Input.is_action_pressed("ui_up")
 	buffer["down"] = Input.is_action_pressed("ui_down")
-
 	buffer["jump_just_pressed"] = Input.is_action_just_pressed("ui_jump")
 	buffer["jump_held"] = Input.is_action_pressed("ui_jump")
 	buffer["jump_released"] = Input.is_action_just_released("ui_jump")
-
 	buffer["attack_pressed"] = Input.is_action_pressed("ui_attack")
 	buffer["attack_just_pressed"] = Input.is_action_just_pressed("ui_attack")
 	buffer["attack_released"] = Input.is_action_just_released("ui_attack")
-
 	buffer["dash_pressed"] = Input.is_action_just_pressed("ui_dash")
 
 
@@ -63,7 +50,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 
 func teardown() -> void:
-	set_physics_process(false)  # Immediately stop processing
+	set_physics_process(false)
 	owner_node = null
 	p_data = null
 	_config = null
