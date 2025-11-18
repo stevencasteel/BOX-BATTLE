@@ -171,9 +171,6 @@ func _die() -> void:
 	collision_mask = 0
 	set_physics_process(false)
 
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
-
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
 	

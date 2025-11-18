@@ -1,6 +1,6 @@
 # src/combat/attack_logic/projectile_logic.gd
 @tool
-## Concrete AttackLogic for firing one or more projectiles.
+## Concrete AttackLogic for firing one or more projectiles via the ProjectileShooterComponent.
 class_name ProjectileLogic
 extends AttackLogic
 
@@ -11,7 +11,14 @@ func get_telegraph_info(owner: BaseEntity, _pattern: AttackPattern) -> Dictionar
 
 
 func execute(owner: BaseEntity, pattern: AttackPattern) -> Callable:
+	# Fetch the new component
+	var shooter: ProjectileShooterComponent = owner.get_component(ProjectileShooterComponent)
+	
+	if not is_instance_valid(shooter):
+		push_warning("ProjectileLogic: Entity '%s' lacks a ProjectileShooterComponent." % owner.name)
+		return Callable()
+
 	if pattern.projectile_count <= 1:
-		return owner.fire_shot_at_player.bind()
+		return shooter.fire_shot_at_player.bind()
 	else:
-		return owner.fire_volley.bind(pattern.projectile_count, pattern.volley_delay)
+		return shooter.fire_volley.bind(pattern.projectile_count, pattern.volley_delay)

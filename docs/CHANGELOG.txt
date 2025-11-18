@@ -23,7 +23,12 @@
 ║      ░ ■ `CombatComponent`: Manages attack duration, cooldown, and pogo timers.║
 ║      ░ ■ `ChargeAttackComponent`: Manages charge duration timer.               ║
 ║      ░ ■ Reduced `Player.gd` responsibility significantly (SRP).               ║
-
+║   █  Architecture & Code Quality                                               ║
+║      ░ ■ Created `ProjectileShooterComponent` to handle all projectile firing. ║
+║      ░ ■ Refactored `BaseEntity` to remove legacy shooting methods (LSP Fix).  ║
+║      ░ ■ Updated `Boss` and `Minion` archetypes to use the new component.      ║
+║      ░ ■ Updated `ProjectileLogic` (Attack Strategy) to use the new component. ║
+║      ░ ■ Cleaned up unused tween references in entity classes.                 ║
 
 
 

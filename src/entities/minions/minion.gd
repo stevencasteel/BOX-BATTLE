@@ -170,9 +170,6 @@ func _die() -> void:
 	collision_mask = 0
 	deactivate()
 
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
-
 	var fc: FXComponent = get_component(FXComponent)
 	var death_tween: Tween = fc.play_effect(dissolve_effect)
 	if is_instance_valid(death_tween):

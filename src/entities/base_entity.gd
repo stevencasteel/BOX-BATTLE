@@ -8,6 +8,7 @@ extends CharacterBody2D
 @export var archetype: EntityArchetype
 
 # --- Public Member Variables ---
+@warning_ignore("unused_private_class_variable")
 var _is_dead: bool = false
 
 # --- Private Member Variables ---
@@ -16,7 +17,6 @@ var _services
 var _components: Dictionary = {}
 var _components_by_interface: Dictionary = {}
 var _player: CharacterBody2D
-var _active_attack_tween: Tween
 
 
 # --- Godot Lifecycle Methods ---
@@ -126,50 +126,12 @@ func setup_components(
 	_components_initialized = true
 
 
-# --- Generic Attack Implementations ---
-func fire_volley(shot_count: int, delay: float) -> void:
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
-	_active_attack_tween = get_tree().create_tween()
-	for i in range(shot_count):
-		_active_attack_tween.tween_callback(fire_shot_at_player)
-		if i < shot_count - 1:
-			_active_attack_tween.tween_interval(delay)
-
-
-func fire_shot_at_player() -> void:
-	if _is_dead or not is_instance_valid(_player):
-		return
-
-	var pool_key: StringName = self.entity_data.projectile_pool_key
-	if pool_key == &"":
-		push_warning("Entity '%s' tried to fire a shot but has no 'projectile_pool_key' in its data." % name)
-		return
-
-	var shot: Node = _services.object_pool.get_instance(pool_key)
-	if not shot:
-		return
-
-	_update_player_tracking()
-
-	shot.direction = (_player.global_position - global_position).normalized()
-	shot.global_position = global_position
-	var dependencies = {
-		"object_pool": _services.object_pool,
-		"combat_utils": _services.combat_utils
-	}
-	shot.activate(dependencies)
-
-
 # --- Protected Virtual Methods (for children to override) ---
 
 func _on_build() -> void:
 	pass
 
-func _update_player_tracking() -> void:
-	pass 
-
-# NEW: Virtual signal handlers
+# Virtual signal handlers
 func _on_entity_died() -> void:
 	pass
 
