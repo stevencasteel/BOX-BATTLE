@@ -9,7 +9,7 @@ var states: Dictionary = {}
 var current_state: BaseState
 var owner_node: Node
 var state_history: Array[String] = []
-var _current_state_key
+var _current_state_key: StringName = &""
 
 
 func _ready() -> void:
@@ -60,6 +60,8 @@ func teardown() -> void:
 	states.clear()
 	state_history.clear()
 	current_state = null
+	# FIX: Reset the key so components know the FSM is inactive
+	_current_state_key = &""
 
 
 func change_state(new_state_key, msg := {}) -> void:

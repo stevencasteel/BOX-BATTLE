@@ -69,6 +69,15 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 		_health_component = p_owner.get_component(HealthComponent)
 
 
+func teardown() -> void:
+	set_physics_process(false)
+	set_deferred("monitoring", false)
+	_owner_entity = null
+	_health_component = null
+	_combat_utils = null
+	_object_pool = null
+
+
 # --- Private Logic ---
 
 func _process_contact(target: Node) -> void:
@@ -92,13 +101,19 @@ func _process_contact(target: Node) -> void:
 	# Apply Damage
 	var result = _health_component.apply_damage(damage_info)
 
+	# CRASH FIX: Check validity again. The entity might have died and torn down 
+	# the components during the apply_damage call stack.
+	if not is_instance_valid(_health_component) or not _health_component.entity_data:
+		return
+
 	# Handle Post-Hit Logic
 	if result.was_damaged:
 		if _owner_entity is CharacterBody2D:
 			_owner_entity.velocity = result.knockback_velocity
 		
-		# Configurable State Change
-		if hurt_response_state != &"" and _owner_entity.has_method("get_component"):
+		var is_alive = _health_component.entity_data.health > 0
+
+		if is_alive and hurt_response_state != &"" and _owner_entity.has_method("get_component"):
 			var sm = _owner_entity.get_component(BaseStateMachine)
 			if is_instance_valid(sm):
 				sm.change_state(hurt_response_state)

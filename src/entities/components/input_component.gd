@@ -7,7 +7,6 @@ extends IComponent
 # --- Member Variables ---
 var owner_node: CharacterBody2D
 var p_data: PlayerStateData
-var _config # Type removed for refactor compatibility
 
 ## A buffer dictionary populated each frame with the current input state.
 var buffer: Dictionary = {}
@@ -42,10 +41,9 @@ func _physics_process(_delta: float) -> void:
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
 	self.p_data = p_dependencies.get("data_resource")
-	self._config = p_dependencies.get("config")
 
-	if not p_data or not _config:
-		push_error("InputComponent.setup: Missing one or more required dependencies.")
+	if not p_data:
+		push_error("InputComponent.setup: Missing 'data_resource' dependency.")
 		return
 
 
@@ -53,5 +51,4 @@ func teardown() -> void:
 	set_physics_process(false)
 	owner_node = null
 	p_data = null
-	_config = null
 	buffer.clear()

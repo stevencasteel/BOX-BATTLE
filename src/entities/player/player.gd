@@ -155,6 +155,9 @@ func teardown() -> void:
 	if is_instance_valid(healing_timer):
 		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
 			healing_timer.timeout.disconnect(_on_healing_timer_timeout)
+	
+	if is_instance_valid(hurtbox):
+		hurtbox.teardown()
 
 	super.teardown()
 	entity_data = null
@@ -181,6 +184,10 @@ func _die() -> void:
 	collision_layer = 0
 	collision_mask = 0
 	set_physics_process(false)
+	
+	# Stop hurtbox processing immediately
+	if is_instance_valid(hurtbox):
+		hurtbox.teardown()
 
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	if is_instance_valid(sm):

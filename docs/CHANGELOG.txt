@@ -55,7 +55,7 @@
 ║      ░ ■ Physics Overhaul: Disabled physical collision between Player and Enemies.   ║
 ║      ░ ■ Refactored Player contact damage to use Hurtbox signals + continuous polling.║
 ║      ░ ■ Fixed bug where Player could get stuck inside or push heavy enemies.        ║
-
+       ░ ■ clean up InputComponent.gd to remove the unused configuration dependency.
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.19.0] - CONTEXT HYGIENE - 11/18/2025             ██   ║
