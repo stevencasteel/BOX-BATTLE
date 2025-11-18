@@ -49,12 +49,12 @@ func activate(shape: Shape2D, position_offset: Vector2) -> void:
 		_shape_node.position = position_offset
 		_shape_node.set_deferred("disabled", false)
 	
-	monitoring = true
+	set_deferred("monitoring", true)
 
 
 ## Disables the hitbox.
 func deactivate() -> void:
-	monitoring = false
+	set_deferred("monitoring", false)
 	if is_instance_valid(_shape_node):
 		_shape_node.set_deferred("disabled", true)
 

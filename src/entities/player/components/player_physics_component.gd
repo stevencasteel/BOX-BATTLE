@@ -1,6 +1,7 @@
 # src/entities/player/components/player_physics_component.gd
 @tool
 ## Manages all direct physics interactions for the player character.
+## Acts as the gatekeeper for the 'velocity' property.
 class_name PlayerPhysicsComponent
 extends IComponent
 
@@ -20,8 +21,7 @@ func _physics_process(_delta: float) -> void:
 		return
 
 	owner_node.move_and_slide()
-	# UPDATE: Removed manual _check_for_contact_damage() loop
-
+	
 	if not is_instance_valid(owner_node):
 		return
 
@@ -44,6 +44,9 @@ func teardown() -> void:
 	p_data = null
 
 
+# --- Movement API ---
+
+## Standard horizontal movement based on Input.
 func apply_horizontal_movement() -> void:
 	var input_component: InputComponent = owner_node.get_component(InputComponent)
 	if not is_instance_valid(input_component):
@@ -54,8 +57,37 @@ func apply_horizontal_movement() -> void:
 		p_data.facing_direction = sign(move_axis)
 
 
+## Applies gravity to the vertical velocity.
 func apply_gravity(delta: float, multiplier: float = 1.0) -> void:
 	owner_node.velocity.y += p_data.world_config.gravity * multiplier * delta
+
+
+## Applies an instant vertical force.
+func jump(force: float) -> void:
+	owner_node.velocity.y = -force
+
+
+## Sets the full velocity vector immediately (used for Dashing/Recoil).
+func set_velocity(new_velocity: Vector2) -> void:
+	owner_node.velocity = new_velocity
+
+
+## Reduces the vertical velocity (used for variable jump height).
+func damp_jump() -> void:
+	if owner_node.velocity.y < 0:
+		owner_node.velocity.y *= p_data.config.jump_release_dampener
+
+
+## Applies friction/drag to bring velocity to zero.
+func apply_friction(amount: float, delta: float) -> void:
+	owner_node.velocity = owner_node.velocity.move_toward(Vector2.ZERO, amount * delta)
+
+
+## Executes the physical reaction to a pogo hit.
+func perform_pogo_bounce() -> void:
+	owner_node.velocity.y = -p_data.config.pogo_force
+	# Nudge up slightly to prevent immediate re-collision issues
+	owner_node.position.y -= 1
 
 
 ## Checks if the conditions for performing a wall slide are met.

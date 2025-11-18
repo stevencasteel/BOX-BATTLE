@@ -4,21 +4,28 @@ class_name PlayerStatePogo
 extends BaseState
 
 var _physics: PlayerPhysicsComponent
+var _player: Player
 
 # --- State Lifecycle ---
 
-
 func enter(_msg := {}) -> void:
+	_player = owner as Player
 	_physics = owner.get_component(PlayerPhysicsComponent)
+	
 	state_data.is_pogo_attack = true
-	# UPDATE: config.attack_duration
 	state_data.attack_duration_timer = state_data.config.attack_duration
-	state_machine.pogo_hitbox_toggled.emit(true)
+	
+	# Direct Actuation
+	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
+		# Passing null shape reuses the one defined in the scene (if specific logic isn't needed)
+		# or we could define a pogo_shape in PlayerConfig.
+		_player.pogo_hitbox.activate(null, Vector2(0, 40))
 
 
 func exit() -> void:
-	state_machine.pogo_hitbox_toggled.emit(false)
 	state_data.is_pogo_attack = false
+	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
+		_player.pogo_hitbox.deactivate()
 
 
 func process_physics(delta: float) -> void:

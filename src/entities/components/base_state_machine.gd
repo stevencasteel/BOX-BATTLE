@@ -4,11 +4,6 @@
 class_name BaseStateMachine
 extends IComponent
 
-@warning_ignore("unused_signal")
-signal melee_hitbox_toggled(is_enabled: bool, is_up_attack: bool)
-@warning_ignore("unused_signal")
-signal pogo_hitbox_toggled(is_enabled: bool)
-
 const MAX_HISTORY_SIZE = 5
 var states: Dictionary = {}
 var current_state: BaseState

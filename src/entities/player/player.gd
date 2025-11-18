@@ -138,12 +138,6 @@ func _on_build() -> void:
 		if not cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 			cc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
 
-	if sm:
-		if not sm.melee_hitbox_toggled.is_connected(_enable_melee_hitbox):
-			sm.melee_hitbox_toggled.connect(_enable_melee_hitbox)
-		if not sm.pogo_hitbox_toggled.is_connected(_enable_pogo_hitbox):
-			sm.pogo_hitbox_toggled.connect(_enable_pogo_hitbox)
-
 	if healing_timer and not healing_timer.timeout.is_connected(_on_healing_timer_timeout):
 		healing_timer.timeout.connect(_on_healing_timer_timeout)
 
@@ -157,13 +151,6 @@ func teardown() -> void:
 			cc.damage_dealt.disconnect(rc.on_damage_dealt)
 		if cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 			cc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
-
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if is_instance_valid(sm):
-		if sm.melee_hitbox_toggled.is_connected(_enable_melee_hitbox):
-			sm.melee_hitbox_toggled.disconnect(_enable_melee_hitbox)
-		if sm.pogo_hitbox_toggled.is_connected(_enable_pogo_hitbox):
-			sm.pogo_hitbox_toggled.disconnect(_enable_pogo_hitbox)
 
 	if is_instance_valid(healing_timer):
 		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
@@ -208,36 +195,6 @@ func _die() -> void:
 	died.emit()
 
 
-func _enable_melee_hitbox(is_enabled: bool, is_up_attack: bool = false) -> void:
-	if not is_instance_valid(melee_hitbox):
-		return
-		
-	if is_enabled:
-		var shape = entity_data.config.forward_attack_shape
-		var offset = Vector2(entity_data.facing_direction * 60, 0)
-		if is_up_attack:
-			shape = entity_data.config.upward_attack_shape
-			offset = Vector2(0, -40)
-		melee_hitbox.activate(shape, offset)
-	else:
-		melee_hitbox.deactivate()
-
-
-func _enable_pogo_hitbox(is_enabled: bool) -> void:
-	if not is_instance_valid(pogo_hitbox):
-		return
-		
-	if is_enabled:
-		# No special shape defined for pogo yet, could just use default shape if not passed
-		# But Component requires explicit activation args or default usage.
-		# Pogo hitbox has a Shape already in the scene, let's reuse it if we pass null?
-		# Our API says activate(shape, offset).
-		# We can pass null as shape to keep existing.
-		pogo_hitbox.activate(null, Vector2(0, 40))
-	else:
-		pogo_hitbox.deactivate()
-
-
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(entity_data):
 		return
@@ -269,8 +226,10 @@ func _on_healing_timer_timeout() -> void:
 
 
 func _on_pogo_bounce_requested() -> void:
-	velocity.y = -entity_data.config.pogo_force
-	position.y -= 1
+	var physics = get_component(PlayerPhysicsComponent)
+	if physics:
+		physics.perform_pogo_bounce()
+	
 	entity_data.can_dash = true
 	entity_data.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)

@@ -7,7 +7,6 @@ var _physics: PlayerPhysicsComponent
 
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
-	# UPDATE: config.knockback_duration
 	state_data.knockback_timer = state_data.config.knockback_duration
 	state_data.is_charging = false
 	owner._cancel_heal()
@@ -15,6 +14,7 @@ func enter(_msg := {}) -> void:
 
 func process_physics(delta: float) -> void:
 	_physics.apply_gravity(delta)
+	# Apply high drag/friction during knockback
 	owner.velocity.x = move_toward(owner.velocity.x, 0, 800 * delta)
 
 	if state_data.knockback_timer <= 0:

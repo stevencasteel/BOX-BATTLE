@@ -4,29 +4,41 @@ class_name PlayerStateAttack
 extends BaseState
 
 var _input: InputComponent
+var _physics: PlayerPhysicsComponent
+var _player: Player
 
 # --- State Lifecycle ---
 
-
 func enter(_msg := {}) -> void:
+	_player = owner as Player
 	_input = owner.get_component(InputComponent)
+	_physics = owner.get_component(PlayerPhysicsComponent)
+	
 	state_data.hit_targets_this_swing.clear()
-	# UPDATE: config.attack_duration, config.attack_cooldown
+	
 	state_data.attack_duration_timer = state_data.config.attack_duration
 	state_data.attack_cooldown_timer = state_data.config.attack_cooldown
+	
 	var is_up_attack = _input.buffer.get("up", false)
-	state_machine.melee_hitbox_toggled.emit(true, is_up_attack)
+	
+	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
+		var shape = state_data.config.forward_attack_shape
+		var offset = Vector2(state_data.facing_direction * 60, 0)
+		if is_up_attack:
+			shape = state_data.config.upward_attack_shape
+			offset = Vector2(0, -40)
+		_player.melee_hitbox.activate(shape, offset)
 
 
 func exit() -> void:
-	state_machine.melee_hitbox_toggled.emit(false, false)
 	state_data.hit_targets_this_swing.clear()
+	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
+		_player.melee_hitbox.deactivate()
 
 
 func process_physics(delta: float) -> void:
-	# UPDATE: config.attack_friction
-	var friction = state_data.config.attack_friction
-	owner.velocity = owner.velocity.move_toward(Vector2.ZERO, friction * delta)
+	if is_instance_valid(_physics):
+		_physics.apply_friction(state_data.config.attack_friction, delta)
 
 	if state_data.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
