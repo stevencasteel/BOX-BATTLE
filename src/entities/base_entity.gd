@@ -29,6 +29,16 @@ func _ready() -> void:
 
 
 # --- Public Methods ---
+
+## The main entry point for self-construction.
+## Replaces the external EntityBuilder.
+func build_entity() -> void:
+	_services = ServiceLocator # Get singleton reference directly here if not injected
+	
+	# Child classes override this to configure data and components
+	_on_build() 
+
+
 ## Retrieves a component from this entity by its script type or an interface it implements.
 func get_component(type: Script) -> IComponent:
 	if _components.has(type):
@@ -50,6 +60,8 @@ func require_component(type: Script) -> IComponent:
 
 func inject_dependencies(p_services) -> void:
 	_services = p_services
+	# If we are built via spawner/builder, we might get services here.
+	# If not built yet, we hold them.
 
 
 func teardown() -> void:
@@ -65,7 +77,10 @@ func setup_components(
 		return
 
 	var base_shared_deps = shared_dependencies.duplicate()
-	base_shared_deps["services"] = _services
+	if _services:
+		base_shared_deps["services"] = _services
+	else:
+		base_shared_deps["services"] = ServiceLocator
 
 	for child in get_children():
 		if not (child is IComponent):
@@ -136,9 +151,13 @@ func fire_shot_at_player() -> void:
 
 
 # --- Protected Virtual Methods (for children to override) ---
-## A virtual method for child classes to implement their own tracking logic.
+
+## Override this to define entity-specific build logic (states, data, etc)
+func _on_build() -> void:
+	pass
+
 func _update_player_tracking() -> void:
-	pass # Default implementation does nothing.
+	pass 
 
 
 # --- Private Methods ---

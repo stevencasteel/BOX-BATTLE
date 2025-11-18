@@ -48,7 +48,9 @@ func _ready() -> void:
 		return
 
 	_initialize_data()
-	EntityBuilder.build(self)
+	
+	# Trigger internal build
+	build_entity()
 
 
 func _physics_process(delta: float) -> void:
@@ -66,6 +68,52 @@ func _physics_process(delta: float) -> void:
 		and is_on_wall()
 	):
 		entity_data.facing_direction *= -1.0
+
+
+# --- Internal Build Logic (Moved from EntityBuilder) ---
+func _on_build() -> void:
+	var hc: HealthComponent = get_component(HealthComponent)
+	var sm: BaseStateMachine = get_component(BaseStateMachine)
+	var fc: FXComponent = get_component(FXComponent)
+
+	var shared_deps := {
+		"data_resource": entity_data, 
+		"config": entity_data.config,
+		"services": _services
+		}
+
+	var states: Dictionary = {
+		Identifiers.BossStates.IDLE: state_idle_script.new(self, sm, entity_data),
+		Identifiers.BossStates.ATTACK: state_attack_script.new(self, sm, entity_data),
+		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
+		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
+		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
+		"melee": state_melee_script.new(self, sm, entity_data),
+	}
+
+	var per_component_deps := {
+		sm: {"states": states, "initial_state_key": Identifiers.BossStates.COOLDOWN},
+		fc: {
+			"visual_node": visual_sprite, 
+			"hit_effect": hit_flash_effect,
+			"fx_manager": _services.fx_manager
+			},
+		hc: {
+			"hit_spark_effect": hit_spark_effect,
+			"fx_manager": _services.fx_manager,
+			"event_bus": _services.event_bus
+			}
+	}
+
+	setup_components(shared_deps, per_component_deps)
+
+	if hc:
+		if not hc.health_changed.is_connected(_on_health_component_health_changed):
+			hc.health_changed.connect(_on_health_component_health_changed)
+		if not hc.died.is_connected(_on_health_component_died):
+			hc.died.connect(_on_health_component_died)
+		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
+			hc.health_threshold_reached.connect(_on_health_threshold_reached)
 
 
 # --- Public Methods ---
@@ -128,8 +176,10 @@ func _initialize_data() -> void:
 	if is_instance_valid(behavior):
 		current_attack_patterns = behavior.phase_1_patterns
 	entity_data = BossStateData.new()
-	assert(is_instance_valid(_services), "BaseBoss requires a ServiceLocator.")
 	
+	if not _services:
+		_services = ServiceLocator
+
 	# UPDATE: Inject new configs
 	entity_data.config = _services.enemy_config
 	entity_data.world_config = _services.world_config

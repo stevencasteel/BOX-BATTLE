@@ -22,6 +22,11 @@ behavior = ExtResource("7_lancer_behavior")
 hit_flash_effect = ExtResource("2_hit_flash")
 hit_spark_effect = ExtResource("4_hit_spark_effect")
 dissolve_effect = ExtResource("6_dissolve_effect")
+state_idle_script = null
+state_attack_script = null
+state_melee_script = null
+state_patrol_script = null
+state_fall_script = null
 archetype = ExtResource("5_archetype")
 
 [node name="Visual" type="Polygon2D" parent="."]

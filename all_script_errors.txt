@@ -112,6 +112,9 @@ Loading resource: res://assets/audio/sfx/sfx_ui_select.mp3
 Loading resource: res://.godot/imported/sfx_ui_select.mp3-3073366784d3e7caa5d5c9691f71648c.mp3str
 Loading resource: res://src/scenes/loading/loading_screen.tscn
 Loading resource: res://src/scenes/loading/loading_screen.gd
+Loading resource: res://src/entities/components/telegraph_component.tscn
+Loading resource: res://src/entities/components/telegraph_component.gd
+Loading resource: res://src/data/combat/attacks/lancer_poke.tres
 Starting shader pre-warming...
 Loading resource: res://src/entities/player/player.tscn
 Loading resource: res://src/entities/archetypes/player_archetype.tres
@@ -145,9 +148,6 @@ Loading resource: res://shaders/entity/dissolve.gdshader
 Loading resource: res://assets/textures/noise_texture.tres
 Loading resource: res://src/entities/boss/base_boss.tscn
 Loading resource: res://src/entities/components/melee_component.tscn
-Loading resource: res://src/entities/components/melee_component.gd
-Loading resource: res://src/entities/components/telegraph_component.tscn
-Loading resource: res://src/entities/components/telegraph_component.gd
 Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
 Loading resource: res://src/core/data/effects/boss_death_shake.tres
 Loading resource: res://src/entities/archetypes/boss_archetype.tres
@@ -235,46 +235,19 @@ Loading resource: res://src/ui/themes/main_theme.tres
 Loading resource: res://src/scenes/game/encounter_scene.tscn
 Loading resource: res://src/scenes/game/encounter_scene.gd
 Loading resource: res://src/data/dialogue/test_conversation.tres
-Loading resource: res://src/entities/minions/states/state_minion_idle.gd
-Loading resource: res://src/entities/minions/states/state_minion_attack.gd
-Loading resource: res://src/entities/states/state_entity_fall.gd
-Loading resource: res://src/entities/minions/states/state_minion_melee.gd
-Loading resource: res://src/data/combat/attacks/lancer_poke.tres
-Loading resource: res://src/entities/minions/states/state_minion_patrol.gd
 Loading resource: res://src/core/systems/camera_shaker.tscn
 Loading resource: res://src/ui/dev/debug_overlay.tscn
 Loading resource: res://src/ui/dev/debug_overlay.gd
 Loading resource: res://addons/gut/fonts/AnonymousPro-Regular.ttf
 Loading resource: res://.godot/imported/AnonymousPro-Regular.ttf-856c843fd6f89964d2ca8d8ff1724f13.fontdata
-Loading resource: res://src/scenes/game_over/game_over_screen.tscn
-Loading resource: res://src/scenes/game_over/game_over_screen.gd
-Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
-Loading resource: res://assets/fonts/font_main_black.ttf
-Loading resource: res://.godot/imported/font_main_black.ttf-766d9cc0a208469438ff831535d8483c.fontdata
-Loading resource: res://assets/fonts/font_main_bold.ttf
-Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
-Loading resource: res://src/scenes/menus/title_screen.tscn
-Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
-Loading resource: res://src/ui/components/logo_display/logo_display.tscn
-Loading resource: res://assets/sprites/ui/logos/newgrounds_logo.png
-Loading resource: res://.godot/imported/newgrounds_logo.png-2977cde893870d21b7f84cd17b13c225.ctex
-Loading resource: res://assets/sprites/ui/logos/godot_logo.png
-Loading resource: res://.godot/imported/godot_logo.png-2c4abc4be94a9a8ee3cb014f11b6a489.ctex
-Loading resource: res://assets/sprites/ui/logos/itch_logo.png
-Loading resource: res://.godot/imported/itch_logo.png-55a8cdb2f6f34f33f1968a45adf238ea.ctex
-Loading resource: res://src/ui/components/mute_button/mute_button.tscn
-Loading resource: res://assets/fonts/font_main_bold.ttf
-Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
-Loading resource: res://assets/audio/sfx/sfx_ui_back.mp3
-Loading resource: res://.godot/imported/sfx_ui_back.mp3-358be61abf136e7b6152e5b6ad330de8.mp3str
 XR: Clearing primary interface
 XR: Removed interface "Native mobile"
 XR: Removed interface "OpenXR"
 Leaked instance: GDScriptNativeClass:9223372049974559412
 Leaked instance: GDScript:9223372081129850270 - Resource path: res://src/core/building/terrain_builder.gd
-Leaked instance: Node:140341414101 - Node path: 
-Leaked instance: SceneTreeTimer:9223372229843093758
-Leaked instance: Node:164802595758 - Node path: 
+Leaked instance: Node:140072978658 - Node path: 
+Leaked instance: SceneTreeTimer:9223372215397911394
+Leaked instance: Node:159165451167 - Node path: 
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
 Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
 Orphan StringName: _enter_tree (static: 0, total: 2)

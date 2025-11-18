@@ -12,6 +12,13 @@ extends BaseEntity
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
 
+@export_group("State Scripts")
+@export var state_idle_script: Script = preload("res://src/entities/minions/states/state_minion_idle.gd")
+@export var state_attack_script: Script = preload("res://src/entities/minions/states/state_minion_attack.gd")
+@export var state_melee_script: Script = preload("res://src/entities/minions/states/state_minion_melee.gd")
+@export var state_patrol_script: Script = preload("res://src/entities/minions/states/state_minion_patrol.gd")
+@export var state_fall_script: Script = preload("res://src/entities/states/state_entity_fall.gd")
+
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
 @onready var attack_timer: Timer = $AttackTimer
@@ -36,15 +43,14 @@ func _ready() -> void:
 		return
 
 	_initialize_data()
-	EntityBuilder.build(self)
+	# FIX: Call internal build instead of EntityBuilder
+	build_entity()
 
 
 func _physics_process(delta: float) -> void:
 	if _is_dead or not is_instance_valid(entity_data):
 		return
 	
-	# Only apply gravity if the entity is not anchored (i.e., it's a ground unit).
-	# UPDATE: world_config.gravity
 	if not entity_data.behavior.is_anchored and not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 		
@@ -67,7 +73,6 @@ func teardown() -> void:
 	entity_data = null
 
 
-## A public method for states to request the minion updates its facing direction.
 func update_player_tracking() -> void:
 	_update_player_tracking()
 
@@ -81,6 +86,62 @@ func deactivate() -> void:
 
 	set_physics_process(false)
 	$RangeDetector.monitoring = false
+
+
+# --- Internal Build Logic (Moved from EntityBuilder) ---
+func _on_build() -> void:
+	var circle_shape := CircleShape2D.new()
+	circle_shape.radius = entity_data.behavior.detection_radius
+	range_detector_shape.shape = circle_shape
+
+	var hc: HealthComponent = get_component(HealthComponent)
+	var sm: BaseStateMachine = get_component(BaseStateMachine)
+	var fc: FXComponent = get_component(FXComponent)
+
+	var shared_deps := {
+		"data_resource": entity_data,
+		"config": entity_data.config,
+		"services": _services
+	}
+
+	# Safe access to scripts to prevent crashes
+	var states: Dictionary = {
+		Identifiers.MinionStates.IDLE:
+		_safe_script(state_idle_script, "res://src/entities/minions/states/state_minion_idle.gd").new(self, sm, entity_data),
+		Identifiers.MinionStates.ATTACK:
+		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
+		Identifiers.MinionStates.FALL:
+		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
+		"melee":
+		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
+		"patrol":
+		_safe_script(state_patrol_script, "res://src/entities/minions/states/state_minion_patrol.gd").new(self, sm, entity_data),
+	}
+
+	var per_component_deps := {
+		sm: {"states": states, "initial_state_key": entity_data.behavior.initial_state_key},
+		fc: {
+			"visual_node": visual, 
+			"hit_effect": hit_flash_effect,
+			"fx_manager": _services.fx_manager
+			},
+		hc: {
+			"hit_spark_effect": hit_spark_effect,
+			"fx_manager": _services.fx_manager,
+			"event_bus": _services.event_bus
+			}
+	}
+
+	setup_components(shared_deps, per_component_deps)
+	
+	if is_instance_valid(hc):
+		hc.died.connect(_on_health_component_died)
+
+# Helper to handle null exports on existing instances
+func _safe_script(script_ref: Script, fallback_path: String) -> Script:
+	if script_ref:
+		return script_ref
+	return load(fallback_path)
 
 
 # --- Private Methods ---
@@ -109,14 +170,16 @@ func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
 	visual.color = Palette.COLOR_TERRAIN_SECONDARY
 	entity_data = MinionStateData.new()
-	assert(is_instance_valid(_services), "Minion requires a ServiceLocator.")
+	
+	# Ensure we have services (from base build_entity or fallback)
+	if not _services:
+		_services = ServiceLocator
 
 	assert(is_instance_valid(behavior), "Minion requires a valid MinionBehavior resource.")
 	entity_data.behavior = behavior
 	entity_data.max_health = behavior.max_health
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 	entity_data.services = _services
-	# UPDATE: Inject new configs
 	entity_data.config = _services.enemy_config
 	entity_data.world_config = _services.world_config
 

@@ -20,8 +20,7 @@
 ║      ░ ■ Dismantled the monolithic `CombatConfig`.                             ║
 ║      ░ ■ Implemented granular `PlayerConfig`, `EnemyConfig`, and `WorldConfig`.║
 ║      ░ ■ Refactored all Entities and Systems to use specific config injection. ║
-║                                                                                ║
-
+║      ░ ■ Removed `EntityBuilder`. Entities now self-assemble via `build_entity()`.║
 
 
 
