@@ -12,6 +12,20 @@
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.21.0] - PLAYER REFACTOR - 11/18/2025             ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture                                                              ║
+║      ░ ■ Extracted `HurtboxComponent` to handle contact damage detection.      ║
+║      ░ ■ Extracted `HitboxComponent` to handle attack collision detection.     ║
+║      ░ ■ Refactored `Player.gd` to delegate physics polling to these components.║
+║      ░ ■ Updated `CombatComponent` to subscribe directly to hitbox signals.    ║
+║      ░ ■ Removed manual collision wiring from `Player.gd`.                     ║
+║      ░ ■ Decoupled Hurtbox state changes via `hurt_response_state` export.     ║
+
+
+
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
 ║  ██                  [0.20.0] - CONFIG DECOUPLING - 11/XX/2025           ██    ║
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║

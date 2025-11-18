@@ -34,10 +34,10 @@ const ACTION_ALLOWED_STATES = [
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
-@onready var hurtbox: Area2D = $Hurtbox
 @onready var healing_timer: Timer = $HealingTimer
-@onready var melee_hitbox: Area2D = $MeleeHitbox
-@onready var pogo_hitbox: Area2D = $PogoHitbox
+@onready var melee_hitbox: HitboxComponent = $MeleeHitbox
+@onready var pogo_hitbox: HitboxComponent = $PogoHitbox
+@onready var hurtbox: HurtboxComponent = $Hurtbox
 
 # --- Data ---
 var entity_data: PlayerStateData
@@ -67,16 +67,6 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
-	
-	# --- CONTINUOUS CONTACT DAMAGE CHECK ---
-	if is_instance_valid(hurtbox):
-		# Check Enemies (Bodies)
-		for body in hurtbox.get_overlapping_bodies():
-			_handle_contact_damage(body)
-			
-		# Check Projectiles (Areas)
-		for area in hurtbox.get_overlapping_areas():
-			_handle_contact_damage(area)
 
 
 # --- Internal Build Logic ---
@@ -127,7 +117,9 @@ func _on_build() -> void:
 			"object_pool": _services.object_pool,
 			"fx_manager": _services.fx_manager,
 			"combat_utils": _services.combat_utils,
-			"services": _services
+			"services": _services,
+			"melee_hitbox": melee_hitbox,
+			"pogo_hitbox": pogo_hitbox
 			},
 		rc: {
 			"event_bus": _services.event_bus
@@ -136,31 +128,10 @@ func _on_build() -> void:
 
 	setup_components(shared_deps, per_component_deps)
 
-	# --- HURTBOX CONFIGURATION ---
 	if is_instance_valid(hurtbox):
-		hurtbox.monitoring = true
-		hurtbox.monitorable = true
-		hurtbox.collision_layer = 64 # Player Hurtbox
-		hurtbox.collision_mask = 28  # Enemy(4) + Hazard(8) + EnemyProjectile(16)
-		
-		if hurtbox.body_entered.is_connected(_on_hurtbox_body_entered):
-			hurtbox.body_entered.disconnect(_on_hurtbox_body_entered)
-		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
-		
-		if hurtbox.area_entered.is_connected(_on_hurtbox_area_entered):
-			hurtbox.area_entered.disconnect(_on_hurtbox_area_entered)
-		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+		hurtbox.setup(self, {"services": _services})
 
-	# Wire other signals
-	if melee_hitbox.body_entered.get_connections().is_empty():
-		melee_hitbox.body_entered.connect(_on_melee_hitbox_body_entered)
-	if pogo_hitbox.body_entered.get_connections().is_empty():
-		pogo_hitbox.body_entered.connect(_on_pogo_hitbox_body_entered)
-	if melee_hitbox.area_entered.get_connections().is_empty():
-		melee_hitbox.area_entered.connect(_on_hitbox_area_entered)
-	if pogo_hitbox.area_entered.get_connections().is_empty():
-		pogo_hitbox.area_entered.connect(_on_hitbox_area_entered)
-	
+	# --- Wire signals between components ---
 	if cc and rc:
 		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.connect(rc.on_damage_dealt)
@@ -238,23 +209,33 @@ func _die() -> void:
 
 
 func _enable_melee_hitbox(is_enabled: bool, is_up_attack: bool = false) -> void:
-	var shape_node: CollisionShape2D = melee_hitbox.get_node("CollisionShape2D")
+	if not is_instance_valid(melee_hitbox):
+		return
+		
 	if is_enabled:
+		var shape = entity_data.config.forward_attack_shape
+		var offset = Vector2(entity_data.facing_direction * 60, 0)
 		if is_up_attack:
-			# UPDATE: config.upward_attack_shape
-			shape_node.shape = entity_data.config.upward_attack_shape
-			shape_node.position = Vector2(0, -40)
-		else:
-			# UPDATE: config.forward_attack_shape
-			shape_node.shape = entity_data.config.forward_attack_shape
-			shape_node.position = Vector2(entity_data.facing_direction * 60, 0)
-	shape_node.set_deferred("disabled", not is_enabled)
+			shape = entity_data.config.upward_attack_shape
+			offset = Vector2(0, -40)
+		melee_hitbox.activate(shape, offset)
+	else:
+		melee_hitbox.deactivate()
 
 
 func _enable_pogo_hitbox(is_enabled: bool) -> void:
-	var shape_node: CollisionShape2D = pogo_hitbox.get_node("CollisionShape2D")
-	shape_node.position = Vector2(0, 40)
-	shape_node.set_deferred("disabled", not is_enabled)
+	if not is_instance_valid(pogo_hitbox):
+		return
+		
+	if is_enabled:
+		# No special shape defined for pogo yet, could just use default shape if not passed
+		# But Component requires explicit activation args or default usage.
+		# Pogo hitbox has a Shape already in the scene, let's reuse it if we pass null?
+		# Our API says activate(shape, offset).
+		# We can pass null as shape to keep existing.
+		pogo_hitbox.activate(null, Vector2(0, 40))
+	else:
+		pogo_hitbox.deactivate()
 
 
 func _update_timers(delta: float) -> void:
@@ -277,58 +258,6 @@ func _update_timers(delta: float) -> void:
 
 
 # --- Signal Handlers ---
-func _on_melee_hitbox_body_entered(body: Node) -> void:
-	get_component(CombatComponent).trigger_melee_attack(body)
-
-
-func _on_pogo_hitbox_body_entered(body: Node) -> void:
-	get_component(CombatComponent).trigger_pogo(body)
-
-
-func _on_hitbox_area_entered(area: Area2D) -> void:
-	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-		if entity_data.is_pogo_attack:
-			get_component(CombatComponent).trigger_pogo(area)
-		else:
-			_services.object_pool.return_instance.call_deferred(area)
-
-
-func _handle_contact_damage(target: Node) -> void:
-	var hc: HealthComponent = get_component(HealthComponent)
-	if not is_instance_valid(hc) or hc.is_invincible():
-		return
-		
-	var is_threat = (
-		target.is_in_group(Identifiers.Groups.ENEMY) or 
-		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
-		target.is_in_group(Identifiers.Groups.HAZARD)
-	)
-	
-	if is_threat:
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1
-		damage_info.source_node = target
-		damage_info.impact_position = global_position
-		damage_info.impact_normal = (global_position - target.global_position).normalized()
-		var damage_result = hc.apply_damage(damage_info)
-
-		if not is_instance_valid(entity_data):
-			return
-
-		if damage_result.was_damaged and entity_data.health > 0:
-			self.velocity = damage_result.knockback_velocity
-			get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.HURT)
-		
-		if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-			_services.object_pool.return_instance.call_deferred(target)
-
-
-func _on_hurtbox_area_entered(area: Area2D) -> void:
-	_handle_contact_damage(area)
-
-func _on_hurtbox_body_entered(body: Node) -> void:
-	_handle_contact_damage(body)
-
 
 func _on_healing_timer_timeout() -> void:
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
@@ -340,11 +269,9 @@ func _on_healing_timer_timeout() -> void:
 
 
 func _on_pogo_bounce_requested() -> void:
-	# UPDATE: config.pogo_force
 	velocity.y = -entity_data.config.pogo_force
 	position.y -= 1
 	entity_data.can_dash = true
-	# UPDATE: config.max_air_jumps
 	entity_data.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
 

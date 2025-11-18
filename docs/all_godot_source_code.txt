@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Nov 18 11:39:52 CST 2025
+Generated on: Tue Nov 18 16:05:32 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -10,6 +10,7 @@ PROJECT DIRECTORY STRUCTURE:
 .
 ├── LICENSE
 ├── README.md
+├── all_script_errors.txt
 ├── default_bus_layout.tres
 ├── docs
 │   ├── ARCHITECTURE.txt
@@ -23,7 +24,6 @@ PROJECT DIRECTORY STRUCTURE:
 │   ├── create_all_addons_collector.sh
 │   ├── create_all_godot_source_code_txt.command
 │   ├── create_all_godot_source_code_txt.sh
-│   ├── create_all_godot_source_code_txt_no_docs.command
 │   ├── last_commit_command.txt
 │   └── standards
 │       ├── ADR-001_Service_Locator.md
@@ -88,8 +88,10 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   └── terrain_builder.gd
 │   │   ├── data
 │   │   │   ├── config
-│   │   │   │   ├── combat_config.gd
-│   │   │   │   └── settings.gd
+│   │   │   │   ├── enemy_config.gd
+│   │   │   │   ├── player_config.gd
+│   │   │   │   ├── settings.gd
+│   │   │   │   └── world_config.gd
 │   │   │   ├── effects
 │   │   │   │   ├── boss_death_shake.tres
 │   │   │   │   ├── boss_phase_change_shake.tres
@@ -105,7 +107,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── event_bus.gd
 │   │   │   ├── event_catalog.gd
 │   │   │   └── typed_events
+│   │   │       ├── boss_died_event.gd
 │   │   │       ├── boss_health_changed_event.gd
+│   │   │       ├── boss_phase_changed_event.gd
 │   │   │       ├── player_healing_charges_changed_event.gd
 │   │   │       └── player_health_changed_event.gd
 │   │   ├── sequencing
@@ -130,6 +134,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── object_pool.gd
 │   │   │   ├── pool_bindings
 │   │   │   │   └── object_pool_adapter.gd
+│   │   │   ├── pooling
+│   │   │   │   ├── pool_definition.gd
+│   │   │   │   └── pool_manifest.gd
 │   │   │   └── scene_manager.gd
 │   │   └── util
 │   │       ├── asset_paths.gd
@@ -151,7 +158,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │       ├── boss_lunge_melee.tres
 │   │   │       ├── boss_quick_swipe.tres
 │   │   │       └── lancer_poke.tres
-│   │   ├── combat_config.tres
+│   │   ├── default_pool_manifest.tres
 │   │   ├── dialogue
 │   │   │   ├── dialogue_data.gd
 │   │   │   ├── dialogue_line.gd
@@ -161,9 +168,12 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   ├── encounters
 │   │   │   ├── encounter_00.tres
 │   │   │   └── encounter_data.gd
-│   │   └── layouts
-│   │       ├── layout_00.tres
-│   │       └── level_layout.gd
+│   │   ├── enemy_config.tres
+│   │   ├── layouts
+│   │   │   ├── layout_00.tres
+│   │   │   └── level_layout.gd
+│   │   ├── player_config.tres
+│   │   └── world_config.tres
 │   ├── entities
 │   │   ├── README.md
 │   │   ├── archetypes
@@ -185,6 +195,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── boss_state_data.gd
 │   │   │   ├── data
 │   │   │   │   ├── boss_behavior.gd
+│   │   │   │   ├── boss_patrol_movement.tres
 │   │   │   │   └── default_boss_behavior.tres
 │   │   │   └── states
 │   │   │       ├── state_boss_attack.gd
@@ -194,6 +205,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │       ├── state_boss_melee.gd
 │   │   │       └── state_boss_patrol.gd
 │   │   ├── builders
+│   │   ├── common_states
+│   │   │   ├── state_entity_idle.gd
+│   │   │   └── state_entity_patrol.gd
 │   │   ├── components
 │   │   │   ├── base_state.gd
 │   │   │   ├── base_state_machine.gd
@@ -210,7 +224,6 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── melee_component.tscn
 │   │   │   ├── telegraph_component.gd
 │   │   │   └── telegraph_component.tscn
-│   │   ├── entity_builder.gd
 │   │   ├── minions
 │   │   │   ├── data
 │   │   │   │   ├── flying_patroller_behavior.tres
@@ -237,8 +250,14 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   └── turret.tscn
 │   │   ├── player
 │   │   │   ├── components
-│   │   │   │   ├── player_ability_component.gd
-│   │   │   │   ├── player_ability_component.tscn
+│   │   │   │   ├── charge_attack_component.gd
+│   │   │   │   ├── charge_attack_component.tscn
+│   │   │   │   ├── dash_component.gd
+│   │   │   │   ├── dash_component.tscn
+│   │   │   │   ├── heal_component.gd
+│   │   │   │   ├── heal_component.tscn
+│   │   │   │   ├── jump_component.gd
+│   │   │   │   ├── jump_component.tscn
 │   │   │   │   ├── player_jump_helper.gd
 │   │   │   │   ├── player_physics_component.gd
 │   │   │   │   ├── player_physics_component.tscn
@@ -358,7 +377,7 @@ PROJECT DIRECTORY STRUCTURE:
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-85 directories, 265 files
+87 directories, 282 files
 
 
 =====================================
@@ -590,6 +609,379 @@ FILE: ./materials/entity_hit_flash_material.tres
 shader = ExtResource("1_shader")
 shader_parameter/fx_progress = 0.0
 shader_parameter/tint_color = Color(1, 0, 0, 1)
+
+=====================================
+FILE: ./all_script_errors.txt
+=====================================
+WorkerThreadPool: 8 threads, 2 max low-priority.
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+Devices:
+  #0: Apple Apple M1 (Apple7) - Supported, Integrated
+- Metal multiview supported:
+  max view count: 16
+  max instances: 4294967295
+Metal 3.1 - Forward Mobile - Using Device #0: Apple - Apple M1 (Apple7)
+Using "default" pen tablet driver...
+Shader 'CanvasSdfShaderRD' (group 0) SHA256: 97dc9fb2f592cd02d8b1f8fd33df8aec73849d2fbafcfeaa6e99b9c3678c221d
+Shader 'SkeletonShaderRD' (group 0) SHA256: a7e5115c09793f8e950720a2ab8906bff195e9b508eec01af7aeb363da2bf75b
+Shader 'SortShaderRD' (group 0) SHA256: e184fb752fd6b1f86c536cb9dff20977fee019403e1025080eca44e6bfa11ef1
+Shader 'ParticlesShaderRD' (group 0) SHA256: 9797916f926fab4024422fe6c75cc0d8d517705d90802882fb9efa6dda0af392
+Shader 'ParticlesCopyShaderRD' (group 0) SHA256: 1a312a6797c1ba217655b41d33ce357ac226cba8d65d4daab9278d88c57d6468
+Shader 'CanvasShaderRD' (group 0) SHA256: 908e609e1337d67f8799155a57f03a3de33fcdba22b574595e90da921079b33d
+Shader 'CanvasOcclusionShaderRD' (group 0) SHA256: f9d6c9d569cf2f40595061ee84efd5fe34d68284e1f7273f62a4ac36de8852ee
+Shader 'SceneForwardMobileShaderRD' (group 0) SHA256: 1c5d16b1f4d38d016026900999bd209a9f901f70f04136d9fdd669f9601e2db3
+Shader 'SkyShaderRD' (group 0) SHA256: 34c03a8e46624b5ab7488ca0527d4f733272c048f0dd61258a69b9bf419225bd
+Shader 'BokehDofRasterShaderRD' (group 0) SHA256: a5ed26e5b86fb1a016f61f719fa3ba45119a0bda505dcc038bfd26e718ef956d
+Shader 'BlurRasterShaderRD' (group 0) SHA256: 193d80f293dc88299ae7ef003640f13fa7cab1fd1a57de366b53029265639146
+Shader 'CopyShaderRD' (group 0) SHA256: aaaaf4bfa2e7bd72bdafaa25005b56152e2e738422178c95ce5ed4976f964862
+Shader 'CopyToFbShaderRD' (group 0) SHA256: f113ba1d923f38bcf263af4dbc168573e755be83c1d3616fc49b7588aa9fffa4
+Shader 'CubeToDpShaderRD' (group 0) SHA256: 37d76ea0432d00e86934ff9eab83ce63c9c7feffafd96809773e109c5a078e17
+Shader 'CubemapDownsamplerRasterShaderRD' (group 0) SHA256: 20c48704e5817755c17d80b22e7c39d99270bd1e95c54446d742753abc03db33
+Shader 'CubemapFilterRasterShaderRD' (group 0) SHA256: de06c7a642b6af01caa44a65e94daa5dfafbdda1a6111bdd975c28e8c1fe4c1a
+Shader 'CubemapRoughnessRasterShaderRD' (group 0) SHA256: 3efae0638df891d7ec5aaa17ead03d3243a3fdc9f5920d95e16f92a0aeccfd04
+Shader 'SpecularMergeShaderRD' (group 0) SHA256: 8d06f9bec87ae4177f0a49133608f41313ebad2d0d81a5c074db1541cd396ddc
+Shader 'ShadowFrustumShaderRD' (group 0) SHA256: b73466659c6c1252aff41d1d117370efac3ed69d2ee89bb6e036036557afb5bd
+Shader 'MotionVectorsShaderRD' (group 0) SHA256: 548f1c61370fbba7d8bacec2827d86adc6984d8874d31cb21b7bb5f78e6d4335
+Shader 'LuminanceReduceRasterShaderRD' (group 0) SHA256: dcf85fa15135d7aecd1e6003b5a0c97bd615d1990a7012076a61e11cb05df558
+Shader 'TonemapShaderRD' (group 0) SHA256: 73e7046526ed4eb6328f66f868ec7b5209c4718b23c670b7d187840eef7d3448
+Shader 'BlitShaderRD' (group 0) SHA256: 07fdbb8db3418305063d813e1e5abdaea384f5dbf1ce1011ba48a3124d0a6d39
+CoreAudio: detected 2 channels
+CoreAudio: output sampling rate: 44100 Hz
+CoreAudio: output audio buffer frames: 512 calculated latency: 11ms
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+CameraServer: Registered camera OBS Virtual Camera with ID 1 and position 0 at index 0
+Loading resource: res://default_bus_layout.tres
+CORE API HASH: 4052744068
+EDITOR API HASH: 910296392
+Loading resource: res://src/core/systems/game_manager.gd
+Loading resource: res://src/core/systems/scene_manager.gd
+Loading resource: res://src/core/systems/audio_manager.gd
+Loading resource: res://src/core/systems/fx_manager.gd
+Loading resource: res://src/data/player_config.tres
+Loading resource: res://src/core/data/config/player_config.gd
+Loading resource: res://src/entities/player/data/forward_attack_shape.tres
+Loading resource: res://src/entities/player/data/upward_attack_shape.tres
+Loading resource: res://src/data/enemy_config.tres
+Loading resource: res://src/core/data/config/enemy_config.gd
+Loading resource: res://src/data/world_config.tres
+Loading resource: res://src/core/data/config/world_config.gd
+Loading resource: res://src/core/systems/camera_manager.gd
+Loading resource: res://src/core/systems/cursor_manager.gd
+Loading resource: res://assets/sprites/ui/cursors/sprite_cursor_default.png
+Loading resource: res://.godot/imported/sprite_cursor_default.png-0ae11c7582bcce7f2e16760a505c9927.ctex
+Loading resource: res://assets/sprites/ui/cursors/sprite_cursor_pointer.png
+Loading resource: res://.godot/imported/sprite_cursor_pointer.png-6681326a5b7347271de62dd751fb3b83.ctex
+Loading resource: res://src/core/systems/dialogue_manager.gd
+Loading resource: res://src/ui/dialogue/dialogue_box.tscn
+Loading resource: res://src/ui/dialogue/dialogue_box.gd
+Loading resource: res://src/core/building/arena_builder.gd
+Loading resource: res://src/core/data/effects/boss_spawn_shake.tres
+Loading resource: res://src/api/global_preloader.gd
+Loading resource: res://src/core/util/grid_utils.gd
+Loading resource: res://src/core/util/combat_utils.gd
+Loading resource: res://src/core/systems/fx_bindings/fx_manager_adapter.gd
+Loading resource: res://src/core/systems/pool_bindings/object_pool_adapter.gd
+Loaded system CA certificates
+Loading resource: res://src/scenes/main/main.tscn
+Loading resource: res://src/scenes/main/main.gd
+AssetPaths: Validating all asset paths...
+AssetPaths: All paths validated successfully.
+Loading resource: res://src/data/default_pool_manifest.tres
+Loading resource: res://src/projectiles/player_shot.tscn
+Loading resource: res://src/projectiles/player_shot.gd
+Loading resource: res://src/projectiles/boss_shot.tscn
+Loading resource: res://src/projectiles/boss_shot.gd
+Loading resource: res://src/projectiles/turret_shot.tscn
+Loading resource: res://src/projectiles/turret_shot.gd
+Loading resource: res://src/projectiles/homing_boss_shot.tscn
+Loading resource: res://src/projectiles/homing_boss_shot.gd
+Loading resource: res://src/vfx/hit_spark.tscn
+Loading resource: res://src/vfx/hit_spark.gd
+Loading resource: res://assets/audio/music/music_menu_loop.mp3
+Loading resource: res://.godot/imported/music_menu_loop.mp3-a3f890b5159e51d7cc53cdad36cfcd36.mp3str
+Loading resource: res://src/scenes/menus/title_screen.tscn
+Loading resource: res://src/scenes/menus/title_screen.gd
+Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
+Loading resource: res://src/ui/components/logo_display/logo_display.tscn
+Loading resource: res://assets/sprites/ui/logos/newgrounds_logo.png
+Loading resource: res://.godot/imported/newgrounds_logo.png-2977cde893870d21b7f84cd17b13c225.ctex
+Loading resource: res://assets/sprites/ui/logos/godot_logo.png
+Loading resource: res://.godot/imported/godot_logo.png-2c4abc4be94a9a8ee3cb014f11b6a489.ctex
+Loading resource: res://assets/sprites/ui/logos/itch_logo.png
+Loading resource: res://.godot/imported/itch_logo.png-55a8cdb2f6f34f33f1968a45adf238ea.ctex
+Loading resource: res://assets/fonts/font_main_black.ttf
+Loading resource: res://.godot/imported/font_main_black.ttf-766d9cc0a208469438ff831535d8483c.fontdata
+Loading resource: res://src/ui/components/mute_button/mute_button.tscn
+Loading resource: res://assets/sprites/ui/icons/icon_ui_sound_off.png
+Loading resource: res://.godot/imported/icon_ui_sound_off.png-3fb3ac644d936ac41f943fdd25d24217.ctex
+Loading resource: res://src/ui/components/mute_button/mute_button.gd
+Loading resource: res://assets/sprites/ui/icons/icon_ui_sound_on.png
+Loading resource: res://.godot/imported/icon_ui_sound_on.png-c97b0b59545c0dc177b96447a16e0a9f.ctex
+Loading resource: res://assets/fonts/font_main_bold.ttf
+Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
+Loading resource: res://assets/audio/sfx/sfx_ui_move.mp3
+Loading resource: res://.godot/imported/sfx_ui_move.mp3-22d501a1c652a7c7f2af3e97d97a2b16.mp3str
+Loading resource: res://assets/audio/sfx/sfx_ui_select.mp3
+Loading resource: res://.godot/imported/sfx_ui_select.mp3-3073366784d3e7caa5d5c9691f71648c.mp3str
+Loading resource: res://src/scenes/loading/loading_screen.tscn
+Loading resource: res://src/scenes/loading/loading_screen.gd
+Starting shader pre-warming...
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/health_component.tscn
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/components/base_state_machine.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.gd
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/components/fx_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.gd
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.gd
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.gd
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.gd
+Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
+Loading resource: res://materials/entity_hit_flash_material.tres
+Loading resource: res://shaders/entity/red_hit_flash_test.gdshader
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/core/data/effects/player_hit_spark_effect.tres
+Loading resource: res://src/entities/player/states/state_move.gd
+Loading resource: res://src/entities/player/states/state_jump.gd
+Loading resource: res://src/entities/player/states/state_fall.gd
+Loading resource: res://src/entities/player/states/state_dash.gd
+Loading resource: res://src/entities/player/states/state_wall_slide.gd
+Loading resource: res://src/entities/player/states/state_attack.gd
+Loading resource: res://src/entities/player/states/state_hurt.gd
+Loading resource: res://src/entities/player/states/state_heal.gd
+Loading resource: res://src/entities/player/states/state_pogo.gd
+Loading resource: res://src/core/data/effects/dissolve_effect.tres
+Loading resource: res://materials/dissolve_material.tres
+Loading resource: res://shaders/entity/dissolve.gdshader
+Loading resource: res://assets/textures/noise_texture.tres
+Loading resource: res://src/entities/boss/base_boss.tscn
+Loading resource: res://src/entities/components/melee_component.tscn
+Loading resource: res://src/entities/components/melee_component.gd
+Loading resource: res://src/entities/components/telegraph_component.tscn
+Loading resource: res://src/entities/components/telegraph_component.gd
+Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
+Loading resource: res://src/core/data/effects/boss_death_shake.tres
+Loading resource: res://src/entities/archetypes/boss_archetype.tres
+Loading resource: res://src/entities/boss/states/state_boss_idle.gd
+Loading resource: res://src/entities/boss/states/state_boss_attack.gd
+Loading resource: res://src/entities/boss/states/state_boss_cooldown.gd
+Loading resource: res://src/entities/boss/states/state_boss_patrol.gd
+Loading resource: res://src/data/combat/attacks/boss_quick_swipe.tres
+Loading resource: res://src/entities/boss/states/state_boss_lunge.gd
+Loading resource: res://src/entities/boss/states/state_boss_melee.gd
+Loading resource: res://src/data/combat/attacks/boss_lunge_melee.tres
+Loading resource: res://src/entities/boss/data/default_boss_behavior.tres
+Loading resource: res://src/entities/boss/attack_patterns/single_shot.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.gd
+Loading resource: res://src/entities/boss/attack_patterns/volley_3_shot.tres
+Loading resource: res://src/combat/attack_logic/volley_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/lunge_attack.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.gd
+Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
+Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.gd
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
+Loading resource: res://src/entities/minions/movement_logic/patrol_movement_logic.gd
+Shader pre-warming complete.
+Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
+Loading resource: res://materials/entity_hit_flash_material.tres
+Loading resource: res://shaders/entity/red_hit_flash_test.gdshader
+Loading resource: res://src/core/data/effects/dissolve_effect.tres
+Loading resource: res://materials/dissolve_material.tres
+Loading resource: res://shaders/entity/dissolve.gdshader
+Loading resource: res://assets/textures/noise_texture.tres
+FXManager: Starting shader pre-warm...
+FXManager: Shader pre-warm complete.
+Loading resource: res://src/data/encounters/encounter_00.tres
+Loading resource: res://src/entities/boss/base_boss.tscn
+Loading resource: res://src/entities/components/melee_component.tscn
+Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
+Loading resource: res://src/core/data/effects/boss_death_shake.tres
+Loading resource: res://src/entities/archetypes/boss_archetype.tres
+Loading resource: res://src/entities/components/health_component.tscn
+Loading resource: res://src/entities/components/base_state_machine.tscn
+Loading resource: res://src/entities/components/fx_component.tscn
+Loading resource: res://src/entities/boss/data/default_boss_behavior.tres
+Loading resource: res://src/entities/boss/attack_patterns/single_shot.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/volley_3_shot.tres
+Loading resource: res://src/combat/attack_logic/volley_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/lunge_attack.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
+Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
+Loading resource: res://src/data/layouts/layout_00.tres
+Loading resource: res://src/entities/minions/turret.tscn
+Loading resource: res://src/entities/minions/minion.gd
+Loading resource: res://src/data/combat/attacks/lancer_poke.tres
+Loading resource: res://src/entities/archetypes/minion_archetype.tres
+Loading resource: res://src/entities/minions/data/turret_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/stationary_movement.tres
+Loading resource: res://src/entities/minions/movement_logic/stationary_movement_logic.gd
+Loading resource: res://src/entities/spawners/patrolling_lancer_spawner.tscn
+Loading resource: res://src/entities/spawners/spawner.tscn
+Loading resource: res://src/entities/spawners/spawner.gd
+Loading resource: res://src/entities/minions/patrolling_lancer.tscn
+Loading resource: res://src/entities/minions/data/patrolling_lancer_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/patrol_movement.tres
+Loading resource: res://src/entities/minions/flying_patroller.tscn
+Loading resource: res://src/entities/minions/data/flying_patroller_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/flying_patrol.tres
+Loading resource: res://src/entities/minions/movement_logic/flying_patrol_movement_logic.gd
+Loading resource: res://src/combat/attack_logic/minion_volley_3_shot.tres
+Loading resource: res://src/core/sequencing/steps/wait_step.gd
+Loading resource: res://src/core/sequencing/steps/emit_step.gd
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/ui/game_hud/game_hud.tscn
+Loading resource: res://src/ui/game_hud/game_hud.gd
+Loading resource: res://src/ui/themes/main_theme.tres
+Loading resource: res://src/scenes/game/encounter_scene.tscn
+Loading resource: res://src/scenes/game/encounter_scene.gd
+Loading resource: res://src/data/dialogue/test_conversation.tres
+Loading resource: res://src/core/systems/camera_shaker.tscn
+Loading resource: res://src/ui/dev/debug_overlay.tscn
+Loading resource: res://src/ui/dev/debug_overlay.gd
+Loading resource: res://addons/gut/fonts/AnonymousPro-Regular.ttf
+Loading resource: res://.godot/imported/AnonymousPro-Regular.ttf-856c843fd6f89964d2ca8d8ff1724f13.fontdata
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"
+Leaked instance: GDScriptNativeClass:9223372049974559412
+Leaked instance: GDScript:9223372080827860385 - Resource path: res://src/core/building/terrain_builder.gd
+Leaked instance: GDScript:9223372085441594798 - Resource path: res://src/api/interfaces/IComponent.gd
+Leaked instance: CircleShape2D:9223372177481402519 - Resource path: res://src/entities/boss/base_boss.tscn::CircleShape2D_closetrigger
+Leaked instance: RectangleShape2D:9223372175250032844 - Resource path: res://src/entities/components/melee_component.tscn::RectangleShape2D_placeholder
+Leaked instance: RectangleShape2D:9223372177464625367 - Resource path: res://src/entities/boss/base_boss.tscn::RectangleShape2D_bossbody
+Leaked instance: Timer:178425694424 - Node path: 
+Leaked instance: Node:152722999513 - Node path: 
+Leaked instance: SceneTreeTimer:9223372122116589786
+Leaked instance: GDScript:9223372124465400050 - Resource path: res://src/entities/boss/base_boss.gd
+Leaked instance: GDScript:9223372151527049494 - Resource path: res://src/entities/components/melee_component.gd
+Leaked instance: Timer:178408917944 - Node path: 
+Leaked instance: CollisionShape2D:178392140729 - Node path: 
+Leaked instance: Object:178375363514
+Leaked instance: ColorRect:178358586299 - Node path: 
+Leaked instance: CharacterBody2D:178341809084 - Node path: 
+Leaked instance: Node2D:178442472381 - Node path: 
+Leaked instance: Node:172822105022 - Node path: 
+Leaked instance: Area2D:178459249927 - Node path: 
+Leaked instance: CollisionShape2D:178476027144 - Node path: 
+Leaked instance: Area2D:178492804361 - Node path: 
+Leaked instance: CollisionShape2D:178509581578 - Node path: 
+Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
+Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
+Resource still in use: res://src/api/interfaces/IComponent.gd (GDScript)
+Resource still in use: res://src/entities/boss/base_boss.gd (GDScript)
+Resource still in use: res://src/entities/components/melee_component.gd (GDScript)
+Resource still in use: res://src/entities/components/melee_component.tscn::RectangleShape2D_placeholder (RectangleShape2D)
+Resource still in use: res://src/entities/boss/base_boss.tscn::RectangleShape2D_bossbody (RectangleShape2D)
+Resource still in use: res://src/entities/boss/base_boss.tscn::CircleShape2D_closetrigger (CircleShape2D)
+Orphan StringName: _make_custom_tooltip (static: 0, total: 1)
+Orphan StringName: _enter_tree (static: 0, total: 12)
+Orphan StringName: _set_path_cache (static: 0, total: 7)
+Orphan StringName: _reset_state (static: 0, total: 7)
+Orphan StringName: _unhandled_input (static: 0, total: 12)
+Orphan StringName: _ready (static: 0, total: 12)
+Orphan StringName: _has_point (static: 0, total: 1)
+Orphan StringName: body_entered (static: 0, total: 3)
+Orphan StringName: _exit_tree (static: 0, total: 12)
+Orphan StringName: _create_solid_tile (static: 0, total: 1)
+Orphan StringName: collision_shape (static: 0, total: 4)
+Orphan StringName: _setup_local_to_scene (static: 0, total: 7)
+Orphan StringName: hit_confirmed (static: 0, total: 2)
+Orphan StringName: BaseBoss (static: 0, total: 3)
+Orphan StringName: _on_patrol_timer_timeout (static: 0, total: 3)
+Orphan StringName: CloseRangeDetector (static: 0, total: 2)
+Orphan StringName: REQUIRED_DEPS (static: 0, total: 1)
+Orphan StringName: _create_hazard_tile (static: 0, total: 1)
+Orphan StringName: Area2D (static: 1, total: 3)
+Orphan StringName: ColorRect (static: 1, total: 3)
+Orphan StringName: attack_finished (static: 0, total: 2)
+Orphan StringName: PatrolTimer (static: 0, total: 2)
+Orphan StringName: setup (static: 0, total: 2)
+Orphan StringName: _drop_data (static: 0, total: 1)
+Orphan StringName: _input (static: 0, total: 12)
+Orphan StringName: MeleeComponent (static: 0, total: 5)
+Orphan StringName: Resource (static: 2, total: 3)
+Orphan StringName: _mouse_shape_enter (static: 0, total: 3)
+Orphan StringName: IComponent (static: 0, total: 3)
+Orphan StringName: body_exited (static: 0, total: 3)
+Orphan StringName: metadata/REQUIRED_DEPS (static: 0, total: 1)
+Orphan StringName: _on_hitbox_area_entered (static: 0, total: 1)
+Orphan StringName: _hit_targets_this_swing (static: 0, total: 4)
+Orphan StringName: _on_close_range_detector_body_exited (static: 0, total: 3)
+Orphan StringName: _on_close_range_detector_body_entered (static: 0, total: 3)
+Orphan StringName: _shortcut_input (static: 0, total: 12)
+Orphan StringName: timeout (static: 2, total: 9)
+Orphan StringName: CharacterBody2D (static: 1, total: 2)
+Orphan StringName: _mouse_shape_exit (static: 0, total: 3)
+Orphan StringName: _input_event (static: 0, total: 3)
+Orphan StringName: _is_attacking (static: 0, total: 5)
+Orphan StringName: BaseEntity (static: 0, total: 1)
+Orphan StringName: _process (static: 0, total: 12)
+Orphan StringName: CollisionShape2D (static: 1, total: 9)
+Orphan StringName: _create_oneway_platform (static: 0, total: 1)
+Orphan StringName: _execute_attack_sequence (static: 0, total: 1)
+Orphan StringName: _create_background_tile (static: 0, total: 1)
+Orphan StringName: _on_cooldown_timer_timeout (static: 0, total: 3)
+Orphan StringName: Node (static: 5, total: 8)
+Orphan StringName: _unhandled_key_input (static: 0, total: 12)
+Orphan StringName: _services (static: 0, total: 4)
+Orphan StringName: _current_attack_data (static: 0, total: 4)
+Orphan StringName: CooldownTimer (static: 0, total: 2)
+Orphan StringName: MeleeAttackData (static: 0, total: 1)
+Orphan StringName: build_terrain_async (static: 0, total: 1)
+Orphan StringName: teardown (static: 0, total: 2)
+Orphan StringName: _process_hit (static: 0, total: 1)
+Orphan StringName: _gui_input (static: 0, total: 1)
+Orphan StringName: _on_hitbox_body_entered (static: 0, total: 1)
+Orphan StringName: _get_tooltip (static: 0, total: 1)
+Orphan StringName: Hitbox (static: 0, total: 2)
+Orphan StringName: _mouse_enter (static: 0, total: 3)
+Orphan StringName: _can_drop_data (static: 0, total: 1)
+Orphan StringName: _get_configuration_warnings (static: 0, total: 12)
+Orphan StringName: fill_viewport (static: 0, total: 1)
+Orphan StringName: _owner (static: 0, total: 4)
+Orphan StringName: hitbox (static: 0, total: 4)
+Orphan StringName: _draw (static: 0, total: 8)
+Orphan StringName: _get_minimum_size (static: 0, total: 1)
+Orphan StringName: _get_rid (static: 0, total: 7)
+Orphan StringName: _structured_text_parser (static: 0, total: 1)
+Orphan StringName: _get_drag_data (static: 0, total: 1)
+Orphan StringName: perform_attack (static: 0, total: 1)
+Orphan StringName: TerrainBuilder (static: 0, total: 3)
+Orphan StringName: TelegraphScene (static: 0, total: 1)
+Orphan StringName: _physics_process (static: 0, total: 12)
+Orphan StringName: _mouse_exit (static: 0, total: 3)
+Orphan StringName: changed (static: 0, total: 9)
+StringName: 78 unclaimed string names at exit.
+
 
 =====================================
 FILE: ./docs/TODO.txt
@@ -868,15 +1260,37 @@ FILE: ./docs/CHANGELOG.txt
 ║                  A log of all notable changes to the project.                  ║
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
+
+
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
+║  ██                  [0.20.0] - CONFIG DECOUPLING - 11/XX/2025           ██    ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
+║                                                                                ║
+║   █  Architecture                                                              ║
+║      ░ ■ Dismantled the monolithic `CombatConfig`.                             ║
+║      ░ ■ Implemented granular `PlayerConfig`, `EnemyConfig`, and `WorldConfig`.║
+║      ░ ■ Refactored all Entities and Systems to use specific config injection. ║
+║      ░ ■ Removed `EntityBuilder`. Entities now self-assemble via `build_entity()`.║
+║      ░ ■ Genericized States: Created `StateEntityPatrol` and `StateEntityIdle` base classes.║
+║      ░ ■ Split `PlayerAbilityComponent` into atomic Jump/Dash/Heal/Charge components.║
+║      ░ ■ Enforced typed events for Boss Death and Phase Changes (removed dictionary payloads).║
+║      ░ ■ Replaced magic state strings ("melee", "patrol") with `Identifiers.CommonStates`.║
+║      ░ ■ Deduplicated entity lifecycle: `BaseEntity` auto-wires Health signals.      ║
+║      ░ ■ Implemented `PoolManifest`: Object pooling is now fully data-driven.        ║
+║      ░ ■ Physics Overhaul: Disabled physical collision between Player and Enemies.   ║
+║      ░ ■ Refactored Player contact damage to use Hurtbox signals + continuous polling.║
+║      ░ ■ Fixed bug where Player could get stuck inside or push heavy enemies.        ║
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██                  [0.19.0] - IN PROGRESS - 11/XX/2025                 ██   ║
+║   ██                  [0.19.0] - CONTEXT HYGIENE - 11/18/2025             ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-
-
-
-
-
-
+║                                                                                ║
+║   █  Documentation Refactor                                                    ║
+║      ░ ■ Archived legacy logs and creative docs to `docs/archive/`.            ║
+║      ░ ■ Abridged `CHANGELOG`, `TODO`, and `ARCHITECTURE` for token limits.    ║
+║      ░ ■ Fixed source code generator to exclude archive/addons.                ║
+║                                                                                ║
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.18.0] - SYSTEM HARDENING - 08/26/2025            ██   ║
@@ -1391,7 +1805,7 @@ config_version=5
 [application]
 
 config/name="BOX BATTLE"
-config/version="0.18.0"
+config/version="0.20.0"
 run/main_scene="res://src/scenes/main/main.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
@@ -1564,13 +1978,11 @@ FILE: ./src/ui/game_hud/game_hud.gd
 =====================================
 # src/ui/game_hud/game_hud.gd
 ## Manages the in-game heads-up display.
-##
-## Subscribes to [EventBus] events to keep the player health, boss health,
-## and phase indicators updated in real-time.
 extends CanvasLayer
 
 # --- Constants ---
-const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
+const PLAYER_CONFIG = preload("res://src/data/player_config.tres")
+const ENEMY_CONFIG = preload("res://src/data/enemy_config.tres")
 
 # --- Node References ---
 @onready var player_info: VBoxContainer = %PlayerInfo
@@ -1635,7 +2047,7 @@ func _initialize_ui_state() -> void:
 	_empty_phase_style.border_color = Color.WHITE
 	
 	# --- Initialize Rest of UI ---
-	var max_health = COMBAT_CONFIG.player_max_health
+	var max_health = PLAYER_CONFIG.max_health
 	player_health_value.text = "%d / %d" % [max_health, max_health]
 	player_heal_charges_value.text = "0"
 
@@ -1643,7 +2055,7 @@ func _initialize_ui_state() -> void:
 	health_bar_style.bg_color = Palette.COLOR_PLAYER_PROJECTILE
 	boss_health_bar.add_theme_stylebox_override("fill", health_bar_style)
 
-	boss_health_bar.max_value = COMBAT_CONFIG.boss_health
+	boss_health_bar.max_value = ENEMY_CONFIG.boss_health
 	boss_health_bar.value = boss_health_bar.max_value
 
 	phase_indicators.add_theme_constant_override("separation", 5)
@@ -1685,9 +2097,9 @@ func on_boss_health_changed(payload: BossHealthChangedEvent) -> void:
 	boss_health_bar.value = payload.current_health
 
 
-func on_boss_phase_changed(payload: Dictionary) -> void:
-	var phases_remaining = payload.get("phases_remaining", 1)
-	_update_phase_visuals(phases_remaining)
+func on_boss_phase_changed(payload: BossPhaseChangedEvent) -> void:
+	# UPDATE: Typed property access
+	_update_phase_visuals(payload.phases_remaining)
 
 
 func on_boss_died(_payload) -> void:
@@ -3304,9 +3716,6 @@ FILE: ./src/scenes/game/encounter_scene.gd
 =====================================
 # src/scenes/game/encounter_scene.gd
 ## The main game scene controller.
-##
-## Responsible for orchestrating the level build, running intro sequences,
-## managing the game camera, and handling victory/defeat sequences.
 class_name EncounterScene
 extends ISceneController
 
@@ -3423,7 +3832,6 @@ func _initialize_debug_inspector() -> void:
 	add_child(_debug_overlay)
 	_debug_overlay.visible = false
 
-	# Initial population. _cycle_debug_target will refresh this list live.
 	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
 	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
 
@@ -3432,12 +3840,9 @@ func _initialize_debug_inspector() -> void:
 
 
 func _cycle_debug_target() -> void:
-	# This is the fix. We re-query the scene tree every time we cycle.
 	_inspectable_entities.clear()
 	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
 	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
-
-	# Filter out any nulls just in case
 	_inspectable_entities = _inspectable_entities.filter(func(e): return is_instance_valid(e))
 
 	if _inspectable_entities.is_empty():
@@ -3459,9 +3864,6 @@ func _deactivate_all_minions() -> void:
 # --- Signal Handlers ---
 
 func _on_spawn_boss_requested(_payload) -> void:
-	# This function is now responsible for the action.
-	# We don't await here because this is a fire-and-forget event.
-	# The ArenaBuilder's function is async, so it will complete in the background.
 	ArenaBuilder.spawn_boss_async()
 
 
@@ -3469,11 +3871,13 @@ func _on_player_died() -> void:
 	SceneManager.go_to_game_over()
 
 
-func _on_boss_died(payload: Dictionary) -> void:
+func _on_boss_died(payload: BossDiedEvent) -> void:
 	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.set_physics_process(false)
-	var boss_node: Node = payload.get("boss_node")
+	
+	# UPDATE: Using typed payload property
+	var boss_node: Node = payload.boss_node
 
 	_deactivate_all_minions()
 
@@ -4858,12 +5262,13 @@ FILE: ./src/core/util/service_locator.gd
 =====================================
 # src/core/util/service_locator.gd
 ## A central, autoloaded singleton that provides clean, type-safe access
-## to all other core systems (services). This avoids passing around messy
-## dictionaries for dependency injection.
+## to all other core systems (services).
 extends Node
 
 # --- Constants ---
-const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
+const PLAYER_CONFIG = preload("res://src/data/player_config.tres")
+const ENEMY_CONFIG = preload("res://src/data/enemy_config.tres")
+const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 
 # --- Service References ---
 @onready var fx_manager: IFXManager = get_node("/root/FXManagerAdapter")
@@ -4874,7 +5279,9 @@ const COMBAT_CONFIG = preload("res://src/data/combat_config.tres")
 @onready var grid_utils = get_node("/root/GridUtils")
 
 # --- Public Properties ---
-var combat_config: CombatConfig = COMBAT_CONFIG
+var player_config: PlayerConfig = PLAYER_CONFIG
+var enemy_config: EnemyConfig = ENEMY_CONFIG
+var world_config: WorldConfig = WORLD_CONFIG
 
 
 =====================================
@@ -5058,14 +5465,11 @@ FILE: ./src/core/util/identifiers.gd
 =====================================
 # src/core/util/identifiers.gd
 ## An autoloaded singleton that provides a central authority for all string-based
-## identifiers used in the project, such as group names and pool keys.
-##
-## Using these constants prevents bugs caused by typos in raw strings.
+## identifiers used in the project.
 extends Node
 
 
 ## A container for all physics group names.
-## Usage: Identifiers.Groups.PLAYER
 class Groups:
 	const PLAYER = "player"
 	const ENEMY = "enemy"
@@ -5079,13 +5483,21 @@ class Groups:
 
 
 ## A container for all ObjectPool keys.
-## Usage: Identifiers.Pools.PLAYER_SHOTS
 class Pools:
 	const PLAYER_SHOTS = &"player_shots"
 	const BOSS_SHOTS = &"boss_shots"
 	const MINION_SHOTS = &"minion_shots"
 	const HOMING_BOSS_SHOTS = &"homing_boss_shots"
 	const HIT_SPARKS = &"hit_sparks"
+
+
+## Shared state keys used by multiple entity types.
+class CommonStates:
+	const IDLE = &"idle"
+	const PATROL = &"patrol"
+	const MELEE = &"melee"
+	const ATTACK = &"attack"
+	const FALL = &"fall"
 
 
 ## Container for all Player state keys.
@@ -5116,6 +5528,7 @@ class MinionStates:
 	const IDLE = &"idle"
 	const ATTACK = &"attack"
 	const FALL = &"fall"
+
 
 =====================================
 FILE: ./src/core/util/asset_paths.gd
@@ -5377,6 +5790,16 @@ extends Resource
 
 
 =====================================
+FILE: ./src/core/events/typed_events/boss_died_event.gd
+=====================================
+# src/core/events/typed_events/boss_died_event.gd
+class_name BossDiedEvent
+extends Resource
+
+var boss_node: Node
+
+
+=====================================
 FILE: ./src/core/events/typed_events/player_health_changed_event.gd
 =====================================
 # src/core/events/typed_events/player_health_changed_event.gd
@@ -5397,6 +5820,16 @@ class_name PlayerHealingChargesChangedEvent
 extends Resource
 
 @export var current_charges: int = 0
+
+
+=====================================
+FILE: ./src/core/events/typed_events/boss_phase_changed_event.gd
+=====================================
+# src/core/events/typed_events/boss_phase_changed_event.gd
+class_name BossPhaseChangedEvent
+extends Resource
+
+var phases_remaining: int = 0
 
 
 =====================================
@@ -5514,6 +5947,30 @@ func center_camera_on_arena(camera: Camera2D, arena_size_tiles: Vector2i) -> voi
 
 	var arena_pixel_size = Vector2(arena_size_tiles) * Constants.TILE_SIZE
 	camera.position = arena_pixel_size / 2.0
+
+
+=====================================
+FILE: ./src/core/systems/pooling/pool_definition.gd
+=====================================
+# src/core/systems/pooling/pool_definition.gd
+@tool
+class_name PoolDefinition
+extends Resource
+
+@export var pool_key: StringName
+@export var scene: PackedScene
+@export var initial_size: int = 10
+
+
+=====================================
+FILE: ./src/core/systems/pooling/pool_manifest.gd
+=====================================
+# src/core/systems/pooling/pool_manifest.gd
+@tool
+class_name PoolManifest
+extends Resource
+
+@export var pools: Array[PoolDefinition] = []
 
 
 =====================================
@@ -5764,10 +6221,10 @@ FILE: ./src/core/systems/object_pool.gd
 =====================================
 # src/core/systems/object_pool.gd
 ## An autoloaded singleton that manages pools of reusable nodes.
-##
-## This system prevents performance degradation (stutter) from frequent
-## instantiation and deletion of nodes like projectiles and visual effects.
 extends Node
+
+# --- Constants ---
+const MANIFEST_PATH = "res://src/data/default_pool_manifest.tres"
 
 # --- Private Member Variables ---
 var _pools: Dictionary = {}
@@ -5796,11 +6253,23 @@ func _exit_tree() -> void:
 func initialize() -> void:
 	if _is_initialized:
 		return
-	_create_pool_from_path(Identifiers.Pools.PLAYER_SHOTS, AssetPaths.SCENE_PLAYER_SHOT, 15)
-	_create_pool_from_path(Identifiers.Pools.BOSS_SHOTS, AssetPaths.SCENE_BOSS_SHOT, 30)
-	_create_pool_from_path(Identifiers.Pools.MINION_SHOTS, AssetPaths.SCENE_MINION_SHOT, 20)
-	_create_pool_from_path(Identifiers.Pools.HOMING_BOSS_SHOTS, AssetPaths.SCENE_HOMING_BOSS_SHOT, 40)
-	_create_pool_from_path(Identifiers.Pools.HIT_SPARKS, AssetPaths.SCENE_HIT_SPARK, 25)
+	
+	# UPDATE: Data-Driven Initialization
+	if not FileAccess.file_exists(MANIFEST_PATH):
+		push_error("ObjectPool: Manifest not found at %s" % MANIFEST_PATH)
+		return
+		
+	var manifest: PoolManifest = load(MANIFEST_PATH)
+	if not manifest:
+		push_error("ObjectPool: Failed to load PoolManifest resource.")
+		return
+		
+	for def in manifest.pools:
+		if def.scene == null:
+			push_warning("ObjectPool: Pool definition for '%s' has no scene." % def.pool_key)
+			continue
+		_create_pool_for_scene(def.pool_key, def.scene, def.initial_size)
+		
 	_is_initialized = true
 
 
@@ -5862,15 +6331,6 @@ func return_instance(p_instance: Node) -> void:
 
 
 # --- Private Methods ---
-
-func _create_pool_from_path(p_pool_name: StringName, p_scene_path: String, p_initial_size: int) -> void:
-	var scene: PackedScene = load(p_scene_path)
-
-	if not is_instance_valid(scene):
-		push_error("ObjectPool: Failed to load scene for pool '%s' at path: %s" % [p_pool_name, p_scene_path])
-		return
-
-	_create_pool_for_scene(p_pool_name, scene, p_initial_size)
 
 
 func _create_pool_for_scene(
@@ -6387,63 +6847,39 @@ signal audio_settings_changed
 
 
 =====================================
-FILE: ./src/core/data/config/combat_config.gd
+FILE: ./src/core/data/config/world_config.gd
 =====================================
-# src/core/data/config/combat_config.gd
+# src/core/data/config/world_config.gd
 @tool
-## A single, flat Resource that exposes all gameplay tuning values.
-##
-## This allows designers to balance the game directly in the Godot Inspector
-## using organized, range-limited sliders.
-class_name CombatConfig
+## A configuration resource for Global World settings (Physics, Time, Juice).
+class_name WorldConfig
 extends Resource
 
-@export_group("Player - Health & Resources")
-@export_range(1, 20, 1) var player_max_health: int = 5
-@export_range(1, 10, 1) var player_max_healing_charges: int = 1
-@export_range(0.1, 5.0, 0.1) var player_heal_duration: float = 2.0
-@export_range(1, 100, 1) var player_determination_per_charge: int = 10
-@export_range(0.1, 5.0, 0.1) var player_invincibility_duration: float = 1.5
+@export_group("Physics")
+@export_range(500, 3000, 10) var gravity: float = 1200.0
 
-@export_group("Player - Movement & Physics")
-@export_range(100, 1000, 5) var player_speed: float = 450.0
-@export_range(200, 1500, 10) var player_jump_force: float = 680.0
-@export_range(0.1, 1.0, 0.05) var player_jump_release_dampener: float = 0.4
-@export_range(0.0, 0.5, 0.01) var player_coyote_time: float = 0.1
-@export_range(0.0, 0.5, 0.01) var player_jump_buffer: float = 0.1
-@export_range(1.0, 3.0, 0.1) var player_fast_fall_gravity_multiplier: float = 1.4
-@export var player_max_air_jumps: int = 1
+@export_group("Juice & Feedback (Hit-Stop)")
+@export_range(0.0, 0.5, 0.01) var hit_stop_player_melee_close: float = 0.025
+@export_range(0.0, 0.5, 0.01) var hit_stop_player_hurt: float = 0.04
+@export_range(0.0, 1.0, 0.01) var hit_stop_boss_phase_change: float = 0.1
+@export_range(0.0, 1.0, 0.01) var hit_stop_boss_death: float = 0.2
 
-@export_group("Player - Wall Interaction")
-@export_range(50, 500, 5) var player_wall_slide_speed: float = 120.0
-@export_range(0.0, 0.5, 0.01) var player_wall_coyote_time: float = 0.05
-@export_range(500, 2500, 50) var player_wall_jump_force_x: float = 1650.0
-@export_range(200, 1500, 10) var player_wall_jump_force_y: float = 680.0
 
-@export_group("Player - Dash")
-@export_range(500, 2500, 50) var player_dash_speed: float = 1400.0
-@export_range(0.05, 0.5, 0.01) var player_dash_duration: float = 0.15
-@export_range(0.1, 2.0, 0.05) var player_dash_cooldown: float = 0.5
-
-@export_group("Player - Combat")
-@export var player_forward_attack_shape: Shape2D
-@export var player_upward_attack_shape: Shape2D
-@export_range(0.05, 1.0, 0.01) var player_attack_cooldown: float = 0.12
-@export_range(0.05, 0.5, 0.01) var player_attack_duration: float = 0.1
-@export_range(100, 5000, 100) var player_attack_friction: float = 2000.0
-@export_range(0.1, 1.0, 0.01) var player_charge_time: float = 0.35
-@export_range(200, 1000, 10) var player_pogo_force: float = 450.0
-@export_range(100, 1500, 25) var player_knockback_speed: float = 400.0
-@export_range(0.05, 0.5, 0.01) var player_knockback_duration: float = 0.1
-@export_range(100, 1500, 25) var player_hazard_knockback_speed: float = 400.0
-@export_range(10, 200, 5) var player_close_range_threshold: float = 75.0
+=====================================
+FILE: ./src/core/data/config/enemy_config.gd
+=====================================
+# src/core/data/config/enemy_config.gd
+@tool
+## A configuration resource for Enemy stats (Bosses, Minions, Projectiles).
+class_name EnemyConfig
+extends Resource
 
 @export_group("Boss - General")
 @export_range(10, 500, 5) var boss_health: int = 30
 @export_range(50, 500, 5) var boss_patrol_speed: float = 100.0
 @export_range(0.0, 2.0, 0.01) var boss_invincibility_duration: float = 0.1
 
-@export_group("Boss - Lunge Attack")
+@export_group("Boss - Attacks")
 @export_range(500, 3000, 50) var boss_lunge_speed: float = 1200.0
 
 @export_group("Projectiles")
@@ -6451,14 +6887,56 @@ extends Resource
 @export_range(100, 1000, 10) var homing_shot_speed: float = 250.0
 @export_range(1.0, 20.0, 0.5) var homing_shot_lifespan: float = 10.0
 
-@export_group("Global - Physics")
-@export_range(500, 3000, 10) var gravity: float = 1200.0
 
-@export_group("Global - Juice & Feedback (Hit-Stop)")
-@export_range(0.0, 0.5, 0.01) var player_melee_close_range_hit_stop_duration: float = 0.025
-@export_range(0.0, 0.5, 0.01) var player_damage_taken_hit_stop_duration: float = 0.04
-@export_range(0.0, 1.0, 0.01) var boss_phase_change_hit_stop_duration: float = 0.1
-@export_range(0.0, 1.0, 0.01) var boss_death_hit_stop_duration: float = 0.2
+=====================================
+FILE: ./src/core/data/config/player_config.gd
+=====================================
+# src/core/data/config/player_config.gd
+@tool
+## A configuration resource for Player-specific stats and tuning.
+class_name PlayerConfig
+extends Resource
+
+@export_group("Health & Resources")
+@export_range(1, 20, 1) var max_health: int = 5
+@export_range(1, 10, 1) var max_healing_charges: int = 1
+@export_range(0.1, 5.0, 0.1) var heal_duration: float = 2.0
+@export_range(1, 100, 1) var determination_per_charge: int = 10
+@export_range(0.1, 5.0, 0.1) var invincibility_duration: float = 1.5
+@export_range(100, 1500, 25) var knockback_speed: float = 400.0
+@export_range(0.05, 0.5, 0.01) var knockback_duration: float = 0.1
+@export_range(100, 1500, 25) var hazard_knockback_speed: float = 400.0
+
+@export_group("Movement & Physics")
+@export_range(100, 1000, 5) var move_speed: float = 450.0
+@export_range(200, 1500, 10) var jump_force: float = 680.0
+@export_range(0.1, 1.0, 0.05) var jump_release_dampener: float = 0.4
+@export_range(0.0, 0.5, 0.01) var coyote_time: float = 0.1
+@export_range(0.0, 0.5, 0.01) var jump_buffer: float = 0.1
+@export_range(1.0, 3.0, 0.1) var fast_fall_gravity_multiplier: float = 1.4
+@export var max_air_jumps: int = 1
+
+@export_group("Wall Interaction")
+@export_range(50, 500, 5) var wall_slide_speed: float = 120.0
+@export_range(0.0, 0.5, 0.01) var wall_coyote_time: float = 0.05
+@export_range(500, 2500, 50) var wall_jump_force_x: float = 1650.0
+@export_range(200, 1500, 10) var wall_jump_force_y: float = 680.0
+
+@export_group("Dash")
+@export_range(500, 2500, 50) var dash_speed: float = 1400.0
+@export_range(0.05, 0.5, 0.01) var dash_duration: float = 0.15
+@export_range(0.1, 2.0, 0.05) var dash_cooldown: float = 0.5
+
+@export_group("Combat")
+@export var forward_attack_shape: Shape2D
+@export var upward_attack_shape: Shape2D
+@export_range(0.05, 1.0, 0.01) var attack_cooldown: float = 0.12
+@export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
+@export_range(100, 5000, 100) var attack_friction: float = 2000.0
+@export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
+@export_range(200, 1000, 10) var pogo_force: float = 450.0
+@export_range(10, 200, 5) var close_range_threshold: float = 75.0
+
 
 =====================================
 FILE: ./src/core/data/game_state_data.gd
@@ -7211,6 +7689,7 @@ func _fire_omni_burst(owner: BaseEntity) -> void:
 		if not is_instance_valid(shot):
 			continue
 
+		# config is now EnemyConfig
 		shot.damage = owner.entity_data.config.homing_shot_damage
 		shot.speed = owner.entity_data.config.homing_shot_speed
 		shot.lifespan = owner.entity_data.config.homing_shot_lifespan
@@ -7235,7 +7714,7 @@ extends GutTest
 # --- Constants ---
 const InputComponent = preload("res://src/entities/components/input_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const GutInputSender = preload("res://addons/gut/input_sender.gd")
 
 # --- Test Internals ---
@@ -7257,7 +7736,7 @@ func before_each():
 
 	var dependencies = {
 		"data_resource": PlayerStateData.new(),
-		"config": CombatConfig
+		"config": PlayerConfig # UPDATE
 	}
 	_input_component.setup(_mock_owner, dependencies)
 
@@ -7332,7 +7811,7 @@ extends GutTest
 # --- Constants ---
 const PlayerResourceComponent = preload("res://src/entities/player/components/player_resource_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const EventCatalog = preload("res://src/core/events/event_catalog.gd")
 
 # --- Test Internals ---
@@ -7357,7 +7836,7 @@ func before_each():
 	var mock_owner = Node.new()
 	add_child_autofree(mock_owner)
 	_player_data = PlayerStateData.new()
-	_player_data.config = CombatConfig
+	_player_data.config = PlayerConfig # UPDATE
 	# Explicitly set max charges for clarity in tests
 	_player_data.max_healing_charges = 3
 
@@ -7377,7 +7856,8 @@ func test_on_damage_dealt_increments_determination():
 
 func test_healing_charge_gained_at_threshold():
 	_player_data.healing_charges = 0
-	_player_data.determination_counter = CombatConfig.player_determination_per_charge - 1
+	# UPDATE: determination_per_charge (removed player_ prefix)
+	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
 
@@ -7389,13 +7869,14 @@ func test_healing_charge_gained_at_threshold():
 
 func test_healing_charges_are_capped():
 	_player_data.healing_charges = _player_data.max_healing_charges
-	_player_data.determination_counter = CombatConfig.player_determination_per_charge - 1
+	# UPDATE: determination_per_charge
+	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
 	assert_eq(_player_data.healing_charges, _player_data.max_healing_charges, "Charges should not exceed max.")
 	assert_eq(
 		_player_data.determination_counter,
-		CombatConfig.player_determination_per_charge - 1,
+		PlayerConfig.determination_per_charge - 1,
 		"Determination should not increment if charges are max."
 	)
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
@@ -7425,10 +7906,11 @@ extends GutTest
 const HealthComponent = preload("res://src/entities/components/health_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/api/combat/damage_info.gd")
-const CombatConfig = preload("res://src/data/combat_config.tres")
+const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
 const IFXManager = preload("res://src/api/interfaces/IFXManager.gd")
+const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _health_component: HealthComponent
@@ -7455,10 +7937,12 @@ func before_each() -> void:
 
 	# 3. Setup test subject
 	_mock_owner = CharacterBody2D.new()
+	# UPDATE: Add to player group so HealthComponent logic works correctly with PlayerConfig
+	_mock_owner.add_to_group(Identifiers.Groups.PLAYER)
 	add_child_autofree(_mock_owner)
 
 	_player_data = PlayerStateData.new()
-	_player_data.config = CombatConfig
+	_player_data.config = PlayerConfig # UPDATE
 	_player_data.max_health = 10
 	_player_data.health = 10
 
@@ -7470,7 +7954,7 @@ func before_each() -> void:
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": CombatConfig,
+		"config": PlayerConfig, # UPDATE
 		"services": _fake_services,
 		"hit_spark_effect": vfx
 	}
@@ -7562,7 +8046,7 @@ func test_health_component_fulfills_contract():
 	data.max_health = 10
 	var deps = {
 		"data_resource": data,
-		"config": preload("res://src/data/combat_config.tres"),
+		"config": preload("res://src/data/player_config.tres"), # UPDATE
 		"services": _fake_services,
 		"hit_spark_effect": preload("res://src/core/data/effects/player_hit_spark_effect.tres")
 	}
@@ -8591,6 +9075,49 @@ hit_stop_duration = 0.02
 
 
 =====================================
+FILE: ./src/data/player_config.tres
+=====================================
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/player_config.gd" id="1_script"]
+[ext_resource type="Shape2D" path="res://src/entities/player/data/forward_attack_shape.tres" id="2_shape"]
+[ext_resource type="Shape2D" path="res://src/entities/player/data/upward_attack_shape.tres" id="3_shape"]
+
+[resource]
+script = ExtResource("1_script")
+max_health = 5
+max_healing_charges = 1
+heal_duration = 2.0
+determination_per_charge = 10
+invincibility_duration = 1.5
+knockback_speed = 400.0
+knockback_duration = 0.1
+hazard_knockback_speed = 400.0
+move_speed = 450.0
+jump_force = 680.0
+jump_release_dampener = 0.4
+coyote_time = 0.1
+jump_buffer = 0.1
+fast_fall_gravity_multiplier = 1.4
+max_air_jumps = 1
+wall_slide_speed = 120.0
+wall_coyote_time = 0.05
+wall_jump_force_x = 1650.0
+wall_jump_force_y = 680.0
+dash_speed = 1400.0
+dash_duration = 0.15
+dash_cooldown = 0.5
+forward_attack_shape = ExtResource("2_shape")
+upward_attack_shape = ExtResource("3_shape")
+attack_cooldown = 0.12
+attack_duration = 0.1
+attack_friction = 2000.0
+charge_time = 0.35
+pogo_force = 450.0
+close_range_threshold = 75.0
+
+
+=====================================
 FILE: ./src/data/dialogue/dialogue_line.gd
 =====================================
 # src/data/dialogue/dialogue_line.gd
@@ -8653,60 +9180,6 @@ FILE: ./src/data/audio/sfx_player_impact.tres
 
 # TODO: Add impact audio samples and configure randomization.
 
-
-=====================================
-FILE: ./src/data/combat_config.tres
-=====================================
-[gd_resource type="Resource" script_class="CombatConfig" load_steps=4 format=3 uid="uid://kov03lmcorvh"]
-
-[ext_resource type="Script" uid="uid://bhpg5eaxemkw1" path="res://src/core/data/config/combat_config.gd" id="1_config"]
-[ext_resource type="Shape2D" uid="uid://c1b2d3e4f5g6h" path="res://src/entities/player/data/forward_attack_shape.tres" id="2_forward_shape"]
-[ext_resource type="Shape2D" uid="uid://c0dt7jqwtnbr" path="res://src/entities/player/data/upward_attack_shape.tres" id="3_upward_shape"]
-
-[resource]
-script = ExtResource("1_config")
-player_max_health = 5
-player_max_healing_charges = 1
-player_heal_duration = 2.0
-player_determination_per_charge = 10
-player_invincibility_duration = 1.5
-player_speed = 450.0
-player_jump_force = 680.0
-player_jump_release_dampener = 0.4
-player_coyote_time = 0.1
-player_jump_buffer = 0.1
-player_fast_fall_gravity_multiplier = 1.4
-player_max_air_jumps = 1
-player_wall_slide_speed = 120.0
-player_wall_coyote_time = 0.05
-player_wall_jump_force_x = 1650.0
-player_wall_jump_force_y = 680.0
-player_dash_speed = 1400.0
-player_dash_duration = 0.15
-player_dash_cooldown = 0.5
-player_forward_attack_shape = ExtResource("2_forward_shape")
-player_upward_attack_shape = ExtResource("3_upward_shape")
-player_attack_cooldown = 0.12
-player_attack_duration = 0.1
-player_attack_friction = 2000.0
-player_charge_time = 0.35
-player_pogo_force = 450.0
-player_knockback_speed = 400.0
-player_knockback_duration = 0.1
-player_hazard_knockback_speed = 400.0
-player_close_range_threshold = 75.0
-boss_health = 30
-boss_patrol_speed = 100.0
-boss_invincibility_duration = 0.1
-boss_lunge_speed = 1200.0
-homing_shot_damage = 1
-homing_shot_speed = 250.0
-homing_shot_lifespan = 10.0
-gravity = 1200.0
-player_melee_close_range_hit_stop_duration = 0.025
-player_damage_taken_hit_stop_duration = 0.04
-boss_phase_change_hit_stop_duration = 0.1
-boss_death_hit_stop_duration = 0.1
 
 =====================================
 FILE: ./src/data/layouts/level_layout.gd
@@ -8784,6 +9257,60 @@ terrain_data = [
 ]
 
 =====================================
+FILE: ./src/data/default_pool_manifest.tres
+=====================================
+[gd_resource type="Resource" script_class="PoolManifest" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/core/systems/pooling/pool_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/systems/pooling/pool_manifest.gd" id="2_man"]
+[ext_resource type="PackedScene" path="res://src/projectiles/player_shot.tscn" id="3_player_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/boss_shot.tscn" id="4_boss_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/turret_shot.tscn" id="5_minion_shot"]
+[ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
+[ext_resource type="PackedScene" path="res://src/vfx/hit_spark.tscn" id="7_spark"]
+
+[sub_resource type="Resource" id="Resource_player"]
+script = ExtResource("1_def")
+pool_key = &"player_shots"
+scene = ExtResource("3_player_shot")
+initial_size = 15
+
+[sub_resource type="Resource" id="Resource_boss"]
+script = ExtResource("1_def")
+pool_key = &"boss_shots"
+scene = ExtResource("4_boss_shot")
+initial_size = 30
+
+[sub_resource type="Resource" id="Resource_minion"]
+script = ExtResource("1_def")
+pool_key = &"minion_shots"
+scene = ExtResource("5_minion_shot")
+initial_size = 20
+
+[sub_resource type="Resource" id="Resource_homing"]
+script = ExtResource("1_def")
+pool_key = &"homing_boss_shots"
+scene = ExtResource("6_homing")
+initial_size = 40
+
+[sub_resource type="Resource" id="Resource_spark"]
+script = ExtResource("1_def")
+pool_key = &"hit_sparks"
+scene = ExtResource("7_spark")
+initial_size = 25
+
+[resource]
+script = ExtResource("2_man")
+pools = Array[ExtResource("1_def")]([
+    SubResource("Resource_player"),
+    SubResource("Resource_boss"),
+    SubResource("Resource_minion"),
+    SubResource("Resource_homing"),
+    SubResource("Resource_spark")
+])
+
+
+=====================================
 FILE: ./src/data/encounters/encounter_00.tres
 =====================================
 [gd_resource type="Resource" script_class="EncounterData" load_steps=9 format=3 uid="uid://4lptu40or7m1"]
@@ -8851,6 +9378,22 @@ extends Resource
 @export var intro_sequence: Array[SequenceStep] = []
 
 =====================================
+FILE: ./src/data/world_config.tres
+=====================================
+[gd_resource type="Resource" script_class="WorldConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/world_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+gravity = 1200.0
+hit_stop_player_melee_close = 0.025
+hit_stop_player_hurt = 0.04
+hit_stop_boss_phase_change = 0.1
+hit_stop_boss_death = 0.1
+
+
+=====================================
 FILE: ./src/data/effects/entity_hit_flash_effect.tres
 =====================================
 [gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://entity_hit_flash_effect"]
@@ -8864,6 +9407,24 @@ material = ExtResource("2_material")
 duration = 0.12
 target_scope = 0
 coalesce_window = 0.1
+
+=====================================
+FILE: ./src/data/enemy_config.tres
+=====================================
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+boss_health = 30
+boss_patrol_speed = 100.0
+boss_invincibility_duration = 0.1
+boss_lunge_speed = 1200.0
+homing_shot_damage = 1
+homing_shot_speed = 250.0
+homing_shot_lifespan = 10.0
+
 
 =====================================
 FILE: ./src/entities/base_entity.gd
@@ -8899,6 +9460,13 @@ func _ready() -> void:
 
 
 # --- Public Methods ---
+
+## The main entry point for self-construction.
+func build_entity() -> void:
+	_services = ServiceLocator
+	_on_build() 
+
+
 ## Retrieves a component from this entity by its script type or an interface it implements.
 func get_component(type: Script) -> IComponent:
 	if _components.has(type):
@@ -8923,6 +9491,14 @@ func inject_dependencies(p_services) -> void:
 
 
 func teardown() -> void:
+	# Auto-disconnect HealthComponent signals to prevent memory leaks
+	var hc = get_component(HealthComponent)
+	if is_instance_valid(hc):
+		if hc.died.is_connected(_on_entity_died):
+			hc.died.disconnect(_on_entity_died)
+		if hc.health_changed.is_connected(_on_health_changed):
+			hc.health_changed.disconnect(_on_health_changed)
+
 	for child in get_children():
 		if child is IComponent:
 			child.teardown()
@@ -8935,7 +9511,10 @@ func setup_components(
 		return
 
 	var base_shared_deps = shared_dependencies.duplicate()
-	base_shared_deps["services"] = _services
+	if _services:
+		base_shared_deps["services"] = _services
+	else:
+		base_shared_deps["services"] = ServiceLocator
 
 	for child in get_children():
 		if not (child is IComponent):
@@ -8966,6 +9545,14 @@ func setup_components(
 
 		if child.has_method("setup"):
 			child.setup(self, merged_deps)
+
+	# NEW: Auto-wire common components after setup
+	var hc = get_component(HealthComponent)
+	if is_instance_valid(hc):
+		if not hc.died.is_connected(_on_entity_died):
+			hc.died.connect(_on_entity_died)
+		if not hc.health_changed.is_connected(_on_health_changed):
+			hc.health_changed.connect(_on_health_changed)
 
 	_components_initialized = true
 
@@ -9006,9 +9593,19 @@ func fire_shot_at_player() -> void:
 
 
 # --- Protected Virtual Methods (for children to override) ---
-## A virtual method for child classes to implement their own tracking logic.
+
+func _on_build() -> void:
+	pass
+
 func _update_player_tracking() -> void:
-	pass # Default implementation does nothing.
+	pass 
+
+# NEW: Virtual signal handlers
+func _on_entity_died() -> void:
+	pass
+
+func _on_health_changed(_current: int, _max: int) -> void:
+	pass
 
 
 # --- Private Methods ---
@@ -9047,9 +9644,80 @@ func _cache_components_by_type() -> void:
 
 
 =====================================
+FILE: ./src/entities/common_states/state_entity_patrol.gd
+=====================================
+# src/entities/common_states/state_entity_patrol.gd
+## A generic state for moving an entity according to its MovementLogic.
+class_name StateEntityPatrol
+extends BaseState
+
+var _entity: BaseEntity
+
+func enter(_msg := {}) -> void:
+	_entity = owner as BaseEntity
+	# Reset timer if the entity has one for patrolling
+	if _entity.has_node("PatrolTimer"):
+		_entity.get_node("PatrolTimer").start()
+
+func process_physics(delta: float) -> void:
+	if not is_instance_valid(_entity):
+		return
+
+	# 1. Allow child classes (or injected logic) to check for state changes
+	if _check_interrupts():
+		return
+
+	# 2. Execute Movement Logic
+	var logic: MovementLogic
+	
+	# Polymorphic access to behavior.movement_logic
+	if "entity_data" in _entity:
+		var data = _entity.entity_data
+		if "behavior" in data and data.behavior and data.behavior.movement_logic:
+			logic = data.behavior.movement_logic
+	
+	if is_instance_valid(logic):
+		# We pass the entity_data to the logic. Both Minion and Boss data 
+		# are compatible with what MovementLogic expects (services, config, facing_direction).
+		_entity.velocity = logic.execute(delta, _entity, _entity.entity_data)
+	else:
+		# Fallback if no logic assigned
+		_entity.velocity.x = 0
+		if not _entity.is_on_floor():
+			_entity.velocity.y += 980 * delta
+
+# Virtual method for subclasses to override
+func _check_interrupts() -> bool:
+	return false
+
+
+=====================================
+FILE: ./src/entities/common_states/state_entity_idle.gd
+=====================================
+# src/entities/common_states/state_entity_idle.gd
+## A generic state that stops horizontal movement and checks for interruptions.
+class_name StateEntityIdle
+extends BaseState
+
+var _entity: BaseEntity
+
+func enter(_msg := {}) -> void:
+	_entity = owner as BaseEntity
+	_entity.velocity.x = 0
+
+func process_physics(_delta: float) -> void:
+	if _check_interrupts():
+		return
+
+# Virtual method for subclasses (AI logic)
+func _check_interrupts() -> bool:
+	return false
+
+
+=====================================
 FILE: ./src/entities/archetypes/player_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=10 format=3 uid="uid://player_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=13 format=3 uid="uid://player_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
@@ -9057,25 +9725,36 @@ FILE: ./src/entities/archetypes/player_archetype.tres
 [ext_resource type="PackedScene" uid="uid://c7d8e9f0g1h2" path="res://src/entities/components/input_component.tscn" id="4_input"]
 [ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="5_fsm"]
 [ext_resource type="PackedScene" uid="uid://o9p0q1r2s3t4" path="res://src/entities/player/components/player_physics_component.tscn" id="6_phys"]
-[ext_resource type="PackedScene" uid="uid://u5v6w7x8y9z0" path="res://src/entities/player/components/player_ability_component.tscn" id="7_abil"]
 [ext_resource type="PackedScene" uid="uid://a1b2c3d4e5f6" path="res://src/entities/player/components/player_resource_component.tscn" id="8_res"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="9_fx"]
+
+; --- New Split Components ---
+[ext_resource type="PackedScene" path="res://src/entities/player/components/jump_component.tscn" id="10_jump"]
+[ext_resource type="PackedScene" path="res://src/entities/player/components/dash_component.tscn" id="11_dash"]
+[ext_resource type="PackedScene" path="res://src/entities/player/components/heal_component.tscn" id="12_heal"]
+[ext_resource type="PackedScene" path="res://src/entities/player/components/charge_attack_component.tscn" id="13_charge"]
 
 [resource]
 script = ExtResource("1_archetype")
 components = [
-	; --- Core Components ---
+	; --- Core ---
 	ExtResource("2_health"), 
 	ExtResource("3_combat"), 
 	ExtResource("4_input"), 
 	ExtResource("5_fsm"), 
 	ExtResource("9_fx"), 
 	
-	; --- Player-Specific Components ---
+	; --- Physics & Resources ---
 	ExtResource("6_phys"), 
-	ExtResource("7_abil"), 
-	ExtResource("8_res")
+	ExtResource("8_res"),
+	
+	; --- Abilities (Split) ---
+	ExtResource("10_jump"),
+	ExtResource("11_dash"),
+	ExtResource("12_heal"),
+	ExtResource("13_charge")
 ]
+
 
 =====================================
 FILE: ./src/entities/archetypes/boss_archetype.tres
@@ -9124,190 +9803,6 @@ extends Resource
 ## An array of PackedScene files, where each scene is a component
 ## (e.g., HealthComponent.tscn, InputComponent.tscn).
 @export var components: Array[PackedScene] = []
-
-
-=====================================
-FILE: ./src/entities/entity_builder.gd
-=====================================
-# src/entities/entity_builder.gd
-## A stateless utility responsible for the construction and dependency wiring
-## of all component-based entities. This separates the "setup" logic from
-## the entity's "runtime" logic.
-class_name EntityBuilder
-extends RefCounted
-
-# The main entry point. Takes a freshly instantiated entity and performs
-## all necessary component setup and signal wiring.
-static func build(entity: BaseEntity) -> void:
-	if entity is Player:
-		_build_player(entity)
-	elif entity is BaseBoss:
-		_build_boss(entity)
-	elif entity is Minion:
-		_build_minion(entity)
-	else:
-		push_warning("EntityBuilder: No build logic found for entity type: %s" % entity)
-
-# --- Private Builder Methods ---
-
-static func _build_player(player: Player) -> void:
-	player.entity_data = PlayerStateData.new()
-	assert(is_instance_valid(player._services), "Player requires a ServiceLocator.")
-	player.entity_data.config = player._services.combat_config
-
-	var hc: HealthComponent = player.get_component(HealthComponent)
-	var sm: BaseStateMachine = player.get_component(BaseStateMachine)
-	var fc: FXComponent = player.get_component(FXComponent)
-	var cc: CombatComponent = player.get_component(CombatComponent)
-	var rc: PlayerResourceComponent = player.get_component(PlayerResourceComponent)
-
-	var shared_deps := {
-		"data_resource": player.entity_data, 
-		"config": player.entity_data.config,
-		"services": player._services
-		}
-
-	var states: Dictionary = {
-		Identifiers.PlayerStates.MOVE: player.state_move_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.FALL: player.state_fall_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.JUMP: player.state_jump_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.DASH: player.state_dash_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.WALL_SLIDE: player.state_wall_slide_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.ATTACK: player.state_attack_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.HURT: player.state_hurt_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.HEAL: player.state_heal_script.new(player, sm, player.entity_data),
-		Identifiers.PlayerStates.POGO: player.state_pogo_script.new(player, sm, player.entity_data),
-	}
-
-	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.PlayerStates.FALL},
-		fc: {
-			"visual_node": player.visual_sprite, 
-			"hit_effect": player.hit_flash_effect,
-			"fx_manager": player._services.fx_manager
-			},
-		hc: {
-			"hit_spark_effect": player.hit_spark_effect,
-			"fx_manager": player._services.fx_manager,
-			"event_bus": player._services.event_bus
-			},
-		cc: {
-			"object_pool": player._services.object_pool,
-			"fx_manager": player._services.fx_manager,
-			"combat_utils": player._services.combat_utils,
-			"services": player._services
-			},
-		rc: {
-			"event_bus": player._services.event_bus
-			}
-	}
-
-	player.setup_components(shared_deps, per_component_deps)
-
-	player.melee_hitbox.body_entered.connect(player._on_melee_hitbox_body_entered)
-	player.pogo_hitbox.body_entered.connect(player._on_pogo_hitbox_body_entered)
-	player.melee_hitbox.area_entered.connect(player._on_hitbox_area_entered)
-	player.pogo_hitbox.area_entered.connect(player._on_hitbox_area_entered)
-	player.hurtbox.area_entered.connect(player._on_hurtbox_area_entered)
-
-	hc.health_changed.connect(player._on_health_component_health_changed)
-	hc.died.connect(player._on_health_component_died)
-
-	cc.damage_dealt.connect(rc.on_damage_dealt)
-	cc.pogo_bounce_requested.connect(player._on_pogo_bounce_requested)
-
-	sm.melee_hitbox_toggled.connect(player._enable_melee_hitbox)
-	sm.pogo_hitbox_toggled.connect(player._enable_pogo_hitbox)
-
-	player.healing_timer.timeout.connect(player._on_healing_timer_timeout)
-
-
-static func _build_boss(boss: BaseBoss) -> void:
-	var hc: HealthComponent = boss.get_component(HealthComponent)
-	var sm: BaseStateMachine = boss.get_component(BaseStateMachine)
-	var fc: FXComponent = boss.get_component(FXComponent)
-
-	var shared_deps := {
-		"data_resource": boss.entity_data, 
-		"config": boss.entity_data.config,
-		"services": boss._services
-		}
-
-	var states: Dictionary = {
-		Identifiers.BossStates.IDLE: boss.state_idle_script.new(boss, sm, boss.entity_data),
-		Identifiers.BossStates.ATTACK: boss.state_attack_script.new(boss, sm, boss.entity_data),
-		Identifiers.BossStates.COOLDOWN: boss.state_cooldown_script.new(boss, sm, boss.entity_data),
-		Identifiers.BossStates.PATROL: boss.state_patrol_script.new(boss, sm, boss.entity_data),
-		Identifiers.BossStates.LUNGE: boss.state_lunge_script.new(boss, sm, boss.entity_data),
-		"melee": boss.state_melee_script.new(boss, sm, boss.entity_data),
-	}
-
-	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.BossStates.COOLDOWN},
-		fc: {
-			"visual_node": boss.visual_sprite, 
-			"hit_effect": boss.hit_flash_effect,
-			"fx_manager": boss._services.fx_manager
-			},
-		hc: {
-			"hit_spark_effect": boss.hit_spark_effect,
-			"fx_manager": boss._services.fx_manager,
-			"event_bus": boss._services.event_bus
-			}
-	}
-
-	boss.setup_components(shared_deps, per_component_deps)
-
-	hc.health_changed.connect(boss._on_health_component_health_changed)
-	hc.died.connect(boss._on_health_component_died)
-	hc.health_threshold_reached.connect(boss._on_health_threshold_reached)
-
-
-static func _build_minion(minion: Minion) -> void:
-	var circle_shape := CircleShape2D.new()
-	circle_shape.radius = minion.entity_data.behavior.detection_radius
-	minion.range_detector_shape.shape = circle_shape
-
-	var hc: HealthComponent = minion.get_component(HealthComponent)
-	var sm: BaseStateMachine = minion.get_component(BaseStateMachine)
-	var fc: FXComponent = minion.get_component(FXComponent)
-
-	var shared_deps := {
-		"data_resource": minion.entity_data,
-		"config": minion._services.combat_config,
-		"services": minion._services
-	}
-
-	var states: Dictionary = {
-		Identifiers.MinionStates.IDLE:
-		load("res://src/entities/minions/states/state_minion_idle.gd").new(minion, sm, minion.entity_data),
-		Identifiers.MinionStates.ATTACK:
-		load("res://src/entities/minions/states/state_minion_attack.gd").new(minion, sm, minion.entity_data),
-		Identifiers.MinionStates.FALL:
-		load("res://src/entities/states/state_entity_fall.gd").new(minion, sm, minion.entity_data),
-		"melee":
-		load("res://src/entities/minions/states/state_minion_melee.gd").new(minion, sm, minion.entity_data),
-		"patrol":
-		load("res://src/entities/minions/states/state_minion_patrol.gd").new(minion, sm, minion.entity_data),
-	}
-
-	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": minion.entity_data.behavior.initial_state_key},
-		fc: {
-			"visual_node": minion.visual, 
-			"hit_effect": minion.hit_flash_effect,
-			"fx_manager": minion._services.fx_manager
-			},
-		hc: {
-			"hit_spark_effect": minion.hit_spark_effect,
-			"fx_manager": minion._services.fx_manager,
-			"event_bus": minion._services.event_bus
-			}
-	}
-
-	minion.setup_components(shared_deps, per_component_deps)
-	
-	hc.died.connect(minion._on_health_component_died)
 
 
 =====================================
@@ -9431,8 +9926,12 @@ FILE: ./src/entities/boss/boss_state_data.gd
 class_name BossStateData
 extends Resource
 
-# --- Configuration Reference ---
-var config: CombatConfig
+# --- Configuration References ---
+# UPDATE: Added behavior and services for MovementLogic compatibility
+var behavior: BossBehavior
+var services: ServiceLocator
+var config: EnemyConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 30
@@ -9476,7 +9975,7 @@ radius = 100.0
 
 [node name="BaseBoss" type="CharacterBody2D"]
 collision_layer = 12
-collision_mask = 131
+collision_mask = 138
 script = ExtResource("1_26qjf")
 behavior = ExtResource("19_default_behavior")
 hit_flash_effect = ExtResource("2_hit_flash")
@@ -9575,24 +10074,27 @@ func _on_attack_finished() -> void:
 FILE: ./src/entities/boss/states/state_boss_idle.gd
 =====================================
 # src/entities/boss/states/state_boss_idle.gd
-## A transient state that immediately selects the next attack pattern.
+## A specialized idle state for the Boss.
+## It immediately selects the next attack pattern (Transient State).
 class_name BossStateIdle
-extends BaseState
+extends StateEntityIdle
 
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	
+	# Boss Idle is unique: it immediately decides what to do next.
+	# We can do this directly in enter() or via the interrupt check.
+	_decide_next_action()
 
-func enter(_msg := {}) -> void:
-	owner.velocity.x = 0
-
-	if owner.current_attack_patterns.is_empty():
-		push_warning(
-			"BossStateIdle: No attack patterns defined for current phase. Defaulting to Cooldown."
-		)
+func _decide_next_action() -> void:
+	var boss = owner as BaseBoss
+	if boss.current_attack_patterns.is_empty():
+		push_warning("BossStateIdle: No attack patterns. Defaulting to Cooldown.")
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
 		return
 
-	var chosen_pattern: AttackPattern = owner.current_attack_patterns.pick_random()
+	var chosen_pattern: AttackPattern = boss.current_attack_patterns.pick_random()
 	state_machine.change_state(Identifiers.BossStates.ATTACK, {"pattern": chosen_pattern})
-
 
 =====================================
 FILE: ./src/entities/boss/states/state_boss_lunge.gd
@@ -9633,8 +10135,8 @@ func exit() -> void:
 func process_physics(delta: float) -> void:
 	_lunge_duration -= delta
 	if _lunge_duration <= 0:
-		# This is the key change: transition to melee instead of cooldown.
-		state_machine.change_state("melee")
+		# UPDATE: Use constant
+		state_machine.change_state(Identifiers.CommonStates.MELEE)
 
 =====================================
 FILE: ./src/entities/boss/states/state_boss_cooldown.gd
@@ -9730,23 +10232,22 @@ func _start_telegraph_and_attack() -> void:
 FILE: ./src/entities/boss/states/state_boss_patrol.gd
 =====================================
 # src/entities/boss/states/state_boss_patrol.gd
-## A simple state for moving the boss back and forth between attacks.
-extends BaseState
+## A specialized patrol state for the Boss that inherits generic movement logic
+## but adds specific interrupt conditions (Close Range Melee).
 class_name BossStatePatrol
+extends StateEntityPatrol
 
 const QuickSwipeData = preload("res://src/data/combat/attacks/boss_quick_swipe.tres")
 
-func enter(_msg := {}) -> void:
-	owner.patrol_timer.start()
-
-
-func process_physics(_delta: float) -> void:
+# Override the virtual method from StateEntityPatrol
+func _check_interrupts() -> bool:
 	# High-priority check: if player gets too close, interrupt patrol to attack.
 	if state_data.is_player_in_close_range and owner.cooldown_timer.is_stopped():
-		state_machine.change_state("melee", {"attack_data": QuickSwipeData})
-		return
-		
-	owner.velocity.x = state_data.facing_direction * state_data.config.boss_patrol_speed
+		# UPDATE: Use constant
+		state_machine.change_state(Identifiers.CommonStates.MELEE, {"attack_data": QuickSwipeData})
+		return true
+	
+	return false
 
 
 =====================================
@@ -9778,6 +10279,7 @@ extends BaseEntity
 @onready var visual_sprite: ColorRect = $ColorRect
 @onready var cooldown_timer: Timer = $CooldownTimer
 @onready var patrol_timer: Timer = $PatrolTimer
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
 # --- Public Member Variables ---
 var current_attack_patterns: Array[AttackPattern] = []
@@ -9801,28 +10303,75 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	# --- PARANOID COLLISION FIX ---
+	# 1. Force Layers
+	collision_layer = 4 # Enemy(4) ONLY
+	collision_mask = 138 # Platforms(2) + Hazard(8) + SolidWorld(128)
+	
+	# 2. Force Groups
+	if not is_in_group(Identifiers.Groups.ENEMY):
+		add_to_group(Identifiers.Groups.ENEMY)
+	
+	# 3. Force Shape Active
+	if is_instance_valid(collision_shape):
+		collision_shape.disabled = false
+	else:
+		push_error("BOSS CRITICAL: CollisionShape2D not found!")
+
 	_initialize_data()
-	EntityBuilder.build(self)
-
-
-func _exit_tree() -> void:
-	teardown()
+	
+	# Trigger internal build
+	build_entity()
 
 
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	if not is_on_floor():
-		velocity.y += entity_data.config.gravity * delta
+		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
 
+
+# --- Internal Build Logic ---
+func _on_build() -> void:
+	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if (
-		is_instance_valid(sm) and is_instance_valid(sm.current_state)
-		and sm.current_state == sm.states[Identifiers.BossStates.PATROL]
-		and is_on_wall()
-	):
-		entity_data.facing_direction *= -1.0
+	var fc: FXComponent = get_component(FXComponent)
+
+	var shared_deps := {
+		"data_resource": entity_data, 
+		"config": entity_data.config,
+		"services": _services
+		}
+
+	var states: Dictionary = {
+		Identifiers.BossStates.IDLE: state_idle_script.new(self, sm, entity_data),
+		Identifiers.BossStates.ATTACK: state_attack_script.new(self, sm, entity_data),
+		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
+		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
+		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
+		Identifiers.CommonStates.MELEE: state_melee_script.new(self, sm, entity_data),
+	}
+
+	var per_component_deps := {
+		sm: {"states": states, "initial_state_key": Identifiers.BossStates.COOLDOWN},
+		fc: {
+			"visual_node": visual_sprite, 
+			"hit_effect": hit_flash_effect,
+			"fx_manager": _services.fx_manager
+			},
+		hc: {
+			"hit_spark_effect": hit_spark_effect,
+			"fx_manager": _services.fx_manager,
+			"event_bus": _services.event_bus
+			}
+	}
+
+	setup_components(shared_deps, per_component_deps)
+
+	if hc:
+		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
+			hc.health_threshold_reached.connect(_on_health_threshold_reached)
 
 
 # --- Public Methods ---
@@ -9830,10 +10379,6 @@ func teardown() -> void:
 	set_physics_process(false)
 	var hc: HealthComponent = get_component(HealthComponent)
 	if is_instance_valid(hc):
-		if hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.disconnect(_on_health_component_health_changed)
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
 		if hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.disconnect(_on_health_threshold_reached)
 
@@ -9845,6 +10390,17 @@ func get_health_thresholds() -> Array[float]:
 	if is_instance_valid(behavior):
 		return [behavior.phase_2_threshold, behavior.phase_3_threshold]
 	return []
+
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
+
+func _on_health_changed(current: int, max_val: int) -> void:
+	var ev := BossHealthChangedEvent.new()
+	ev.current_health = current
+	ev.max_health = max_val
+	_services.event_bus.emit(EventCatalog.BOSS_HEALTH_CHANGED, ev)
 
 
 # --- Private Methods ---
@@ -9869,13 +10425,16 @@ func _die() -> void:
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
-	_services.fx_manager.request_hit_stop(entity_data.config.boss_death_hit_stop_duration)
+	
+	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
 		fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 
-	_services.event_bus.emit(EventCatalog.BOSS_DIED, {"boss_node": self})
+	var ev = BossDiedEvent.new()
+	ev.boss_node = self
+	_services.event_bus.emit(EventCatalog.BOSS_DIED, ev)
 
 
 func _initialize_data() -> void:
@@ -9884,8 +10443,16 @@ func _initialize_data() -> void:
 	if is_instance_valid(behavior):
 		current_attack_patterns = behavior.phase_1_patterns
 	entity_data = BossStateData.new()
-	assert(is_instance_valid(_services), "BaseBoss requires a ServiceLocator.")
-	entity_data.config = _services.combat_config
+	
+	if not _services:
+		_services = ServiceLocator
+
+	entity_data.config = _services.enemy_config
+	entity_data.world_config = _services.world_config
+	
+	entity_data.behavior = behavior
+	entity_data.services = _services
+	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
 
@@ -9927,12 +10494,14 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 				current_attack_patterns = behavior.phase_3_patterns
 		if is_instance_valid(phase_change_shake_effect):
 			_services.fx_manager.request_screen_shake(phase_change_shake_effect)
+		
 		_services.fx_manager.request_hit_stop(
-			entity_data.config.boss_phase_change_hit_stop_duration
+			entity_data.world_config.hit_stop_boss_phase_change
 		)
-		_services.event_bus.emit(
-			EventCatalog.BOSS_PHASE_CHANGED, {"phases_remaining": phases_remaining}
-		)
+		
+		var ev = BossPhaseChangedEvent.new()
+		ev.phases_remaining = phases_remaining
+		_services.event_bus.emit(EventCatalog.BOSS_PHASE_CHANGED, ev)
 
 
 func _on_cooldown_timer_timeout() -> void:
@@ -9961,7 +10530,7 @@ func _on_health_component_died() -> void:
 =====================================
 FILE: ./src/entities/boss/data/default_boss_behavior.tres
 =====================================
-[gd_resource type="Resource" script_class="BossBehavior" load_steps=8 format=3 uid="uid://cypy26d84f23b"]
+[gd_resource type="Resource" script_class="BossBehavior" load_steps=9 format=3 uid="uid://cypy26d84f23b"]
 
 [ext_resource type="Script" uid="uid://dni2it8b687id" path="res://src/entities/boss/data/boss_behavior.gd" id="1_behavior_script"]
 [ext_resource type="Script" uid="uid://dy4xl0q65hagu" path="res://src/entities/boss/attack_patterns/attack_pattern.gd" id="1_pfqfc"]
@@ -9970,15 +10539,29 @@ FILE: ./src/entities/boss/data/default_boss_behavior.tres
 [ext_resource type="Resource" uid="uid://y6g5o6f7h8ja" path="res://src/entities/boss/attack_patterns/lunge_attack.tres" id="4_pattern_lunge"]
 [ext_resource type="Resource" uid="uid://01x2y3a4b5c6" path="res://src/entities/boss/attack_patterns/volley_5_shot.tres" id="5_pattern_volley5"]
 [ext_resource type="Resource" uid="uid://dibqnlm2wg88d" path="res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres" id="6_pattern_homing"]
+[ext_resource type="Resource" path="res://src/entities/boss/data/boss_patrol_movement.tres" id="7_movement_logic"]
 
 [resource]
 script = ExtResource("1_behavior_script")
 phase_2_threshold = 0.7
 phase_3_threshold = 0.4
+movement_logic = ExtResource("7_movement_logic")
 projectile_pool_key = &"boss_shots"
 phase_1_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("2_pattern_single")])
 phase_2_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("3_pattern_volley3"), ExtResource("4_pattern_lunge")])
 phase_3_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("5_pattern_volley5"), ExtResource("4_pattern_lunge"), ExtResource("6_pattern_homing")])
+
+
+=====================================
+FILE: ./src/entities/boss/data/boss_patrol_movement.tres
+=====================================
+[gd_resource type="Resource" script_class="PatrolMovementLogic" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/minions/movement_logic/patrol_movement_logic.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+
 
 =====================================
 FILE: ./src/entities/boss/data/boss_behavior.gd
@@ -9986,10 +10569,6 @@ FILE: ./src/entities/boss/data/boss_behavior.gd
 # src/entities/boss/data/boss_behavior.gd
 @tool
 ## A data resource that defines a boss's complete combat behavior.
-##
-## This encapsulates phase health thresholds and the specific attack patterns
-## used in each phase, allowing for the creation of varied boss types without
-## changing the core BaseBoss scene or script.
 class_name BossBehavior
 extends Resource
 
@@ -9997,12 +10576,16 @@ extends Resource
 @export_range(0.0, 1.0, 0.01) var phase_2_threshold: float = 0.7
 @export_range(0.0, 1.0, 0.01) var phase_3_threshold: float = 0.4
 
+@export_group("Movement")
+## Defines how the boss moves during the Patrol state.
+@export var movement_logic: MovementLogic
+
 @export_group("Attack Patterns")
-## The StringName key for the ObjectPool where this boss's projectiles are stored.
 @export var projectile_pool_key: StringName = &"boss_shots"
 @export var phase_1_patterns: Array[AttackPattern] = []
 @export var phase_2_patterns: Array[AttackPattern] = []
 @export var phase_3_patterns: Array[AttackPattern] = []
+
 
 =====================================
 FILE: ./src/entities/README.md
@@ -10271,7 +10854,7 @@ var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
 var _combat_utils
-var _services
+var _services: ServiceLocator
 
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
@@ -10300,7 +10883,8 @@ func teardown() -> void:
 
 ## Fires a player projectile from the object pool.
 func fire_shot() -> void:
-	p_data.attack_cooldown_timer = p_data.config.player_attack_cooldown
+	# UPDATE: config.attack_cooldown
+	p_data.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
 	if not shot:
@@ -10336,7 +10920,9 @@ func trigger_melee_attack(target_body: Node) -> void:
 		var damage_info = DamageInfo.new()
 		damage_info.source_node = owner_node
 		var distance = owner_node.global_position.distance_to(target_body.global_position)
-		var is_close_range = distance <= p_data.config.player_close_range_threshold
+		
+		# UPDATE: config.close_range_threshold
+		var is_close_range = distance <= p_data.config.close_range_threshold
 		damage_info.amount = 5 if is_close_range else 1
 		damage_info.impact_position = target_body.global_position
 		damage_info.impact_normal = (target_body.global_position - owner_node.global_position).normalized()
@@ -10345,8 +10931,9 @@ func trigger_melee_attack(target_body: Node) -> void:
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 			if is_close_range:
+				# UPDATE: world_config.hit_stop_player_melee_close
 				_fx_manager.request_hit_stop(
-					p_data.config.player_melee_close_range_hit_stop_duration
+					p_data.world_config.hit_stop_player_melee_close
 				)
 
 
@@ -10476,7 +11063,7 @@ func _notification(what: int) -> void:
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
     self.owner_node = p_owner as CharacterBody2D
     self.entity_data = p_dependencies.get("data_resource")
-    var cfg: CombatConfig = p_dependencies.get("config")
+    var cfg = p_dependencies.get("config") # Type is Variant (PlayerConfig or EnemyConfig)
     
     self._fx_manager = p_dependencies.get("fx_manager")
     self._event_bus = p_dependencies.get("event_bus")
@@ -10487,12 +11074,20 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
         return
 
     _max_health = entity_data.max_health
+    
+    # UPDATE: Handle polymorphic config logic
     if owner_node.is_in_group(Identifiers.Groups.PLAYER):
-        _invincibility_duration = cfg.player_invincibility_duration
-        _knockback_speed = cfg.player_knockback_speed
-        _hazard_knockback_speed = cfg.player_hazard_knockback_speed
+        # cfg is PlayerConfig
+        _invincibility_duration = cfg.invincibility_duration
+        _knockback_speed = cfg.knockback_speed
+        _hazard_knockback_speed = cfg.hazard_knockback_speed
     else:
-        _invincibility_duration = cfg.boss_invincibility_duration
+        # cfg is EnemyConfig (or old CombatConfig for minion transiently)
+        if cfg.get("boss_invincibility_duration") != null:
+            _invincibility_duration = cfg.boss_invincibility_duration
+        else:
+            _invincibility_duration = 0.0
+            
         _knockback_speed = 0
         _hazard_knockback_speed = 0
 
@@ -10599,17 +11194,13 @@ FILE: ./src/entities/components/input_component.gd
 # src/entities/components/input_component.gd
 @tool
 ## A component that centralizes all raw input polling.
-##
-## It reads from Godot's Input singleton each frame and populates a buffer
-## dictionary. Other components and states read from this buffer, decoupling
-## them from the global Input singleton.
 class_name InputComponent
 extends IComponent
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
 var p_data: PlayerStateData
-var _config: CombatConfig  # Internal reference to the injected config
+var _config # Type removed for refactor compatibility
 
 ## A buffer dictionary populated each frame with the current input state.
 var buffer: Dictionary = {}
@@ -10618,32 +11209,23 @@ var buffer: Dictionary = {}
 
 
 func _ready() -> void:
-	# A lower number runs earlier in the physics step.
-	# This ensures the buffer is populated before other components try to read it.
 	process_priority = -100
 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(owner_node):
-		return  # Guard against post-teardown calls
+		return
 
-	# 1. Clear the buffer at the start of the frame.
 	buffer.clear()
-
-	# 2. Populate the buffer with the current input state.
 	buffer["move_axis"] = Input.get_axis("ui_left", "ui_right")
-
 	buffer["up"] = Input.is_action_pressed("ui_up")
 	buffer["down"] = Input.is_action_pressed("ui_down")
-
 	buffer["jump_just_pressed"] = Input.is_action_just_pressed("ui_jump")
 	buffer["jump_held"] = Input.is_action_pressed("ui_jump")
 	buffer["jump_released"] = Input.is_action_just_released("ui_jump")
-
 	buffer["attack_pressed"] = Input.is_action_pressed("ui_attack")
 	buffer["attack_just_pressed"] = Input.is_action_just_pressed("ui_attack")
 	buffer["attack_released"] = Input.is_action_just_released("ui_attack")
-
 	buffer["dash_pressed"] = Input.is_action_just_pressed("ui_dash")
 
 
@@ -10661,7 +11243,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 
 func teardown() -> void:
-	set_physics_process(false)  # Immediately stop processing
+	set_physics_process(false)
 	owner_node = null
 	p_data = null
 	_config = null
@@ -11109,8 +11691,8 @@ func process_physics(delta: float) -> void:
 	if not is_instance_valid(_entity):
 		return
 
-	# Apply gravity
-	var gravity: float = _entity._services.combat_config.gravity
+	# UPDATE: gravity comes from world_config
+	var gravity: float = _entity._services.world_config.gravity
 	_entity.velocity.y += gravity * delta
 	
 	# Apply horizontal friction/drag
@@ -11123,7 +11705,6 @@ func process_physics(delta: float) -> void:
 			idle_state_key = Identifiers.BossStates.IDLE
 		
 		state_machine.change_state(idle_state_key)
-
 
 =====================================
 FILE: ./src/entities/minions/minion.gd
@@ -11141,6 +11722,13 @@ extends BaseEntity
 @export var hit_flash_effect: ShaderEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
+
+@export_group("State Scripts")
+@export var state_idle_script: Script = preload("res://src/entities/minions/states/state_minion_idle.gd")
+@export var state_attack_script: Script = preload("res://src/entities/minions/states/state_minion_attack.gd")
+@export var state_melee_script: Script = preload("res://src/entities/minions/states/state_minion_melee.gd")
+@export var state_patrol_script: Script = preload("res://src/entities/minions/states/state_minion_patrol.gd")
+@export var state_fall_script: Script = preload("res://src/entities/states/state_entity_fall.gd")
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -11166,16 +11754,22 @@ func _ready() -> void:
 		return
 
 	_initialize_data()
-	EntityBuilder.build(self)
+	build_entity()
+	
+	# HARD FIX: If anchored, disable floor logic entirely to prevent "sliding"
+	if entity_data.behavior.is_anchored:
+		motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 
 
 func _physics_process(delta: float) -> void:
 	if _is_dead or not is_instance_valid(entity_data):
 		return
 	
-	# Only apply gravity if the entity is not anchored (i.e., it's a ground unit).
-	if not entity_data.behavior.is_anchored and not is_on_floor():
-		velocity.y += entity_data.services.combat_config.gravity * delta
+	# FIX: Force zero velocity if anchored to prevent "drift"
+	if entity_data.behavior.is_anchored:
+		velocity = Vector2.ZERO
+	elif not is_on_floor():
+		velocity.y += entity_data.world_config.gravity * delta
 		
 	move_and_slide()
 
@@ -11187,16 +11781,11 @@ func _notification(what: int) -> void:
 
 # --- Public Methods ---
 func teardown() -> void:
-	var hc: HealthComponent = get_component(HealthComponent)
-	if is_instance_valid(hc):
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
-
+	# Note: Health signals handled by BaseEntity
 	super.teardown()
 	entity_data = null
 
 
-## A public method for states to request the minion updates its facing direction.
 func update_player_tracking() -> void:
 	_update_player_tracking()
 
@@ -11211,6 +11800,64 @@ func deactivate() -> void:
 	set_physics_process(false)
 	$RangeDetector.monitoring = false
 
+
+# --- Internal Build Logic ---
+func _on_build() -> void:
+	var circle_shape := CircleShape2D.new()
+	circle_shape.radius = entity_data.behavior.detection_radius
+	range_detector_shape.shape = circle_shape
+
+	var hc: HealthComponent = get_component(HealthComponent)
+	var sm: BaseStateMachine = get_component(BaseStateMachine)
+	var fc: FXComponent = get_component(FXComponent)
+
+	var shared_deps := {
+		"data_resource": entity_data,
+		"config": entity_data.config,
+		"services": _services
+	}
+
+	var states: Dictionary = {
+		Identifiers.MinionStates.IDLE:
+		_safe_script(state_idle_script, "res://src/entities/minions/states/state_minion_idle.gd").new(self, sm, entity_data),
+		Identifiers.MinionStates.ATTACK:
+		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
+		Identifiers.MinionStates.FALL:
+		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
+		Identifiers.CommonStates.MELEE:
+		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
+		Identifiers.CommonStates.PATROL:
+		_safe_script(state_patrol_script, "res://src/entities/minions/states/state_minion_patrol.gd").new(self, sm, entity_data),
+	}
+
+	var per_component_deps := {
+		sm: {"states": states, "initial_state_key": entity_data.behavior.initial_state_key},
+		fc: {
+			"visual_node": visual, 
+			"hit_effect": hit_flash_effect,
+			"fx_manager": _services.fx_manager
+			},
+		hc: {
+			"hit_spark_effect": hit_spark_effect,
+			"fx_manager": _services.fx_manager,
+			"event_bus": _services.event_bus
+			}
+	}
+
+	setup_components(shared_deps, per_component_deps)
+	
+	# Auto-wire health handled by BaseEntity
+
+
+func _safe_script(script_ref: Script, fallback_path: String) -> Script:
+	if script_ref:
+		return script_ref
+	return load(fallback_path)
+
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
 
 # --- Private Methods ---
 func _die() -> void:
@@ -11238,13 +11885,17 @@ func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
 	visual.color = Palette.COLOR_TERRAIN_SECONDARY
 	entity_data = MinionStateData.new()
-	assert(is_instance_valid(_services), "Minion requires a ServiceLocator.")
+	
+	if not _services:
+		_services = ServiceLocator
 
 	assert(is_instance_valid(behavior), "Minion requires a valid MinionBehavior resource.")
 	entity_data.behavior = behavior
 	entity_data.max_health = behavior.max_health
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 	entity_data.services = _services
+	entity_data.config = _services.enemy_config
+	entity_data.world_config = _services.world_config
 
 
 func _update_player_tracking() -> void:
@@ -11308,36 +11959,33 @@ FILE: ./src/entities/minions/movement_logic/stationary_movement_logic.gd
 =====================================
 # src/entities/minions/movement_logic/stationary_movement_logic.gd
 @tool
-## A concrete movement strategy where the minion does not move at all.
+## A concrete movement strategy where the entity does not move at all.
 class_name StationaryMovementLogic
 extends MovementLogic
 
 
-## Returns zero velocity, effectively keeping the minion stationary.
-func execute(_delta: float, _minion: Minion, _state_data: MinionStateData) -> Vector2:
+## Returns zero velocity, effectively keeping the entity stationary.
+func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
 	return Vector2.ZERO
-
 
 =====================================
 FILE: ./src/entities/minions/movement_logic/movement_logic.gd
 =====================================
 # src/entities/minions/movement_logic/movement_logic.gd
 @tool
-## The abstract base class for all minion movement strategies.
-## Defines the contract for how a minion's velocity is calculated each frame.
+## The abstract base class for all entity movement strategies.
+## Defines the contract for how an entity's velocity is calculated each frame.
 class_name MovementLogic
 extends Resource
 
-## Calculates and returns the minion's velocity for the current physics frame.
-## This is the core method to be implemented by all concrete movement strategies.
+## Calculates and returns the entity's velocity for the current physics frame.
 ## @param delta: The time elapsed since the last physics frame.
-## @param minion: A reference to the Minion node executing this logic.
-## @param state_data: The shared state data resource for the minion.
+## @param entity: A reference to the BaseEntity executing this logic.
+## @param data: The shared state data resource (BossStateData or MinionStateData).
 ## @return: The calculated velocity vector for the current frame.
-func execute(_delta: float, _minion: Minion, _state_data: MinionStateData) -> Vector2:
+func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
 	push_warning("MovementLogic.execute() was called but not overridden by the implementer.")
 	return Vector2.ZERO
-
 
 =====================================
 FILE: ./src/entities/minions/movement_logic/flying_patrol.tres
@@ -11363,23 +12011,19 @@ extends MovementLogic
 
 @export var patrol_speed: float = 150.0
 
-# Store the patrol points on a per-instance basis to support multiple minions.
+# Store the patrol points on a per-instance basis to support multiple entities.
 var _patrol_points: Dictionary = {}
 
 
-func execute(delta: float, minion: Minion, _state_data: MinionStateData) -> Vector2:
-	var instance_id = minion.get_instance_id()
+func execute(delta: float, entity: BaseEntity, _data: Resource) -> Vector2:
+	var instance_id = entity.get_instance_id()
 	
-	# Initialize patrol points on the first run for this specific minion instance.
+	# Initialize patrol points on the first run for this specific instance.
 	if not _patrol_points.has(instance_id):
 		# Define patrol points using our clear Grid Coordinate system.
-		# The upper waypoint for this minion.
 		var top_patrol_grid_pos = Vector2i(16, 10)
-		
-		# Convert grid coordinates to world-space coordinates for the target.
 		var top_point = GridUtils.grid_to_world(top_patrol_grid_pos)
-		# The minion's "home" position is its spawn point.
-		var bottom_point = minion.global_position
+		var bottom_point = entity.global_position
 		
 		_patrol_points[instance_id] = {
 			"top": top_point,
@@ -11391,16 +12035,15 @@ func execute(delta: float, minion: Minion, _state_data: MinionStateData) -> Vect
 	var target_position = patrol_data.target
 	
 	# This is a kinematic movement. We directly manipulate the position.
-	minion.global_position = minion.global_position.move_toward(target_position, patrol_speed * delta)
+	entity.global_position = entity.global_position.move_toward(target_position, patrol_speed * delta)
 	
 	# If the target is reached, switch to the other point.
-	if minion.global_position.distance_to(target_position) < 1.0:
+	if entity.global_position.distance_to(target_position) < 1.0:
 		if target_position == patrol_data.top:
 			patrol_data.target = patrol_data.bottom
 		else:
 			patrol_data.target = patrol_data.top
 	
-	# Return Vector2.ZERO because the base minion's move_and_slide() is not needed.
 	return Vector2.ZERO
 
 
@@ -11409,23 +12052,22 @@ FILE: ./src/entities/minions/movement_logic/patrol_movement_logic.gd
 =====================================
 # src/entities/minions/movement_logic/patrol_movement_logic.gd
 @tool
-## A concrete movement strategy where the minion moves back and forth,
+## A concrete movement strategy where the entity moves back and forth,
 ## reversing direction when it hits a wall.
 class_name PatrolMovementLogic
 extends MovementLogic
 
-## Moves the minion horizontally, applying gravity, and reverses on wall collision.
-func execute(delta: float, minion: Minion, state_data: MinionStateData) -> Vector2:
-	var new_velocity := minion.velocity
-
-	# This logic is now responsible for applying gravity to itself.
-	if not minion.is_on_floor():
-		new_velocity.y += state_data.services.combat_config.gravity * delta
+## Moves the entity horizontally. Preserves vertical velocity (gravity).
+func execute(_delta: float, entity: BaseEntity, data: Resource) -> Vector2:
+	var new_velocity := entity.velocity
 	
-	if minion.is_on_wall():
-		state_data.facing_direction *= -1.0
+	# Note: Gravity is handled by the BaseEntity's _physics_process.
+	# We just handle the horizontal patrol logic here.
+	
+	if entity.is_on_wall():
+		data.facing_direction *= -1.0
 
-	new_velocity.x = state_data.facing_direction * state_data.services.combat_config.boss_patrol_speed
+	new_velocity.x = data.facing_direction * data.config.boss_patrol_speed
 	return new_velocity
 
 =====================================
@@ -11436,9 +12078,11 @@ FILE: ./src/entities/minions/minion_state_data.gd
 class_name MinionStateData
 extends Resource
 
-# --- Configuration Reference ---
+# --- Configuration References ---
 var behavior: MinionBehavior
 var services: ServiceLocator
+var config: EnemyConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 3
@@ -11530,30 +12174,31 @@ func _start_telegraph_and_attack() -> void:
 FILE: ./src/entities/minions/states/state_minion_patrol.gd
 =====================================
 # src/entities/minions/states/state_minion_patrol.gd
-## The state where a minion actively moves according to its movement logic.
+## A specialized patrol state for Minions.
+## Inherits generic movement but adds specific AI interrupts.
 class_name MinionStatePatrol
-extends BaseState
+extends StateEntityPatrol
 
 var _minion: Minion
 
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	_minion = owner as Minion
 
-func enter(_msg := {}) -> void:
-	self._minion = owner as Minion
-
-
-func process_physics(delta: float) -> void:
+func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
-		return
+		return false
 
 	# --- Priority 1: Melee Interrupt ---
-	# If player gets too close, this action takes precedence over everything.
 	if state_data.is_player_in_melee_range:
-		_minion.velocity = Vector2.ZERO
-		_minion.attack_timer.stop() 
-		state_machine.change_state("melee")
-		return
+		if _minion.get_component(MeleeComponent):
+			_minion.velocity = Vector2.ZERO
+			_minion.attack_timer.stop() 
+			# UPDATE: Use constant
+			state_machine.change_state(Identifiers.CommonStates.MELEE)
+			return true
 
-	# --- Priority 2: Ranged Attack (while continuing to patrol) ---
+	# --- Priority 2: Ranged Attack ---
 	if (
 		state_data.is_player_in_range
 		and _minion.attack_timer.is_stopped()
@@ -11568,13 +12213,8 @@ func process_physics(delta: float) -> void:
 			var attack_command: Callable = pattern.logic.execute(_minion, pattern)
 			if attack_command.is_valid():
 				attack_command.call()
-
-	# --- Default Action: Always Execute Movement ---
-	if is_instance_valid(state_data.behavior.movement_logic):
-		var new_velocity: Vector2 = state_data.behavior.movement_logic.execute(
-			delta, _minion, state_data
-		)
-		_minion.velocity = new_velocity
+	
+	return false
 
 
 =====================================
@@ -11615,7 +12255,8 @@ func exit() -> void:
 func process_physics(_delta: float) -> void:
 	# If the player leaves the melee zone during the attack, immediately go back to patrolling.
 	if not state_data.is_player_in_melee_range:
-		state_machine.change_state("patrol")
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return
 
 
@@ -11627,49 +12268,47 @@ func _on_attack_finished() -> void:
 			_minion.attack_timer.wait_time = 2.0 
 			_minion.attack_timer.start()
 		
-		# Go directly back to patrolling, which is the default active state.
-		state_machine.change_state("patrol")
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
 
 =====================================
 FILE: ./src/entities/minions/states/state_minion_idle.gd
 =====================================
 # src/entities/minions/states/state_minion_idle.gd
-## The default "thinking" state for a minion. It decides what action to take next.
+## A specialized idle state for Minions.
 class_name MinionStateIdle
-extends BaseState
+extends StateEntityIdle
 
 var _minion: Minion
 
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	_minion = owner as Minion
 
-func enter(_msg := {}) -> void:
-	self._minion = owner as Minion
-	# An idle minion does not move.
-	_minion.velocity = Vector2.ZERO
-
-
-func process_physics(_delta: float) -> void:
+func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
-		return
+		return false
 
-	# --- State Transition Checks (Prioritized) ---
-
-	# 1. Check for melee attack conditions, but only if the minion has that capability.
+	# 1. Melee Check
 	if state_data.is_player_in_melee_range and _minion.attack_timer.is_stopped():
-		# This check prevents minions without melee (like the Turret) from erroring.
 		if _minion.get_component(MeleeComponent):
-			state_machine.change_state("melee")
-			return
+			# UPDATE
+			state_machine.change_state(Identifiers.CommonStates.MELEE)
+			return true
 
-	# 2. Check for ranged attack conditions.
+	# 2. Ranged Attack Check
 	if state_data.is_player_in_range and _minion.attack_timer.is_stopped():
 		if not state_data.behavior.attack_patterns.is_empty():
 			state_machine.change_state(Identifiers.MinionStates.ATTACK, {"pattern": state_data.behavior.attack_patterns.pick_random()})
-			return
+			return true
 
-	# 3. If no other action is taken, start patrolling.
+	# 3. Default to Patrol if ready
 	if _minion.attack_timer.is_stopped():
-		state_machine.change_state("patrol")
-		return
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
+		return true
+		
+	return false
 
 =====================================
 FILE: ./src/entities/minions/patrolling_lancer.tscn
@@ -11692,12 +12331,17 @@ radius = 90.0
 
 [node name="PatrollingLancer" type="CharacterBody2D" groups=["enemy"]]
 collision_layer = 4
-collision_mask = 129
+collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("7_lancer_behavior")
 hit_flash_effect = ExtResource("2_hit_flash")
 hit_spark_effect = ExtResource("4_hit_spark_effect")
 dissolve_effect = ExtResource("6_dissolve_effect")
+state_idle_script = null
+state_attack_script = null
+state_melee_script = null
+state_patrol_script = null
+state_fall_script = null
 archetype = ExtResource("5_archetype")
 
 [node name="Visual" type="Polygon2D" parent="."]
@@ -11750,7 +12394,7 @@ radius = 400.0
 
 [node name="Turret" type="CharacterBody2D" groups=["enemy"]]
 collision_layer = 4
-collision_mask = 131
+collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("6_turret_behavior")
 hit_flash_effect = ExtResource("2_hit_flash")
@@ -11799,7 +12443,7 @@ radius = 500.0
 
 [node name="FlyingPatroller" type="CharacterBody2D" groups=["enemy"]]
 collision_layer = 4
-collision_mask = 129
+collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("6_flying_behavior")
 hit_flash_effect = ExtResource("2_hit_flash")
@@ -11943,7 +12587,7 @@ FILE: ./src/entities/player/player.tscn
 size = Vector2(40, 40)
 
 [node name="Player" type="CharacterBody2D"]
-collision_mask = 142
+collision_mask = 138
 script = ExtResource("1_4d1td")
 hit_flash_effect = ExtResource("3_hit_flash")
 damage_shake_effect = ExtResource("4_shake_effect")
@@ -11996,6 +12640,7 @@ shape = SubResource("RectangleShape2D_playerbody")
 
 [node name="HealingTimer" type="Timer" parent="."]
 one_shot = true
+
 
 =====================================
 FILE: ./src/entities/player/player.gd
@@ -12051,8 +12696,14 @@ func _ready() -> void:
 		return
 
 	add_to_group(Identifiers.Groups.PLAYER)
-	EntityBuilder.build(self)
+	
+	# Setup Data
+	entity_data = PlayerStateData.new()
+	
+	# Trigger internal build
+	build_entity()
 
+	# Post-Build Init
 	visual_sprite.color = Palette.COLOR_PLAYER
 	entity_data.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
@@ -12063,17 +12714,118 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+	
+	# --- CONTINUOUS CONTACT DAMAGE CHECK ---
+	if is_instance_valid(hurtbox):
+		# Check Enemies (Bodies)
+		for body in hurtbox.get_overlapping_bodies():
+			_handle_contact_damage(body)
+			
+		# Check Projectiles (Areas)
+		for area in hurtbox.get_overlapping_areas():
+			_handle_contact_damage(area)
+
+
+# --- Internal Build Logic ---
+func _on_build() -> void:
+	if not _services:
+		_services = ServiceLocator
+
+	entity_data.config = _services.player_config
+	entity_data.world_config = _services.world_config
+
+	var hc: HealthComponent = get_component(HealthComponent)
+	var sm: BaseStateMachine = get_component(BaseStateMachine)
+	var fc: FXComponent = get_component(FXComponent)
+	var cc: CombatComponent = get_component(CombatComponent)
+	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
+
+	var shared_deps := {
+		"data_resource": entity_data, 
+		"config": entity_data.config,
+		"services": _services
+		}
+
+	var states: Dictionary = {
+		Identifiers.PlayerStates.MOVE: state_move_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.FALL: state_fall_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.JUMP: state_jump_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.DASH: state_dash_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.WALL_SLIDE: state_wall_slide_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.ATTACK: state_attack_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.HURT: state_hurt_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.HEAL: state_heal_script.new(self, sm, entity_data),
+		Identifiers.PlayerStates.POGO: state_pogo_script.new(self, sm, entity_data),
+	}
+
+	var per_component_deps := {
+		sm: {"states": states, "initial_state_key": Identifiers.PlayerStates.FALL},
+		fc: {
+			"visual_node": visual_sprite, 
+			"hit_effect": hit_flash_effect,
+			"fx_manager": _services.fx_manager
+			},
+		hc: {
+			"hit_spark_effect": hit_spark_effect,
+			"fx_manager": _services.fx_manager,
+			"event_bus": _services.event_bus
+			},
+		cc: {
+			"object_pool": _services.object_pool,
+			"fx_manager": _services.fx_manager,
+			"combat_utils": _services.combat_utils,
+			"services": _services
+			},
+		rc: {
+			"event_bus": _services.event_bus
+			}
+	}
+
+	setup_components(shared_deps, per_component_deps)
+
+	# --- HURTBOX CONFIGURATION ---
+	if is_instance_valid(hurtbox):
+		hurtbox.monitoring = true
+		hurtbox.monitorable = true
+		hurtbox.collision_layer = 64 # Player Hurtbox
+		hurtbox.collision_mask = 28  # Enemy(4) + Hazard(8) + EnemyProjectile(16)
+		
+		if hurtbox.body_entered.is_connected(_on_hurtbox_body_entered):
+			hurtbox.body_entered.disconnect(_on_hurtbox_body_entered)
+		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
+		
+		if hurtbox.area_entered.is_connected(_on_hurtbox_area_entered):
+			hurtbox.area_entered.disconnect(_on_hurtbox_area_entered)
+		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+
+	# Wire other signals
+	if melee_hitbox.body_entered.get_connections().is_empty():
+		melee_hitbox.body_entered.connect(_on_melee_hitbox_body_entered)
+	if pogo_hitbox.body_entered.get_connections().is_empty():
+		pogo_hitbox.body_entered.connect(_on_pogo_hitbox_body_entered)
+	if melee_hitbox.area_entered.get_connections().is_empty():
+		melee_hitbox.area_entered.connect(_on_hitbox_area_entered)
+	if pogo_hitbox.area_entered.get_connections().is_empty():
+		pogo_hitbox.area_entered.connect(_on_hitbox_area_entered)
+	
+	if cc and rc:
+		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
+			cc.damage_dealt.connect(rc.on_damage_dealt)
+		if not cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
+			cc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
+
+	if sm:
+		if not sm.melee_hitbox_toggled.is_connected(_enable_melee_hitbox):
+			sm.melee_hitbox_toggled.connect(_enable_melee_hitbox)
+		if not sm.pogo_hitbox_toggled.is_connected(_enable_pogo_hitbox):
+			sm.pogo_hitbox_toggled.connect(_enable_pogo_hitbox)
+
+	if healing_timer and not healing_timer.timeout.is_connected(_on_healing_timer_timeout):
+		healing_timer.timeout.connect(_on_healing_timer_timeout)
 
 
 # --- Public Methods ---
 func teardown() -> void:
-	var hc: HealthComponent = get_component(HealthComponent)
-	if is_instance_valid(hc):
-		if hc.health_changed.is_connected(_on_health_component_health_changed):
-			hc.health_changed.disconnect(_on_health_component_health_changed)
-		if hc.died.is_connected(_on_health_component_died):
-			hc.died.disconnect(_on_health_component_died)
-
 	var cc: CombatComponent = get_component(CombatComponent)
 	if is_instance_valid(cc):
 		var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
@@ -12095,6 +12847,18 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+
+
+# --- Override Virtual Handlers ---
+func _on_entity_died() -> void:
+	_die()
+
+func _on_health_changed(current: int, max_val: int) -> void:
+	var ev = PlayerHealthChangedEvent.new()
+	ev.current_health = current
+	ev.max_health = max_val
+	_services.event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
+	health_changed.emit(current, max_val)
 
 
 # --- Private Methods ---
@@ -12124,10 +12888,12 @@ func _enable_melee_hitbox(is_enabled: bool, is_up_attack: bool = false) -> void:
 	var shape_node: CollisionShape2D = melee_hitbox.get_node("CollisionShape2D")
 	if is_enabled:
 		if is_up_attack:
-			shape_node.shape = entity_data.config.player_upward_attack_shape
+			# UPDATE: config.upward_attack_shape
+			shape_node.shape = entity_data.config.upward_attack_shape
 			shape_node.position = Vector2(0, -40)
 		else:
-			shape_node.shape = entity_data.config.player_forward_attack_shape
+			# UPDATE: config.forward_attack_shape
+			shape_node.shape = entity_data.config.forward_attack_shape
 			shape_node.position = Vector2(entity_data.facing_direction * 60, 0)
 	shape_node.set_deferred("disabled", not is_enabled)
 
@@ -12174,16 +12940,23 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 			_services.object_pool.return_instance.call_deferred(area)
 
 
-func _on_hurtbox_area_entered(area: Area2D) -> void:
+func _handle_contact_damage(target: Node) -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
-	if hc.is_invincible():
+	if not is_instance_valid(hc) or hc.is_invincible():
 		return
-	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		
+	var is_threat = (
+		target.is_in_group(Identifiers.Groups.ENEMY) or 
+		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
+		target.is_in_group(Identifiers.Groups.HAZARD)
+	)
+	
+	if is_threat:
 		var damage_info = DamageInfo.new()
 		damage_info.amount = 1
-		damage_info.source_node = area
+		damage_info.source_node = target
 		damage_info.impact_position = global_position
-		damage_info.impact_normal = (global_position - area.global_position).normalized()
+		damage_info.impact_normal = (global_position - target.global_position).normalized()
 		var damage_result = hc.apply_damage(damage_info)
 
 		if not is_instance_valid(entity_data):
@@ -12192,7 +12965,16 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		if damage_result.was_damaged and entity_data.health > 0:
 			self.velocity = damage_result.knockback_velocity
 			get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.HURT)
-		_services.object_pool.return_instance.call_deferred(area)
+		
+		if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+			_services.object_pool.return_instance.call_deferred(target)
+
+
+func _on_hurtbox_area_entered(area: Area2D) -> void:
+	_handle_contact_damage(area)
+
+func _on_hurtbox_body_entered(body: Node) -> void:
+	_handle_contact_damage(body)
 
 
 func _on_healing_timer_timeout() -> void:
@@ -12200,27 +12982,17 @@ func _on_healing_timer_timeout() -> void:
 	if sm.current_state == sm.states[Identifiers.PlayerStates.HEAL]:
 		entity_data.health += 1
 		get_component(PlayerResourceComponent).consume_healing_charge()
-		_on_health_component_health_changed(entity_data.health, entity_data.max_health)
+		_on_health_changed(entity_data.health, entity_data.max_health)
 		sm.change_state(Identifiers.PlayerStates.MOVE)
 
 
-func _on_health_component_health_changed(current: int, max_val: int) -> void:
-	var ev = PlayerHealthChangedEvent.new()
-	ev.current_health = current
-	ev.max_health = max_val
-	_services.event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
-	health_changed.emit(current, max_val)
-
-
-func _on_health_component_died() -> void:
-	_die()
-
-
 func _on_pogo_bounce_requested() -> void:
-	velocity.y = -entity_data.config.player_pogo_force
+	# UPDATE: config.pogo_force
+	velocity.y = -entity_data.config.pogo_force
 	position.y -= 1
 	entity_data.can_dash = true
-	entity_data.air_jumps_left = entity_data.config.player_max_air_jumps
+	# UPDATE: config.max_air_jumps
+	entity_data.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -12242,99 +13014,14 @@ script = ExtResource("1_res")
 metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "event_bus")
 
 =====================================
-FILE: ./src/entities/player/components/player_ability_component.gd
+FILE: ./src/entities/player/components/heal_component.tscn
 =====================================
-# src/entities/player/components/player_ability_component.gd
-@tool
-## Governs the activation logic for player abilities.
-##
-## Reads the input buffer and game state to determine if an action (like
-## dashing or healing) can be performed, then directly commands the state machine.
-class_name PlayerAbilityComponent
-extends IComponent
+[gd_scene load_steps=2 format=3]
 
-# --- Constants ---
-const JumpHelper = preload("res://src/entities/player/components/player_jump_helper.gd")
+[ext_resource type="Script" path="res://src/entities/player/components/heal_component.gd" id="1_script"]
 
-# --- Member Variables ---
-var owner_node: Player
-var p_data: PlayerStateData
-var _state_machine: BaseStateMachine # Direct reference to the FSM
-
-# --- Godot Lifecycle Methods ---
-func _ready() -> void:
-	process_priority = 0
-
-
-func _physics_process(_delta: float) -> void:
-	if not is_instance_valid(owner_node) or not is_instance_valid(_state_machine):
-		return
-
-	var input_component: InputComponent = owner_node.get_component(InputComponent)
-	if not is_instance_valid(input_component):
-		return
-
-	var current_state_key = _state_machine._current_state_key
-
-	if not current_state_key in Player.ACTION_ALLOWED_STATES:
-		return
-
-	# --- Action Checks (Prioritized) ---
-	if input_component.buffer.get("jump_just_pressed"):
-		var is_holding_down = input_component.buffer.get("down", false)
-
-		if (
-			is_holding_down
-			and p_data.healing_charges > 0
-			and owner_node.is_on_floor()
-			and is_zero_approx(owner_node.velocity.x)
-		):
-			_state_machine.change_state(Identifiers.PlayerStates.HEAL, {})
-			return
-
-		if is_holding_down:
-			if JumpHelper.try_platform_drop(owner_node):
-				return
-
-		if JumpHelper.try_jump(owner_node, p_data):
-			return
-
-	if input_component.buffer.get("attack_just_pressed") and p_data.attack_cooldown_timer <= 0:
-		p_data.is_charging = true
-		p_data.charge_timer = 0.0
-
-	if input_component.buffer.get("attack_released"):
-		if p_data.is_charging:
-			if p_data.charge_timer >= p_data.config.player_charge_time:
-				owner_node.get_component(CombatComponent).fire_shot()
-			elif input_component.buffer.get("down"):
-				_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
-			else:
-				_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
-			p_data.is_charging = false
-
-	if (
-		input_component.buffer.get("dash_pressed")
-		and p_data.can_dash
-		and p_data.dash_cooldown_timer <= 0
-	):
-		_state_machine.change_state(Identifiers.PlayerStates.DASH, {})
-
-
-# --- Public Methods ---
-func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	self.owner_node = p_owner as Player
-	self.p_data = p_dependencies.get("data_resource")
-	# Get a direct, permanent reference to the state machine.
-	self._state_machine = owner_node.get_component(BaseStateMachine)
-	assert(is_instance_valid(_state_machine), "PlayerAbilityComponent could not find the StateMachine.")
-
-
-func teardown() -> void:
-	set_physics_process(false)
-	owner_node = null
-	p_data = null
-	_state_machine = null
+[node name="HealComponent" type="Node"]
+script = ExtResource("1_script")
 
 
 =====================================
@@ -12342,16 +13029,12 @@ FILE: ./src/entities/player/components/player_jump_helper.gd
 =====================================
 # src/entities/player/components/player_jump_helper.gd
 ## A stateless helper class that centralizes all jump-related logic for the Player.
-## Its single responsibility is to determine if a jump can occur and what kind of
-## jump it is, based on the player's current state.
 class_name PlayerJumpHelper
 extends RefCounted
 
 # --- Public Methods ---
 
-
 ## Checks all possible jump conditions in a prioritized order and executes one if valid.
-## Returns true if a jump was successfully initiated, false otherwise.
 static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 	if not is_instance_valid(owner):
 		return false
@@ -12382,7 +13065,6 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 
 
 ## Checks if the player is attempting to drop through a one-way platform.
-## Returns true if the drop was successful, false otherwise.
 static func try_platform_drop(owner: Player) -> bool:
 	if not is_instance_valid(owner) or not owner is CharacterBody2D:
 		return false
@@ -12402,6 +13084,157 @@ static func try_platform_drop(owner: Player) -> bool:
 
 	return false
 
+
+=====================================
+FILE: ./src/entities/player/components/jump_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/components/jump_component.gd" id="1_script"]
+
+[node name="JumpComponent" type="Node"]
+script = ExtResource("1_script")
+
+
+=====================================
+FILE: ./src/entities/player/components/jump_component.gd
+=====================================
+# src/entities/player/components/jump_component.gd
+@tool
+class_name JumpComponent
+extends IComponent
+
+const JumpHelper = preload("res://src/entities/player/components/player_jump_helper.gd")
+
+var _owner_node: Player
+var _p_data: PlayerStateData
+var _state_machine: BaseStateMachine
+var _input_component: InputComponent
+
+func _ready() -> void:
+	process_priority = 0
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner as Player
+	_p_data = p_dependencies.get("data_resource")
+	_state_machine = _owner_node.get_component(BaseStateMachine)
+	_input_component = _owner_node.get_component(InputComponent)
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_owner_node) or not is_instance_valid(_state_machine):
+		return
+	
+	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+		return
+
+	if _input_component.buffer.get("jump_just_pressed"):
+		var is_holding_down = _input_component.buffer.get("down", false)
+		
+		# Note: Heal logic is now in HealComponent, so we don't check it here.
+		
+		if is_holding_down:
+			if JumpHelper.try_platform_drop(_owner_node):
+				return
+		
+		JumpHelper.try_jump(_owner_node, _p_data)
+
+func teardown() -> void:
+	set_physics_process(false)
+	_owner_node = null
+	_p_data = null
+	_state_machine = null
+	_input_component = null
+
+=====================================
+FILE: ./src/entities/player/components/dash_component.gd
+=====================================
+# src/entities/player/components/dash_component.gd
+@tool
+class_name DashComponent
+extends IComponent
+
+var _owner_node: Player
+var _p_data: PlayerStateData
+var _state_machine: BaseStateMachine
+var _input_component: InputComponent
+
+func _ready() -> void:
+	process_priority = 0
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner as Player
+	_p_data = p_dependencies.get("data_resource")
+	_state_machine = _owner_node.get_component(BaseStateMachine)
+	_input_component = _owner_node.get_component(InputComponent)
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_owner_node):
+		return
+
+	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+		return
+
+	if (
+		_input_component.buffer.get("dash_pressed")
+		and _p_data.can_dash
+		and _p_data.dash_cooldown_timer <= 0
+	):
+		_state_machine.change_state(Identifiers.PlayerStates.DASH, {})
+
+func teardown() -> void:
+	set_physics_process(false)
+	_owner_node = null
+	_p_data = null
+	_state_machine = null
+	_input_component = null
+
+=====================================
+FILE: ./src/entities/player/components/heal_component.gd
+=====================================
+# src/entities/player/components/heal_component.gd
+@tool
+class_name HealComponent
+extends IComponent
+
+var _owner_node: Player
+var _p_data: PlayerStateData
+var _state_machine: BaseStateMachine
+var _input_component: InputComponent
+
+func _ready() -> void:
+	process_priority = 0
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner as Player
+	_p_data = p_dependencies.get("data_resource")
+	_state_machine = _owner_node.get_component(BaseStateMachine)
+	_input_component = _owner_node.get_component(InputComponent)
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_owner_node):
+		return
+
+	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+		return
+
+	if _input_component.buffer.get("jump_just_pressed"):
+		var is_holding_down = _input_component.buffer.get("down", false)
+
+		if (
+			is_holding_down
+			and _p_data.healing_charges > 0
+			and _owner_node.is_on_floor()
+			and is_zero_approx(_owner_node.velocity.x)
+		):
+			_state_machine.change_state(Identifiers.PlayerStates.HEAL, {})
+
+func teardown() -> void:
+	set_physics_process(false)
+	_owner_node = null
+	_p_data = null
+	_state_machine = null
+	_input_component = null
+
 =====================================
 FILE: ./src/entities/player/components/player_physics_component.tscn
 =====================================
@@ -12418,10 +13251,6 @@ FILE: ./src/entities/player/components/player_physics_component.gd
 # src/entities/player/components/player_physics_component.gd
 @tool
 ## Manages all direct physics interactions for the player character.
-##
-## Handles gravity, movement, collision detection, and applying velocity via
-## move_and_slide(). It serves as the single point of contact with the
-## Godot physics engine for the player.
 class_name PlayerPhysicsComponent
 extends IComponent
 
@@ -12433,24 +13262,21 @@ var p_data: PlayerStateData
 
 
 func _ready() -> void:
-	# Run before other components to ensure move_and_slide() is called
-	# before any physics state checks like is_on_floor().
 	process_priority = -50
 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(owner_node):
-		return  # Guard against post-teardown calls
+		return
 
 	owner_node.move_and_slide()
-	_check_for_contact_damage()
+	# UPDATE: Removed manual _check_for_contact_damage() loop
 
-	# GUARD: The owner may have been freed by the contact damage check.
 	if not is_instance_valid(owner_node):
 		return
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
-		p_data.wall_coyote_timer = p_data.config.player_wall_coyote_time
+		p_data.wall_coyote_timer = p_data.config.wall_coyote_time
 		p_data.last_wall_normal = owner_node.get_wall_normal()
 
 
@@ -12473,13 +13299,13 @@ func apply_horizontal_movement() -> void:
 	if not is_instance_valid(input_component):
 		return
 	var move_axis = input_component.buffer.get("move_axis", 0.0)
-	owner_node.velocity.x = move_axis * p_data.config.player_speed
+	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
 		p_data.facing_direction = sign(move_axis)
 
 
 func apply_gravity(delta: float, multiplier: float = 1.0) -> void:
-	owner_node.velocity.y += p_data.config.gravity * multiplier * delta
+	owner_node.velocity.y += p_data.world_config.gravity * multiplier * delta
 
 
 ## Checks if the conditions for performing a wall slide are met.
@@ -12498,61 +13324,94 @@ func can_wall_slide() -> bool:
 
 ## Applies the velocity and resets timers for a wall jump.
 func perform_wall_jump() -> void:
-	owner_node.velocity.y = -p_data.config.player_wall_jump_force_y
-	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.player_wall_jump_force_x
+	owner_node.velocity.y = -p_data.config.wall_jump_force_y
+	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.wall_jump_force_x
 	p_data.coyote_timer = 0
 	p_data.wall_coyote_timer = 0
 
+=====================================
+FILE: ./src/entities/player/components/charge_attack_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3]
 
-# --- Private Methods ---
+[ext_resource type="Script" path="res://src/entities/player/components/charge_attack_component.gd" id="1_script"]
+
+[node name="ChargeAttackComponent" type="Node"]
+script = ExtResource("1_script")
 
 
-func _check_for_contact_damage() -> void:
-	var health_component: HealthComponent = owner_node.get_component(HealthComponent)
-	if not is_instance_valid(health_component) or health_component.is_invincible():
+=====================================
+FILE: ./src/entities/player/components/charge_attack_component.gd
+=====================================
+# src/entities/player/components/charge_attack_component.gd
+@tool
+class_name ChargeAttackComponent
+extends IComponent
+
+var _owner_node: Player
+var _p_data: PlayerStateData
+var _state_machine: BaseStateMachine
+var _input_component: InputComponent
+var _combat_component: CombatComponent
+
+func _ready() -> void:
+	process_priority = 0
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner as Player
+	_p_data = p_dependencies.get("data_resource")
+	_state_machine = _owner_node.get_component(BaseStateMachine)
+	_input_component = _owner_node.get_component(InputComponent)
+	_combat_component = _owner_node.get_component(CombatComponent)
+
+# FIX: Renamed delta to _delta to suppress unused parameter warning
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_owner_node):
+		return
+	
+	if _input_component.buffer.get("attack_just_pressed") and _p_data.attack_cooldown_timer <= 0:
+		_p_data.is_charging = true
+		_p_data.charge_timer = 0.0
+
+	if _input_component.buffer.get("attack_released"):
+		if _p_data.is_charging:
+			_try_execute_attack()
+			_p_data.is_charging = false
+
+func _try_execute_attack() -> void:
+	# FIX: Guard against race condition where state machine is cleared (player death)
+	if _state_machine.states.is_empty():
 		return
 
-	for i in range(owner_node.get_slide_collision_count()):
-		var col = owner_node.get_slide_collision(i)
-		if not col:
-			continue
+	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+		return
 
-		var collider = col.get_collider()
-		var is_damage_source = (
-			is_instance_valid(collider)
-			and (
-				collider.is_in_group(Identifiers.Groups.ENEMY)
-				or collider.is_in_group(Identifiers.Groups.HAZARD)
-			)
-		)
+	if _p_data.charge_timer >= _p_data.config.charge_time:
+		_combat_component.fire_shot()
+	elif _input_component.buffer.get("down"):
+		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
+	else:
+		_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
 
-		if not is_damage_source:
-			continue
+func teardown() -> void:
+	set_physics_process(false)
+	_owner_node = null
+	_p_data = null
+	_state_machine = null
+	_input_component = null
+	_combat_component = null
 
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1
-		damage_info.source_node = collider
-		damage_info.impact_position = col.get_position()
-		damage_info.impact_normal = col.get_normal()
-		var damage_result = health_component.apply_damage(damage_info)
-
-		if not is_instance_valid(owner_node):
-			return
-
-		if damage_result.was_damaged and p_data.health > 0:
-			owner_node.velocity = damage_result.knockback_velocity
-			owner_node.get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.HURT)
-		break
 
 =====================================
-FILE: ./src/entities/player/components/player_ability_component.tscn
+FILE: ./src/entities/player/components/dash_component.tscn
 =====================================
-[gd_scene load_steps=2 format=3 uid="uid://u5v6w7x8y9z0"]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://src/entities/player/components/player_ability_component.gd" id="1_abil"]
+[ext_resource type="Script" path="res://src/entities/player/components/dash_component.gd" id="1_script"]
 
-[node name="PlayerAbilityComponent" type="Node"]
-script = ExtResource("1_abil")
+[node name="DashComponent" type="Node"]
+script = ExtResource("1_script")
+
 
 =====================================
 FILE: ./src/entities/player/components/player_resource_component.gd
@@ -12585,11 +13444,11 @@ func teardown() -> void:
 
 ## Called when the player successfully deals damage to an enemy.
 func on_damage_dealt() -> void:
-	if p_data.healing_charges >= p_data.config.player_max_healing_charges:
+	if p_data.healing_charges >= p_data.config.max_healing_charges:
 		return
 
 	p_data.determination_counter += 1
-	if p_data.determination_counter >= p_data.config.player_determination_per_charge:
+	if p_data.determination_counter >= p_data.config.determination_per_charge:
 		p_data.determination_counter = 0
 		p_data.healing_charges += 1
 		_emit_healing_charges_changed_event()
@@ -12627,7 +13486,8 @@ func enter(msg := {}) -> void:
 	if msg.get("is_air_jump", false):
 		state_data.air_jumps_left -= 1
 
-	owner.velocity.y = -state_data.config.player_jump_force
+	# UPDATE: config.jump_force
+	owner.velocity.y = -state_data.config.jump_force
 	state_data.coyote_timer = 0
 
 
@@ -12639,7 +13499,8 @@ func process_physics(delta: float) -> void:
 			_perform_air_jump()
 
 	if _input.buffer.get("jump_released") and owner.velocity.y < 0:
-		owner.velocity.y *= state_data.config.player_jump_release_dampener
+		# UPDATE: config.jump_release_dampener
+		owner.velocity.y *= state_data.config.jump_release_dampener
 
 	_apply_gravity(delta)
 
@@ -12660,8 +13521,8 @@ func _apply_gravity(delta: float) -> void:
 
 func _perform_air_jump() -> void:
 	state_data.air_jumps_left -= 1
-	owner.velocity.y = -state_data.config.player_jump_force
-
+	# UPDATE: config.jump_force
+	owner.velocity.y = -state_data.config.jump_force
 
 =====================================
 FILE: ./src/entities/player/states/state_dash.gd
@@ -12678,13 +13539,15 @@ func enter(_msg := {}):
 	_health = owner.get_component(HealthComponent)
 
 	state_data.can_dash = false
-	state_data.dash_duration_timer = state_data.config.player_dash_duration
-	state_data.dash_cooldown_timer = state_data.config.player_dash_cooldown
+	# UPDATE: config.dash_duration, config.dash_cooldown
+	state_data.dash_duration_timer = state_data.config.dash_duration
+	state_data.dash_cooldown_timer = state_data.config.dash_cooldown
 
 	_invincibility_token = _health.grant_invincibility(self)
 
 	_dash_direction = _get_dash_direction()
-	owner.velocity = _dash_direction * state_data.config.player_dash_speed
+	# UPDATE: config.dash_speed
+	owner.velocity = _dash_direction * state_data.config.dash_speed
 
 
 func exit():
@@ -12710,7 +13573,6 @@ func _get_dash_direction():
 		return Vector2.DOWN
 	return Vector2(state_data.facing_direction, 0)
 
-
 =====================================
 FILE: ./src/entities/player/states/state_heal.gd
 =====================================
@@ -12721,7 +13583,8 @@ extends BaseState
 
 func enter(_msg := {}):
 	owner.velocity = Vector2.ZERO
-	owner.healing_timer.start(state_data.config.player_heal_duration)
+	# UPDATE: config.heal_duration
+	owner.healing_timer.start(state_data.config.heal_duration)
 
 
 func exit():
@@ -12736,7 +13599,6 @@ func process_physics(_delta: float):
 		or not owner.is_on_floor()
 	):
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
-
 
 =====================================
 FILE: ./src/entities/player/states/state_wall_slide.gd
@@ -12753,7 +13615,8 @@ func enter(_msg := {}):
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	_input = owner.get_component(InputComponent)
 	state_data.can_dash = true
-	state_data.air_jumps_left = state_data.config.player_max_air_jumps
+	# UPDATE: config.max_air_jumps
+	state_data.air_jumps_left = state_data.config.max_air_jumps
 
 
 func exit():
@@ -12762,8 +13625,10 @@ func exit():
 
 
 func process_physics(delta: float):
-	var gravity = state_data.config.gravity
-	var wall_slide_speed = state_data.config.player_wall_slide_speed
+	# UPDATE: world_config.gravity
+	var gravity = state_data.world_config.gravity
+	# UPDATE: config.wall_slide_speed
+	var wall_slide_speed = state_data.config.wall_slide_speed
 	owner.velocity.y = min(owner.velocity.y + gravity * delta, wall_slide_speed)
 
 	state_data.facing_direction = sign(-state_data.last_wall_normal.x)
@@ -12786,7 +13651,6 @@ func process_physics(delta: float):
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
 		return
 
-
 =====================================
 FILE: ./src/entities/player/states/state_attack.gd
 =====================================
@@ -12803,8 +13667,9 @@ var _input: InputComponent
 func enter(_msg := {}) -> void:
 	_input = owner.get_component(InputComponent)
 	state_data.hit_targets_this_swing.clear()
-	state_data.attack_duration_timer = state_data.config.player_attack_duration
-	state_data.attack_cooldown_timer = state_data.config.player_attack_cooldown
+	# UPDATE: config.attack_duration, config.attack_cooldown
+	state_data.attack_duration_timer = state_data.config.attack_duration
+	state_data.attack_cooldown_timer = state_data.config.attack_cooldown
 	var is_up_attack = _input.buffer.get("up", false)
 	state_machine.melee_hitbox_toggled.emit(true, is_up_attack)
 
@@ -12815,12 +13680,12 @@ func exit() -> void:
 
 
 func process_physics(delta: float) -> void:
-	var friction = state_data.config.player_attack_friction
+	# UPDATE: config.attack_friction
+	var friction = state_data.config.attack_friction
 	owner.velocity = owner.velocity.move_toward(Vector2.ZERO, friction * delta)
 
 	if state_data.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
-
 
 =====================================
 FILE: ./src/entities/player/states/state_pogo.gd
@@ -12838,7 +13703,8 @@ var _physics: PlayerPhysicsComponent
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	state_data.is_pogo_attack = true
-	state_data.attack_duration_timer = state_data.config.player_attack_duration
+	# UPDATE: config.attack_duration
+	state_data.attack_duration_timer = state_data.config.attack_duration
 	state_machine.pogo_hitbox_toggled.emit(true)
 
 
@@ -12857,7 +13723,6 @@ func process_physics(delta: float) -> void:
 	if state_data.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
-
 =====================================
 FILE: ./src/entities/player/states/state_hurt.gd
 =====================================
@@ -12870,7 +13735,8 @@ var _physics: PlayerPhysicsComponent
 
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
-	state_data.knockback_timer = state_data.config.player_knockback_duration
+	# UPDATE: config.knockback_duration
+	state_data.knockback_timer = state_data.config.knockback_duration
 	state_data.is_charging = false
 	owner._cancel_heal()
 
@@ -12881,7 +13747,6 @@ func process_physics(delta: float) -> void:
 
 	if state_data.knockback_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
-
 
 =====================================
 FILE: ./src/entities/player/states/state_fall.gd
@@ -12920,9 +13785,9 @@ func process_physics(delta: float) -> void:
 func _apply_gravity(delta: float) -> void:
 	var gravity_multiplier = 1.0
 	if _input.buffer.get("down"):
-		gravity_multiplier = state_data.config.player_fast_fall_gravity_multiplier
+		# UPDATE: config.fast_fall_gravity_multiplier
+		gravity_multiplier = state_data.config.fast_fall_gravity_multiplier
 	_physics.apply_gravity(delta, gravity_multiplier)
-
 
 =====================================
 FILE: ./src/entities/player/states/state_move.gd
@@ -12936,12 +13801,14 @@ var _physics: PlayerPhysicsComponent
 
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
-	state_data.air_jumps_left = state_data.config.player_max_air_jumps
+	# UPDATE: config.max_air_jumps
+	state_data.air_jumps_left = state_data.config.max_air_jumps
 	state_data.can_dash = true
 
 
 func process_physics(delta: float) -> void:
-	state_data.coyote_timer = state_data.config.player_coyote_time
+	# UPDATE: config.coyote_time
+	state_data.coyote_timer = state_data.config.coyote_time
 
 	_physics.apply_gravity(delta)
 	_physics.apply_horizontal_movement()
@@ -12949,8 +13816,6 @@ func process_physics(delta: float) -> void:
 	if not owner.is_on_floor():
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 		return
-
-
 
 =====================================
 FILE: ./src/entities/player/data/player_state_data.gd
@@ -12961,8 +13826,9 @@ FILE: ./src/entities/player/data/player_state_data.gd
 class_name PlayerStateData
 extends Resource
 
-# --- Configuration Reference ---
-var config: CombatConfig
+# --- Configuration References ---
+var config: PlayerConfig
+var world_config: WorldConfig
 
 # --- Health & Combat ---
 var max_health: int = 5
@@ -12996,7 +13862,6 @@ var knockback_timer: float = 0.0
 var is_charging: bool = false
 var charge_timer: float = 0.0
 var is_pogo_attack: bool = false
-
 
 =====================================
 FILE: ./src/entities/player/data/upward_attack_shape.tres

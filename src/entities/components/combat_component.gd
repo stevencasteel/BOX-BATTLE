@@ -13,8 +13,12 @@ var owner_node: CharacterBody2D
 var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
-var _combat_utils
+var _combat_utils: Node
 var _services: ServiceLocator
+
+# --- Hitbox References ---
+var _melee_hitbox: HitboxComponent
+var _pogo_hitbox: HitboxComponent
 
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
@@ -26,24 +30,41 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._combat_utils = p_dependencies.get("combat_utils")
 	self._services = p_dependencies.get("services")
 	
+	# Inject Hitboxes
+	_melee_hitbox = p_dependencies.get("melee_hitbox")
+	_pogo_hitbox = p_dependencies.get("pogo_hitbox")
+	
+	if is_instance_valid(_melee_hitbox):
+		if not _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
+			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
+
+	if is_instance_valid(_pogo_hitbox):
+		if not _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
+			_pogo_hitbox.hit_detected.connect(_on_pogo_hit_detected)
+
 	assert(is_instance_valid(_object_pool), "CombatComponent requires an IObjectPool.")
 	assert(is_instance_valid(_fx_manager), "CombatComponent requires an IFXManager.")
-	assert(is_instance_valid(_combat_utils), "CombatComponent requires a CombatUtils.")
-	assert(is_instance_valid(_services), "CombatComponent requires a ServiceLocator.")
 
 
 func teardown() -> void:
+	if is_instance_valid(_melee_hitbox) and _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
+		_melee_hitbox.hit_detected.disconnect(_on_melee_hit_detected)
+		
+	if is_instance_valid(_pogo_hitbox) and _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
+		_pogo_hitbox.hit_detected.disconnect(_on_pogo_hit_detected)
+
 	owner_node = null
 	p_data = null
 	_object_pool = null
 	_fx_manager = null
 	_combat_utils = null
 	_services = null
+	_melee_hitbox = null
+	_pogo_hitbox = null
 
 
 ## Fires a player projectile from the object pool.
 func fire_shot() -> void:
-	# UPDATE: config.attack_cooldown
 	p_data.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
@@ -51,12 +72,12 @@ func fire_shot() -> void:
 		return
 
 	var shot_dir = Vector2(p_data.facing_direction, 0)
-	var ic: InputComponent = owner_node.get_component(InputComponent)
-	if is_instance_valid(ic):
-		if ic.buffer.get("up"):
-			shot_dir = Vector2.UP
-		elif ic.buffer.get("down"):
-			shot_dir = Vector2.DOWN
+	# We assume InputComponent is updating the buffer elsewhere
+	# Ideally, direction should be passed in or read from p_data if generalized
+	if Input.is_action_pressed("ui_up"):
+		shot_dir = Vector2.UP
+	elif Input.is_action_pressed("ui_down"):
+		shot_dir = Vector2.DOWN
 
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)
@@ -68,66 +89,62 @@ func fire_shot() -> void:
 	shot.activate(dependencies)
 
 
-## Handles a melee hitbox collision.
-func trigger_melee_attack(target_body: Node) -> void:
-	var target_id = target_body.get_instance_id()
+# --- Private Signal Handlers ---
+
+func _on_melee_hit_detected(target: Node) -> void:
+	var target_id = target.get_instance_id()
 	if p_data.hit_targets_this_swing.has(target_id):
 		return
 
 	p_data.hit_targets_this_swing[target_id] = true
-	var damageable = _combat_utils.find_damageable(target_body)
+	
+	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var damage_info = DamageInfo.new()
 		damage_info.source_node = owner_node
-		var distance = owner_node.global_position.distance_to(target_body.global_position)
+		var distance = owner_node.global_position.distance_to(target.global_position)
 		
-		# UPDATE: config.close_range_threshold
 		var is_close_range = distance <= p_data.config.close_range_threshold
 		damage_info.amount = 5 if is_close_range else 1
-		damage_info.impact_position = target_body.global_position
-		damage_info.impact_normal = (target_body.global_position - owner_node.global_position).normalized()
+		damage_info.impact_position = target.global_position
+		damage_info.impact_normal = (target.global_position - owner_node.global_position).normalized()
 
 		var damage_result = damageable.apply_damage(damage_info)
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 			if is_close_range:
-				# UPDATE: world_config.hit_stop_player_melee_close
 				_fx_manager.request_hit_stop(
 					p_data.world_config.hit_stop_player_melee_close
 				)
 
 
-## Attempts to perform a pogo action on a target.
-func trigger_pogo(pogo_target: Node) -> bool:
+func _on_pogo_hit_detected(target: Node) -> void:
 	if not p_data.is_pogo_attack:
-		return false
-	if not is_instance_valid(pogo_target):
-		return false
+		return
+	if not is_instance_valid(target):
+		return
 
 	var should_bounce = false
 
-	if pogo_target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
 		should_bounce = true
-		_object_pool.return_instance.call_deferred(pogo_target)
+		_object_pool.return_instance.call_deferred(target)
 
-	var damageable = _combat_utils.find_damageable(pogo_target)
+	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		should_bounce = true
 		var damage_info = DamageInfo.new()
 		damage_info.amount = 1
 		damage_info.source_node = owner_node
 		damage_info.bypass_invincibility = true
-		damage_info.impact_position = pogo_target.global_position
+		damage_info.impact_position = target.global_position
 		damage_info.impact_normal = Vector2.UP
 		var damage_result = damageable.apply_damage(damage_info)
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 
-	if pogo_target is StaticBody2D and pogo_target.is_in_group(Identifiers.Groups.WORLD):
+	if target is StaticBody2D and target.is_in_group(Identifiers.Groups.WORLD):
 		should_bounce = true
 
 	if should_bounce:
 		pogo_bounce_requested.emit()
-		return true
-
-	return false
