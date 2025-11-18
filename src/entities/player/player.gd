@@ -206,19 +206,13 @@ func _update_timers(delta: float) -> void:
 	if not is_instance_valid(entity_data):
 		return
 
-	entity_data.coyote_timer = max(0.0, entity_data.coyote_timer - delta)
-	entity_data.wall_coyote_timer = max(0.0, entity_data.wall_coyote_timer - delta)
-	entity_data.dash_cooldown_timer = max(0.0, entity_data.dash_cooldown_timer - delta)
-	entity_data.dash_duration_timer = max(0.0, entity_data.dash_duration_timer - delta)
-	entity_data.attack_duration_timer = max(0.0, entity_data.attack_duration_timer - delta)
-	entity_data.attack_cooldown_timer = max(0.0, entity_data.attack_cooldown_timer - delta)
+	# MOVED TO COMPONENTS:
+	# - coyote_timer, wall_coyote_timer -> PlayerPhysicsComponent
+	# - dash_cooldown_timer, dash_duration_timer -> DashComponent
+	# - attack_duration, attack_cooldown, pogo_timer -> CombatComponent
+	# - charge_timer -> ChargeAttackComponent
+	
 	entity_data.knockback_timer = max(0.0, entity_data.knockback_timer - delta)
-	entity_data.pogo_fall_prevention_timer = max(
-		0.0, entity_data.pogo_fall_prevention_timer - delta
-	)
-	var ic: InputComponent = get_component(InputComponent)
-	if entity_data.is_charging and is_instance_valid(ic) and ic.buffer.get("attack_pressed"):
-		entity_data.charge_timer += delta
 
 
 # --- Signal Handlers ---

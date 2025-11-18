@@ -20,6 +20,16 @@ var _services: ServiceLocator
 var _melee_hitbox: HitboxComponent
 var _pogo_hitbox: HitboxComponent
 
+# --- Godot Lifecycle Methods ---
+
+func _ready() -> void:
+	process_priority = 0
+
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(owner_node):
+		return
+	_update_timers(delta)
+
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
@@ -47,6 +57,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 
 func teardown() -> void:
+	set_physics_process(false)
 	if is_instance_valid(_melee_hitbox) and _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 		_melee_hitbox.hit_detected.disconnect(_on_melee_hit_detected)
 		
@@ -87,6 +98,17 @@ func fire_shot() -> void:
 		"combat_utils": _combat_utils
 	}
 	shot.activate(dependencies)
+
+
+# --- Private Methods ---
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(p_data):
+		return
+	p_data.attack_cooldown_timer = max(0.0, p_data.attack_cooldown_timer - delta)
+	p_data.attack_duration_timer = max(0.0, p_data.attack_duration_timer - delta)
+	# Pogo fall prevention is loosely related to combat timing
+	p_data.pogo_fall_prevention_timer = max(0.0, p_data.pogo_fall_prevention_timer - delta)
 
 
 # --- Private Signal Handlers ---

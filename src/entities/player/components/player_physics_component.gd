@@ -1,7 +1,7 @@
 # src/entities/player/components/player_physics_component.gd
 @tool
 ## Manages all direct physics interactions for the player character.
-## Acts as the gatekeeper for the 'velocity' property.
+## Acts as the gatekeeper for the 'velocity' property and physics timers.
 class_name PlayerPhysicsComponent
 extends IComponent
 
@@ -16,9 +16,11 @@ func _ready() -> void:
 	process_priority = -50
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(owner_node):
 		return
+
+	_update_timers(delta)
 
 	owner_node.move_and_slide()
 	
@@ -28,6 +30,16 @@ func _physics_process(_delta: float) -> void:
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
 		p_data.wall_coyote_timer = p_data.config.wall_coyote_time
 		p_data.last_wall_normal = owner_node.get_wall_normal()
+
+
+# --- Private Methods ---
+
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(p_data):
+		return
+	p_data.coyote_timer = max(0.0, p_data.coyote_timer - delta)
+	p_data.wall_coyote_timer = max(0.0, p_data.wall_coyote_timer - delta)
 
 
 # --- Public Methods ---

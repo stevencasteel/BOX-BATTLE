@@ -17,9 +17,11 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_owner_node):
 		return
+
+	_update_timers(delta)
 
 	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
 		return
@@ -37,3 +39,9 @@ func teardown() -> void:
 	_p_data = null
 	_state_machine = null
 	_input_component = null
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(_p_data):
+		return
+	_p_data.dash_cooldown_timer = max(0.0, _p_data.dash_cooldown_timer - delta)
+	_p_data.dash_duration_timer = max(0.0, _p_data.dash_duration_timer - delta)

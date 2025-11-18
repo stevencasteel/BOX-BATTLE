@@ -13,6 +13,21 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025 ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Refactoring                                                               ║
+║      ░ ■ Decentralized timer management from `Player.gd` to components.        ║
+║      ░ ■ `PlayerPhysicsComponent`: Manages coyote and wall coyote timers.      ║
+║      ░ ■ `DashComponent`: Manages dash duration and cooldown timers.           ║
+║      ░ ■ `CombatComponent`: Manages attack duration, cooldown, and pogo timers.║
+║      ░ ■ `ChargeAttackComponent`: Manages charge duration timer.               ║
+║      ░ ■ Reduced `Player.gd` responsibility significantly (SRP).               ║
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██                  [0.21.0] - PLAYER & SENSOR REFACTOR & PHYSICS & FSM CLEANUP- 11/18/2025  ██           ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║

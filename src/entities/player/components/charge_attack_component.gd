@@ -19,11 +19,15 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
 
-# FIX: Renamed delta to _delta to suppress unused parameter warning
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_owner_node):
 		return
 	
+	# 1. Update Timers
+	if _p_data.is_charging and _input_component.buffer.get("attack_pressed"):
+		_p_data.charge_timer += delta
+
+	# 2. Handle Inputs
 	if _input_component.buffer.get("attack_just_pressed") and _p_data.attack_cooldown_timer <= 0:
 		_p_data.is_charging = true
 		_p_data.charge_timer = 0.0
@@ -34,7 +38,7 @@ func _physics_process(_delta: float) -> void:
 			_p_data.is_charging = false
 
 func _try_execute_attack() -> void:
-	# FIX: Guard against race condition where state machine is cleared (player death)
+	# Guard against race condition where state machine is cleared (player death)
 	if _state_machine.states.is_empty():
 		return
 
