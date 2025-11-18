@@ -22,7 +22,7 @@
 ║      ░ ■ Refactored all Entities and Systems to use specific config injection. ║
 ║      ░ ■ Removed `EntityBuilder`. Entities now self-assemble via `build_entity()`.║
 ║      ░ ■ Genericized States: Created `StateEntityPatrol` and `StateEntityIdle` base classes.║
-
+║      ░ ■ Split `PlayerAbilityComponent` into atomic Jump/Dash/Heal/Charge components.║
 
 
 
