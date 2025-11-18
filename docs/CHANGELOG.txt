@@ -24,6 +24,9 @@
 ║      ░ ■ Genericized States: Created `StateEntityPatrol` and `StateEntityIdle` base classes.║
 ║      ░ ■ Split `PlayerAbilityComponent` into atomic Jump/Dash/Heal/Charge components.║
 ║      ░ ■ Enforced typed events for Boss Death and Phase Changes (removed dictionary payloads).║
+║      ░ ■ Replaced magic state strings ("melee", "patrol") with `Identifiers.CommonStates`.║
+
+
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

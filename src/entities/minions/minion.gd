@@ -43,7 +43,6 @@ func _ready() -> void:
 		return
 
 	_initialize_data()
-	# FIX: Call internal build instead of EntityBuilder
 	build_entity()
 
 
@@ -88,7 +87,7 @@ func deactivate() -> void:
 	$RangeDetector.monitoring = false
 
 
-# --- Internal Build Logic (Moved from EntityBuilder) ---
+# --- Internal Build Logic ---
 func _on_build() -> void:
 	var circle_shape := CircleShape2D.new()
 	circle_shape.radius = entity_data.behavior.detection_radius
@@ -104,7 +103,6 @@ func _on_build() -> void:
 		"services": _services
 	}
 
-	# Safe access to scripts to prevent crashes
 	var states: Dictionary = {
 		Identifiers.MinionStates.IDLE:
 		_safe_script(state_idle_script, "res://src/entities/minions/states/state_minion_idle.gd").new(self, sm, entity_data),
@@ -112,9 +110,10 @@ func _on_build() -> void:
 		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
 		Identifiers.MinionStates.FALL:
 		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
-		"melee":
+		# UPDATE: Use Constants
+		Identifiers.CommonStates.MELEE:
 		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
-		"patrol":
+		Identifiers.CommonStates.PATROL:
 		_safe_script(state_patrol_script, "res://src/entities/minions/states/state_minion_patrol.gd").new(self, sm, entity_data),
 	}
 
@@ -137,7 +136,7 @@ func _on_build() -> void:
 	if is_instance_valid(hc):
 		hc.died.connect(_on_health_component_died)
 
-# Helper to handle null exports on existing instances
+
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
 	if script_ref:
 		return script_ref
@@ -171,7 +170,6 @@ func _initialize_data() -> void:
 	visual.color = Palette.COLOR_TERRAIN_SECONDARY
 	entity_data = MinionStateData.new()
 	
-	# Ensure we have services (from base build_entity or fallback)
 	if not _services:
 		_services = ServiceLocator
 

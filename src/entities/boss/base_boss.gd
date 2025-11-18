@@ -80,7 +80,8 @@ func _on_build() -> void:
 		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
 		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
 		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
-		"melee": state_melee_script.new(self, sm, entity_data),
+		# UPDATE: Use Constant
+		Identifiers.CommonStates.MELEE: state_melee_script.new(self, sm, entity_data),
 	}
 
 	var per_component_deps := {
@@ -159,7 +160,6 @@ func _die() -> void:
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
 		fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 
-	# UPDATE: Use typed event
 	var ev = BossDiedEvent.new()
 	ev.boss_node = self
 	_services.event_bus.emit(EventCatalog.BOSS_DIED, ev)
@@ -227,7 +227,6 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 			entity_data.world_config.hit_stop_boss_phase_change
 		)
 		
-		# UPDATE: Use typed event
 		var ev = BossPhaseChangedEvent.new()
 		ev.phases_remaining = phases_remaining
 		_services.event_bus.emit(EventCatalog.BOSS_PHASE_CHANGED, ev)

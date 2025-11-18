@@ -16,11 +16,11 @@ func _check_interrupts() -> bool:
 
 	# --- Priority 1: Melee Interrupt ---
 	if state_data.is_player_in_melee_range:
-		# Guard: Only switch if the minion actually has a MeleeComponent
 		if _minion.get_component(MeleeComponent):
 			_minion.velocity = Vector2.ZERO
 			_minion.attack_timer.stop() 
-			state_machine.change_state("melee")
+			# UPDATE: Use constant
+			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
 	# --- Priority 2: Ranged Attack ---
@@ -38,8 +38,5 @@ func _check_interrupts() -> bool:
 			var attack_command: Callable = pattern.logic.execute(_minion, pattern)
 			if attack_command.is_valid():
 				attack_command.call()
-		
-		# Note: We stay in Patrol state to allow moving while firing (if logic allows),
-		# unless we explicitly want to stop.
 	
 	return false

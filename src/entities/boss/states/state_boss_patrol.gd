@@ -10,7 +10,8 @@ const QuickSwipeData = preload("res://src/data/combat/attacks/boss_quick_swipe.t
 func _check_interrupts() -> bool:
 	# High-priority check: if player gets too close, interrupt patrol to attack.
 	if state_data.is_player_in_close_range and owner.cooldown_timer.is_stopped():
-		state_machine.change_state("melee", {"attack_data": QuickSwipeData})
+		# UPDATE: Use constant
+		state_machine.change_state(Identifiers.CommonStates.MELEE, {"attack_data": QuickSwipeData})
 		return true
 	
 	return false

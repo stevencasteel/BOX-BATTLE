@@ -16,7 +16,8 @@ func _check_interrupts() -> bool:
 	# 1. Melee Check
 	if state_data.is_player_in_melee_range and _minion.attack_timer.is_stopped():
 		if _minion.get_component(MeleeComponent):
-			state_machine.change_state("melee")
+			# UPDATE
+			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
 	# 2. Ranged Attack Check
@@ -27,7 +28,8 @@ func _check_interrupts() -> bool:
 
 	# 3. Default to Patrol if ready
 	if _minion.attack_timer.is_stopped():
-		state_machine.change_state("patrol")
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return true
 		
 	return false

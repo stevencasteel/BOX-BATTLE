@@ -33,7 +33,8 @@ func exit() -> void:
 func process_physics(_delta: float) -> void:
 	# If the player leaves the melee zone during the attack, immediately go back to patrolling.
 	if not state_data.is_player_in_melee_range:
-		state_machine.change_state("patrol")
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return
 
 
@@ -45,5 +46,5 @@ func _on_attack_finished() -> void:
 			_minion.attack_timer.wait_time = 2.0 
 			_minion.attack_timer.start()
 		
-		# Go directly back to patrolling, which is the default active state.
-		state_machine.change_state("patrol")
+		# UPDATE
+		state_machine.change_state(Identifiers.CommonStates.PATROL)
