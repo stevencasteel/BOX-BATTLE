@@ -20,7 +20,7 @@ func _physics_process(_delta: float) -> void:
 		return
 
 	owner_node.move_and_slide()
-	_check_for_contact_damage()
+	# UPDATE: Removed manual _check_for_contact_damage() loop
 
 	if not is_instance_valid(owner_node):
 		return
@@ -49,14 +49,12 @@ func apply_horizontal_movement() -> void:
 	if not is_instance_valid(input_component):
 		return
 	var move_axis = input_component.buffer.get("move_axis", 0.0)
-	# UPDATE: config.move_speed
 	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
 		p_data.facing_direction = sign(move_axis)
 
 
 func apply_gravity(delta: float, multiplier: float = 1.0) -> void:
-	# UPDATE: world_config.gravity
 	owner_node.velocity.y += p_data.world_config.gravity * multiplier * delta
 
 
@@ -76,49 +74,7 @@ func can_wall_slide() -> bool:
 
 ## Applies the velocity and resets timers for a wall jump.
 func perform_wall_jump() -> void:
-	# UPDATE: config.wall_jump_force_...
 	owner_node.velocity.y = -p_data.config.wall_jump_force_y
 	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.wall_jump_force_x
 	p_data.coyote_timer = 0
 	p_data.wall_coyote_timer = 0
-
-
-# --- Private Methods ---
-
-
-func _check_for_contact_damage() -> void:
-	var health_component: HealthComponent = owner_node.get_component(HealthComponent)
-	if not is_instance_valid(health_component) or health_component.is_invincible():
-		return
-
-	for i in range(owner_node.get_slide_collision_count()):
-		var col = owner_node.get_slide_collision(i)
-		if not col:
-			continue
-
-		var collider = col.get_collider()
-		var is_damage_source = (
-			is_instance_valid(collider)
-			and (
-				collider.is_in_group(Identifiers.Groups.ENEMY)
-				or collider.is_in_group(Identifiers.Groups.HAZARD)
-			)
-		)
-
-		if not is_damage_source:
-			continue
-
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1
-		damage_info.source_node = collider
-		damage_info.impact_position = col.get_position()
-		damage_info.impact_normal = col.get_normal()
-		var damage_result = health_component.apply_damage(damage_info)
-
-		if not is_instance_valid(owner_node):
-			return
-
-		if damage_result.was_damaged and p_data.health > 0:
-			owner_node.velocity = damage_result.knockback_velocity
-			owner_node.get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.HURT)
-		break

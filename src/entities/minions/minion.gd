@@ -44,13 +44,20 @@ func _ready() -> void:
 
 	_initialize_data()
 	build_entity()
+	
+	# HARD FIX: If anchored, disable floor logic entirely to prevent "sliding"
+	if entity_data.behavior.is_anchored:
+		motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 
 
 func _physics_process(delta: float) -> void:
 	if _is_dead or not is_instance_valid(entity_data):
 		return
 	
-	if not entity_data.behavior.is_anchored and not is_on_floor():
+	# FIX: Force zero velocity if anchored to prevent "drift"
+	if entity_data.behavior.is_anchored:
+		velocity = Vector2.ZERO
+	elif not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 		
 	move_and_slide()
@@ -128,7 +135,7 @@ func _on_build() -> void:
 
 	setup_components(shared_deps, per_component_deps)
 	
-	# Note: health signals handled by BaseEntity
+	# Auto-wire health handled by BaseEntity
 
 
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
@@ -208,3 +215,7 @@ func _on_melee_range_detector_body_entered(body: Node) -> void:
 func _on_melee_range_detector_body_exited(body: Node) -> void:
 	if is_instance_valid(entity_data) and body is Player:
 		entity_data.is_player_in_melee_range = false
+
+
+func _on_health_component_died() -> void:
+	_die()

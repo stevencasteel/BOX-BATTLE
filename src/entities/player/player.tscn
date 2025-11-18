@@ -20,7 +20,7 @@
 size = Vector2(40, 40)
 
 [node name="Player" type="CharacterBody2D"]
-collision_mask = 142
+collision_mask = 138
 script = ExtResource("1_4d1td")
 hit_flash_effect = ExtResource("3_hit_flash")
 damage_shake_effect = ExtResource("4_shake_effect")

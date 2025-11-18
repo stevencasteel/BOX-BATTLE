@@ -24,6 +24,7 @@ extends BaseEntity
 @onready var visual_sprite: ColorRect = $ColorRect
 @onready var cooldown_timer: Timer = $CooldownTimer
 @onready var patrol_timer: Timer = $PatrolTimer
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
 # --- Public Member Variables ---
 var current_attack_patterns: Array[AttackPattern] = []
@@ -47,6 +48,21 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	# --- PARANOID COLLISION FIX ---
+	# 1. Force Layers
+	collision_layer = 4 # Enemy(4) ONLY
+	collision_mask = 138 # Platforms(2) + Hazard(8) + SolidWorld(128)
+	
+	# 2. Force Groups
+	if not is_in_group(Identifiers.Groups.ENEMY):
+		add_to_group(Identifiers.Groups.ENEMY)
+	
+	# 3. Force Shape Active
+	if is_instance_valid(collision_shape):
+		collision_shape.disabled = false
+	else:
+		push_error("BOSS CRITICAL: CollisionShape2D not found!")
+
 	_initialize_data()
 	
 	# Trigger internal build
@@ -57,7 +73,6 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	if not is_on_floor():
-		# UPDATE: world_config.gravity
 		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
 
@@ -102,8 +117,6 @@ func _on_build() -> void:
 	if hc:
 		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.connect(_on_health_threshold_reached)
-	
-	# Note: died and health_changed are handled by BaseEntity now
 
 
 # --- Public Methods ---
@@ -246,3 +259,14 @@ func _on_patrol_timer_timeout() -> void:
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.PATROL]:
 		sm.change_state(Identifiers.BossStates.IDLE)
+
+
+func _on_health_component_health_changed(current: int, max_val: int) -> void:
+	var ev := BossHealthChangedEvent.new()
+	ev.current_health = current
+	ev.max_health = max_val
+	_services.event_bus.emit(EventCatalog.BOSS_HEALTH_CHANGED, ev)
+
+
+func _on_health_component_died() -> void:
+	_die()

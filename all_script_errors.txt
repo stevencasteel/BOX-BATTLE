@@ -33,8 +33,8 @@ Shader 'LuminanceReduceRasterShaderRD' (group 0) SHA256: dcf85fa15135d7aecd1e600
 Shader 'TonemapShaderRD' (group 0) SHA256: 73e7046526ed4eb6328f66f868ec7b5209c4718b23c670b7d187840eef7d3448
 Shader 'BlitShaderRD' (group 0) SHA256: 07fdbb8db3418305063d813e1e5abdaea384f5dbf1ce1011ba48a3124d0a6d39
 CoreAudio: detected 2 channels
-CoreAudio: output sampling rate: 48000 Hz
-CoreAudio: output audio buffer frames: 512 calculated latency: 10ms
+CoreAudio: output sampling rate: 44100 Hz
+CoreAudio: output audio buffer frames: 512 calculated latency: 11ms
 
 TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
 CameraServer: Registered camera OBS Virtual Camera with ID 1 and position 0 at index 0
@@ -74,6 +74,7 @@ Loading resource: res://src/scenes/main/main.tscn
 Loading resource: res://src/scenes/main/main.gd
 AssetPaths: Validating all asset paths...
 AssetPaths: All paths validated successfully.
+Loading resource: res://src/data/default_pool_manifest.tres
 Loading resource: res://src/projectiles/player_shot.tscn
 Loading resource: res://src/projectiles/player_shot.gd
 Loading resource: res://src/projectiles/boss_shot.tscn
@@ -112,9 +113,6 @@ Loading resource: res://assets/audio/sfx/sfx_ui_select.mp3
 Loading resource: res://.godot/imported/sfx_ui_select.mp3-3073366784d3e7caa5d5c9691f71648c.mp3str
 Loading resource: res://src/scenes/loading/loading_screen.tscn
 Loading resource: res://src/scenes/loading/loading_screen.gd
-Loading resource: res://src/entities/components/telegraph_component.tscn
-Loading resource: res://src/entities/components/telegraph_component.gd
-Loading resource: res://src/data/combat/attacks/lancer_poke.tres
 Starting shader pre-warming...
 Loading resource: res://src/entities/player/player.tscn
 Loading resource: res://src/entities/archetypes/player_archetype.tres
@@ -124,10 +122,16 @@ Loading resource: res://src/entities/components/input_component.tscn
 Loading resource: res://src/entities/components/base_state_machine.tscn
 Loading resource: res://src/entities/player/components/player_physics_component.tscn
 Loading resource: res://src/entities/player/components/player_physics_component.gd
-Loading resource: res://src/entities/player/components/player_ability_component.tscn
-Loading resource: res://src/entities/player/components/player_ability_component.gd
 Loading resource: res://src/entities/player/components/player_resource_component.tscn
 Loading resource: res://src/entities/components/fx_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.gd
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.gd
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.gd
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.gd
 Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
 Loading resource: res://materials/entity_hit_flash_material.tres
 Loading resource: res://shaders/entity/red_hit_flash_test.gdshader
@@ -148,6 +152,9 @@ Loading resource: res://shaders/entity/dissolve.gdshader
 Loading resource: res://assets/textures/noise_texture.tres
 Loading resource: res://src/entities/boss/base_boss.tscn
 Loading resource: res://src/entities/components/melee_component.tscn
+Loading resource: res://src/entities/components/melee_component.gd
+Loading resource: res://src/entities/components/telegraph_component.tscn
+Loading resource: res://src/entities/components/telegraph_component.gd
 Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
 Loading resource: res://src/core/data/effects/boss_death_shake.tres
 Loading resource: res://src/entities/archetypes/boss_archetype.tres
@@ -206,6 +213,8 @@ Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
 Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
 Loading resource: res://src/data/layouts/layout_00.tres
 Loading resource: res://src/entities/minions/turret.tscn
+Loading resource: res://src/entities/minions/minion.gd
+Loading resource: res://src/data/combat/attacks/lancer_poke.tres
 Loading resource: res://src/entities/archetypes/minion_archetype.tres
 Loading resource: res://src/entities/minions/data/turret_behavior.tres
 Loading resource: res://src/entities/minions/movement_logic/stationary_movement.tres
@@ -228,8 +237,11 @@ Loading resource: res://src/entities/archetypes/player_archetype.tres
 Loading resource: res://src/entities/components/combat_component.tscn
 Loading resource: res://src/entities/components/input_component.tscn
 Loading resource: res://src/entities/player/components/player_physics_component.tscn
-Loading resource: res://src/entities/player/components/player_ability_component.tscn
 Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
 Loading resource: res://src/core/data/effects/player_damage_shake.tres
 Loading resource: res://src/ui/game_hud/game_hud.tscn
 Loading resource: res://src/ui/game_hud/game_hud.gd
@@ -246,33 +258,111 @@ XR: Clearing primary interface
 XR: Removed interface "Native mobile"
 XR: Removed interface "OpenXR"
 Leaked instance: GDScriptNativeClass:9223372049974559412
-Leaked instance: GDScript:9223372081129850270 - Resource path: res://src/core/building/terrain_builder.gd
-Leaked instance: SceneTreeTimer:9223372121613273300
-Leaked instance: Node:136717535501 - Node path: 
-Leaked instance: Node:155793230764 - Node path: 
+Leaked instance: GDScript:9223372080827860385 - Resource path: res://src/core/building/terrain_builder.gd
+Leaked instance: GDScript:9223372085441594798 - Resource path: res://src/api/interfaces/IComponent.gd
+Leaked instance: CircleShape2D:9223372177481402519 - Resource path: res://src/entities/boss/base_boss.tscn::CircleShape2D_closetrigger
+Leaked instance: RectangleShape2D:9223372175250032844 - Resource path: res://src/entities/components/melee_component.tscn::RectangleShape2D_placeholder
+Leaked instance: RectangleShape2D:9223372177464625367 - Resource path: res://src/entities/boss/base_boss.tscn::RectangleShape2D_bossbody
+Leaked instance: Timer:178425694424 - Node path: 
+Leaked instance: Node:152722999513 - Node path: 
+Leaked instance: SceneTreeTimer:9223372122116589786
+Leaked instance: GDScript:9223372124465400050 - Resource path: res://src/entities/boss/base_boss.gd
+Leaked instance: GDScript:9223372151527049494 - Resource path: res://src/entities/components/melee_component.gd
+Leaked instance: Timer:178408917944 - Node path: 
+Leaked instance: CollisionShape2D:178392140729 - Node path: 
+Leaked instance: Object:178375363514
+Leaked instance: ColorRect:178358586299 - Node path: 
+Leaked instance: CharacterBody2D:178341809084 - Node path: 
+Leaked instance: Node2D:178442472381 - Node path: 
+Leaked instance: Node:172822105022 - Node path: 
+Leaked instance: Area2D:178459249927 - Node path: 
+Leaked instance: CollisionShape2D:178476027144 - Node path: 
+Leaked instance: Area2D:178492804361 - Node path: 
+Leaked instance: CollisionShape2D:178509581578 - Node path: 
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
 Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
-Orphan StringName: _enter_tree (static: 0, total: 2)
-Orphan StringName: _set_path_cache (static: 0, total: 1)
-Orphan StringName: _reset_state (static: 0, total: 1)
-Orphan StringName: _unhandled_input (static: 0, total: 2)
-Orphan StringName: _ready (static: 0, total: 2)
-Orphan StringName: _exit_tree (static: 0, total: 2)
+Resource still in use: res://src/api/interfaces/IComponent.gd (GDScript)
+Resource still in use: res://src/entities/boss/base_boss.gd (GDScript)
+Resource still in use: res://src/entities/components/melee_component.gd (GDScript)
+Resource still in use: res://src/entities/components/melee_component.tscn::RectangleShape2D_placeholder (RectangleShape2D)
+Resource still in use: res://src/entities/boss/base_boss.tscn::RectangleShape2D_bossbody (RectangleShape2D)
+Resource still in use: res://src/entities/boss/base_boss.tscn::CircleShape2D_closetrigger (CircleShape2D)
+Orphan StringName: _make_custom_tooltip (static: 0, total: 1)
+Orphan StringName: _enter_tree (static: 0, total: 12)
+Orphan StringName: _set_path_cache (static: 0, total: 7)
+Orphan StringName: _reset_state (static: 0, total: 7)
+Orphan StringName: _unhandled_input (static: 0, total: 12)
+Orphan StringName: _ready (static: 0, total: 12)
+Orphan StringName: _has_point (static: 0, total: 1)
+Orphan StringName: body_entered (static: 0, total: 3)
+Orphan StringName: _exit_tree (static: 0, total: 12)
 Orphan StringName: _create_solid_tile (static: 0, total: 1)
-Orphan StringName: _setup_local_to_scene (static: 0, total: 1)
+Orphan StringName: collision_shape (static: 0, total: 4)
+Orphan StringName: _setup_local_to_scene (static: 0, total: 7)
+Orphan StringName: hit_confirmed (static: 0, total: 2)
+Orphan StringName: BaseBoss (static: 0, total: 3)
+Orphan StringName: _on_patrol_timer_timeout (static: 0, total: 3)
+Orphan StringName: CloseRangeDetector (static: 0, total: 2)
+Orphan StringName: REQUIRED_DEPS (static: 0, total: 1)
 Orphan StringName: _create_hazard_tile (static: 0, total: 1)
-Orphan StringName: _input (static: 0, total: 2)
-Orphan StringName: _shortcut_input (static: 0, total: 2)
-Orphan StringName: timeout (static: 2, total: 3)
-Orphan StringName: _process (static: 0, total: 2)
+Orphan StringName: Area2D (static: 1, total: 3)
+Orphan StringName: ColorRect (static: 1, total: 3)
+Orphan StringName: attack_finished (static: 0, total: 2)
+Orphan StringName: PatrolTimer (static: 0, total: 2)
+Orphan StringName: setup (static: 0, total: 2)
+Orphan StringName: _drop_data (static: 0, total: 1)
+Orphan StringName: _input (static: 0, total: 12)
+Orphan StringName: MeleeComponent (static: 0, total: 5)
+Orphan StringName: Resource (static: 2, total: 3)
+Orphan StringName: _mouse_shape_enter (static: 0, total: 3)
+Orphan StringName: IComponent (static: 0, total: 3)
+Orphan StringName: body_exited (static: 0, total: 3)
+Orphan StringName: metadata/REQUIRED_DEPS (static: 0, total: 1)
+Orphan StringName: _on_hitbox_area_entered (static: 0, total: 1)
+Orphan StringName: _hit_targets_this_swing (static: 0, total: 4)
+Orphan StringName: _on_close_range_detector_body_exited (static: 0, total: 3)
+Orphan StringName: _on_close_range_detector_body_entered (static: 0, total: 3)
+Orphan StringName: _shortcut_input (static: 0, total: 12)
+Orphan StringName: timeout (static: 2, total: 9)
+Orphan StringName: CharacterBody2D (static: 1, total: 2)
+Orphan StringName: _mouse_shape_exit (static: 0, total: 3)
+Orphan StringName: _input_event (static: 0, total: 3)
+Orphan StringName: _is_attacking (static: 0, total: 5)
+Orphan StringName: BaseEntity (static: 0, total: 1)
+Orphan StringName: _process (static: 0, total: 12)
+Orphan StringName: CollisionShape2D (static: 1, total: 9)
 Orphan StringName: _create_oneway_platform (static: 0, total: 1)
+Orphan StringName: _execute_attack_sequence (static: 0, total: 1)
 Orphan StringName: _create_background_tile (static: 0, total: 1)
-Orphan StringName: Node (static: 5, total: 6)
-Orphan StringName: _unhandled_key_input (static: 0, total: 2)
+Orphan StringName: _on_cooldown_timer_timeout (static: 0, total: 3)
+Orphan StringName: Node (static: 5, total: 8)
+Orphan StringName: _unhandled_key_input (static: 0, total: 12)
+Orphan StringName: _services (static: 0, total: 4)
+Orphan StringName: _current_attack_data (static: 0, total: 4)
+Orphan StringName: CooldownTimer (static: 0, total: 2)
+Orphan StringName: MeleeAttackData (static: 0, total: 1)
 Orphan StringName: build_terrain_async (static: 0, total: 1)
-Orphan StringName: _get_configuration_warnings (static: 0, total: 2)
+Orphan StringName: teardown (static: 0, total: 2)
+Orphan StringName: _process_hit (static: 0, total: 1)
+Orphan StringName: _gui_input (static: 0, total: 1)
+Orphan StringName: _on_hitbox_body_entered (static: 0, total: 1)
+Orphan StringName: _get_tooltip (static: 0, total: 1)
+Orphan StringName: Hitbox (static: 0, total: 2)
+Orphan StringName: _mouse_enter (static: 0, total: 3)
+Orphan StringName: _can_drop_data (static: 0, total: 1)
+Orphan StringName: _get_configuration_warnings (static: 0, total: 12)
 Orphan StringName: fill_viewport (static: 0, total: 1)
-Orphan StringName: _get_rid (static: 0, total: 1)
+Orphan StringName: _owner (static: 0, total: 4)
+Orphan StringName: hitbox (static: 0, total: 4)
+Orphan StringName: _draw (static: 0, total: 8)
+Orphan StringName: _get_minimum_size (static: 0, total: 1)
+Orphan StringName: _get_rid (static: 0, total: 7)
+Orphan StringName: _structured_text_parser (static: 0, total: 1)
+Orphan StringName: _get_drag_data (static: 0, total: 1)
+Orphan StringName: perform_attack (static: 0, total: 1)
 Orphan StringName: TerrainBuilder (static: 0, total: 3)
-Orphan StringName: _physics_process (static: 0, total: 2)
-StringName: 23 unclaimed string names at exit.
+Orphan StringName: TelegraphScene (static: 0, total: 1)
+Orphan StringName: _physics_process (static: 0, total: 12)
+Orphan StringName: _mouse_exit (static: 0, total: 3)
+Orphan StringName: changed (static: 0, total: 9)
+StringName: 78 unclaimed string names at exit.

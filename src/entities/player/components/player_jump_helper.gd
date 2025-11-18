@@ -1,15 +1,11 @@
 # src/entities/player/components/player_jump_helper.gd
 ## A stateless helper class that centralizes all jump-related logic for the Player.
-## Its single responsibility is to determine if a jump can occur and what kind of
-## jump it is, based on the player's current state.
 class_name PlayerJumpHelper
 extends RefCounted
 
 # --- Public Methods ---
 
-
 ## Checks all possible jump conditions in a prioritized order and executes one if valid.
-## Returns true if a jump was successfully initiated, false otherwise.
 static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 	if not is_instance_valid(owner):
 		return false
@@ -40,7 +36,6 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 
 
 ## Checks if the player is attempting to drop through a one-way platform.
-## Returns true if the drop was successful, false otherwise.
 static func try_platform_drop(owner: Player) -> bool:
 	if not is_instance_valid(owner) or not owner is CharacterBody2D:
 		return false

@@ -67,6 +67,16 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+	
+	# --- CONTINUOUS CONTACT DAMAGE CHECK ---
+	if is_instance_valid(hurtbox):
+		# Check Enemies (Bodies)
+		for body in hurtbox.get_overlapping_bodies():
+			_handle_contact_damage(body)
+			
+		# Check Projectiles (Areas)
+		for area in hurtbox.get_overlapping_areas():
+			_handle_contact_damage(area)
 
 
 # --- Internal Build Logic ---
@@ -126,7 +136,22 @@ func _on_build() -> void:
 
 	setup_components(shared_deps, per_component_deps)
 
-	# Wire Signals
+	# --- HURTBOX CONFIGURATION ---
+	if is_instance_valid(hurtbox):
+		hurtbox.monitoring = true
+		hurtbox.monitorable = true
+		hurtbox.collision_layer = 64 # Player Hurtbox
+		hurtbox.collision_mask = 28  # Enemy(4) + Hazard(8) + EnemyProjectile(16)
+		
+		if hurtbox.body_entered.is_connected(_on_hurtbox_body_entered):
+			hurtbox.body_entered.disconnect(_on_hurtbox_body_entered)
+		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
+		
+		if hurtbox.area_entered.is_connected(_on_hurtbox_area_entered):
+			hurtbox.area_entered.disconnect(_on_hurtbox_area_entered)
+		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+
+	# Wire other signals
 	if melee_hitbox.body_entered.get_connections().is_empty():
 		melee_hitbox.body_entered.connect(_on_melee_hitbox_body_entered)
 	if pogo_hitbox.body_entered.get_connections().is_empty():
@@ -135,11 +160,7 @@ func _on_build() -> void:
 		melee_hitbox.area_entered.connect(_on_hitbox_area_entered)
 	if pogo_hitbox.area_entered.get_connections().is_empty():
 		pogo_hitbox.area_entered.connect(_on_hitbox_area_entered)
-	if hurtbox.area_entered.get_connections().is_empty():
-		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
-
-	# Note: hc wiring is now handled by BaseEntity
-
+	
 	if cc and rc:
 		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.connect(rc.on_damage_dealt)
@@ -158,8 +179,6 @@ func _on_build() -> void:
 
 # --- Public Methods ---
 func teardown() -> void:
-	# Note: HealthComponent teardown is now handled by BaseEntity
-
 	var cc: CombatComponent = get_component(CombatComponent)
 	if is_instance_valid(cc):
 		var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
@@ -274,16 +293,23 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 			_services.object_pool.return_instance.call_deferred(area)
 
 
-func _on_hurtbox_area_entered(area: Area2D) -> void:
+func _handle_contact_damage(target: Node) -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
-	if hc.is_invincible():
+	if not is_instance_valid(hc) or hc.is_invincible():
 		return
-	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		
+	var is_threat = (
+		target.is_in_group(Identifiers.Groups.ENEMY) or 
+		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
+		target.is_in_group(Identifiers.Groups.HAZARD)
+	)
+	
+	if is_threat:
 		var damage_info = DamageInfo.new()
 		damage_info.amount = 1
-		damage_info.source_node = area
+		damage_info.source_node = target
 		damage_info.impact_position = global_position
-		damage_info.impact_normal = (global_position - area.global_position).normalized()
+		damage_info.impact_normal = (global_position - target.global_position).normalized()
 		var damage_result = hc.apply_damage(damage_info)
 
 		if not is_instance_valid(entity_data):
@@ -292,7 +318,16 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		if damage_result.was_damaged and entity_data.health > 0:
 			self.velocity = damage_result.knockback_velocity
 			get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.HURT)
-		_services.object_pool.return_instance.call_deferred(area)
+		
+		if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+			_services.object_pool.return_instance.call_deferred(target)
+
+
+func _on_hurtbox_area_entered(area: Area2D) -> void:
+	_handle_contact_damage(area)
+
+func _on_hurtbox_body_entered(body: Node) -> void:
+	_handle_contact_damage(body)
 
 
 func _on_healing_timer_timeout() -> void:
