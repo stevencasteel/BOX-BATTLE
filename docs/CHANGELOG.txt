@@ -13,7 +13,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██                  [0.21.0] - PLAYER REFACTOR - 11/18/2025             ██   ║
+║   ██                  [0.21.0] - PLAYER and SENSOR REFACTOR - 11/18/2025  ██           ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture                                                              ║
@@ -24,7 +24,10 @@
 ║      ░ ■ Removed manual collision wiring from `Player.gd`.                     ║
 ║      ░ ■ Decoupled Hurtbox state changes via `hurt_response_state` export.     ║
 
-
+║      ░ ■ Extracted `SensorComponent` to handle target detection areas.         ║
+║      ░ ■ Refactored `Minion` and `BaseBoss` to use `SensorComponent`.          ║
+║      ░ ■ Removed boilerplate signal handling for player detection in entities. ║
+║      ░ ■ Sensors now auto-update entity state data via property reflection.    ║
 
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
 ║  ██                  [0.20.0] - CONFIG DECOUPLING - 11/XX/2025           ██    ║

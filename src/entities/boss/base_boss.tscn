@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://dmej4a7ykn2q0"]
+[gd_scene load_steps=19 format=3 uid="uid://dmej4a7ykn2q0"]
 
 [ext_resource type="Script" uid="uid://5bkyx4fguxor" path="res://src/entities/boss/base_boss.gd" id="1_26qjf"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_hit_flash"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://cfirfsn8ugufx" path="res://src/entities/boss/states/state_boss_melee.gd" id="17_state_melee"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="18_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://cypy26d84f23b" path="res://src/entities/boss/data/default_boss_behavior.tres" id="19_default_behavior"]
+[ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/components/sensor_component.gd" id="20_sensor_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bossbody"]
 size = Vector2(60, 60)
@@ -61,12 +62,13 @@ one_shot = true
 [node name="MeleeComponent" parent="." instance=ExtResource("3_melee_component")]
 
 [node name="CloseRangeDetector" type="Area2D" parent="."]
-collision_layer = 4
+collision_layer = 512
+monitorable = false
+script = ExtResource("20_sensor_script")
+state_property_name = &"is_player_in_close_range"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CloseRangeDetector"]
 shape = SubResource("CircleShape2D_closetrigger")
 
 [connection signal="timeout" from="CooldownTimer" to="." method="_on_cooldown_timer_timeout"]
 [connection signal="timeout" from="PatrolTimer" to="." method="_on_patrol_timer_timeout"]
-[connection signal="body_entered" from="CloseRangeDetector" to="." method="_on_close_range_detector_body_entered"]
-[connection signal="body_exited" from="CloseRangeDetector" to="." method="_on_close_range_detector_body_exited"]

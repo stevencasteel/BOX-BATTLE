@@ -22,6 +22,7 @@ extends BaseEntity
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
 @onready var attack_timer: Timer = $AttackTimer
+@onready var range_detector: SensorComponent = $RangeDetector
 @onready var range_detector_shape: CollisionShape2D = $RangeDetector/CollisionShape2D
 
 # --- Public Member Variables ---
@@ -45,7 +46,6 @@ func _ready() -> void:
 	_initialize_data()
 	build_entity()
 	
-	# HARD FIX: If anchored, disable floor logic entirely to prevent "sliding"
 	if entity_data.behavior.is_anchored:
 		motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 
@@ -54,7 +54,6 @@ func _physics_process(delta: float) -> void:
 	if _is_dead or not is_instance_valid(entity_data):
 		return
 	
-	# FIX: Force zero velocity if anchored to prevent "drift"
 	if entity_data.behavior.is_anchored:
 		velocity = Vector2.ZERO
 	elif not is_on_floor():
@@ -70,7 +69,6 @@ func _notification(what: int) -> void:
 
 # --- Public Methods ---
 func teardown() -> void:
-	# Note: Health signals handled by BaseEntity
 	super.teardown()
 	entity_data = null
 
@@ -87,15 +85,30 @@ func deactivate() -> void:
 		attack_timer.stop()
 
 	set_physics_process(false)
-	$RangeDetector.monitoring = false
+	if is_instance_valid(range_detector):
+		range_detector.monitoring = false
+	
+	var melee_detector = get_node_or_null("MeleeRangeDetector")
+	if is_instance_valid(melee_detector) and melee_detector is Area2D:
+		melee_detector.monitoring = false
 
 
 # --- Internal Build Logic ---
 func _on_build() -> void:
+	# Apply Behavior Config
 	var circle_shape := CircleShape2D.new()
 	circle_shape.radius = entity_data.behavior.detection_radius
 	range_detector_shape.shape = circle_shape
 
+	# Setup Sensors
+	if is_instance_valid(range_detector):
+		range_detector.setup(self, {"data_resource": entity_data})
+	
+	var melee_detector = get_node_or_null("MeleeRangeDetector")
+	if is_instance_valid(melee_detector) and melee_detector is SensorComponent:
+		melee_detector.setup(self, {"data_resource": entity_data})
+
+	# Setup Components
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
@@ -134,8 +147,6 @@ func _on_build() -> void:
 	}
 
 	setup_components(shared_deps, per_component_deps)
-	
-	# Auto-wire health handled by BaseEntity
 
 
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
@@ -147,6 +158,7 @@ func _safe_script(script_ref: Script, fallback_path: String) -> Script:
 # --- Override Virtual Handlers ---
 func _on_entity_died() -> void:
 	_die()
+
 
 # --- Private Methods ---
 func _die() -> void:
@@ -197,25 +209,5 @@ func _update_player_tracking() -> void:
 
 
 # --- Signal Handlers ---
-func _on_range_detector_body_entered(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_range = true
-
-
-func _on_range_detector_body_exited(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_range = false
-
-
-func _on_melee_range_detector_body_entered(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_melee_range = true
-
-
-func _on_melee_range_detector_body_exited(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_melee_range = false
-
-
 func _on_health_component_died() -> void:
 	_die()

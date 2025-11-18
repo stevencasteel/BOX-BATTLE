@@ -25,6 +25,7 @@ extends BaseEntity
 @onready var cooldown_timer: Timer = $CooldownTimer
 @onready var patrol_timer: Timer = $PatrolTimer
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var close_range_detector: SensorComponent = $CloseRangeDetector
 
 # --- Public Member Variables ---
 var current_attack_patterns: Array[AttackPattern] = []
@@ -79,6 +80,9 @@ func _physics_process(delta: float) -> void:
 
 # --- Internal Build Logic ---
 func _on_build() -> void:
+	if is_instance_valid(close_range_detector):
+		close_range_detector.setup(self, {"data_resource": entity_data})
+
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
@@ -160,6 +164,8 @@ func _die() -> void:
 
 	cooldown_timer.stop()
 	patrol_timer.stop()
+	if is_instance_valid(close_range_detector):
+		close_range_detector.monitoring = false
 
 	collision_layer = 0
 	collision_mask = 0
@@ -210,15 +216,6 @@ func _update_player_tracking() -> void:
 
 
 # --- Signal Handlers ---
-func _on_close_range_detector_body_entered(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_close_range = true
-
-
-func _on_close_range_detector_body_exited(body: Node) -> void:
-	if is_instance_valid(entity_data) and body is Player:
-		entity_data.is_player_in_close_range = false
-
 
 func _on_health_threshold_reached(health_percentage: float) -> void:
 	if not is_instance_valid(behavior):
