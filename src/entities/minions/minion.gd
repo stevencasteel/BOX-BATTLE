@@ -7,17 +7,12 @@ extends BaseEntity
 # --- Editor Configuration ---
 @export_group("Core Configuration")
 @export var behavior: MinionBehavior
+@export var state_machine_config: StateMachineConfig
+
 @export_group("Juice & Feedback")
 @export var hit_flash_effect: ShaderEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-
-@export_group("State Scripts")
-@export var state_idle_script: Script = preload("res://src/entities/minions/states/state_minion_idle.gd")
-@export var state_attack_script: Script = preload("res://src/entities/minions/states/state_minion_attack.gd")
-@export var state_melee_script: Script = preload("res://src/entities/minions/states/state_minion_melee.gd")
-@export var state_patrol_script: Script = preload("res://src/entities/minions/states/state_minion_patrol.gd")
-@export var state_fall_script: Script = preload("res://src/entities/states/state_entity_fall.gd")
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -35,6 +30,8 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("This node requires an EntityArchetype resource.")
 	if not behavior:
 		warnings.append("This node requires a MinionBehavior resource to function.")
+	if not state_machine_config:
+		warnings.append("This node requires a StateMachineConfig resource.")
 	return warnings
 
 
@@ -119,21 +116,25 @@ func _on_build() -> void:
 		"services": _services
 	}
 
-	var states: Dictionary = {
-		Identifiers.MinionStates.IDLE:
-		_safe_script(state_idle_script, "res://src/entities/minions/states/state_minion_idle.gd").new(self, sm, entity_data),
-		Identifiers.MinionStates.ATTACK:
-		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
-		Identifiers.MinionStates.FALL:
-		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
-		Identifiers.CommonStates.MELEE:
-		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
-		Identifiers.CommonStates.PATROL:
-		_safe_script(state_patrol_script, "res://src/entities/minions/states/state_minion_patrol.gd").new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		# Prefer behavior's override if set, otherwise default to config's initial
+		initial_state_key = entity_data.behavior.initial_state_key
+		if initial_state_key == &"":
+			initial_state_key = state_machine_config.initial_state
+			
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("Minion: Missing StateMachineConfig!")
+
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": entity_data.behavior.initial_state_key},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual, 
 			"hit_effect": hit_flash_effect,

@@ -27,16 +27,10 @@ func process_physics(delta: float) -> void:
 		var data = _entity.entity_data
 		if "behavior" in data and data.behavior and data.behavior.movement_logic:
 			logic = data.behavior.movement_logic
-	
-	if is_instance_valid(logic):
-		# We pass the entity_data to the logic. Both Minion and Boss data 
-		# are compatible with what MovementLogic expects (services, config, facing_direction).
-		_entity.velocity = logic.execute(delta, _entity, _entity.entity_data)
-	else:
-		# Fallback if no logic assigned
-		_entity.velocity.x = 0
-		if not _entity.is_on_floor():
-			_entity.velocity.y += 980 * delta
+			
+			# LSP Check: Ensure the data conforms to the BaseEntityData contract
+			if data is BaseEntityData:
+				_entity.velocity = logic.execute(delta, _entity, data)
 
 # Virtual method for subclasses to override
 func _check_interrupts() -> bool:

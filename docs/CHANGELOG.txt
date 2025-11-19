@@ -14,6 +14,32 @@
 
 
 
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR - 11/19/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Liskov Substitution Principle (LSP) to Entity Data.           ║
+║      ░ ■ Created `BaseEntityData` resource. `PlayerStateData`, `BossStateData`,║
+║      ░   and `MinionStateData` now inherit from this base class.               ║
+║      ░ ■ Enforced strong typing in `MovementLogic`, removing "duck typing".    ║
+║      ░ ■ Applied Open/Closed Principle (OCP) to State Machine construction.    ║
+║      ░ ■ Created `StateMachineConfig` resource to map state keys to scripts.   ║
+║      ░ ■ Entities now build their FSM dynamically from resources, removing     ║
+║      ░   hardcoded state lists from source code.                               ║
+║      ░ ■ Fixed bug where entities defaulted to 1 HP due to uninitialized       ║
+║      ░   base data values.                                                     ║
+║                                                                                ║
+
+
+
+
+
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR & OCP TELEGRAPH REFACTOR - 11/19/2025              ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

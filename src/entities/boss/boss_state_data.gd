@@ -1,24 +1,14 @@
 # src/entities/boss/boss_state_data.gd
+@tool
 ## A Resource that holds all shared runtime state data for the Boss.
 class_name BossStateData
-extends Resource
+extends BaseEntityData
 
 # --- Configuration References ---
-# UPDATE: Added behavior and services for MovementLogic compatibility
 var behavior: BossBehavior
-var services: ServiceLocator
-var config: EnemyConfig
-var world_config: WorldConfig
 
-# --- Health & Combat ---
-var max_health: int = 30
-var health: int = 30:
-	set(value):
-		health = clamp(value, 0, max_health)
+# --- Combat ---
 var projectile_pool_key: StringName = &""
 
 # --- Targeting ---
 var is_player_in_close_range: bool = false
-
-# --- Physics & Movement ---
-var facing_direction: float = -1.0

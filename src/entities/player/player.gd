@@ -21,16 +21,9 @@ const ACTION_ALLOWED_STATES = [
 @export var damage_shake_effect: ScreenShakeEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-@export_group("State Scripts")
-@export var state_move_script: Script
-@export var state_jump_script: Script
-@export var state_fall_script: Script
-@export var state_dash_script: Script
-@export var state_wall_slide_script: Script
-@export var state_attack_script: Script
-@export var state_hurt_script: Script
-@export var state_heal_script: Script
-@export var state_pogo_script: Script
+
+@export_group("Configuration")
+@export var state_machine_config: StateMachineConfig
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -76,6 +69,10 @@ func _on_build() -> void:
 
 	entity_data.config = _services.player_config
 	entity_data.world_config = _services.world_config
+	
+	# CRITICAL FIX: Initialize health from config before components read it
+	entity_data.max_health = entity_data.config.max_health
+	entity_data.health = entity_data.max_health
 
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
@@ -90,20 +87,20 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	var states: Dictionary = {
-		Identifiers.PlayerStates.MOVE: state_move_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.FALL: state_fall_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.JUMP: state_jump_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.DASH: state_dash_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.WALL_SLIDE: state_wall_slide_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.ATTACK: state_attack_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.HURT: state_hurt_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.HEAL: state_heal_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.POGO: state_pogo_script.new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		initial_state_key = state_machine_config.initial_state
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("Player: Missing StateMachineConfig!")
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.PlayerStates.FALL},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual_sprite, 
 			"hit_effect": hit_flash_effect,
@@ -120,7 +117,6 @@ func _on_build() -> void:
 			"combat_utils": _services.combat_utils,
 			"services": _services,
 			"melee_hitbox": melee_hitbox
-			# Pogo hitbox removed from here
 			},
 		rc: {
 			"event_bus": _services.event_bus

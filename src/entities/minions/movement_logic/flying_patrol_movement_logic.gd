@@ -11,7 +11,7 @@ extends MovementLogic
 var _patrol_points: Dictionary = {}
 
 
-func execute(delta: float, entity: BaseEntity, _data: Resource) -> Vector2:
+func execute(delta: float, entity: BaseEntity, _data: BaseEntityData) -> Vector2:
 	var instance_id = entity.get_instance_id()
 	
 	# Initialize patrol points on the first run for this specific instance.

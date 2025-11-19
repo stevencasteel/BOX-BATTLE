@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_move.gd" id="3_move"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_jump.gd" id="4_jump"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_fall.gd" id="5_fall"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_dash.gd" id="6_dash"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_wall_slide.gd" id="7_slide"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_attack.gd" id="8_attack"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_hurt.gd" id="9_hurt"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_heal.gd" id="10_heal"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_pogo.gd" id="11_pogo"]
+
+[sub_resource type="Resource" id="Resource_move"]
+script = ExtResource("1_def")
+key = &"move"
+state_script = ExtResource("3_move")
+
+[sub_resource type="Resource" id="Resource_jump"]
+script = ExtResource("1_def")
+key = &"jump"
+state_script = ExtResource("4_jump")
+
+[sub_resource type="Resource" id="Resource_fall"]
+script = ExtResource("1_def")
+key = &"fall"
+state_script = ExtResource("5_fall")
+
+[sub_resource type="Resource" id="Resource_dash"]
+script = ExtResource("1_def")
+key = &"dash"
+state_script = ExtResource("6_dash")
+
+[sub_resource type="Resource" id="Resource_slide"]
+script = ExtResource("1_def")
+key = &"wall_slide"
+state_script = ExtResource("7_slide")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("1_def")
+key = &"attack"
+state_script = ExtResource("8_attack")
+
+[sub_resource type="Resource" id="Resource_hurt"]
+script = ExtResource("1_def")
+key = &"hurt"
+state_script = ExtResource("9_hurt")
+
+[sub_resource type="Resource" id="Resource_heal"]
+script = ExtResource("1_def")
+key = &"heal"
+state_script = ExtResource("10_heal")
+
+[sub_resource type="Resource" id="Resource_pogo"]
+script = ExtResource("1_def")
+key = &"pogo"
+state_script = ExtResource("11_pogo")
+
+[resource]
+script = ExtResource("2_cfg")
+initial_state = &"fall"
+states = Array[ExtResource("1_def")]([
+    SubResource("Resource_move"),
+    SubResource("Resource_jump"),
+    SubResource("Resource_fall"),
+    SubResource("Resource_dash"),
+    SubResource("Resource_slide"),
+    SubResource("Resource_attack"),
+    SubResource("Resource_hurt"),
+    SubResource("Resource_heal"),
+    SubResource("Resource_pogo")
+])

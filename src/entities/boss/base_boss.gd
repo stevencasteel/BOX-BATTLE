@@ -6,19 +6,15 @@ extends BaseEntity
 # --- Editor Configuration ---
 @export_group("Core Configuration")
 @export var behavior: BossBehavior
+@export var state_machine_config: StateMachineConfig
+
 @export_group("Juice & Feedback")
 @export var hit_flash_effect: ShaderEffect
 @export var phase_change_shake_effect: ScreenShakeEffect
 @export var death_shake_effect: ScreenShakeEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-@export_group("State Scripts")
-@export var state_idle_script: Script
-@export var state_attack_script: Script
-@export var state_cooldown_script: Script
-@export var state_patrol_script: Script
-@export var state_lunge_script: Script
-@export var state_melee_script: Script
+
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -41,6 +37,8 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("This node requires a BossBehavior resource.")
 	elif is_instance_valid(behavior) and behavior.phase_1_patterns.is_empty():
 		warnings.append("The assigned BossBehavior has no Phase 1 attack patterns.")
+	if not state_machine_config:
+		warnings.append("This node requires a StateMachineConfig resource.")
 	return warnings
 
 
@@ -93,17 +91,20 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	var states: Dictionary = {
-		Identifiers.BossStates.IDLE: state_idle_script.new(self, sm, entity_data),
-		Identifiers.BossStates.ATTACK: state_attack_script.new(self, sm, entity_data),
-		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
-		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
-		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
-		Identifiers.CommonStates.MELEE: state_melee_script.new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		initial_state_key = state_machine_config.initial_state
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("BaseBoss: Missing StateMachineConfig!")
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.BossStates.COOLDOWN},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual_sprite, 
 			"hit_effect": hit_flash_effect,
@@ -202,6 +203,10 @@ func _initialize_data() -> void:
 	entity_data.services = _services
 	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
+
+	# CRITICAL FIX: Set max_health from config, overriding the default of 1
+	entity_data.max_health = entity_data.config.boss_health
+	entity_data.health = entity_data.max_health
 
 
 func _update_player_tracking() -> void:

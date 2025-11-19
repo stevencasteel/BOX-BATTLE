@@ -6,5 +6,5 @@ extends MovementLogic
 
 
 ## Returns zero velocity, effectively keeping the entity stationary.
-func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
+func execute(_delta: float, _entity: BaseEntity, _data: BaseEntityData) -> Vector2:
 	return Vector2.ZERO
