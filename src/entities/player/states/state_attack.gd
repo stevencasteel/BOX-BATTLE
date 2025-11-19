@@ -5,12 +5,12 @@ extends BaseState
 
 var _input: InputComponent
 var _physics: PlayerPhysicsComponent
-var _player: Player
+var _player # Untyped
 
 # --- State Lifecycle ---
 
 func enter(_msg := {}) -> void:
-	_player = owner as Player
+	_player = owner
 	_input = owner.get_component(InputComponent)
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	

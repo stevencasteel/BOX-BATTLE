@@ -123,7 +123,7 @@ func _update_entity_info() -> void:
 	if is_instance_valid(state_machine):
 		state_history_label.text = "History: %s" % ", ".join(state_machine.state_history)
 
-	if _target_entity is Player:
+	if _target_entity.is_in_group(Identifiers.Groups.PLAYER):
 		_update_player_specific_info()
 	else:
 		timers_label.text = "Timers:"
@@ -153,7 +153,7 @@ func _on_toggle_collision_toggled(button_pressed: bool) -> void:
 
 
 func _on_toggle_invincibility_toggled(button_pressed: bool) -> void:
-	var player: Player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER) as Player
+	var player: CharacterBody2D = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
 	if not is_instance_valid(player):
 		return
 

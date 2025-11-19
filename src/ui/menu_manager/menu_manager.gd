@@ -37,10 +37,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if menu_items.is_empty():
 		return
 
-	if event.is_action_pressed("ui_down"):
+	if event.is_action_pressed(Identifiers.Actions.MOVE_DOWN):
 		_change_selection(1)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_up"):
+	elif event.is_action_pressed(Identifiers.Actions.MOVE_UP):
 		_change_selection(-1)
 		get_viewport().set_input_as_handled()
 

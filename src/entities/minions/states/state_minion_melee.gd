@@ -8,11 +8,11 @@ const LancerPokeData = preload("res://src/data/combat/attacks/lancer_poke.tres")
 
 # --- Private Member Variables ---
 var _melee_component: MeleeComponent
-var _minion: Minion
+var _minion # Untyped
 
 
 func enter(_msg := {}) -> void:
-	self._minion = owner as Minion
+	self._minion = owner
 	_minion.velocity = Vector2.ZERO
 	_melee_component = _minion.get_component(MeleeComponent)
 	
@@ -33,7 +33,6 @@ func exit() -> void:
 func process_physics(_delta: float) -> void:
 	# If the player leaves the melee zone during the attack, immediately go back to patrolling.
 	if not state_data.is_player_in_melee_range:
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return
 
@@ -46,5 +45,4 @@ func _on_attack_finished() -> void:
 			_minion.attack_timer.wait_time = 2.0 
 			_minion.attack_timer.start()
 		
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)

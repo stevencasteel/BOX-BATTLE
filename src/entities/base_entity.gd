@@ -23,20 +23,36 @@ var _player: CharacterBody2D
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
-	_build_from_archetype()
-	if not Engine.is_editor_hint():
-		_player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	
+	# Deferred build to ensure Autoloads are ready
+	call_deferred("build_entity")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
+
+func _exit_tree() -> void:
+	# Defined to allow subclasses to call super._exit_tree() safely
+	pass
 
 
 # --- Public Methods ---
 
 ## The main entry point for self-construction.
 func build_entity() -> void:
-	_services = ServiceLocator
+	if _components_initialized:
+		return
+		
+	if not _services:
+		_services = ServiceLocator
+	
+	# Safely access targeting system if available
+	if _services and _services.get("targeting_system"):
+		_player = _services.targeting_system.get_first(Identifiers.Groups.PLAYER)
+	
+	# CRITICAL: Instantiate components from the archetype before configuration
+	_build_from_archetype()
+	
 	_on_build() 
 
 
@@ -75,6 +91,10 @@ func teardown() -> void:
 	for child in get_children():
 		if child is IComponent:
 			child.teardown()
+	
+	_components.clear()
+	_components_by_interface.clear()
+	_components_initialized = false
 
 
 func setup_components(
@@ -93,7 +113,10 @@ func setup_components(
 	base_shared_deps["object_pool"] = s.object_pool
 	base_shared_deps["combat_utils"] = s.combat_utils
 	base_shared_deps["grid_utils"] = s.grid_utils
-	base_shared_deps["audio_manager"] = AudioManager # Autoload
+	base_shared_deps["audio_manager"] = AudioManager
+	
+	if s.get("targeting_system"):
+		base_shared_deps["targeting_system"] = s.targeting_system
 
 	# DIP: Auto-extract DamageResponseConfig if present in the main config.
 	if base_shared_deps.has("config"):

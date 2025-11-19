@@ -6,12 +6,12 @@ extends RefCounted
 # --- Public Methods ---
 
 ## Checks all possible jump conditions in a prioritized order and executes one if valid.
-static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
+static func try_jump(owner: Node, p_data: Resource) -> bool:
 	if not is_instance_valid(owner):
 		return false
 
-	var physics: PlayerPhysicsComponent = owner.get_component(PlayerPhysicsComponent)
-	var sm: BaseStateMachine = owner.get_component(BaseStateMachine)
+	var physics = owner.get_component(PlayerPhysicsComponent)
+	var sm = owner.get_component(BaseStateMachine)
 
 	if not is_instance_valid(physics) or not is_instance_valid(sm):
 		return false
@@ -36,7 +36,7 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 
 
 ## Checks if the player is attempting to drop through a one-way platform.
-static func try_platform_drop(owner: Player) -> bool:
+static func try_platform_drop(owner: Node) -> bool:
 	if not is_instance_valid(owner) or not owner is CharacterBody2D:
 		return false
 
@@ -50,7 +50,10 @@ static func try_platform_drop(owner: Player) -> bool:
 		and floor_collider.is_in_group(Identifiers.Groups.ONEWAY_PLATFORMS)
 	):
 		owner.position.y += 2 # Nudge the player down to clear the platform
-		owner.get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
+		# We access the state machine via component lookup to avoid type dependency
+		var sm = owner.get_component(BaseStateMachine)
+		if sm:
+			sm.change_state(Identifiers.PlayerStates.FALL)
 		return true
 
 	return false

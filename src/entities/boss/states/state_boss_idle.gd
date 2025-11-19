@@ -12,7 +12,8 @@ func enter(msg := {}) -> void:
 	_decide_next_action()
 
 func _decide_next_action() -> void:
-	var boss = owner as BaseBoss
+	# Removed strict casting to avoid cyclic dep
+	var boss = owner
 	if boss.current_attack_patterns.is_empty():
 		push_warning("BossStateIdle: No attack patterns. Defaulting to Cooldown.")
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)

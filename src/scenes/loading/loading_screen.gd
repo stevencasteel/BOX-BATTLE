@@ -67,13 +67,15 @@ func _prewarm_shaders() -> void:
 
 		prewarm_viewport.add_child(instance)
 
-		if instance is Player:
+		# Use Group checks instead of static type checks to prevent parser cycles
+		if instance.is_in_group(Identifiers.Groups.PLAYER):
 			instance.velocity.x = 100
 			var sm: BaseStateMachine = instance.get_component(BaseStateMachine)
 			if is_instance_valid(sm) and sm.has_method("change_state"):
 				sm.change_state(Identifiers.PlayerStates.ATTACK)
-		elif instance is BaseBoss:
-			instance.velocity.x = 100
+		elif instance.is_in_group(Identifiers.Groups.ENEMY):
+			if "velocity" in instance:
+				instance.velocity.x = 100
 
 		await get_tree().process_frame
 		instance.queue_free()

@@ -4,12 +4,12 @@ class_name PlayerStatePogo
 extends BaseState
 
 var _physics: PlayerPhysicsComponent
-var _player: Player
+var _player # Untyped
 
 # --- State Lifecycle ---
 
 func enter(_msg := {}) -> void:
-	_player = owner as Player
+	_player = owner
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	
 	state_data.combat.is_pogo_attack = true

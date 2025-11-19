@@ -8,13 +8,13 @@ const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _current_pattern: AttackPattern
-var _boss: BaseBoss
+var _boss # Untyped to avoid cycles
 
 # --- State Lifecycle ---
 
 
 func enter(msg := {}) -> void:
-	self._boss = owner as BaseBoss
+	self._boss = owner
 	if not _boss:
 		push_error("BossStateAttack: Owner is not a BaseBoss. Aborting.")
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)

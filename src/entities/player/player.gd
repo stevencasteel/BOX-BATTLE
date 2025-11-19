@@ -17,13 +17,13 @@ const ACTION_ALLOWED_STATES = [
 
 # --- Editor Properties ---
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var damage_shake_effect: ScreenShakeEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var damage_shake_effect: ScreenShakeEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
 
 @export_group("Configuration")
-@export var state_machine_config: StateMachineConfig
+@export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -41,7 +41,9 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	# Registration
 	add_to_group(Identifiers.Groups.PLAYER)
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.PLAYER)
 	
 	# Setup Data
 	entity_data = PlayerStateData.new()
@@ -60,6 +62,12 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+
+
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
 
 
 # --- Internal Build Logic ---
@@ -167,6 +175,9 @@ func teardown() -> void:
 	
 	if is_instance_valid(hurtbox):
 		hurtbox.teardown()
+	
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
 
 	super.teardown()
 	entity_data = null
@@ -194,7 +205,9 @@ func _die() -> void:
 	collision_mask = 0
 	set_physics_process(false)
 	
-	# Stop hurtbox processing immediately
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
+	
 	if is_instance_valid(hurtbox):
 		hurtbox.teardown()
 

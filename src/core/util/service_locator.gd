@@ -11,6 +11,7 @@ const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 # --- Service References ---
 @onready var fx_manager: IFXManager = get_node("/root/FXManagerAdapter")
 @onready var object_pool: IObjectPool = get_node("/root/ObjectPoolAdapter")
+@onready var targeting_system = get_node("/root/TargetingSystem")
 @onready var event_bus = get_node("/root/EventBus")
 @onready var sequencer = get_node("/root/Sequencer")
 @onready var combat_utils = get_node("/root/CombatUtils")

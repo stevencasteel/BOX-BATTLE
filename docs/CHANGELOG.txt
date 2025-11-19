@@ -13,11 +13,25 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.25.0] - CURRENT UNTITLED - 11/19/2025                           ██   ║
+║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING - 11/19/2025      ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
-
+║   █  Architecture & Decoupling                                                 ║
+║      ░ ■ Implemented 'TargetingSystem': A centralized service for entities to  ║
+║      ░   register/find targets, removing brittle 'get_tree()' group lookups.   ║
+║      ░ ■ Centralized Input Identifiers: Created 'Identifiers.Actions' to       ║
+║      ░   replace magic strings ("ui_left") throughout the codebase.            ║
+║      ░ ■ Resolved Cyclic Dependencies: Removed strict static typing in         ║
+║      ░   Component and State scripts referencing their owners. Replaced with   ║
+║      ░   runtime checks to prevent parser lock-ups in the Editor.              ║
+║                                                                                ║
+║   █  Code Quality                                                              ║
+║      ░ ■ Refactored 'BaseEntity' initialization to ensure Archetypes build     ║
+║      ░   components before configuration injection occurs.                     ║
+║      ░ ■ Updated 'InputComponent' and 'MenuManager' to use the new identifiers.║
+║      ░ ■ Hardened 'ArenaBuilder' to prevent type errors during hot-reloads.    ║
+║                                                                                ║
 
 
 

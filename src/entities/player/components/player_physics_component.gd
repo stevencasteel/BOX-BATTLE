@@ -6,7 +6,7 @@ class_name PlayerPhysicsComponent
 extends IComponent
 
 # --- Member Variables ---
-var owner_node: Player
+var owner_node # Typed as Player in logic
 var p_data: PlayerStateData
 
 # --- Godot Lifecycle Methods ---
@@ -17,6 +17,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(owner_node):
 		return
 
@@ -46,7 +48,7 @@ func _update_timers(delta: float) -> void:
 
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	self.owner_node = p_owner as Player
+	self.owner_node = p_owner
 	self.p_data = p_dependencies.get("data_resource")
 
 

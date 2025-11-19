@@ -58,9 +58,13 @@ func spawn_boss_async() -> Node:
 	var boss_scene: PackedScene = _current_build_data.encounter_data_resource.boss_scene
 	if not boss_scene:
 		return null
-	var instance: BaseEntity = boss_scene.instantiate()
-	instance.global_position = _current_build_data.boss_spawn_pos
-	instance.inject_dependencies(ServiceLocator)
+	var instance: Node = boss_scene.instantiate() # Weakened type
+	if instance is Node2D:
+		instance.global_position = _current_build_data.boss_spawn_pos
+	
+	if instance is BaseEntity:
+		instance.inject_dependencies(ServiceLocator)
+	
 	_current_level_container.add_child(instance)
 	await get_tree().process_frame
 
@@ -72,9 +76,13 @@ func spawn_boss_async() -> Node:
 
 # --- Private Methods ---
 func _spawn_player_async() -> void:
-	var instance: BaseEntity = load(AssetPaths.SCENE_PLAYER).instantiate()
-	instance.global_position = _current_build_data.player_spawn_pos
-	instance.inject_dependencies(ServiceLocator)
+	var instance: Node = load(AssetPaths.SCENE_PLAYER).instantiate() # Weakened type
+	if instance is Node2D:
+		instance.global_position = _current_build_data.player_spawn_pos
+	
+	if instance is BaseEntity:
+		instance.inject_dependencies(ServiceLocator)
+	
 	_current_level_container.add_child(instance)
 	await get_tree().process_frame
 

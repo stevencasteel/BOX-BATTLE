@@ -4,7 +4,7 @@ extends BaseState
 class_name BossStateLunge
 
 # --- Private Member Variables ---
-var _boss: BaseBoss
+var _boss # Untyped
 var _health: HealthComponent
 var _lunge_duration: float
 var _invincibility_token: int
@@ -13,7 +13,7 @@ var _invincibility_token: int
 
 
 func enter(msg := {}) -> void:
-	self._boss = owner as BaseBoss
+	self._boss = owner
 	if not _boss:
 		return
 

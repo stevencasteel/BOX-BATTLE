@@ -3,11 +3,11 @@
 class_name MinionStateIdle
 extends StateEntityIdle
 
-var _minion: Minion
+var _minion # Untyped
 
 func enter(msg := {}) -> void:
 	super.enter(msg)
-	_minion = owner as Minion
+	_minion = owner
 
 func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
@@ -16,7 +16,6 @@ func _check_interrupts() -> bool:
 	# 1. Melee Check
 	if state_data.is_player_in_melee_range and _minion.attack_timer.is_stopped():
 		if _minion.get_component(MeleeComponent):
-			# UPDATE
 			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
@@ -28,7 +27,6 @@ func _check_interrupts() -> bool:
 
 	# 3. Default to Patrol if ready
 	if _minion.attack_timer.is_stopped():
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return true
 		

@@ -10,6 +10,7 @@ var _owner: Node2D
 var _entity_data: Resource # BossStateData or MinionStateData
 var _object_pool: IObjectPool
 var _combat_utils: Node
+var _targeting_system: Node
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -22,6 +23,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._entity_data = p_dependencies.get("data_resource")
 	self._object_pool = p_dependencies.get("object_pool")
 	self._combat_utils = p_dependencies.get("combat_utils")
+	self._targeting_system = p_dependencies.get("targeting_system")
 	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
@@ -29,7 +31,11 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
-		_player_node = _owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+		# Use the TargetingSystem if available, otherwise fallback to global ServiceLocator for robustness
+		if not _targeting_system:
+			_targeting_system = ServiceLocator.targeting_system
+		
+		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 
 func teardown() -> void:
@@ -40,6 +46,7 @@ func teardown() -> void:
 	_object_pool = null
 	_combat_utils = null
 	_player_node = null
+	_targeting_system = null
 
 
 # --- Public API ---
@@ -59,7 +66,14 @@ func fire_volley(shot_count: int, delay: float) -> void:
 
 ## Fires a single shot directly at the player's current position.
 func fire_shot_at_player() -> void:
-	if not is_instance_valid(_owner) or not is_instance_valid(_player_node):
+	if not is_instance_valid(_owner):
+		return
+		
+	# Refresh player reference if needed
+	if not is_instance_valid(_player_node) and is_instance_valid(_targeting_system):
+		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
+
+	if not is_instance_valid(_player_node):
 		return
 
 	# If the owner is marked as dead via internal flags, don't fire.

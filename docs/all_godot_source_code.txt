@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Nov 18 19:04:27 CST 2025
+Generated on: Wed Nov 19 11:52:00 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -56,13 +56,16 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── damage_result.gd
 │   │   │   └── melee_attack_data.gd
 │   │   ├── global_preloader.gd
-│   │   └── interfaces
-│   │       ├── IComponent.gd
-│   │       ├── IDamageable.gd
-│   │       ├── IFXManager.gd
-│   │       ├── IObjectPool.gd
-│   │       ├── IPoolable.gd
-│   │       └── ISceneController.gd
+│   │   ├── interfaces
+│   │   │   ├── IComponent.gd
+│   │   │   ├── IDamageable.gd
+│   │   │   ├── IFXManager.gd
+│   │   │   ├── IObjectPool.gd
+│   │   │   ├── IPoolable.gd
+│   │   │   └── ISceneController.gd
+│   │   └── status_effects
+│   │       ├── invincibility_effect.gd
+│   │       └── status_effect.gd
 │   ├── arenas
 │   ├── combat
 │   │   └── attack_logic
@@ -86,10 +89,16 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── level_parser.gd
 │   │   │   └── terrain_builder.gd
 │   │   ├── data
+│   │   │   ├── audio
+│   │   │   │   └── audio_cue.gd
+│   │   │   ├── base_entity_data.gd
 │   │   │   ├── config
+│   │   │   │   ├── damage_response_config.gd
 │   │   │   │   ├── enemy_config.gd
 │   │   │   │   ├── player_config.gd
 │   │   │   │   ├── settings.gd
+│   │   │   │   ├── state_definition.gd
+│   │   │   │   ├── state_machine_config.gd
 │   │   │   │   └── world_config.gd
 │   │   │   ├── effects
 │   │   │   │   ├── boss_death_shake.tres
@@ -195,6 +204,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── data
 │   │   │   │   ├── boss_behavior.gd
 │   │   │   │   ├── boss_patrol_movement.tres
+│   │   │   │   ├── boss_state_machine_config.tres
 │   │   │   │   └── default_boss_behavior.tres
 │   │   │   └── states
 │   │   │       ├── state_boss_attack.gd
@@ -226,12 +236,15 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── projectile_shooter_component.gd
 │   │   │   ├── projectile_shooter_component.tscn
 │   │   │   ├── sensor_component.gd
+│   │   │   ├── status_effect_component.gd
+│   │   │   ├── status_effect_component.tscn
 │   │   │   ├── telegraph_component.gd
 │   │   │   └── telegraph_component.tscn
 │   │   ├── minions
 │   │   │   ├── data
 │   │   │   │   ├── flying_patroller_behavior.tres
 │   │   │   │   ├── minion_behavior.gd
+│   │   │   │   ├── minion_state_machine_config.tres
 │   │   │   │   ├── patrolling_lancer_behavior.tres
 │   │   │   │   └── turret_behavior.tres
 │   │   │   ├── flying_patroller.tscn
@@ -266,12 +279,15 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   │   ├── player_physics_component.gd
 │   │   │   │   ├── player_physics_component.tscn
 │   │   │   │   ├── player_resource_component.gd
-│   │   │   │   └── player_resource_component.tscn
+│   │   │   │   ├── player_resource_component.tscn
+│   │   │   │   ├── pogo_component.gd
+│   │   │   │   └── pogo_component.tscn
 │   │   │   ├── data
 │   │   │   │   ├── forward_attack_shape.tres
 │   │   │   │   ├── player_combat_data.gd
 │   │   │   │   ├── player_physics_data.gd
 │   │   │   │   ├── player_state_data.gd
+│   │   │   │   ├── player_state_machine_config.tres
 │   │   │   │   └── upward_attack_shape.tres
 │   │   │   ├── player.gd
 │   │   │   ├── player.tscn
@@ -383,7 +399,7 @@ PROJECT DIRECTORY STRUCTURE:
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-87 directories, 288 files
+89 directories, 302 files
 
 
 =====================================
@@ -896,6 +912,114 @@ FILE: ./docs/CHANGELOG.txt
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.25.0] - CURRENT UNTITLED - 11/19/2025                           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR & DRY DAMAGE REFACTOR & AUDIO & PHYSICS HARDENING - 11/19/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Liskov Substitution Principle (LSP) to Entity Data.           ║
+║      ░ ■ Created `BaseEntityData` resource. `PlayerStateData`, `BossStateData`,║
+║      ░   and `MinionStateData` now inherit from this base class.               ║
+║      ░ ■ Enforced strong typing in `MovementLogic`, removing "duck typing".    ║
+║      ░ ■ Applied Open/Closed Principle (OCP) to State Machine construction.    ║
+║      ░ ■ Created `StateMachineConfig` resource to map state keys to scripts.   ║
+║      ░ ■ Entities now build their FSM dynamically from resources, removing     ║
+║      ░   hardcoded state lists from source code.                               ║
+║      ░ ■ Fixed bug where entities defaulted to 1 HP due to uninitialized       ║
+║      ░   base data values.                                                     ║
+║                                                                                ║                                                                                ║
+║   █  Architecture & Code Quality                                               ║
+║      ░ ■ Applied "Don't Repeat Yourself" (DRY) to Damage Logic.                ║
+║      ░ ■ Implemented `CombatUtils.create_damage_info()` factory method to      ║
+║      ░   centralize the creation of damage payloads.                           ║
+║      ░ ■ Refactored `MeleeComponent`, `PogoComponent`, `HurtboxComponent`,     ║
+║      ░   and `BaseProjectile` to use the factory, removing boilerplate code.   ║
+║                                                                                ║                                                                                ║
+║   █  Systems Upgrade                                                           ║
+║      ░ ■ Implemented `AudioCue` resource system.                               ║
+║      ░   - Allows designers to define pitch randomization, volume variance,    ║
+║      ░     and bus routing in the Inspector.                                   ║
+║      ░   - Updated `AudioManager` to accept Cues instead of raw paths.         ║
+║      ░ ■ Integrated Audio Cues into the `DamageResponseConfig`, enabling       ║
+║      ░   automatic impact sounds for any entity using the system.              ║
+║   █  Code Quality & Stability                                                  ║
+║      ░ ■ Physics Cleanup: Removed hardcoded collision layer overrides in       ║
+║      ░   `BaseBoss` and `HurtboxComponent`. Physics layers are now strictly    ║
+║      ░   controlled by the Scene/Inspector settings (OCP).                     ║
+║      ░ ■ Fixed a crash in `HurtboxComponent` where it attempted to process     ║
+║      ░   collisions after the owner entity had been destroyed in the same      ║
+║      ░   frame.                                                                ║
+║                                                                                ║║                                                                                ║
+║   █  Systems Architecture                                                      ║
+║      ░ ■ Implemented `StatusEffect` system (Open/Closed Principle).            ║
+║      ░   - Created `StatusEffectComponent` to manage buffs/debuffs.            ║
+║      ░   - Refactored `HealthComponent` to use `InvincibilityEffect` instead   ║
+║      ░     of hardcoded tokens.                                                ║
+║      ░ ■ Hardened Audio System (Dependency Inversion).                         ║
+║      ░   - Fixed cyclic dependency issues with `AudioCue` resource loading.    ║
+║      ░   - Renamed `AudioCue` constant in `AudioManager` to avoid shadowing.   ║
+║                                                                                ║
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR & OCP TELEGRAPH REFACTOR - 11/19/2025              ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Single Responsibility Principle (SRP) to `CombatComponent`.   ║
+║      ░ ■ Extracted `PogoComponent` to handle all downward strike and bounce    ║
+║      ░   mechanics separately from projectile/melee logic.                     ║
+║      ░ ■ Updated `PlayerArchetype` and `Player.gd` to include and wire the     ║
+║      ░   new component.                                                        ║
+║      ░ ■ Cleaned `CombatComponent`, removing legacy pogo detection code.       ║
+║                                                                                ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Interface Segregation Principle (ISP) to Entity composition.  ║
+║      ░ ■ Refactored `BaseEntity` to deconstruct the `ServiceLocator` into      ║
+║      ░   discrete dependencies (`object_pool`, `fx_manager`, etc.) before      ║
+║      ░   passing them to components.                                           ║
+║      ░ ■ Updated `CombatComponent`, `MeleeComponent`, `PogoComponent`, and     ║
+║      ░   `ProjectileShooterComponent` to request specific interfaces instead   ║
+║      ░   of the monolithic Service Locator.                                    ║
+║                                                                                ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Dependency Inversion Principle (DIP) to Health Configuration. ║
+║      ░ ■ Created `DamageResponseConfig` resource to standardize how entities   ║
+║      ░   react to damage (Invincibility, Knockback).                           ║
+║      ░ ■ Refactored `HealthComponent` to depend on this abstract config        ║
+║      ░   instead of checking concrete entity groups (Player/Enemy).            ║
+║      ░ ■ Updated `BaseEntity` to automatically extract and inject this config  ║
+║      ░   during the build process.                                             ║
+║      ░ ■ Migrated `PlayerConfig` and `EnemyConfig` to use the new sub-resource.║
+║                                                                                ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Open/Closed Principle (OCP) to Combat Telegraphs.             ║
+║      ░ ■ Removed hardcoded scene preloads from `MeleeComponent`,               ║
+║      ░   `BossStateAttack`, and `MinionStateAttack`.                           ║
+║      ░ ■ Updated `MeleeAttackData` and `AttackPattern` resources to accept     ║
+║      ░   custom `telegraph_scene` references, enabling visual customization    ║
+║      ░   without code modification.                                            ║
+║                                                                                ║
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██             [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025    ██.  ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
@@ -925,17 +1049,8 @@ FILE: ./docs/CHANGELOG.txt
 ║      ░   monitoring was active.                                                ║
 
 
-
-
-
-
-
-
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██                  [0.21.0] - PLAYER & SENSOR REFACTOR & PHYSICS & FSM CLEANUP- 11/18/2025  ██           ██   ║
+║   ██   [0.21.0] - PLAYER & SENSOR REFACTOR & PHYSICS & FSM CLEANUP- 11/18/2025  ██  ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture                                                              ║
@@ -1502,7 +1617,7 @@ config_version=5
 [application]
 
 config/name="BOX BATTLE"
-config/version="0.20.0"
+config/version="0.25.0"
 run/main_scene="res://src/scenes/main/main.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
@@ -4934,6 +5049,7 @@ func find_entity_root(from_node: Node) -> BaseEntity:
 		
 	return null
 
+
 ## Finds the IDamageable component on a target node by first finding the
 ## target's entity root, then asking for the component.
 func find_damageable(from_node: Node) -> IDamageable:
@@ -4954,6 +5070,24 @@ func find_damageable(from_node: Node) -> IDamageable:
 		return from_node
 		
 	return null
+
+
+## Factory method to create a standard DamageInfo resource.
+func create_damage_info(
+	amount: int, 
+	source: Node, 
+	position: Vector2 = Vector2.ZERO, 
+	normal: Vector2 = Vector2.ZERO,
+	bypass_iframe: bool = false
+) -> DamageInfo:
+	var info = DamageInfo.new()
+	info.amount = amount
+	info.source_node = source
+	info.impact_position = position
+	info.impact_normal = normal
+	info.bypass_invincibility = bypass_iframe
+	return info
+
 
 =====================================
 FILE: ./src/core/util/service_locator.gd
@@ -6065,11 +6199,11 @@ FILE: ./src/core/systems/audio_manager.gd
 =====================================
 # src/core/systems/audio_manager.gd
 ## An autoloaded singleton responsible for all audio playback.
-##
-## Manages separate channels for music and sound effects, and responds
-## dynamically to changes in the global [Settings] resource. It includes
-## robust cleanup handlers to prevent memory leaks on game exit.
 extends Node
+
+# --- Preloads ---
+# Renamed to avoid shadowing the global class_name 'AudioCue'
+const AudioCueResource = preload("res://src/core/data/audio/audio_cue.gd")
 
 # --- Private Member Variables ---
 var _sfx_players: Array[AudioStreamPlayer] = []
@@ -6077,7 +6211,6 @@ var _sfx_player_index: int = 0
 var _music_player: AudioStreamPlayer
 
 # --- Godot Lifecycle Methods ---
-
 
 func _ready() -> void:
 	# --- Create SFX Players ---
@@ -6098,72 +6231,69 @@ func _ready() -> void:
 	Settings.audio_settings_changed.connect(_on_audio_settings_changed)
 	_on_audio_settings_changed()  # Apply initial settings
 
-
 func _notification(what: int) -> void:
-	# A robust, system-level notification for cleaning up before the app quits.
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if is_instance_valid(_music_player):
 			_music_player.stop()
 			_music_player.stream = null
 
-
 func _exit_tree() -> void:
-	# Disconnect from the signal to be a good citizen.
 	if Settings.audio_settings_changed.is_connected(_on_audio_settings_changed):
 		Settings.audio_settings_changed.disconnect(_on_audio_settings_changed)
 
-	# Secondary cleanup method for when the node is removed from the tree.
 	if is_instance_valid(_music_player):
 		_music_player.stop()
 		_music_player.stream = null
 
-
 # --- Public Methods ---
 
+## Plays a configured AudioCue resource.
+func play_cue(cue: AudioCueResource) -> void:
+	if not is_instance_valid(cue) or not cue.stream:
+		return
 
-## Plays a one-shot sound effect.
-func play_sfx(sound_path: String) -> void:
 	var player = _sfx_players[_sfx_player_index]
-	player.stream = load(sound_path)
+	
+	player.stream = cue.stream
+	player.volume_db = cue.volume_db
+	player.pitch_scale = cue.get_pitch()
+	player.bus = cue.bus
+	
 	player.play()
 	_sfx_player_index = (_sfx_player_index + 1) % Constants.NUM_SFX_PLAYERS
 
+## Plays a one-shot sound effect from a path (Legacy).
+func play_sfx(sound_path: String) -> void:
+	var player = _sfx_players[_sfx_player_index]
+	player.stream = load(sound_path)
+	player.volume_db = 0.0
+	player.pitch_scale = 1.0
+	player.bus = "SFX"
+	
+	player.play()
+	_sfx_player_index = (_sfx_player_index + 1) % Constants.NUM_SFX_PLAYERS
 
 ## Plays a looping music track.
 func play_music(music_path: String) -> void:
-	if (
-		_music_player.stream
-		and _music_player.stream.resource_path == music_path
-		and _music_player.playing
-	):
+	if _music_player.stream and _music_player.stream.resource_path == music_path and _music_player.playing:
 		return
 
 	_music_player.stream = load(music_path)
 	_music_player.play()
 
-
-## Stops the current music track.
 func stop_music() -> void:
 	_music_player.stop()
 
-
 # --- Signal Handlers ---
 
-
 func _on_audio_settings_changed() -> void:
-	AudioServer.set_bus_volume_db(
-		AudioServer.get_bus_index("Master"), linear_to_db(Settings.master_volume)
-	)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), linear_to_db(Settings.master_volume))
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), Settings.master_muted)
 
-	AudioServer.set_bus_volume_db(
-		AudioServer.get_bus_index("Music"), linear_to_db(Settings.music_volume)
-	)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Music"), linear_to_db(Settings.music_volume))
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), Settings.music_muted)
 
-	AudioServer.set_bus_volume_db(
-		AudioServer.get_bus_index("SFX"), linear_to_db(Settings.sfx_volume)
-	)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("SFX"), linear_to_db(Settings.sfx_volume))
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), Settings.sfx_muted)
 
 
@@ -6556,6 +6686,56 @@ signal audio_settings_changed
 
 
 =====================================
+FILE: ./src/core/data/config/damage_response_config.gd
+=====================================
+# src/core/data/config/damage_response_config.gd
+@tool
+## A standard configuration resource defining how an entity reacts to damage.
+class_name DamageResponseConfig
+extends Resource
+
+# Prevent cyclic dependency parse errors by using the raw resource type in signature if needed,
+# but here we will rely on the global class_name 'AudioCue'.
+@export_group("Feedback")
+## The sound to play when damage is taken.
+@export var audio_cue: AudioCue
+
+@export_group("Invincibility")
+@export_range(0.0, 5.0, 0.1) var invincibility_duration: float = 0.0
+
+@export_group("Knockback")
+@export_range(0.0, 2000.0, 10.0) var knockback_speed: float = 0.0
+@export_range(0.0, 2000.0, 10.0) var hazard_knockback_speed: float = 0.0
+
+
+=====================================
+FILE: ./src/core/data/config/state_machine_config.gd
+=====================================
+# src/core/data/config/state_machine_config.gd
+@tool
+## A configuration resource defining the structure of a Finite State Machine.
+## Allows states to be injected via the Inspector/Resources rather than hardcoded.
+class_name StateMachineConfig
+extends Resource
+
+@export var initial_state: StringName = &"idle"
+@export var states: Array[StateDefinition] = []
+
+
+=====================================
+FILE: ./src/core/data/config/state_definition.gd
+=====================================
+# src/core/data/config/state_definition.gd
+@tool
+## A simple mapping between a State Key (StringName) and its logic Script.
+class_name StateDefinition
+extends Resource
+
+@export var key: StringName
+@export var state_script: Script
+
+
+=====================================
 FILE: ./src/core/data/config/world_config.gd
 =====================================
 # src/core/data/config/world_config.gd
@@ -6586,7 +6766,9 @@ extends Resource
 @export_group("Boss - General")
 @export_range(10, 500, 5) var boss_health: int = 30
 @export_range(50, 500, 5) var boss_patrol_speed: float = 100.0
-@export_range(0.0, 2.0, 0.01) var boss_invincibility_duration: float = 0.1
+
+## Configuration for how the enemy reacts to taking damage.
+@export var damage_response: DamageResponseConfig
 
 @export_group("Boss - Attacks")
 @export_range(500, 3000, 50) var boss_lunge_speed: float = 1200.0
@@ -6611,10 +6793,12 @@ extends Resource
 @export_range(1, 10, 1) var max_healing_charges: int = 1
 @export_range(0.1, 5.0, 0.1) var heal_duration: float = 2.0
 @export_range(1, 100, 1) var determination_per_charge: int = 10
-@export_range(0.1, 5.0, 0.1) var invincibility_duration: float = 1.5
-@export_range(100, 1500, 25) var knockback_speed: float = 400.0
+
+## Configuration for how the player reacts to taking damage (Invincibility, Knockback force).
+@export var damage_response: DamageResponseConfig
+
+## How long the player loses control when hurt (StateHurt duration).
 @export_range(0.05, 0.5, 0.01) var knockback_duration: float = 0.1
-@export_range(100, 1500, 25) var hazard_knockback_speed: float = 400.0
 
 @export_group("Movement & Physics")
 @export_range(100, 1000, 5) var move_speed: float = 450.0
@@ -6660,6 +6844,65 @@ extends Resource
 var current_encounter_path: String = ""
 ## A reference to the fully constructed, but currently hidden, level node.
 var prebuilt_level: Node = null
+
+
+=====================================
+FILE: ./src/core/data/audio/audio_cue.gd
+=====================================
+# src/core/data/audio/audio_cue.gd
+@tool
+## A wrapper resource for AudioStreams that adds randomization and mixing data.
+## Allows sound designers to tune pitch/volume without modifying code.
+class_name AudioCue
+extends Resource
+
+@export_group("Sound Source")
+## The raw audio file or Randomizer to play.
+@export var stream: AudioStream
+
+@export_group("Mixing")
+## Base volume offset in decibels.
+@export_range(-80.0, 24.0, 0.1) var volume_db: float = 0.0
+## Base pitch scale (1.0 is normal speed).
+@export_range(0.1, 4.0, 0.01) var pitch_scale: float = 1.0
+## Target AudioBus (e.g., "SFX", "Music", "UI").
+@export var bus: StringName = &"SFX"
+
+@export_group("Randomization")
+## Random variance applied to pitch. A value of 0.1 means +/- 0.1.
+@export_range(0.0, 1.0, 0.01) var pitch_randomness: float = 0.0
+
+
+## Returns the final pitch value with randomization applied.
+func get_pitch() -> float:
+	if pitch_randomness > 0:
+		return pitch_scale + randf_range(-pitch_randomness, pitch_randomness)
+	return pitch_scale
+
+
+=====================================
+FILE: ./src/core/data/base_entity_data.gd
+=====================================
+# src/core/data/base_entity_data.gd
+@tool
+## The base data container for all entities in the game.
+## Enforces the Liskov Substitution Principle for shared logic.
+class_name BaseEntityData
+extends Resource
+
+# --- Dependencies ---
+var services: ServiceLocator
+## The specific configuration (PlayerConfig or EnemyConfig).
+var config: Resource 
+var world_config: WorldConfig
+
+# --- Core State ---
+var max_health: int = 1
+var health: int = 1:
+	set(value):
+		health = clamp(value, 0, max_health)
+
+var facing_direction: float = 1.0
 
 
 =====================================
@@ -7625,6 +7868,7 @@ const HealthComponent = preload("res://src/entities/components/health_component.
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/api/combat/damage_info.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
 const IFXManager = preload("res://src/api/interfaces/IFXManager.gd")
@@ -7669,12 +7913,20 @@ func before_each() -> void:
 
 	var vfx = VFXEffect.new()
 	vfx.pool_key = "test_hit_spark"
+	
+	# Create specific damage config for test
+	var damage_config = DamageResponseConfig.new()
+	damage_config.invincibility_duration = 1.0
+	damage_config.knockback_speed = 100.0
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": PlayerConfig, # UPDATE
+		"config": PlayerConfig, # Legacy
+		"damage_config": damage_config, # DIP Injection
 		"services": _fake_services,
-		"hit_spark_effect": vfx
+		"hit_spark_effect": vfx,
+		"event_bus": _fake_services.event_bus, # Direct injection
+		"fx_manager": _fake_services.fx_manager # Direct injection
 	}
 	_health_component.setup(_mock_owner, dependencies)
 
@@ -7716,6 +7968,7 @@ func test_died_signal_emitted_at_zero_health():
 
 	assert_true(_died_signal_was_emitted, "The 'died' signal should have been emitted.")
 	assert_eq(_player_data.health, 0, "Health should be 0 after lethal damage.")
+
 
 =====================================
 FILE: ./src/tests/unit/test_idamageable_contract.gd
@@ -8098,6 +8351,10 @@ extends Resource
 ## The base damage dealt by the attack.
 @export var damage_amount: int = 1
 
+@export_group("Visuals")
+## The scene to instantiate for the telegraph. If null, uses the default.
+@export var telegraph_scene: PackedScene
+
 @export_group("Timing")
 ## The duration in seconds the hitbox remains active.
 @export_range(0.05, 1.0, 0.01) var duration: float = 0.15
@@ -8129,6 +8386,56 @@ var knockback_velocity: Vector2 = Vector2.ZERO
 
 
 =====================================
+FILE: ./src/api/status_effects/invincibility_effect.gd
+=====================================
+# src/api/status_effects/invincibility_effect.gd
+@tool
+## A concrete status effect that grants immunity to damage.
+class_name InvincibilityEffect
+extends StatusEffect
+
+func _init() -> void:
+	effect_id = &"invincibility"
+
+func on_apply(_target: Node, manager: Node) -> void:
+	# We use the manager's tagging system to register immunity.
+	if manager.has_method("add_tag"):
+		manager.add_tag(&"invincible")
+
+func on_remove(_target: Node, manager: Node) -> void:
+	if manager.has_method("remove_tag"):
+		manager.remove_tag(&"invincible")
+
+
+=====================================
+FILE: ./src/api/status_effects/status_effect.gd
+=====================================
+# src/api/status_effects/status_effect.gd
+@tool
+## Base configuration resource for a temporary status effect (buff/debuff).
+## Defines logic for application, removal, and per-frame updates.
+class_name StatusEffect
+extends Resource
+
+@export var effect_id: StringName
+@export_range(0.0, 60.0, 0.1) var duration: float = 0.0
+
+## Called when the effect is first applied to the entity.
+## [param target]: The Entity (CharacterBody2D).
+## [param manager]: The StatusEffectComponent managing this effect.
+func on_apply(_target: Node, _manager: Node) -> void:
+	pass
+
+## Called when the effect expires or is cleansed.
+func on_remove(_target: Node, _manager: Node) -> void:
+	pass
+
+## Called every frame while active. Useful for DoTs or HoTs.
+func on_tick(_delta: float, _target: Node, _manager: Node) -> void:
+	pass
+
+
+=====================================
 FILE: ./src/api/global_preloader.gd
 =====================================
 # src/api/global_preloader.gd
@@ -8150,6 +8457,8 @@ func _ready() -> void:
 	preload("res://src/entities/components/hurtbox_component.gd")
 	preload("res://src/entities/components/hitbox_component.gd")
 	preload("res://src/entities/components/sensor_component.gd")
+	# Newly added:
+	preload("res://src/core/data/audio/audio_cue.gd")
 
 
 =====================================
@@ -8698,11 +9007,15 @@ func _handle_collision(target: Node) -> void:
 
 	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
-		var damage_info := DamageInfo.new()
-		damage_info.amount = damage
-		damage_info.source_node = self
-		damage_info.impact_position = global_position
-		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
+		var impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
+		
+		# DRY: Use factory method
+		var damage_info = _combat_utils.create_damage_info(
+			damage,
+			self,
+			global_position,
+			impact_normal
+		)
 		damageable.apply_damage(damage_info)
 
 	_object_pool.return_instance.call_deferred(self)
@@ -8799,11 +9112,20 @@ hit_stop_duration = 0.02
 =====================================
 FILE: ./src/data/player_config.tres
 =====================================
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=7 format=3 uid="uid://v472r2pi58n8"]
 
-[ext_resource type="Script" path="res://src/core/data/config/player_config.gd" id="1_script"]
-[ext_resource type="Shape2D" path="res://src/entities/player/data/forward_attack_shape.tres" id="2_shape"]
-[ext_resource type="Shape2D" path="res://src/entities/player/data/upward_attack_shape.tres" id="3_shape"]
+[ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
+[ext_resource type="Shape2D" uid="uid://c1b2d3e4f5g6h" path="res://src/entities/player/data/forward_attack_shape.tres" id="3_shape"]
+[ext_resource type="Shape2D" uid="uid://c0dt7jqwtnbr" path="res://src/entities/player/data/upward_attack_shape.tres" id="4_shape"]
+[ext_resource type="Resource" path="res://src/data/audio/sfx_player_impact.tres" id="5_audio"]
+
+[sub_resource type="Resource" id="Resource_dmg"]
+script = ExtResource("2_dmg_resp")
+audio_cue = ExtResource("5_audio")
+invincibility_duration = 1.5
+knockback_speed = 400.0
+hazard_knockback_speed = 400.0
 
 [resource]
 script = ExtResource("1_script")
@@ -8811,10 +9133,8 @@ max_health = 5
 max_healing_charges = 1
 heal_duration = 2.0
 determination_per_charge = 10
-invincibility_duration = 1.5
-knockback_speed = 400.0
+damage_response = SubResource("Resource_dmg")
 knockback_duration = 0.1
-hazard_knockback_speed = 400.0
 move_speed = 450.0
 jump_force = 680.0
 jump_release_dampener = 0.4
@@ -8829,8 +9149,8 @@ wall_jump_force_y = 680.0
 dash_speed = 1400.0
 dash_duration = 0.15
 dash_cooldown = 0.5
-forward_attack_shape = ExtResource("2_shape")
-upward_attack_shape = ExtResource("3_shape")
+forward_attack_shape = ExtResource("3_shape")
+upward_attack_shape = ExtResource("4_shape")
 attack_cooldown = 0.12
 attack_duration = 0.1
 attack_friction = 2000.0
@@ -8898,9 +9218,18 @@ FILE: ./src/data/audio/sfx_player_footsteps.tres
 =====================================
 FILE: ./src/data/audio/sfx_player_impact.tres
 =====================================
-[gd_resource type="AudioStreamRandomizer" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="AudioCue" load_steps=3 format=3]
 
-# TODO: Add impact audio samples and configure randomization.
+[ext_resource type="Script" path="res://src/core/data/audio/audio_cue.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/sfx_ui_error.mp3" id="2_sound"]
+
+[resource]
+script = ExtResource("1_script")
+stream = ExtResource("2_sound")
+volume_db = -5.0
+pitch_scale = 1.0
+pitch_randomness = 0.2
+bus = &"SFX"
 
 
 =====================================
@@ -9133,15 +9462,22 @@ coalesce_window = 0.1
 =====================================
 FILE: ./src/data/enemy_config.tres
 =====================================
-[gd_resource type="Resource" script_class="EnemyConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=4 format=3 uid="uid://cm4r58pku22ug"]
 
-[ext_resource type="Script" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c1ran020tmpwh" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
+
+[sub_resource type="Resource" id="Resource_dmg"]
+script = ExtResource("2_dmg_resp")
+invincibility_duration = 0.1
+knockback_speed = 0.0
+hazard_knockback_speed = 0.0
 
 [resource]
 script = ExtResource("1_script")
 boss_health = 30
 boss_patrol_speed = 100.0
-boss_invincibility_duration = 0.1
+damage_response = SubResource("Resource_dmg")
 boss_lunge_speed = 1200.0
 homing_shot_damage = 1
 homing_shot_speed = 250.0
@@ -9237,10 +9573,27 @@ func setup_components(
 		return
 
 	var base_shared_deps = shared_dependencies.duplicate()
-	if _services:
-		base_shared_deps["services"] = _services
-	else:
-		base_shared_deps["services"] = ServiceLocator
+	
+	# ISP: Deconstruct ServiceLocator so components can request specific interfaces
+	var s = _services if _services else ServiceLocator
+	base_shared_deps["services"] = s # Legacy support
+	base_shared_deps["event_bus"] = s.event_bus
+	base_shared_deps["fx_manager"] = s.fx_manager
+	base_shared_deps["object_pool"] = s.object_pool
+	base_shared_deps["combat_utils"] = s.combat_utils
+	base_shared_deps["grid_utils"] = s.grid_utils
+	base_shared_deps["audio_manager"] = AudioManager # Autoload
+
+	# DIP: Auto-extract DamageResponseConfig if present in the main config.
+	if base_shared_deps.has("config"):
+		var cfg = base_shared_deps["config"]
+		if cfg and cfg.get("damage_response") != null:
+			base_shared_deps["damage_config"] = cfg.damage_response
+
+	# Auto-inject sibling StatusEffectComponent if present
+	var status_comp = get_component(StatusEffectComponent)
+	if is_instance_valid(status_comp):
+		base_shared_deps["status_effect_component"] = status_comp
 
 	for child in get_children():
 		if not (child is IComponent):
@@ -9363,16 +9716,10 @@ func process_physics(delta: float) -> void:
 		var data = _entity.entity_data
 		if "behavior" in data and data.behavior and data.behavior.movement_logic:
 			logic = data.behavior.movement_logic
-	
-	if is_instance_valid(logic):
-		# We pass the entity_data to the logic. Both Minion and Boss data 
-		# are compatible with what MovementLogic expects (services, config, facing_direction).
-		_entity.velocity = logic.execute(delta, _entity, _entity.entity_data)
-	else:
-		# Fallback if no logic assigned
-		_entity.velocity.x = 0
-		if not _entity.is_on_floor():
-			_entity.velocity.y += 980 * delta
+			
+			# LSP Check: Ensure the data conforms to the BaseEntityData contract
+			if data is BaseEntityData:
+				_entity.velocity = logic.execute(delta, _entity, data)
 
 # Virtual method for subclasses to override
 func _check_interrupts() -> bool:
@@ -9405,7 +9752,7 @@ func _check_interrupts() -> bool:
 =====================================
 FILE: ./src/entities/archetypes/player_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=13 format=3 uid="uid://player_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=15 format=3 uid="uid://player_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
@@ -9415,65 +9762,64 @@ FILE: ./src/entities/archetypes/player_archetype.tres
 [ext_resource type="PackedScene" uid="uid://o9p0q1r2s3t4" path="res://src/entities/player/components/player_physics_component.tscn" id="6_phys"]
 [ext_resource type="PackedScene" uid="uid://a1b2c3d4e5f6" path="res://src/entities/player/components/player_resource_component.tscn" id="8_res"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="9_fx"]
-
-; --- New Split Components ---
 [ext_resource type="PackedScene" path="res://src/entities/player/components/jump_component.tscn" id="10_jump"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/dash_component.tscn" id="11_dash"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/heal_component.tscn" id="12_heal"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/charge_attack_component.tscn" id="13_charge"]
+[ext_resource type="PackedScene" path="res://src/entities/player/components/pogo_component.tscn" id="14_pogo"]
+[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="15_status"]
 
 [resource]
 script = ExtResource("1_archetype")
 components = [
-	; --- Core ---
 	ExtResource("2_health"), 
 	ExtResource("3_combat"), 
 	ExtResource("4_input"), 
 	ExtResource("5_fsm"), 
 	ExtResource("9_fx"), 
-	
-	; --- Physics & Resources ---
 	ExtResource("6_phys"), 
 	ExtResource("8_res"),
-	
-	; --- Abilities (Split) ---
 	ExtResource("10_jump"),
 	ExtResource("11_dash"),
 	ExtResource("12_heal"),
-	ExtResource("13_charge")
+	ExtResource("13_charge"),
+	ExtResource("14_pogo"),
+	ExtResource("15_status")
 ]
 
 
 =====================================
 FILE: ./src/entities/archetypes/boss_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=6 format=3 uid="uid://boss_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=7 format=3 uid="uid://boss_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
 [ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="3_fsm"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="4_fx"]
 [ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/components/projectile_shooter_component.tscn" id="5_shooter"]
+[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="6_status"]
 
 [resource]
 script = ExtResource("1_archetype")
-components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter")]
+components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter"), ExtResource("6_status")]
 
 
 =====================================
 FILE: ./src/entities/archetypes/minion_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=6 format=3 uid="uid://turret_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=7 format=3 uid="uid://turret_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
 [ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="3_fsm"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="4_fx"]
 [ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/components/projectile_shooter_component.tscn" id="5_shooter"]
+[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="6_status"]
 
 [resource]
 script = ExtResource("1_archetype")
-components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter")]
+components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter"), ExtResource("6_status")]
 
 
 =====================================
@@ -9583,10 +9929,15 @@ extends Resource
 @export var attack_duration: float = 0.1
 @export var cooldown: float = 1.5
 
+@export_group("Visuals")
+## The scene to instantiate for the telegraph. If null, uses the default.
+@export var telegraph_scene: PackedScene
+
 @export_group("Attack-Specific Data")
 # These parameters now live in the AttackPattern, where they belong.
 @export var projectile_count: int = 1
 @export var volley_delay: float = 0.2
+
 
 =====================================
 FILE: ./src/entities/boss/attack_patterns/single_shot.tres
@@ -9610,34 +9961,25 @@ volley_delay = 0.0
 FILE: ./src/entities/boss/boss_state_data.gd
 =====================================
 # src/entities/boss/boss_state_data.gd
+@tool
 ## A Resource that holds all shared runtime state data for the Boss.
 class_name BossStateData
-extends Resource
+extends BaseEntityData
 
 # --- Configuration References ---
-# UPDATE: Added behavior and services for MovementLogic compatibility
 var behavior: BossBehavior
-var services: ServiceLocator
-var config: EnemyConfig
-var world_config: WorldConfig
 
-# --- Health & Combat ---
-var max_health: int = 30
-var health: int = 30:
-	set(value):
-		health = clamp(value, 0, max_health)
+# --- Combat ---
 var projectile_pool_key: StringName = &""
 
 # --- Targeting ---
 var is_player_in_close_range: bool = false
 
-# --- Physics & Movement ---
-var facing_direction: float = -1.0
 
 =====================================
 FILE: ./src/entities/boss/base_boss.tscn
 =====================================
-[gd_scene load_steps=19 format=3 uid="uid://dmej4a7ykn2q0"]
+[gd_scene load_steps=14 format=3 uid="uid://dmej4a7ykn2q0"]
 
 [ext_resource type="Script" uid="uid://5bkyx4fguxor" path="res://src/entities/boss/base_boss.gd" id="1_26qjf"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_hit_flash"]
@@ -9646,15 +9988,10 @@ FILE: ./src/entities/boss/base_boss.tscn
 [ext_resource type="Resource" path="res://src/core/data/effects/boss_death_shake.tres" id="8_death_shake"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="9_hit_spark_effect"]
 [ext_resource type="Resource" path="res://src/entities/archetypes/boss_archetype.tres" id="10_archetype"]
-[ext_resource type="Script" uid="uid://dnyvyoos5kkxy" path="res://src/entities/boss/states/state_boss_idle.gd" id="12_state_idle"]
-[ext_resource type="Script" uid="uid://bl6ot8t61nixu" path="res://src/entities/boss/states/state_boss_attack.gd" id="13_state_attack"]
-[ext_resource type="Script" uid="uid://dgok3ph2i0i47" path="res://src/entities/boss/states/state_boss_cooldown.gd" id="14_state_cooldown"]
-[ext_resource type="Script" uid="uid://bsmqi0p5h8urh" path="res://src/entities/boss/states/state_boss_patrol.gd" id="15_state_patrol"]
-[ext_resource type="Script" uid="uid://b47bmwcdrdd8d" path="res://src/entities/boss/states/state_boss_lunge.gd" id="16_state_lunge"]
-[ext_resource type="Script" uid="uid://cfirfsn8ugufx" path="res://src/entities/boss/states/state_boss_melee.gd" id="17_state_melee"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="18_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://cypy26d84f23b" path="res://src/entities/boss/data/default_boss_behavior.tres" id="19_default_behavior"]
 [ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/components/sensor_component.gd" id="20_sensor_script"]
+[ext_resource type="Resource" uid="uid://s5xi3ciavs2n" path="res://src/entities/boss/data/boss_state_machine_config.tres" id="21_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bossbody"]
 size = Vector2(60, 60)
@@ -9663,21 +10000,16 @@ size = Vector2(60, 60)
 radius = 100.0
 
 [node name="BaseBoss" type="CharacterBody2D"]
-collision_layer = 12
+collision_layer = 4
 collision_mask = 138
 script = ExtResource("1_26qjf")
 behavior = ExtResource("19_default_behavior")
+state_machine_config = ExtResource("21_sm_config")
 hit_flash_effect = ExtResource("2_hit_flash")
 phase_change_shake_effect = ExtResource("7_phase_shake")
 death_shake_effect = ExtResource("8_death_shake")
 hit_spark_effect = ExtResource("9_hit_spark_effect")
 dissolve_effect = ExtResource("18_dissolve_effect")
-state_idle_script = ExtResource("12_state_idle")
-state_attack_script = ExtResource("13_state_attack")
-state_cooldown_script = ExtResource("14_state_cooldown")
-state_patrol_script = ExtResource("15_state_patrol")
-state_lunge_script = ExtResource("16_state_lunge")
-state_melee_script = ExtResource("17_state_melee")
 archetype = ExtResource("10_archetype")
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -9851,7 +10183,7 @@ class_name BossStateAttack
 extends BaseState
 
 # --- Constants ---
-const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
+const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _current_pattern: AttackPattern
@@ -9885,7 +10217,12 @@ func _start_telegraph_and_attack() -> void:
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
 		return
 
-	var telegraph = TelegraphScene.instantiate()
+	# OCP: Use pattern-specific telegraph if available, else default.
+	var scene_to_use = _current_pattern.telegraph_scene
+	if not scene_to_use:
+		scene_to_use = DEFAULT_TELEGRAPH_SCENE
+
+	var telegraph = scene_to_use.instantiate()
 	_boss.add_child(telegraph)
 
 	var telegraph_info = _current_pattern.logic.get_telegraph_info(_boss, _current_pattern)
@@ -9897,13 +10234,18 @@ func _start_telegraph_and_attack() -> void:
 	)
 	var telegraph_position = _boss.global_position + directional_offset
 
-	telegraph.start_telegraph(
-		_current_pattern.telegraph_duration,
-		telegraph_size,
-		telegraph_position,
-		Palette.COLOR_UI_PANEL_BG
-	)
-	await telegraph.telegraph_finished
+	if telegraph.has_method("start_telegraph"):
+		telegraph.start_telegraph(
+			_current_pattern.telegraph_duration,
+			telegraph_size,
+			telegraph_position,
+			Palette.COLOR_UI_PANEL_BG
+		)
+		await telegraph.telegraph_finished
+	else:
+		# Fallback if custom scene doesn't match interface (prevents soft lock)
+		telegraph.queue_free()
+		await _boss.get_tree().create_timer(_current_pattern.telegraph_duration).timeout
 
 	# Use a robust check to ensure the owner wasn't freed during the await.
 	if not is_instance_valid(_boss):
@@ -9951,6 +10293,8 @@ extends BaseEntity
 # --- Editor Configuration ---
 @export_group("Core Configuration")
 @export var behavior: BossBehavior
+@export var state_machine_config: StateMachineConfig
+
 @export_group("Juice & Feedback")
 @export var hit_flash_effect: ShaderEffect
 @export var phase_change_shake_effect: ScreenShakeEffect
@@ -9986,6 +10330,8 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("This node requires a BossBehavior resource.")
 	elif is_instance_valid(behavior) and behavior.phase_1_patterns.is_empty():
 		warnings.append("The assigned BossBehavior has no Phase 1 attack patterns.")
+	if not state_machine_config:
+		warnings.append("This node requires a StateMachineConfig resource.")
 	return warnings
 
 
@@ -9994,20 +10340,8 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
-	# --- PARANOID COLLISION FIX ---
-	# 1. Force Layers
-	collision_layer = 4 # Enemy(4) ONLY
-	collision_mask = 138 # Platforms(2) + Hazard(8) + SolidWorld(128)
-	
-	# 2. Force Groups
 	if not is_in_group(Identifiers.Groups.ENEMY):
 		add_to_group(Identifiers.Groups.ENEMY)
-	
-	# 3. Force Shape Active
-	if is_instance_valid(collision_shape):
-		collision_shape.disabled = false
-	else:
-		push_error("BOSS CRITICAL: CollisionShape2D not found!")
 
 	_initialize_data()
 	
@@ -10038,17 +10372,20 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	var states: Dictionary = {
-		Identifiers.BossStates.IDLE: state_idle_script.new(self, sm, entity_data),
-		Identifiers.BossStates.ATTACK: state_attack_script.new(self, sm, entity_data),
-		Identifiers.BossStates.COOLDOWN: state_cooldown_script.new(self, sm, entity_data),
-		Identifiers.BossStates.PATROL: state_patrol_script.new(self, sm, entity_data),
-		Identifiers.BossStates.LUNGE: state_lunge_script.new(self, sm, entity_data),
-		Identifiers.CommonStates.MELEE: state_melee_script.new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		initial_state_key = state_machine_config.initial_state
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("BaseBoss: Missing StateMachineConfig!")
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.BossStates.COOLDOWN},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual_sprite, 
 			"hit_effect": hit_flash_effect,
@@ -10148,6 +10485,10 @@ func _initialize_data() -> void:
 	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
+	# CRITICAL FIX: Set max_health from config, overriding the default of 1
+	entity_data.max_health = entity_data.config.boss_health
+	entity_data.health = entity_data.max_health
+
 
 func _update_player_tracking() -> void:
 	if is_instance_valid(_player):
@@ -10234,6 +10575,56 @@ projectile_pool_key = &"boss_shots"
 phase_1_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("2_pattern_single")])
 phase_2_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("3_pattern_volley3"), ExtResource("4_pattern_lunge")])
 phase_3_patterns = Array[ExtResource("1_pfqfc")]([ExtResource("5_pattern_volley5"), ExtResource("4_pattern_lunge"), ExtResource("6_pattern_homing")])
+
+
+=====================================
+FILE: ./src/entities/boss/data/boss_state_machine_config.tres
+=====================================
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=15 format=3 uid="uid://s5xi3ciavs2n"]
+
+[ext_resource type="Script" uid="uid://n65f7l7vgpyh" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" uid="uid://bhpvwtjqtlr08" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" uid="uid://dnyvyoos5kkxy" path="res://src/entities/boss/states/state_boss_idle.gd" id="3_idle"]
+[ext_resource type="Script" uid="uid://bl6ot8t61nixu" path="res://src/entities/boss/states/state_boss_attack.gd" id="4_attack"]
+[ext_resource type="Script" uid="uid://dgok3ph2i0i47" path="res://src/entities/boss/states/state_boss_cooldown.gd" id="5_cooldown"]
+[ext_resource type="Script" uid="uid://bsmqi0p5h8urh" path="res://src/entities/boss/states/state_boss_patrol.gd" id="6_patrol"]
+[ext_resource type="Script" uid="uid://b47bmwcdrdd8d" path="res://src/entities/boss/states/state_boss_lunge.gd" id="7_lunge"]
+[ext_resource type="Script" uid="uid://cfirfsn8ugufx" path="res://src/entities/boss/states/state_boss_melee.gd" id="8_melee"]
+
+[sub_resource type="Resource" id="Resource_idle"]
+script = ExtResource("1_def")
+key = &"idle"
+state_script = ExtResource("3_idle")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("1_def")
+key = &"attack"
+state_script = ExtResource("4_attack")
+
+[sub_resource type="Resource" id="Resource_cooldown"]
+script = ExtResource("1_def")
+key = &"cooldown"
+state_script = ExtResource("5_cooldown")
+
+[sub_resource type="Resource" id="Resource_patrol"]
+script = ExtResource("1_def")
+key = &"patrol"
+state_script = ExtResource("6_patrol")
+
+[sub_resource type="Resource" id="Resource_lunge"]
+script = ExtResource("1_def")
+key = &"lunge"
+state_script = ExtResource("7_lunge")
+
+[sub_resource type="Resource" id="Resource_melee"]
+script = ExtResource("1_def")
+key = &"melee"
+state_script = ExtResource("8_melee")
+
+[resource]
+script = ExtResource("2_cfg")
+initial_state = &"cooldown"
+states = Array[ExtResource("1_def")]([SubResource("Resource_idle"), SubResource("Resource_attack"), SubResource("Resource_cooldown"), SubResource("Resource_patrol"), SubResource("Resource_lunge"), SubResource("Resource_melee")])
 
 
 =====================================
@@ -10465,7 +10856,8 @@ FILE: ./src/entities/components/health_component.tscn
 
 [node name="HealthComponent" type="Node"]
 script = ExtResource("1_health")
-metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "config", "hit_spark_effect", "fx_manager", "event_bus")
+metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "damage_config", "status_effect_component", "hit_spark_effect", "fx_manager", "event_bus")
+
 
 =====================================
 FILE: ./src/entities/components/telegraph_component.gd
@@ -10518,13 +10910,12 @@ FILE: ./src/entities/components/combat_component.gd
 =====================================
 # src/entities/components/combat_component.gd
 @tool
-## Centralizes all player combat logic, such as firing projectiles and pogo attacks.
+## Centralizes player offensive logic (Melee & Projectiles), excluding Pogo.
 class_name CombatComponent
 extends IComponent
 
 # --- Signals ---
 signal damage_dealt
-signal pogo_bounce_requested
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
@@ -10532,11 +10923,9 @@ var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
 var _combat_utils: Node
-var _services: ServiceLocator
 
 # --- Hitbox References ---
 var _melee_hitbox: HitboxComponent
-var _pogo_hitbox: HitboxComponent
 
 # --- Godot Lifecycle Methods ---
 
@@ -10556,44 +10945,30 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._object_pool = p_dependencies.get("object_pool")
 	self._fx_manager = p_dependencies.get("fx_manager")
 	self._combat_utils = p_dependencies.get("combat_utils")
-	self._services = p_dependencies.get("services")
 	
 	# Inject Hitboxes
 	_melee_hitbox = p_dependencies.get("melee_hitbox")
-	_pogo_hitbox = p_dependencies.get("pogo_hitbox")
 	
 	if is_instance_valid(_melee_hitbox):
 		if not _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
 
-	if is_instance_valid(_pogo_hitbox):
-		# Pogo specific: Ensure we can hit the ground (World/Platforms)
-		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
-		_pogo_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
-		
-		if not _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
-			_pogo_hitbox.hit_detected.connect(_on_pogo_hit_detected)
-
-	assert(is_instance_valid(_object_pool), "CombatComponent requires an IObjectPool.")
-	assert(is_instance_valid(_fx_manager), "CombatComponent requires an IFXManager.")
+	assert(is_instance_valid(_object_pool), "CombatComponent requires 'object_pool'.")
+	assert(is_instance_valid(_fx_manager), "CombatComponent requires 'fx_manager'.")
+	assert(is_instance_valid(_combat_utils), "CombatComponent requires 'combat_utils'.")
 
 
 func teardown() -> void:
 	set_physics_process(false)
 	if is_instance_valid(_melee_hitbox) and _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 		_melee_hitbox.hit_detected.disconnect(_on_melee_hit_detected)
-		
-	if is_instance_valid(_pogo_hitbox) and _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
-		_pogo_hitbox.hit_detected.disconnect(_on_pogo_hit_detected)
 
 	owner_node = null
 	p_data = null
 	_object_pool = null
 	_fx_manager = null
 	_combat_utils = null
-	_services = null
 	_melee_hitbox = null
-	_pogo_hitbox = null
 
 
 ## Fires a player projectile from the object pool.
@@ -10606,7 +10981,6 @@ func fire_shot() -> void:
 
 	var shot_dir = Vector2(p_data.physics.facing_direction, 0)
 	# We assume InputComponent is updating the buffer elsewhere
-	# Ideally, direction should be passed in or read from p_data if generalized
 	if Input.is_action_pressed("ui_up"):
 		shot_dir = Vector2.UP
 	elif Input.is_action_pressed("ui_down"):
@@ -10629,8 +11003,6 @@ func _update_timers(delta: float) -> void:
 		return
 	p_data.combat.attack_cooldown_timer = max(0.0, p_data.combat.attack_cooldown_timer - delta)
 	p_data.combat.attack_duration_timer = max(0.0, p_data.combat.attack_duration_timer - delta)
-	# Pogo fall prevention is loosely related to combat timing
-	p_data.combat.pogo_fall_prevention_timer = max(0.0, p_data.combat.pogo_fall_prevention_timer - delta)
 
 
 # --- Private Signal Handlers ---
@@ -10662,41 +11034,6 @@ func _on_melee_hit_detected(target: Node) -> void:
 				)
 
 
-func _on_pogo_hit_detected(target: Node) -> void:
-	if not p_data.combat.is_pogo_attack:
-		return
-	if not is_instance_valid(target):
-		return
-
-	var should_bounce = false
-
-	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-		should_bounce = true
-		_object_pool.return_instance.call_deferred(target)
-
-	var damageable = _combat_utils.find_damageable(target)
-	if is_instance_valid(damageable):
-		should_bounce = true
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1
-		damage_info.source_node = owner_node
-		damage_info.bypass_invincibility = true
-		damage_info.impact_position = target.global_position
-		damage_info.impact_normal = Vector2.UP
-		var damage_result = damageable.apply_damage(damage_info)
-		if damage_result.was_damaged:
-			damage_dealt.emit()
-
-	# Check physics bodies (World, Platforms)
-	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
-		should_bounce = true
-	elif target.is_in_group(Identifiers.Groups.WORLD):
-		should_bounce = true
-
-	if should_bounce:
-		pogo_bounce_requested.emit()
-
-
 =====================================
 FILE: ./src/entities/components/hurtbox_component.gd
 =====================================
@@ -10724,16 +11061,9 @@ var _owner_entity: Node
 # --- Godot Lifecycle ---
 
 func _ready() -> void:
-	# Default collision configuration for a Hurtbox
-	# Layer 7 (64) = PlayerHurtbox
-	# Mask 3 (4) = Enemy, 4 (8) = Hazard, 5 (16) = EnemyProjectile
-	collision_layer = 64
-	collision_mask = 28
-	
 	# Ensure we are monitoring to detect overlaps
 	monitoring = true
-	monitorable = true # Usually true so enemies can detect "I hit the player"
-
+	monitorable = true 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(_health_component) or _health_component.is_invincible():
@@ -10750,23 +11080,17 @@ func _physics_process(_delta: float) -> void:
 
 # --- Public Methods (IComponent-like Setup) ---
 
-## setup() is called manually by the entity, or we can auto-wire in _ready if simple.
-## For consistency with the project architecture, we use the setup pattern.
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_owner_entity = p_owner
 	
-	# 1. Resolve Services
 	if p_dependencies.has("services"):
 		var services = p_dependencies["services"]
 		_combat_utils = services.combat_utils
 		_object_pool = services.object_pool
 	else:
-		# Fallback to global autoloads if not injected (Safety net)
 		_combat_utils = CombatUtils
-		# Use Adapter to satisfy type hint
 		_object_pool = ObjectPoolAdapter
 
-	# 2. Resolve HealthComponent
 	if auto_wire_health and p_owner.has_method("get_component"):
 		_health_component = p_owner.get_component(HealthComponent)
 
@@ -10783,7 +11107,11 @@ func teardown() -> void:
 # --- Private Logic ---
 
 func _process_contact(target: Node) -> void:
-	# Double check valid targets
+	# CRITICAL FIX: Guard against mid-frame teardown.
+	# If _combat_utils became null (e.g. player died in previous iteration), stop immediately.
+	if not _combat_utils or not is_instance_valid(_health_component):
+		return
+
 	var is_threat = (
 		target.is_in_group(Identifiers.Groups.ENEMY) or 
 		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
@@ -10793,22 +11121,20 @@ func _process_contact(target: Node) -> void:
 	if not is_threat:
 		return
 
-	# Calculate Impact Data
-	var damage_info = DamageInfo.new()
-	damage_info.amount = 1 # Default contact damage
-	damage_info.source_node = target
-	damage_info.impact_position = global_position
-	damage_info.impact_normal = (global_position - target.global_position).normalized()
+	var impact_normal = (global_position - target.global_position).normalized()
+	
+	var damage_info = _combat_utils.create_damage_info(
+		1, 
+		target,
+		global_position,
+		impact_normal
+	)
 
-	# Apply Damage
 	var result = _health_component.apply_damage(damage_info)
 
-	# CRASH FIX: Check validity again. The entity might have died and torn down 
-	# the components during the apply_damage call stack.
 	if not is_instance_valid(_health_component) or not _health_component.entity_data:
 		return
 
-	# Handle Post-Hit Logic
 	if result.was_damaged:
 		if _owner_entity is CharacterBody2D:
 			_owner_entity.velocity = result.knockback_velocity
@@ -10820,7 +11146,6 @@ func _process_contact(target: Node) -> void:
 			if is_instance_valid(sm):
 				sm.change_state(hurt_response_state)
 
-	# Cleanup Projectiles
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
 		if is_instance_valid(_object_pool):
 			_object_pool.return_instance.call_deferred(target)
@@ -10862,6 +11187,121 @@ metadata/REQUIRED_DEPS = PackedStringArray("services", "data_resource")
 
 
 =====================================
+FILE: ./src/entities/components/status_effect_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3 uid="uid://status_effect_component_scene"]
+
+[ext_resource type="Script" path="res://src/entities/components/status_effect_component.gd" id="1_script"]
+
+[node name="StatusEffectComponent" type="Node"]
+script = ExtResource("1_script")
+
+
+=====================================
+FILE: ./src/entities/components/status_effect_component.gd
+=====================================
+# src/entities/components/status_effect_component.gd
+@tool
+## Manages temporary status effects (buffs/debuffs) and queryable tags.
+## Example: Tracks "Invincibility", "Stun", "DoT".
+class_name StatusEffectComponent
+extends IComponent
+
+# --- Inner Class for Runtime Tracking ---
+class ActiveEffect:
+	var source_resource: StatusEffect
+	var time_remaining: float
+	
+	func _init(res: StatusEffect) -> void:
+		source_resource = res
+		time_remaining = res.duration
+
+# --- Member Variables ---
+var _owner_node: Node
+var _active_effects: Array[ActiveEffect] = []
+var _tags: Dictionary = {} # Map<StringName, int> (Tag -> Count)
+
+# --- Godot Lifecycle ---
+func _process(delta: float) -> void:
+	if _active_effects.is_empty():
+		return
+	
+	# Iterate backwards to allow safe removal during iteration
+	for i in range(_active_effects.size() - 1, -1, -1):
+		var active = _active_effects[i]
+		
+		# Execute Tick Logic (for DoTs/HoTs)
+		if active.source_resource.has_method("on_tick"):
+			active.source_resource.on_tick(delta, _owner_node, self)
+		
+		# Handle Duration
+		if active.source_resource.duration > 0:
+			active.time_remaining -= delta
+			if active.time_remaining <= 0:
+				_remove_active_effect_at(i)
+
+# --- IComponent Contract ---
+func setup(p_owner: Node, _p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner
+
+func teardown() -> void:
+	# Cleanly remove all effects so they can execute their on_remove logic (cleanup tags)
+	for i in range(_active_effects.size() - 1, -1, -1):
+		_remove_active_effect_at(i)
+	_active_effects.clear()
+	_tags.clear()
+	_owner_node = null
+
+# --- Public API ---
+
+## Applies a new status effect to the entity.
+func apply_effect(effect_res: StatusEffect) -> void:
+	if not is_instance_valid(effect_res):
+		return
+		
+	var active = ActiveEffect.new(effect_res)
+	_active_effects.append(active)
+	
+	# Trigger application logic (e.g., adding tags)
+	effect_res.on_apply(_owner_node, self)
+
+
+## Manually removes a specific effect instance.
+func remove_effect_instance(effect_res: StatusEffect) -> void:
+	for i in range(_active_effects.size() - 1, -1, -1):
+		if _active_effects[i].source_resource == effect_res:
+			_remove_active_effect_at(i)
+			return
+
+
+## Checks if a specific tag is currently active (Count > 0).
+## e.g. has_tag("invincible")
+func has_tag(tag: StringName) -> bool:
+	return _tags.get(tag, 0) > 0
+
+
+# --- Tag Management (Called by StatusEffect resources) ---
+
+func add_tag(tag: StringName) -> void:
+	if tag == &"": return
+	_tags[tag] = _tags.get(tag, 0) + 1
+
+func remove_tag(tag: StringName) -> void:
+	if not _tags.has(tag): return
+	_tags[tag] -= 1
+	if _tags[tag] <= 0:
+		_tags.erase(tag)
+
+# --- Private ---
+
+func _remove_active_effect_at(index: int) -> void:
+	var active = _active_effects[index]
+	if is_instance_valid(active.source_resource):
+		active.source_resource.on_remove(_owner_node, self)
+	_active_effects.remove_at(index)
+
+
+=====================================
 FILE: ./src/entities/components/telegraph_component.tscn
 =====================================
 [gd_scene load_steps=2 format=3 uid="uid://b1i2c3d4e5f6g"]
@@ -10894,8 +11334,6 @@ FILE: ./src/entities/components/health_component.gd
 =====================================
 # src/entities/components/health_component.gd
 @tool
-## Manages all health, damage, and invincibility logic for an entity.
-## Implements the IDamageable interface.
 class_name HealthComponent
 extends IDamageable
 
@@ -10905,6 +11343,8 @@ signal died
 signal health_threshold_reached(health_percentage: float)
 signal took_damage(damage_info: DamageInfo, damage_result: DamageResult)
 
+const InvincibilityEffectScript = preload("res://src/api/status_effects/invincibility_effect.gd")
+
 # --- Member Variables ---
 var entity_data: Resource
 var owner_node: CharacterBody2D
@@ -10913,136 +11353,155 @@ var _max_health: int
 var _invincibility_duration: float
 var _knockback_speed: float
 var _hazard_knockback_speed: float
-var _invincibility_tokens: Dictionary = {}
+var _damage_audio_cue: AudioCue 
+
+var _active_invincibility_map: Dictionary = {} # Map<token_int, StatusEffect>
 var _next_token_id: int = 1
+
 var _fx_manager: IFXManager
 var _event_bus
 var _hit_spark_effect: VFXEffect
+var _audio_manager: Node 
+var _status_effect_component: StatusEffectComponent # New!
 
-# --- Godot Lifecycle Methods ---
+# --- Lifecycle ---
 func _notification(what: int) -> void:
-    if what == NOTIFICATION_PREDELETE:
-        teardown()
+	if what == NOTIFICATION_PREDELETE:
+		teardown()
 
-
-# --- Public Methods (IComponent Contract) ---
+# --- Setup ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-    self.owner_node = p_owner as CharacterBody2D
-    self.entity_data = p_dependencies.get("data_resource")
-    var cfg = p_dependencies.get("config") # Type is Variant (PlayerConfig or EnemyConfig)
-    
-    self._fx_manager = p_dependencies.get("fx_manager")
-    self._event_bus = p_dependencies.get("event_bus")
-    self._hit_spark_effect = p_dependencies.get("hit_spark_effect")
+	self.owner_node = p_owner as CharacterBody2D
+	self.entity_data = p_dependencies.get("data_resource")
+	
+	self._fx_manager = p_dependencies.get("fx_manager")
+	self._event_bus = p_dependencies.get("event_bus")
+	self._hit_spark_effect = p_dependencies.get("hit_spark_effect")
+	self._status_effect_component = p_dependencies.get("status_effect_component")
+	
+	if p_dependencies.has("audio_manager"):
+		self._audio_manager = p_dependencies.get("audio_manager")
+	else:
+		self._audio_manager = AudioManager
 
-    if not entity_data or not cfg or not _fx_manager or not _event_bus:
-        push_error("HealthComponent.setup: Missing required dependencies.")
-        return
+	var dmg_config = p_dependencies.get("damage_config")
 
-    _max_health = entity_data.max_health
-    
-    # UPDATE: Handle polymorphic config logic
-    if owner_node.is_in_group(Identifiers.Groups.PLAYER):
-        # cfg is PlayerConfig
-        _invincibility_duration = cfg.invincibility_duration
-        _knockback_speed = cfg.knockback_speed
-        _hazard_knockback_speed = cfg.hazard_knockback_speed
-    else:
-        # cfg is EnemyConfig (or old CombatConfig for minion transiently)
-        if cfg.get("boss_invincibility_duration") != null:
-            _invincibility_duration = cfg.boss_invincibility_duration
-        else:
-            _invincibility_duration = 0.0
-            
-        _knockback_speed = 0
-        _hazard_knockback_speed = 0
+	# Validate critical dependencies
+	if not entity_data or not dmg_config or not _fx_manager or not _event_bus:
+		push_error("HealthComponent.setup: Missing required dependencies.")
+		return
+		
+	if not _status_effect_component:
+		push_warning("HealthComponent: StatusEffectComponent missing. Invincibility will not work.")
 
-    entity_data.health = _max_health
-    health_changed.emit(entity_data.health, _max_health)
+	_max_health = entity_data.max_health
+	
+	_invincibility_duration = dmg_config.invincibility_duration
+	_knockback_speed = dmg_config.knockback_speed
+	_hazard_knockback_speed = dmg_config.hazard_knockback_speed
+	_damage_audio_cue = dmg_config.audio_cue 
 
+	entity_data.health = _max_health
+	health_changed.emit(entity_data.health, _max_health)
 
 func teardown() -> void:
-    entity_data = null
-    owner_node = null
-    _fx_manager = null
-    _event_bus = null
-    _hit_spark_effect = null
+	entity_data = null
+	owner_node = null
+	_fx_manager = null
+	_event_bus = null
+	_hit_spark_effect = null
+	_damage_audio_cue = null
+	_audio_manager = null
+	_status_effect_component = null
+	_active_invincibility_map.clear()
 
-
-# --- Public Methods (IDamageable Contract) ---
+# --- Logic ---
 func apply_damage(damage_info: DamageInfo) -> DamageResult:
-    var result := DamageResult.new()
+	var result := DamageResult.new()
 
-    if not is_instance_valid(damage_info):
-        push_warning("HealthComponent received an invalid DamageInfo object.")
-        return result
+	if not is_instance_valid(damage_info):
+		return result
 
-    if is_invincible() and not damage_info.bypass_invincibility:
-        return result
+	if is_invincible() and not damage_info.bypass_invincibility:
+		return result
 
-    var health_before_damage: int = entity_data.health
-    entity_data.health -= damage_info.amount
-    health_changed.emit(entity_data.health, _max_health)
+	var health_before_damage: int = entity_data.health
+	entity_data.health -= damage_info.amount
+	health_changed.emit(entity_data.health, _max_health)
 
-    var post_hit_token: int = grant_invincibility(self)
-    get_tree().create_timer(_invincibility_duration).timeout.connect(
-        release_invincibility.bind(post_hit_token)
-    )
+	# Apply post-hit invincibility via Status System
+	if is_instance_valid(_status_effect_component) and _invincibility_duration > 0:
+		var effect = InvincibilityEffectScript.new()
+		effect.duration = _invincibility_duration
+		_status_effect_component.apply_effect(effect)
 
-    result.knockback_velocity = _calculate_knockback(damage_info.source_node)
-    _check_for_threshold_crossing(health_before_damage, entity_data.health)
+	result.knockback_velocity = _calculate_knockback(damage_info.source_node)
+	_check_for_threshold_crossing(health_before_damage, entity_data.health)
 
-    result.was_damaged = true
-    took_damage.emit(damage_info, result)
+	result.was_damaged = true
+	took_damage.emit(damage_info, result)
 
-    if result.was_damaged and is_instance_valid(_fx_manager) and is_instance_valid(_hit_spark_effect):
-        _fx_manager.play_vfx(
-            _hit_spark_effect, damage_info.impact_position, damage_info.impact_normal
-        )
+	if result.was_damaged and is_instance_valid(_fx_manager) and is_instance_valid(_hit_spark_effect):
+		_fx_manager.play_vfx(
+			_hit_spark_effect, damage_info.impact_position, damage_info.impact_normal
+		)
+	
+	if result.was_damaged and is_instance_valid(_damage_audio_cue) and is_instance_valid(_audio_manager):
+		_audio_manager.play_cue(_damage_audio_cue)
 
-    if entity_data.health <= 0:
-        died.emit()
+	if entity_data.health <= 0:
+		died.emit()
 
-    return result
+	return result
 
-
-# --- Public Methods (HealthComponent Specific) ---
 func is_invincible() -> bool:
-    return not _invincibility_tokens.is_empty()
+	if is_instance_valid(_status_effect_component):
+		return _status_effect_component.has_tag(&"invincible")
+	return false
 
-
-func grant_invincibility(requester: Object) -> int:
-    var token_id := _next_token_id
-    _next_token_id += 1
-    _invincibility_tokens[token_id] = requester.get_instance_id()
-    return token_id
-
+# Legacy API Wrapper for Compatibility
+func grant_invincibility(_requester: Object) -> int:
+	if not is_instance_valid(_status_effect_component):
+		return -1
+		
+	var token_id := _next_token_id
+	_next_token_id += 1
+	
+	var effect = InvincibilityEffectScript.new()
+	effect.duration = 0.0 # Infinite, manual removal
+	_status_effect_component.apply_effect(effect)
+	
+	_active_invincibility_map[token_id] = effect
+	return token_id
 
 func release_invincibility(token: int) -> void:
-    if _invincibility_tokens.has(token):
-        _invincibility_tokens.erase(token)
+	if not is_instance_valid(_status_effect_component):
+		return
+		
+	if _active_invincibility_map.has(token):
+		var effect = _active_invincibility_map[token]
+		_status_effect_component.remove_effect_instance(effect)
+		_active_invincibility_map.erase(token)
 
-
-# --- Private Methods ---
 func _check_for_threshold_crossing(health_before: int, health_after: int) -> void:
-    if not owner_node.has_method("get_health_thresholds"):
-        return
-    var thresholds: Array[float] = owner_node.get_health_thresholds()
-    var old_percent: float = float(health_before) / _max_health
-    var new_percent: float = float(health_after) / _max_health
-    for threshold in thresholds:
-        if old_percent > threshold and new_percent <= threshold:
-            health_threshold_reached.emit(threshold)
-
+	if not owner_node.has_method("get_health_thresholds"):
+		return
+	var thresholds: Array[float] = owner_node.get_health_thresholds()
+	var old_percent: float = float(health_before) / _max_health
+	var new_percent: float = float(health_after) / _max_health
+	for threshold in thresholds:
+		if old_percent > threshold and new_percent <= threshold:
+			health_threshold_reached.emit(threshold)
 
 func _calculate_knockback(source: Node) -> Vector2:
-    if _knockback_speed == 0 or not is_instance_valid(source):
-        return Vector2.ZERO
-    var knockback_dir: Vector2 = (owner_node.global_position - source.global_position).normalized()
-    var speed: float = _knockback_speed
-    if source.is_in_group(Identifiers.Groups.HAZARD):
-        speed = _hazard_knockback_speed
-    return (knockback_dir + Vector2.UP * 0.5).normalized() * speed
+	if _knockback_speed == 0 or not is_instance_valid(source):
+		return Vector2.ZERO
+	var knockback_dir: Vector2 = (owner_node.global_position - source.global_position).normalized()
+	var speed: float = _knockback_speed
+	if source.is_in_group(Identifiers.Groups.HAZARD):
+		speed = _hazard_knockback_speed
+	return (knockback_dir + Vector2.UP * 0.5).normalized() * speed
+
 
 =====================================
 FILE: ./src/entities/components/base_state_machine.tscn
@@ -11352,7 +11811,7 @@ signal hit_confirmed
 signal attack_finished
 
 # --- Constants ---
-const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
+const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Node References ---
 @onready var hitbox: Area2D = $Hitbox
@@ -11360,7 +11819,8 @@ const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _owner: BaseEntity
-var _services: ServiceLocator
+var _combat_utils: Node
+var _fx_manager: IFXManager
 var _current_attack_data: MeleeAttackData
 var _hit_targets_this_swing: Dictionary = {}
 var _is_attacking: bool = false
@@ -11368,9 +11828,12 @@ var _is_attacking: bool = false
 # --- IComponent Contract ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._owner = p_owner as BaseEntity
-	self._services = p_dependencies.get("services")
+	self._combat_utils = p_dependencies.get("combat_utils")
+	self._fx_manager = p_dependencies.get("fx_manager")
+	
 	assert(is_instance_valid(_owner), "MeleeComponent must be owned by a BaseEntity.")
-	assert(is_instance_valid(_services), "MeleeComponent requires a ServiceLocator.")
+	assert(is_instance_valid(_combat_utils), "MeleeComponent requires 'combat_utils'.")
+	assert(is_instance_valid(_fx_manager), "MeleeComponent requires 'fx_manager'.")
 	
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	hitbox.area_entered.connect(_on_hitbox_area_entered)
@@ -11383,7 +11846,8 @@ func teardown() -> void:
 		if hitbox.area_entered.is_connected(_on_hitbox_area_entered):
 			hitbox.area_entered.disconnect(_on_hitbox_area_entered)
 	_owner = null
-	_services = null
+	_combat_utils = null
+	_fx_manager = null
 
 
 # --- Public API ---
@@ -11405,20 +11869,30 @@ func _execute_attack_sequence() -> void:
 	
 	# --- 1. Telegraph Phase ---
 	if _current_attack_data.telegraph_duration > 0.0:
-		var telegraph := TelegraphScene.instantiate()
+		# OCP: Use the scene defined in data, fallback to default if null.
+		var scene_to_instantiate = _current_attack_data.telegraph_scene
+		if not scene_to_instantiate:
+			scene_to_instantiate = DEFAULT_TELEGRAPH_SCENE
+			
+		var telegraph = scene_to_instantiate.instantiate()
 		_owner.add_child(telegraph)
 		
 		var telegraph_size = _current_attack_data.shape.get_rect().size
 		var telegraph_offset = _current_attack_data.offset
 		var telegraph_position = _owner.global_position + (telegraph_offset * Vector2(facing_direction, 1.0))
 		
-		telegraph.start_telegraph(
-			_current_attack_data.telegraph_duration,
-			telegraph_size,
-			telegraph_position,
-			Palette.COLOR_UI_PANEL_BG
-		)
-		await telegraph.telegraph_finished
+		# Duck-typing check to ensure the custom scene supports the API
+		if telegraph.has_method("start_telegraph"):
+			telegraph.start_telegraph(
+				_current_attack_data.telegraph_duration,
+				telegraph_size,
+				telegraph_position,
+				Palette.COLOR_UI_PANEL_BG
+			)
+			await telegraph.telegraph_finished
+		else:
+			push_warning("Telegraph scene '%s' does not implement 'start_telegraph'. Skipping wait." % telegraph.name)
+			telegraph.queue_free()
 		
 		# GUARD CLAUSE: Check if we are still valid after the wait
 		if not is_instance_valid(self) or not is_instance_valid(_owner) or not is_instance_valid(collision_shape):
@@ -11462,25 +11936,29 @@ func _process_hit(collider: Node) -> void:
 
 	_hit_targets_this_swing[target_id] = true
 	
-	var damageable: IDamageable = _services.combat_utils.find_damageable(collider)
+	var damageable: IDamageable = _combat_utils.find_damageable(collider)
 	if is_instance_valid(damageable):
-		var damage_info := DamageInfo.new()
-		damage_info.amount = _current_attack_data.damage_amount
-		damage_info.source_node = _owner
-		damage_info.impact_position = collider.global_position
-		damage_info.impact_normal = (collider.global_position - _owner.global_position).normalized()
+		var impact_normal = (collider.global_position - _owner.global_position).normalized()
+		
+		# DRY: Use factory method
+		var damage_info = _combat_utils.create_damage_info(
+			_current_attack_data.damage_amount,
+			_owner,
+			collider.global_position,
+			impact_normal
+		)
 		
 		var result := damageable.apply_damage(damage_info)
 		if result.was_damaged:
 			if is_instance_valid(_current_attack_data.hit_spark_effect):
-				_services.fx_manager.play_vfx(
+				_fx_manager.play_vfx(
 					_current_attack_data.hit_spark_effect,
 					damage_info.impact_position,
 					damage_info.impact_normal
 				)
 			
 			if _current_attack_data.hit_stop_duration > 0.0:
-				_services.fx_manager.request_hit_stop(_current_attack_data.hit_stop_duration)
+				_fx_manager.request_hit_stop(_current_attack_data.hit_stop_duration)
 			
 			hit_confirmed.emit()
 
@@ -11594,8 +12072,9 @@ extends IComponent
 
 # --- Dependencies ---
 var _owner: Node2D
-var _services: ServiceLocator
 var _entity_data: Resource # BossStateData or MinionStateData
+var _object_pool: IObjectPool
+var _combat_utils: Node
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -11605,12 +12084,14 @@ var _player_node: Node2D
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._owner = p_owner as Node2D
-	self._services = p_dependencies.get("services")
 	self._entity_data = p_dependencies.get("data_resource")
+	self._object_pool = p_dependencies.get("object_pool")
+	self._combat_utils = p_dependencies.get("combat_utils")
 	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
-	assert(is_instance_valid(_services), "ProjectileShooterComponent requires a ServiceLocator.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
+	assert(is_instance_valid(_object_pool), "ProjectileShooterComponent requires 'object_pool'.")
+	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
 		_player_node = _owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
@@ -11620,8 +12101,9 @@ func teardown() -> void:
 	if is_instance_valid(_active_volley_tween):
 		_active_volley_tween.kill()
 	_owner = null
-	_services = null
 	_entity_data = null
+	_object_pool = null
+	_combat_utils = null
 	_player_node = null
 
 
@@ -11632,8 +12114,6 @@ func fire_volley(shot_count: int, delay: float) -> void:
 	if is_instance_valid(_active_volley_tween):
 		_active_volley_tween.kill()
 	
-	# FIX: Bind tween to self (Component) so it dies when we die. 
-	# Do NOT bind to get_tree().
 	_active_volley_tween = create_tween()
 	
 	for i in range(shot_count):
@@ -11656,7 +12136,7 @@ func fire_shot_at_player() -> void:
 		push_warning("Entity '%s' tried to fire but has no 'projectile_pool_key'." % _owner.name)
 		return
 
-	var shot: Node = _services.object_pool.get_instance(pool_key)
+	var shot: Node = _object_pool.get_instance(pool_key)
 	if not shot:
 		return
 
@@ -11674,8 +12154,8 @@ func fire_shot_at_player() -> void:
 		shot.global_position = _owner.global_position
 	
 	var dependencies = {
-		"object_pool": _services.object_pool,
-		"combat_utils": _services.combat_utils
+		"object_pool": _object_pool,
+		"combat_utils": _combat_utils
 	}
 	
 	if shot.has_method("activate"):
@@ -11841,17 +12321,12 @@ extends BaseEntity
 # --- Editor Configuration ---
 @export_group("Core Configuration")
 @export var behavior: MinionBehavior
+@export var state_machine_config: StateMachineConfig
+
 @export_group("Juice & Feedback")
 @export var hit_flash_effect: ShaderEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-
-@export_group("State Scripts")
-@export var state_idle_script: Script = preload("res://src/entities/minions/states/state_minion_idle.gd")
-@export var state_attack_script: Script = preload("res://src/entities/minions/states/state_minion_attack.gd")
-@export var state_melee_script: Script = preload("res://src/entities/minions/states/state_minion_melee.gd")
-@export var state_patrol_script: Script = preload("res://src/entities/minions/states/state_minion_patrol.gd")
-@export var state_fall_script: Script = preload("res://src/entities/states/state_entity_fall.gd")
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -11869,6 +12344,8 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("This node requires an EntityArchetype resource.")
 	if not behavior:
 		warnings.append("This node requires a MinionBehavior resource to function.")
+	if not state_machine_config:
+		warnings.append("This node requires a StateMachineConfig resource.")
 	return warnings
 
 
@@ -11953,21 +12430,25 @@ func _on_build() -> void:
 		"services": _services
 	}
 
-	var states: Dictionary = {
-		Identifiers.MinionStates.IDLE:
-		_safe_script(state_idle_script, "res://src/entities/minions/states/state_minion_idle.gd").new(self, sm, entity_data),
-		Identifiers.MinionStates.ATTACK:
-		_safe_script(state_attack_script, "res://src/entities/minions/states/state_minion_attack.gd").new(self, sm, entity_data),
-		Identifiers.MinionStates.FALL:
-		_safe_script(state_fall_script, "res://src/entities/states/state_entity_fall.gd").new(self, sm, entity_data),
-		Identifiers.CommonStates.MELEE:
-		_safe_script(state_melee_script, "res://src/entities/minions/states/state_minion_melee.gd").new(self, sm, entity_data),
-		Identifiers.CommonStates.PATROL:
-		_safe_script(state_patrol_script, "res://src/entities/minions/states/state_minion_patrol.gd").new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		# Prefer behavior's override if set, otherwise default to config's initial
+		initial_state_key = entity_data.behavior.initial_state_key
+		if initial_state_key == &"":
+			initial_state_key = state_machine_config.initial_state
+			
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("Minion: Missing StateMachineConfig!")
+
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": entity_data.behavior.initial_state_key},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual, 
 			"hit_effect": hit_flash_effect,
@@ -12077,8 +12558,9 @@ extends MovementLogic
 
 
 ## Returns zero velocity, effectively keeping the entity stationary.
-func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
+func execute(_delta: float, _entity: BaseEntity, _data: BaseEntityData) -> Vector2:
 	return Vector2.ZERO
+
 
 =====================================
 FILE: ./src/entities/minions/movement_logic/movement_logic.gd
@@ -12093,11 +12575,12 @@ extends Resource
 ## Calculates and returns the entity's velocity for the current physics frame.
 ## @param delta: The time elapsed since the last physics frame.
 ## @param entity: A reference to the BaseEntity executing this logic.
-## @param data: The shared state data resource (BossStateData or MinionStateData).
+## @param data: The shared state data resource (must extend BaseEntityData).
 ## @return: The calculated velocity vector for the current frame.
-func execute(_delta: float, _entity: BaseEntity, _data: Resource) -> Vector2:
+func execute(_delta: float, _entity: BaseEntity, _data: BaseEntityData) -> Vector2:
 	push_warning("MovementLogic.execute() was called but not overridden by the implementer.")
 	return Vector2.ZERO
+
 
 =====================================
 FILE: ./src/entities/minions/movement_logic/flying_patrol.tres
@@ -12127,7 +12610,7 @@ extends MovementLogic
 var _patrol_points: Dictionary = {}
 
 
-func execute(delta: float, entity: BaseEntity, _data: Resource) -> Vector2:
+func execute(delta: float, entity: BaseEntity, _data: BaseEntityData) -> Vector2:
 	var instance_id = entity.get_instance_id()
 	
 	# Initialize patrol points on the first run for this specific instance.
@@ -12170,7 +12653,7 @@ class_name PatrolMovementLogic
 extends MovementLogic
 
 ## Moves the entity horizontally. Preserves vertical velocity (gravity).
-func execute(_delta: float, entity: BaseEntity, data: Resource) -> Vector2:
+func execute(_delta: float, entity: BaseEntity, data: BaseEntityData) -> Vector2:
 	var new_velocity := entity.velocity
 	
 	# Note: Gravity is handled by the BaseEntity's _physics_process.
@@ -12179,29 +12662,28 @@ func execute(_delta: float, entity: BaseEntity, data: Resource) -> Vector2:
 	if entity.is_on_wall():
 		data.facing_direction *= -1.0
 
-	new_velocity.x = data.facing_direction * data.config.boss_patrol_speed
+	# Cast config to EnemyConfig to access patrol speed safely.
+	# If config is not EnemyConfig, this will fail gracefully (null check or 0 speed).
+	var enemy_config = data.config as EnemyConfig
+	var speed = enemy_config.boss_patrol_speed if enemy_config else 0.0
+
+	new_velocity.x = data.facing_direction * speed
 	return new_velocity
+
 
 =====================================
 FILE: ./src/entities/minions/minion_state_data.gd
 =====================================
 # src/entities/minions/minion_state_data.gd
+@tool
 ## A Resource that holds all shared runtime state data for a Minion.
 class_name MinionStateData
-extends Resource
+extends BaseEntityData
 
 # --- Configuration References ---
 var behavior: MinionBehavior
-var services: ServiceLocator
-var config: EnemyConfig
-var world_config: WorldConfig
 
-# --- Health & Combat ---
-var max_health: int = 3
-var health: int = 3:
-	set(value):
-		health = clamp(value, 0, max_health)
-
+# --- Combat ---
 var is_invincible: bool = false
 var projectile_pool_key: StringName = &""
 
@@ -12209,8 +12691,6 @@ var projectile_pool_key: StringName = &""
 var is_player_in_range: bool = false
 var is_player_in_melee_range: bool = false
 
-# --- Physics & Movement ---
-var facing_direction: float = -1.0
 
 =====================================
 FILE: ./src/entities/minions/states/state_minion_attack.gd
@@ -12221,7 +12701,7 @@ class_name MinionStateAttack
 extends BaseState
 
 # --- Constants ---
-const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
+const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _minion: Minion
@@ -12249,7 +12729,12 @@ func _start_telegraph_and_attack() -> void:
 		state_machine.change_state(Identifiers.MinionStates.IDLE)
 		return
 
-	var telegraph := TelegraphScene.instantiate()
+	# OCP: Use pattern-specific telegraph if available, else default.
+	var scene_to_use = _current_pattern.telegraph_scene
+	if not scene_to_use:
+		scene_to_use = DEFAULT_TELEGRAPH_SCENE
+
+	var telegraph = scene_to_use.instantiate()
 	_minion.add_child(telegraph)
 
 	var telegraph_info: Dictionary = _current_pattern.logic.get_telegraph_info(_minion, _current_pattern)
@@ -12261,13 +12746,17 @@ func _start_telegraph_and_attack() -> void:
 	)
 	var telegraph_position: Vector2 = _minion.global_position + directional_offset
 
-	telegraph.start_telegraph(
-		_current_pattern.telegraph_duration,
-		telegraph_size,
-		telegraph_position,
-		Palette.COLOR_UI_PANEL_BG
-	)
-	await telegraph.telegraph_finished
+	if telegraph.has_method("start_telegraph"):
+		telegraph.start_telegraph(
+			_current_pattern.telegraph_duration,
+			telegraph_size,
+			telegraph_position,
+			Palette.COLOR_UI_PANEL_BG
+		)
+		await telegraph.telegraph_finished
+	else:
+		telegraph.queue_free()
+		await _minion.get_tree().create_timer(_current_pattern.telegraph_duration).timeout
 
 	if not is_instance_valid(_minion):
 		return
@@ -12281,6 +12770,7 @@ func _start_telegraph_and_attack() -> void:
 		_minion.attack_timer.start()
 		# Return to patrol so the minion moves during its attack cooldown.
 		state_machine.change_state("patrol")
+
 
 =====================================
 FILE: ./src/entities/minions/states/state_minion_patrol.gd
@@ -12425,7 +12915,7 @@ func _check_interrupts() -> bool:
 =====================================
 FILE: ./src/entities/minions/patrolling_lancer.tscn
 =====================================
-[gd_scene load_steps=11 format=3 uid="uid://c0mbo7v80afg1"]
+[gd_scene load_steps=12 format=3 uid="uid://c0mbo7v80afg1"]
 
 [ext_resource type="Script" uid="uid://4xepmjomesfc" path="res://src/entities/minions/minion.gd" id="1_minion_script"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_hit_flash"]
@@ -12435,6 +12925,7 @@ FILE: ./src/entities/minions/patrolling_lancer.tscn
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="6_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://d2b4w7h1qxy5c" path="res://src/entities/minions/data/patrolling_lancer_behavior.tres" id="7_lancer_behavior"]
 [ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/components/sensor_component.gd" id="8_sensor_script"]
+[ext_resource type="Resource" uid="uid://dfvpyyu7iy8by" path="res://src/entities/minions/data/minion_state_machine_config.tres" id="9_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_minionbody"]
 size = Vector2(50, 50)
@@ -12447,6 +12938,7 @@ collision_layer = 4
 collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("7_lancer_behavior")
+state_machine_config = ExtResource("9_sm_config")
 hit_flash_effect = ExtResource("2_hit_flash")
 hit_spark_effect = ExtResource("4_hit_spark_effect")
 dissolve_effect = ExtResource("6_dissolve_effect")
@@ -12486,7 +12978,7 @@ shape = SubResource("CircleShape2D_meleetrigger")
 =====================================
 FILE: ./src/entities/minions/turret.tscn
 =====================================
-[gd_scene load_steps=10 format=3 uid="uid://c7d8faf0g1h2i"]
+[gd_scene load_steps=11 format=3 uid="uid://c7d8faf0g1h2i"]
 
 [ext_resource type="Script" uid="uid://4xepmjomesfc" path="res://src/entities/minions/minion.gd" id="1_minion_script"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_hit_flash"]
@@ -12495,6 +12987,7 @@ FILE: ./src/entities/minions/turret.tscn
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="5_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://dp642amrtq5i3" path="res://src/entities/minions/data/turret_behavior.tres" id="6_turret_behavior"]
 [ext_resource type="Script" path="res://src/entities/components/sensor_component.gd" id="7_sensor_script"]
+[ext_resource type="Resource" path="res://src/entities/minions/data/minion_state_machine_config.tres" id="8_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_minionbody"]
 size = Vector2(50, 50)
@@ -12507,6 +13000,7 @@ collision_layer = 4
 collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("6_turret_behavior")
+state_machine_config = ExtResource("8_sm_config")
 hit_flash_effect = ExtResource("2_hit_flash")
 hit_spark_effect = ExtResource("3_hit_spark_effect")
 dissolve_effect = ExtResource("5_dissolve_effect")
@@ -12536,7 +13030,7 @@ shape = SubResource("CircleShape2D_rangedetector")
 =====================================
 FILE: ./src/entities/minions/flying_patroller.tscn
 =====================================
-[gd_scene load_steps=10 format=3 uid="uid://c1d2e3f4g5h6i"]
+[gd_scene load_steps=11 format=3 uid="uid://c1d2e3f4g5h6i"]
 
 [ext_resource type="Script" uid="uid://4xepmjomesfc" path="res://src/entities/minions/minion.gd" id="1_minion_script"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_hit_flash"]
@@ -12545,6 +13039,7 @@ FILE: ./src/entities/minions/flying_patroller.tscn
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="5_dissolve_effect"]
 [ext_resource type="Resource" path="res://src/entities/minions/data/flying_patroller_behavior.tres" id="6_flying_behavior"]
 [ext_resource type="Script" path="res://src/entities/components/sensor_component.gd" id="7_sensor_script"]
+[ext_resource type="Resource" path="res://src/entities/minions/data/minion_state_machine_config.tres" id="8_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_minionbody"]
 size = Vector2(40, 40)
@@ -12557,6 +13052,7 @@ collision_layer = 4
 collision_mask = 138
 script = ExtResource("1_minion_script")
 behavior = ExtResource("6_flying_behavior")
+state_machine_config = ExtResource("8_sm_config")
 hit_flash_effect = ExtResource("2_hit_flash")
 hit_spark_effect = ExtResource("3_hit_spark_effect")
 dissolve_effect = ExtResource("5_dissolve_effect")
@@ -12674,27 +13170,63 @@ attack_patterns = Array[ExtResource("1_s7dvt")]([ExtResource("3_attack_pattern")
 
 
 =====================================
+FILE: ./src/entities/minions/data/minion_state_machine_config.tres
+=====================================
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=13 format=3 uid="uid://dfvpyyu7iy8by"]
+
+[ext_resource type="Script" uid="uid://n65f7l7vgpyh" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" uid="uid://bhpvwtjqtlr08" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" uid="uid://buddf5jdhvkt8" path="res://src/entities/minions/states/state_minion_idle.gd" id="3_idle"]
+[ext_resource type="Script" uid="uid://dakqidln1rfck" path="res://src/entities/minions/states/state_minion_attack.gd" id="4_attack"]
+[ext_resource type="Script" uid="uid://ck4xvx0sjhmpp" path="res://src/entities/minions/states/state_minion_melee.gd" id="5_melee"]
+[ext_resource type="Script" uid="uid://c8l8fjwub7sq5" path="res://src/entities/minions/states/state_minion_patrol.gd" id="6_patrol"]
+[ext_resource type="Script" uid="uid://bx3sbubexqh1r" path="res://src/entities/states/state_entity_fall.gd" id="7_fall"]
+
+[sub_resource type="Resource" id="Resource_idle"]
+script = ExtResource("1_def")
+key = &"idle"
+state_script = ExtResource("3_idle")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("1_def")
+key = &"attack"
+state_script = ExtResource("4_attack")
+
+[sub_resource type="Resource" id="Resource_melee"]
+script = ExtResource("1_def")
+key = &"melee"
+state_script = ExtResource("5_melee")
+
+[sub_resource type="Resource" id="Resource_patrol"]
+script = ExtResource("1_def")
+key = &"patrol"
+state_script = ExtResource("6_patrol")
+
+[sub_resource type="Resource" id="Resource_fall"]
+script = ExtResource("1_def")
+key = &"fall"
+state_script = ExtResource("7_fall")
+
+[resource]
+script = ExtResource("2_cfg")
+initial_state = &"fall"
+states = Array[ExtResource("1_def")]([SubResource("Resource_idle"), SubResource("Resource_attack"), SubResource("Resource_melee"), SubResource("Resource_patrol"), SubResource("Resource_fall")])
+
+
+=====================================
 FILE: ./src/entities/player/player.tscn
 =====================================
-[gd_scene load_steps=20 format=3 uid="uid://c6vknl71ea1bo"]
+[gd_scene load_steps=21 format=3 uid="uid://c6vknl71ea1bo"]
 
 [ext_resource type="Script" uid="uid://bymbb3pjo71tf" path="res://src/entities/player/player.gd" id="1_4d1td"]
 [ext_resource type="Resource" path="res://src/entities/archetypes/player_archetype.tres" id="2_archetype"]
 [ext_resource type="Resource" uid="uid://entity_hit_flash_effect" path="res://src/data/effects/entity_hit_flash_effect.tres" id="3_hit_flash"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_damage_shake.tres" id="4_shake_effect"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="5_hit_spark_effect"]
-[ext_resource type="Script" uid="uid://pyb4pd4uixxk" path="res://src/entities/player/states/state_move.gd" id="6_state_move"]
-[ext_resource type="Script" uid="uid://52jrtscsjy6s" path="res://src/entities/player/states/state_jump.gd" id="7_state_jump"]
-[ext_resource type="Script" uid="uid://dd6xefkcdr77e" path="res://src/entities/player/states/state_fall.gd" id="8_state_fall"]
-[ext_resource type="Script" uid="uid://11fbrak080kl" path="res://src/entities/player/states/state_dash.gd" id="9_state_dash"]
-[ext_resource type="Script" uid="uid://m3xnbhn5umv6" path="res://src/entities/player/states/state_wall_slide.gd" id="10_state_wall_slide"]
-[ext_resource type="Script" uid="uid://cem1wgbis0qlx" path="res://src/entities/player/states/state_attack.gd" id="11_state_attack"]
-[ext_resource type="Script" uid="uid://bxwc5vsj7qsw1" path="res://src/entities/player/states/state_hurt.gd" id="12_state_hurt"]
-[ext_resource type="Script" uid="uid://dv503l6b2cfqr" path="res://src/entities/player/states/state_heal.gd" id="13_state_heal"]
-[ext_resource type="Script" uid="uid://d1l7j3jqn4awq" path="res://src/entities/player/states/state_pogo.gd" id="14_state_pogo"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="15_dissolve_effect"]
 [ext_resource type="Script" path="res://src/entities/components/hurtbox_component.gd" id="16_hurtbox_script"]
 [ext_resource type="Script" path="res://src/entities/components/hitbox_component.gd" id="17_hitbox_script"]
+[ext_resource type="Resource" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playerbody"]
 size = Vector2(40, 40)
@@ -12706,15 +13238,7 @@ hit_flash_effect = ExtResource("3_hit_flash")
 damage_shake_effect = ExtResource("4_shake_effect")
 hit_spark_effect = ExtResource("5_hit_spark_effect")
 dissolve_effect = ExtResource("15_dissolve_effect")
-state_move_script = ExtResource("6_state_move")
-state_jump_script = ExtResource("7_state_jump")
-state_fall_script = ExtResource("8_state_fall")
-state_dash_script = ExtResource("9_state_dash")
-state_wall_slide_script = ExtResource("10_state_wall_slide")
-state_attack_script = ExtResource("11_state_attack")
-state_hurt_script = ExtResource("12_state_hurt")
-state_heal_script = ExtResource("13_state_heal")
-state_pogo_script = ExtResource("14_state_pogo")
+state_machine_config = ExtResource("18_sm_config")
 archetype = ExtResource("2_archetype")
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -12785,16 +13309,9 @@ const ACTION_ALLOWED_STATES = [
 @export var damage_shake_effect: ScreenShakeEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-@export_group("State Scripts")
-@export var state_move_script: Script
-@export var state_jump_script: Script
-@export var state_fall_script: Script
-@export var state_dash_script: Script
-@export var state_wall_slide_script: Script
-@export var state_attack_script: Script
-@export var state_hurt_script: Script
-@export var state_heal_script: Script
-@export var state_pogo_script: Script
+
+@export_group("Configuration")
+@export var state_machine_config: StateMachineConfig
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -12840,12 +13357,17 @@ func _on_build() -> void:
 
 	entity_data.config = _services.player_config
 	entity_data.world_config = _services.world_config
+	
+	# CRITICAL FIX: Initialize health from config before components read it
+	entity_data.max_health = entity_data.config.max_health
+	entity_data.health = entity_data.max_health
 
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
+	var pc: PogoComponent = get_component(PogoComponent)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -12853,20 +13375,20 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	var states: Dictionary = {
-		Identifiers.PlayerStates.MOVE: state_move_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.FALL: state_fall_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.JUMP: state_jump_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.DASH: state_dash_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.WALL_SLIDE: state_wall_slide_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.ATTACK: state_attack_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.HURT: state_hurt_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.HEAL: state_heal_script.new(self, sm, entity_data),
-		Identifiers.PlayerStates.POGO: state_pogo_script.new(self, sm, entity_data),
-	}
+	# OCP: Build state map dynamically from config resource
+	var states: Dictionary = {}
+	var initial_state_key = &""
+	
+	if state_machine_config:
+		initial_state_key = state_machine_config.initial_state
+		for def in state_machine_config.states:
+			if def.state_script:
+				states[def.key] = def.state_script.new(self, sm, entity_data)
+	else:
+		push_error("Player: Missing StateMachineConfig!")
 
 	var per_component_deps := {
-		sm: {"states": states, "initial_state_key": Identifiers.PlayerStates.FALL},
+		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
 			"visual_node": visual_sprite, 
 			"hit_effect": hit_flash_effect,
@@ -12882,12 +13404,15 @@ func _on_build() -> void:
 			"fx_manager": _services.fx_manager,
 			"combat_utils": _services.combat_utils,
 			"services": _services,
-			"melee_hitbox": melee_hitbox,
-			"pogo_hitbox": pogo_hitbox
+			"melee_hitbox": melee_hitbox
 			},
 		rc: {
 			"event_bus": _services.event_bus
-			}
+			},
+		pc: {
+			"pogo_hitbox": pogo_hitbox,
+			"services": _services
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
@@ -12896,11 +13421,14 @@ func _on_build() -> void:
 		hurtbox.setup(self, {"services": _services})
 
 	# --- Wire signals between components ---
-	if cc and rc:
-		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
+	if rc:
+		if cc and not cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.connect(rc.on_damage_dealt)
-		if not cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
-			cc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
+		if pc and not pc.damage_dealt.is_connected(rc.on_damage_dealt):
+			pc.damage_dealt.connect(rc.on_damage_dealt)
+
+	if pc and not pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
+		pc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
 
 	if healing_timer and not healing_timer.timeout.is_connected(_on_healing_timer_timeout):
 		healing_timer.timeout.connect(_on_healing_timer_timeout)
@@ -12909,12 +13437,17 @@ func _on_build() -> void:
 # --- Public Methods ---
 func teardown() -> void:
 	var cc: CombatComponent = get_component(CombatComponent)
-	if is_instance_valid(cc):
-		var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
-		if is_instance_valid(rc) and cc.damage_dealt.is_connected(rc.on_damage_dealt):
+	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
+	var pc: PogoComponent = get_component(PogoComponent)
+
+	if is_instance_valid(rc):
+		if is_instance_valid(cc) and cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.disconnect(rc.on_damage_dealt)
-		if cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
-			cc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
+		if is_instance_valid(pc) and pc.damage_dealt.is_connected(rc.on_damage_dealt):
+			pc.damage_dealt.disconnect(rc.on_damage_dealt)
+
+	if is_instance_valid(pc) and pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
+		pc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
 
 	if is_instance_valid(healing_timer):
 		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
@@ -13005,6 +13538,109 @@ func _cancel_heal() -> void:
 
 
 =====================================
+FILE: ./src/entities/player/components/pogo_component.gd
+=====================================
+# src/entities/player/components/pogo_component.gd
+@tool
+## Dedicated component for handling the "Pogo" (downward strike) mechanic.
+class_name PogoComponent
+extends IComponent
+
+# --- Signals ---
+signal pogo_bounce_requested
+signal damage_dealt
+
+# --- Dependencies ---
+var _owner_node: CharacterBody2D
+var _p_data: PlayerStateData
+var _hitbox: HitboxComponent
+var _object_pool: IObjectPool
+var _combat_utils: Node 
+
+# --- Godot Lifecycle ---
+
+func _ready() -> void:
+	process_priority = 0
+
+# --- IComponent Contract ---
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_owner_node = p_owner as CharacterBody2D
+	_p_data = p_dependencies.get("data_resource")
+	_hitbox = p_dependencies.get("pogo_hitbox")
+	
+	_object_pool = p_dependencies.get("object_pool")
+	_combat_utils = p_dependencies.get("combat_utils")
+
+	assert(is_instance_valid(_owner_node), "PogoComponent requires a CharacterBody2D owner.")
+	assert(is_instance_valid(_p_data), "PogoComponent requires PlayerStateData.")
+	assert(is_instance_valid(_object_pool), "PogoComponent requires 'object_pool'.")
+	assert(is_instance_valid(_combat_utils), "PogoComponent requires 'combat_utils'.")
+	
+	if is_instance_valid(_hitbox):
+		# Configure hitbox specifically for Pogo
+		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
+		_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
+		
+		if not _hitbox.hit_detected.is_connected(_on_hit_detected):
+			_hitbox.hit_detected.connect(_on_hit_detected)
+
+func teardown() -> void:
+	if is_instance_valid(_hitbox):
+		if _hitbox.hit_detected.is_connected(_on_hit_detected):
+			_hitbox.hit_detected.disconnect(_on_hit_detected)
+	
+	_owner_node = null
+	_p_data = null
+	_hitbox = null
+	_object_pool = null
+	_combat_utils = null
+
+# --- Private Logic ---
+
+func _on_hit_detected(target: Node) -> void:
+	if not _p_data.combat.is_pogo_attack:
+		return
+	if not is_instance_valid(target):
+		return
+
+	var should_bounce = false
+
+	# Case 1: Hit an Enemy Projectile (destroy it)
+	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		should_bounce = true
+		_object_pool.return_instance.call_deferred(target)
+
+	# Case 2: Hit a Damageable Entity (Enemy)
+	var damageable = _combat_utils.find_damageable(target)
+	if is_instance_valid(damageable):
+		should_bounce = true
+		# DRY: Use factory method (Pogo pierces i-frames)
+		var damage_info = _combat_utils.create_damage_info(
+			1,
+			_owner_node,
+			target.global_position,
+			Vector2.UP,
+			true 
+		)
+		
+		var result = damageable.apply_damage(damage_info)
+		if result.was_damaged:
+			damage_dealt.emit()
+
+	# Case 3: Hit World Geometry
+	# Check physics bodies (World, Platforms)
+	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
+		should_bounce = true
+	# Check TileMap layers or static bodies in world group
+	elif target.is_in_group(Identifiers.Groups.WORLD):
+		should_bounce = true
+
+	if should_bounce:
+		pogo_bounce_requested.emit()
+
+
+=====================================
 FILE: ./src/entities/player/components/player_resource_component.tscn
 =====================================
 [gd_scene load_steps=2 format=3 uid="uid://a1b2c3d4e5f6"]
@@ -13085,6 +13721,18 @@ static func try_platform_drop(owner: Player) -> bool:
 		return true
 
 	return false
+
+
+=====================================
+FILE: ./src/entities/player/components/pogo_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3 uid="uid://pogo_component_scene_uid"]
+
+[ext_resource type="Script" path="res://src/entities/player/components/pogo_component.gd" id="1_script"]
+
+[node name="PogoComponent" type="Node"]
+script = ExtResource("1_script")
+metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "pogo_hitbox", "services")
 
 
 =====================================
@@ -13979,25 +14627,93 @@ FILE: ./src/entities/player/data/player_state_data.gd
 ## A Resource that holds all shared runtime state data for the Player.
 ## Acts as a container for domain-specific data chunks.
 class_name PlayerStateData
-extends Resource
+extends BaseEntityData
 
 # --- Sub-Data Containers ---
 var physics: PlayerPhysicsData = PlayerPhysicsData.new()
 var combat: PlayerCombatData = PlayerCombatData.new()
 
 # --- Configuration References ---
-# These remain global as they are read-only configs used by everything.
-var config: PlayerConfig
-var world_config: WorldConfig
+# Note: 'config' and 'world_config' are inherited from BaseEntityData.
+# 'config' is typed as Resource in the base, but holds PlayerConfig at runtime.
 
-# --- Health ---
-# Health is core enough to remain on the root or move to a HealthData.
-# For now, we keep basic health stats here to avoid over-fragmentation,
-# as HealthComponent manages these directly.
-var max_health: int = 5
-var health: int = 5:
-	set(value):
-		health = clamp(value, 0, max_health)
+
+=====================================
+FILE: ./src/entities/player/data/player_state_machine_config.tres
+=====================================
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_move.gd" id="3_move"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_jump.gd" id="4_jump"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_fall.gd" id="5_fall"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_dash.gd" id="6_dash"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_wall_slide.gd" id="7_slide"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_attack.gd" id="8_attack"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_hurt.gd" id="9_hurt"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_heal.gd" id="10_heal"]
+[ext_resource type="Script" path="res://src/entities/player/states/state_pogo.gd" id="11_pogo"]
+
+[sub_resource type="Resource" id="Resource_move"]
+script = ExtResource("1_def")
+key = &"move"
+state_script = ExtResource("3_move")
+
+[sub_resource type="Resource" id="Resource_jump"]
+script = ExtResource("1_def")
+key = &"jump"
+state_script = ExtResource("4_jump")
+
+[sub_resource type="Resource" id="Resource_fall"]
+script = ExtResource("1_def")
+key = &"fall"
+state_script = ExtResource("5_fall")
+
+[sub_resource type="Resource" id="Resource_dash"]
+script = ExtResource("1_def")
+key = &"dash"
+state_script = ExtResource("6_dash")
+
+[sub_resource type="Resource" id="Resource_slide"]
+script = ExtResource("1_def")
+key = &"wall_slide"
+state_script = ExtResource("7_slide")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("1_def")
+key = &"attack"
+state_script = ExtResource("8_attack")
+
+[sub_resource type="Resource" id="Resource_hurt"]
+script = ExtResource("1_def")
+key = &"hurt"
+state_script = ExtResource("9_hurt")
+
+[sub_resource type="Resource" id="Resource_heal"]
+script = ExtResource("1_def")
+key = &"heal"
+state_script = ExtResource("10_heal")
+
+[sub_resource type="Resource" id="Resource_pogo"]
+script = ExtResource("1_def")
+key = &"pogo"
+state_script = ExtResource("11_pogo")
+
+[resource]
+script = ExtResource("2_cfg")
+initial_state = &"fall"
+states = Array[ExtResource("1_def")]([
+    SubResource("Resource_move"),
+    SubResource("Resource_jump"),
+    SubResource("Resource_fall"),
+    SubResource("Resource_dash"),
+    SubResource("Resource_slide"),
+    SubResource("Resource_attack"),
+    SubResource("Resource_hurt"),
+    SubResource("Resource_heal"),
+    SubResource("Resource_pogo")
+])
 
 
 =====================================

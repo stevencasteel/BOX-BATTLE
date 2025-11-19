@@ -6,13 +6,13 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: MinionBehavior
-@export var state_machine_config: StateMachineConfig
+@export var behavior: MinionBehavior = null
+@export var state_machine_config: StateMachineConfig = null
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -39,6 +39,8 @@ func _ready() -> void:
 	super._ready()
 	if Engine.is_editor_hint():
 		return
+	
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.ENEMY)
 
 	_initialize_data()
 	build_entity()
@@ -63,9 +65,17 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
 
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 
 # --- Public Methods ---
 func teardown() -> void:
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 	super.teardown()
 	entity_data = null
 

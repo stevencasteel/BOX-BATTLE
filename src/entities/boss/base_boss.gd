@@ -5,22 +5,23 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: BossBehavior
-@export var state_machine_config: StateMachineConfig
+@export var behavior: BossBehavior = null
+@export var state_machine_config: StateMachineConfig = null
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var phase_change_shake_effect: ScreenShakeEffect
-@export var death_shake_effect: ScreenShakeEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var phase_change_shake_effect: ScreenShakeEffect = null
+@export var death_shake_effect: ScreenShakeEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
+
 @export_group("State Scripts")
-@export var state_idle_script: Script
-@export var state_attack_script: Script
-@export var state_cooldown_script: Script
-@export var state_patrol_script: Script
-@export var state_lunge_script: Script
-@export var state_melee_script: Script
+@export var state_idle_script: Script = null
+@export var state_attack_script: Script = null
+@export var state_cooldown_script: Script = null
+@export var state_patrol_script: Script = null
+@export var state_lunge_script: Script = null
+@export var state_melee_script: Script = null
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -55,6 +56,8 @@ func _ready() -> void:
 
 	if not is_in_group(Identifiers.Groups.ENEMY):
 		add_to_group(Identifiers.Groups.ENEMY)
+	
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.ENEMY)
 
 	_initialize_data()
 	
@@ -68,6 +71,12 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
+
+
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
 
 
 # --- Internal Build Logic ---
@@ -126,6 +135,9 @@ func teardown() -> void:
 		if hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.disconnect(_on_health_threshold_reached)
 
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 	super.teardown()
 	entity_data = null
 
@@ -165,6 +177,8 @@ func _die() -> void:
 	collision_layer = 0
 	collision_mask = 0
 	set_physics_process(false)
+
+	ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)

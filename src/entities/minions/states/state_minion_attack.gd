@@ -7,12 +7,12 @@ extends BaseState
 const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
-var _minion: Minion
+var _minion # Untyped
 var _current_pattern: AttackPattern
 
 
 func enter(msg := {}) -> void:
-	self._minion = owner as Minion
+	self._minion = owner
 	if not is_instance_valid(_minion):
 		state_machine.change_state(Identifiers.MinionStates.IDLE)
 		return

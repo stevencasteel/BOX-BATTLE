@@ -14,11 +14,10 @@ func get_telegraph_info(_owner: BaseEntity, _pattern: AttackPattern) -> Dictiona
 
 
 func execute(owner: BaseEntity, pattern: AttackPattern) -> Callable:
-	var boss_owner := owner as BaseBoss
-	if not is_instance_valid(boss_owner):
-		push_warning("LungeLogic can only be executed by a BaseBoss.")
+	if not owner.is_in_group(Identifiers.Groups.ENEMY):
+		push_warning("LungeLogic can only be executed by an Enemy.")
 		return Callable()
 
 	var lunge_params = {"pattern": pattern}
-	var sm: BaseStateMachine = boss_owner.get_component(BaseStateMachine)
+	var sm: BaseStateMachine = owner.get_component(BaseStateMachine)
 	return sm.change_state.bind(Identifiers.BossStates.LUNGE, lunge_params)

@@ -4,11 +4,11 @@
 class_name MinionStatePatrol
 extends StateEntityPatrol
 
-var _minion: Minion
+var _minion # Untyped
 
 func enter(msg := {}) -> void:
 	super.enter(msg)
-	_minion = owner as Minion
+	_minion = owner
 
 func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
@@ -19,7 +19,6 @@ func _check_interrupts() -> bool:
 		if _minion.get_component(MeleeComponent):
 			_minion.velocity = Vector2.ZERO
 			_minion.attack_timer.stop() 
-			# UPDATE: Use constant
 			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
