@@ -182,6 +182,11 @@ func _on_entity_died() -> void:
 func _on_health_changed(_current: int, _max: int) -> void:
 	pass
 
+## Virtual method: Returns specific health percentages (0.0 to 1.0) that trigger events.
+## Default implementation returns empty. Subclasses (e.g. BaseBoss) should override this.
+func get_health_thresholds() -> Array[float]:
+	return []
+
 
 # --- Private Methods ---
 func _build_from_archetype() -> void:

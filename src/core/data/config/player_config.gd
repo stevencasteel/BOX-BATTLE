@@ -45,3 +45,10 @@ extends Resource
 @export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
 @export_range(200, 1000, 10) var pogo_force: float = 450.0
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
+
+@export_group("Visual Effects")
+@export var vfx_charge_aura: PackedScene
+@export var vfx_charge_splash: PackedScene
+@export var vfx_heal_aura: PackedScene
+@export var vfx_heal_splash: PackedScene
+@export var vfx_dissolve: ShaderEffect

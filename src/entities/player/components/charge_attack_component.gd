@@ -4,10 +4,8 @@ class_name ChargeAttackComponent
 extends IComponent
 
 # --- Constants ---
-const AURA_SCENE = preload("res://src/vfx/aura_charge_green.tscn")
-const SPLASH_SCENE = preload("res://src/vfx/splash_charge_green.tscn")
 # Delay visuals to prevent aura flashing during normal melee taps.
-const AURA_START_DELAY: float = 0.25
+const AURA_START_DELAY: float = 0.15
 
 # --- Dependencies ---
 var _owner_node # Typed as Player
@@ -29,9 +27,10 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
 	
-	# Instantiate the aura and attach it to the player so it follows them
-	if is_instance_valid(_owner_node):
-		_aura_instance = AURA_SCENE.instantiate()
+	# DIP Fix: Instantiate from Config, not hardcoded preload
+	var aura_scene = _p_data.config.vfx_charge_aura
+	if is_instance_valid(_owner_node) and is_instance_valid(aura_scene):
+		_aura_instance = aura_scene.instantiate()
 		_aura_instance.emitting = false
 		_owner_node.add_child(_aura_instance)
 
@@ -83,8 +82,13 @@ func _try_execute_attack() -> void:
 func _spawn_release_splash() -> void:
 	if not is_instance_valid(_owner_node):
 		return
-		
-	var splash = SPLASH_SCENE.instantiate()
+	
+	# DIP Fix: Use config
+	var splash_scene = _p_data.config.vfx_charge_splash
+	if not is_instance_valid(splash_scene):
+		return
+
+	var splash = splash_scene.instantiate()
 	# Calculate same offset as CombatComponent (facing * 60)
 	var offset = Vector2(_p_data.physics.facing_direction * 60, 0)
 	splash.global_position = _owner_node.global_position + offset

@@ -150,9 +150,14 @@ func release_invincibility(token: int) -> void:
 		_active_invincibility_map.erase(token)
 
 func _check_for_threshold_crossing(health_before: int, health_after: int) -> void:
-	if not owner_node.has_method("get_health_thresholds"):
+	# LSP Fix: Use BaseEntity contract instead of duck typing
+	var thresholds: Array[float] = []
+	if owner_node is BaseEntity:
+		thresholds = (owner_node as BaseEntity).get_health_thresholds()
+		
+	if thresholds.is_empty():
 		return
-	var thresholds: Array[float] = owner_node.get_health_thresholds()
+
 	var old_percent: float = float(health_before) / _max_health
 	var new_percent: float = float(health_after) / _max_health
 	for threshold in thresholds:

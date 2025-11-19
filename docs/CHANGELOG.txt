@@ -32,6 +32,10 @@ cat <<EOF > docs/CHANGELOG.txt
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
+
+
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025          ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -58,8 +62,17 @@ cat <<EOF > docs/CHANGELOG.txt
 ║      ░   - Logic handles drag events vs clicks intelligently.                  ║
 
 
-
-
+║   █  Architecture & Design Principles                                          ║
+║      ░ ■ Applied Liskov Substitution Principle (LSP) to BaseEntity.            ║
+║      ░   - Enforced 'get_health_thresholds()' contract in the base class.      ║
+║      ░   - Removed duck-typing/has_method checks in HealthComponent.           ║
+║      ░ ■ Applied Dependency Inversion Principle (DIP) to Visual Assets.        ║
+║      ░   - Removed hardcoded 'preload' paths for VFX in Player scripts.        ║
+║      ░   - VFX scenes (Auras, Splashes) are now injected via 'PlayerConfig'.   ║
+║      ░ ■ Applied Single Responsibility Principle (SRP) to Visual Logic.        ║
+║      ░   - Extracted 'VisualComponent' to handle sprite color and death FX.    ║
+║      ░   - Player.gd is now purely an orchestrator, delegating visuals.        ║
+║                                                                                ║
 
 
 

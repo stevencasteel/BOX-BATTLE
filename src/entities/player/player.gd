@@ -14,14 +14,13 @@ const ACTION_ALLOWED_STATES = [
 	&"jump",
 	&"wall_slide"
 ]
-const HEAL_SPLASH_SCENE = preload("res://src/vfx/splash_heal_purple.tscn")
 
 # --- Editor Properties ---
 @export_group("Juice & Feedback")
 @export var hit_flash_effect: ShaderEffect = null
 @export var damage_shake_effect: ScreenShakeEffect = null
 @export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+# Dissolve effect moved to PlayerConfig via VisualComponent
 
 @export_group("Configuration")
 @export var state_machine_config: StateMachineConfig = null
@@ -53,7 +52,6 @@ func _ready() -> void:
 	build_entity()
 
 	# Post-Build Init
-	visual_sprite.color = Palette.COLOR_PLAYER
 	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
@@ -92,6 +90,7 @@ func _on_build() -> void:
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
 	var pc: PogoComponent = get_component(PogoComponent)
+	var vc: VisualComponent = get_component(VisualComponent)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -136,6 +135,9 @@ func _on_build() -> void:
 		pc: {
 			"pogo_hitbox": pogo_hitbox,
 			"services": _services
+		},
+		vc: {
+			"visual_node": visual_sprite
 		}
 	}
 
@@ -218,10 +220,11 @@ func _die() -> void:
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	if is_instance_valid(sm):
 		sm.teardown()
-
-	var fc: FXComponent = get_component(FXComponent)
-	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+	
+	# SRP Fix: Delegate death visuals to VisualComponent
+	var vc: VisualComponent = get_component(VisualComponent)
+	if is_instance_valid(vc):
+		var tween: Tween = vc.play_death_sequence()
 		if is_instance_valid(tween):
 			await tween.finished
 
@@ -248,9 +251,10 @@ func _on_healing_timer_timeout() -> void:
 		get_component(PlayerResourceComponent).consume_healing_charge()
 		_on_health_changed(entity_data.health, entity_data.max_health)
 		
-		# Visual Feedback
-		if is_instance_valid(HEAL_SPLASH_SCENE):
-			var splash = HEAL_SPLASH_SCENE.instantiate()
+		# DIP Fix: Load splash from config
+		var splash_scene = entity_data.config.vfx_heal_splash
+		if is_instance_valid(splash_scene):
+			var splash = splash_scene.instantiate()
 			splash.global_position = global_position
 			splash.emitting = true
 			get_tree().current_scene.add_child(splash)

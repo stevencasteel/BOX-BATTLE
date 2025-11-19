@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://visual_component_scene"]
+
+[ext_resource type="Script" path="res://src/entities/components/visual_component.gd" id="1_script"]
+
+[node name="VisualComponent" type="Node"]
+script = ExtResource("1_script")
+metadata/REQUIRED_DEPS = PackedStringArray("visual_node", "config")
