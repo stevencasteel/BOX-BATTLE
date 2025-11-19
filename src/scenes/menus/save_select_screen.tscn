@@ -1,0 +1,110 @@
+[gd_scene load_steps=6 format=3 uid="uid://save_select_screen"]
+
+[ext_resource type="Script" path="res://src/scenes/menus/save_select_screen.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://cgt63w7k4w5gq" path="res://src/ui/components/styled_menu_item/styled_menu_item.tscn" id="2_btn"]
+[ext_resource type="PackedScene" uid="uid://save_slot_button_scene" path="res://src/ui/components/save_slot_button/save_slot_button.tscn" id="3_slot"]
+[ext_resource type="FontFile" uid="uid://b41cqy3luy6se" path="res://assets/fonts/font_main_black.ttf" id="4_font"]
+[ext_resource type="FontFile" uid="uid://hypwi2d6bj7t" path="res://assets/fonts/font_main_bold.ttf" id="5_font_bold"]
+
+[node name="SaveSelectScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="BackgroundColor" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 64
+text = "SELECT DATA"
+horizontal_alignment = 1
+
+[node name="ModeLabel" type="Label" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = ExtResource("5_font_bold")
+theme_override_font_sizes/font_size = 24
+text = " "
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="SlotsVBox" type="VBoxContainer" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 20
+
+[node name="Slot0" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 0
+
+[node name="Slot1" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 1
+
+[node name="Slot2" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 2
+
+[node name="Spacer2" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="UtilityHBox" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="BtnCopy" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+text = "COPY"
+font_size = 32
+
+[node name="BtnErase" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+text = "ERASE"
+font_size = 32
+
+[node name="Spacer3" type="Control" parent="MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="BackButton" parent="MainVBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(600, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "BACK"
+font_size = 48

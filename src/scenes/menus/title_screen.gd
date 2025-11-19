@@ -31,7 +31,6 @@ func _ready() -> void:
 
 		# --- Initialize Common Navigation & Feedback ---
 		var focusable_items: Array[Control] = [start_button, options_button, exit_button]
-		# Construct the array in a single statement to preserve its type.
 		var all_items: Array[Control] = [
 			start_button, options_button, exit_button, 
 			newgrounds_logo, godot_logo, itch_logo
@@ -41,9 +40,19 @@ func _ready() -> void:
 		await get_tree().process_frame
 		start_button.grab_focus()
 
+func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint(): return
+	
+	# DEV SHORTCUT: TAB starts fresh game in Slot 0
+	# We use _input to catch it before Control nodes consume "ui_focus_next"
+	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
+		get_viewport().set_input_as_handled() # Prevent focus change
+		SaveManager.create_new_slot(0)
+		SceneManager.start_game(AssetPaths.ENCOUNTER_00)
+
 # --- Unique Signal Handlers ---
 func _on_start_button_pressed() -> void:
-	SceneManager.start_game(AssetPaths.ENCOUNTER_00)
+	SceneManager.go_to_scene(AssetPaths.SCENE_SAVE_SELECT_SCREEN)
 
 func _on_options_button_pressed() -> void:
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)

@@ -9,42 +9,11 @@
 ║                        Strategic Development Plan & Backlog                     ║
 ╚═════════════════════════════════════════════════════════════════════════════════╝
 
-█  IMMEDIATE REFACTORING (The "Gemini v3" Diet)
-   Goal: Reduce boilerplate, token usage, and coupling.
 
-   □  Split 'God Config' (CombatConfig):
-      - Create PlayerConfig, WorldConfig, and EnemyConfig resources.
-      - Update components to request specific configs, not the monolith.
-   □  Genericize State Machine:
-      - Create src/entities/common_states/ (StateIdle, StatePatrol).
-      - Delete specific implementations (StateBossPatrol, StateMinionIdle).
-   □  Remove EntityBuilder:
-      - Hydrate BaseEntity directly from EntityArchetype + ServiceLocator.
-      - Remove hardcoded _build_player/_build_boss logic.
 
-█  PHASE 2: GAME LOOP & PROGRESSION
-   Goal: Turn the encounter prototype into a playable loop.
+   □  Audio Polish:
+      - Add specific SFX for different surface materials (footsteps).
+      - Implement dynamic music mixing (low pass filter on pause/low health).
 
-   □  Persistence:
-      - Create SaveManager (ConfigFile).
-      - Create WorldState resource (track defeated bosses).
-   □  Meta-Game UI:
-      - Implement Stage Select Screen.
-      - Connect Boss Death -> Victory -> Stage Select flow.
+   ░  subtle dust when entity lands or jumps from surfce (floor or wall)
 
-█  PHASE 3: POLISH & JUICE
-   Goal: Production-quality feel and accessibility.
-
-   □  Advanced Shaders:
-      - Implement Fullscreen Shockwave effect.
-      - Add chromatic aberration/distortion for heavy impacts.
-   □  Accessibility:
-      - Localization support (tr keys).
-      - Control Remapping implementation in Settings.
-   □  Combat Depth:
-      - Implement Stun/Poise system for Bosses.
-
-█  FUTURE / WISHLIST
-   ░  Fast-Fall mechanics.
-   ░  Boss Rush Mode.
-   ░  Diegetic UI elements.

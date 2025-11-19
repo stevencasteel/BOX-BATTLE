@@ -38,6 +38,7 @@ const SCENE_OPTIONS_SCREEN = "res://src/scenes/menus/options_screen.tscn"
 const SCENE_SOUND_SCREEN = "res://src/scenes/menus/sound_screen.tscn"
 const SCENE_CONTROLS_SCREEN = "res://src/scenes/menus/controls_screen.tscn"
 const SCENE_CREDITS_SCREEN = "res://src/scenes/menus/credits_screen.tscn"
+const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn" # NEW
 
 # --- UI COMPONENTS ---
 const SCENE_STYLED_MENU_ITEM = "res://src/ui/components/styled_menu_item/styled_menu_item.tscn"

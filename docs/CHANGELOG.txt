@@ -11,9 +11,31 @@
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.27.0] - CURRENT - 11/19/2025                               ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.26.0] - VISUAL JUICE & FX - 11/19/2025                               ██   ║
+║   ██           [0.26.0] - VISUAL JUICE & FX & MULTI-SLOT SAVE SYSTEM - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 ║                                                                                ║
@@ -29,10 +51,21 @@
 ║      ░ ■ Added 'Slow Motion' (Time Scale) effects on Player Death and Victory. ║
 ║      ░ ■ Fixed 'FXPlayground' to support testing of fullscreen shaders.        ║
 ║                                                                                ║
-
-
-
-
+║                                                                                ║
+║   █  Persistence Upgrade                                                       ║
+║      ░ ■ Refactored 'SaveManager' to support 3 distinct save slots.            ║
+║      ░ ■ Implemented File Operations: Create, Load, Copy, and Erase slots.     ║
+║      ░ ■ Added file path management using 'take_over_path' for safe duplication.║
+║                                                                                ║
+║   █  UI & Meta-Game                                                            ║
+║      ░ ■ Created 'SaveSelectScreen': A hub for managing game data before play. ║
+║      ░ ■ Created 'SaveSlotButton': Reusable component displaying Wins/Losses.  ║
+║      ░ ■ Implemented "Copy Mode" and "Erase Mode" UI logic.                    ║
+║      ░ ■ Updated 'TitleScreen' navigation flow.                                ║
+║                                                                                ║
+║   █  Developer Tools                                                           ║
+║      ░ ■ Added TAB shortcut in Main Menu to instantly start a fresh run in     ║
+║      ░   Slot 0 for rapid iteration.                                           ║
 
 
 
