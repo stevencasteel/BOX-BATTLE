@@ -13,7 +13,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING - 11/19/2025      ██   ║
+║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER - 11/19/2025      ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
@@ -32,6 +32,21 @@
 ║      ░ ■ Updated 'InputComponent' and 'MenuManager' to use the new identifiers.║
 ║      ░ ■ Hardened 'ArenaBuilder' to prevent type errors during hot-reloads.    ║
 ║                                                                                ║
+
+║   █  New Systems                                                               ║
+║      ░ ■ Implemented 'SaveManager': Handles serialization of gameplay stats    ║
+║      ░   (Wins/Losses) to 'user://save_data.tres'.                             ║
+║      ░ ■ Upgraded 'Settings': Audio preferences (Volume/Mute) now persist to   ║
+║      ░   'user://options.cfg'.                                                 ║
+║                                                                                ║
+║   █  UI & Gameplay Integration                                                 ║
+║      ░ ■ Debug Overlay: Added persistent Wins/Losses tracker to the HUD.       ║
+║      ░ ■ EncounterScene: Now automatically records match results to disk upon  ║
+║      ░   Player death or Boss defeat.                                          ║
+║      ░ ■ Hardened 'ServiceLocator' to expose the new SaveManager.              ║
+║                                                                                ║
+
+
 
 
 

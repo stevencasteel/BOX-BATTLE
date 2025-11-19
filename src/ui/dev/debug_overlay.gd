@@ -26,6 +26,7 @@ var _target_entity: Node = null
 var _services: ServiceLocator
 var _pool_labels: Dictionary = {}
 var _invincibility_debug_token: int = 0
+var _stats_label: Label = null
 
 # --- Godot Lifecycle Methods ---
 
@@ -44,6 +45,15 @@ func _ready() -> void:
 	entity_panel.add_theme_stylebox_override("panel", panel_style)
 	global_panel.add_theme_stylebox_override("panel", panel_style)
 
+	# Dynamically add a Stats label to the global panel
+	var global_vbox = global_panel.get_node("Margin/GlobalInfoVBox")
+	_stats_label = Label.new()
+	_stats_label.add_theme_font_override("font", load("res://addons/gut/fonts/AnonymousPro-Regular.ttf"))
+	_stats_label.add_theme_font_size_override("font_size", 20)
+	# Insert it after FPS label
+	global_vbox.add_child(_stats_label)
+	global_vbox.move_child(_stats_label, 1)
+
 
 func _process(_delta: float) -> void:
 	_update_global_info()
@@ -51,13 +61,13 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("debug_toggle_collision"):
+	if event.is_action_pressed(Identifiers.Actions.DEBUG_COLLISION):
 		toggle_collision_button.button_pressed = not toggle_collision_button.button_pressed
 	
-	if event.is_action_pressed("debug_toggle_invincibility"):
+	if event.is_action_pressed(Identifiers.Actions.DEBUG_INVINCIBILITY):
 		toggle_invincibility_button.button_pressed = not toggle_invincibility_button.button_pressed
 
-	if event.is_action_pressed("debug_pause_game"):
+	if event.is_action_pressed(Identifiers.Actions.PAUSE):
 		pause_button.button_pressed = not pause_button.button_pressed
 
 
@@ -77,6 +87,12 @@ func _update_global_info() -> void:
 	if is_instance_valid(_services):
 		var fx_stats = _services.fx_manager.get_debug_stats()
 		fx_label.text = "FX: Shaders[%d] VFX[%d]" % [fx_stats.active_shaders, fx_stats.active_vfx]
+
+		# Update persistent stats
+		if _services.save_manager and _services.save_manager.current_save:
+			var save = _services.save_manager.current_save
+			if is_instance_valid(_stats_label):
+				_stats_label.text = "Stats: Wins[%d] Losses[%d]" % [save.total_wins, save.total_losses]
 
 		var pool_stats: Dictionary = _services.object_pool.get_pool_stats()
 		for pool_name in pool_stats:
@@ -153,7 +169,10 @@ func _on_toggle_collision_toggled(button_pressed: bool) -> void:
 
 
 func _on_toggle_invincibility_toggled(button_pressed: bool) -> void:
-	var player: CharacterBody2D = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	if not is_instance_valid(_services) or not is_instance_valid(_services.targeting_system):
+		return
+		
+	var player = _services.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if not is_instance_valid(player):
 		return
 

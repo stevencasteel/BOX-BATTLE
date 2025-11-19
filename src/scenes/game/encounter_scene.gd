@@ -51,23 +51,24 @@ func _ready() -> void:
 	_initialize_camera_shaker()
 	_initialize_debug_inspector()
 
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	# Use TargetingSystem to find player safely
+	var player_node: Node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.died.connect(_on_player_died)
 
 
 func _unhandled_input(_event: InputEvent) -> void:
-	if Input.is_action_just_pressed("debug_toggle_overlay"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_OVERLAY):
 		if is_instance_valid(_debug_overlay):
 			_debug_overlay.visible = not _debug_overlay.visible
 
-	if Input.is_action_just_pressed("debug_dialogue"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_DIALOGUE):
 		if DialogueManager.is_conversation_active():
 			DialogueManager.end_conversation()
 		else:
 			DialogueManager.start_conversation(TestConversation)
 
-	if Input.is_action_just_pressed("debug_cycle_target"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_CYCLE_TARGET):
 		if is_instance_valid(_debug_overlay) and _debug_overlay.visible:
 			_cycle_debug_target()
 
@@ -91,11 +92,11 @@ func scene_exiting() -> void:
 
 # --- Private Methods ---
 func _cleanup_entities() -> void:
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	var player_node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node) and player_node.has_method("teardown"):
 		player_node.teardown()
 
-	var enemy_nodes: Array[Node] = get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY)
+	var enemy_nodes: Array = ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY)
 	for enemy in enemy_nodes:
 		if is_instance_valid(enemy) and enemy.has_method("teardown"):
 			enemy.teardown()
@@ -116,8 +117,8 @@ func _initialize_debug_inspector() -> void:
 	add_child(_debug_overlay)
 	_debug_overlay.visible = false
 
-	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
-	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
+	_inspectable_entities.append(ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER))
+	_inspectable_entities.append_array(ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY))
 
 	if not _inspectable_entities.is_empty():
 		_debug_overlay.set_target(_inspectable_entities[0])
@@ -125,8 +126,8 @@ func _initialize_debug_inspector() -> void:
 
 func _cycle_debug_target() -> void:
 	_inspectable_entities.clear()
-	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
-	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
+	_inspectable_entities.append(ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER))
+	_inspectable_entities.append_array(ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY))
 	_inspectable_entities = _inspectable_entities.filter(func(e): return is_instance_valid(e))
 
 	if _inspectable_entities.is_empty():
@@ -139,7 +140,7 @@ func _cycle_debug_target() -> void:
 
 
 func _deactivate_all_minions() -> void:
-	var minions: Array[Node] = get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY)
+	var minions = ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY)
 	for minion in minions:
 		if minion.has_method("deactivate"):
 			minion.deactivate()
@@ -152,15 +153,15 @@ func _on_spawn_boss_requested(_payload) -> void:
 
 
 func _on_player_died() -> void:
+	SaveManager.record_loss()
 	SceneManager.go_to_game_over()
 
 
 func _on_boss_died(payload: BossDiedEvent) -> void:
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	var player_node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.set_physics_process(false)
 	
-	# UPDATE: Using typed payload property
 	var boss_node: Node = payload.boss_node
 
 	_deactivate_all_minions()
@@ -176,4 +177,5 @@ func _on_boss_died(payload: BossDiedEvent) -> void:
 		boss_node.queue_free()
 
 	if is_instance_valid(_sequence_handle):
+		SaveManager.record_win()
 		SceneManager.go_to_victory()
