@@ -1,8 +1,65 @@
-[gd_scene load_steps=2 format=3 uid="uid://game_scene_unique_id"]
+[gd_scene load_steps=8 format=3 uid="uid://game_scene_unique_id"]
 
 [ext_resource type="Script" path="res://src/scenes/game/encounter_scene.gd" id="1_game_script"]
+[ext_resource type="Resource" uid="uid://boss_shockwave_effect" path="res://src/data/effects/boss_shockwave_effect.tres" id="2_shockwave"]
+[ext_resource type="Script" path="res://src/scenes/game/post_process_manager.gd" id="3_post_process"]
+[ext_resource type="Resource" uid="uid://heavy_impact_chromatic" path="res://src/data/effects/heavy_impact_chromatic.tres" id="4_chromatic_res"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shock"]
+resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_chrom"]
+resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
+resource_local_to_scene = true
 
 [node name="EncounterScene" type="Node"]
 script = ExtResource("1_game_script")
+_boss_death_shockwave = ExtResource("2_shockwave")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="PostProcessLayer" type="CanvasLayer" parent="."]
+layer = 100
+script = ExtResource("3_post_process")
+chromatic_resource = ExtResource("4_chromatic_res")
+
+[node name="BackBufferCopy1" type="BackBufferCopy" parent="PostProcessLayer"]
+copy_mode = 2
+
+[node name="ShockwaveRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_shock")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
+[node name="BackBufferCopy2" type="BackBufferCopy" parent="PostProcessLayer"]
+copy_mode = 2
+
+[node name="ChromaticRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_chrom")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
+[node name="VignetteRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_vig")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)

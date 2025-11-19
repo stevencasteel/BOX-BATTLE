@@ -41,6 +41,9 @@ func go_to_victory() -> void:
 func _switch_to_scene(path: String) -> void:
 	# --- Announce Pre-Transition Cleanup ---
 	EventBus.emit(EventCatalog.SCENE_TRANSITION_STARTED)
+	
+	# Reset time scale in case we are coming from a slow-mo death state
+	Engine.time_scale = 1.0
 
 	# 1. Call the formal teardown method on the current scene controller if it exists.
 	var current_scene = get_tree().current_scene

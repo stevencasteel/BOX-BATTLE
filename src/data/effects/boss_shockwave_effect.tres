@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://boss_shockwave_effect"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/shader_effect.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://shockwave_material" path="res://materials/shockwave_material.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_script")
+material = ExtResource("2_mat")
+duration = 0.8
+params = {
+"center": Vector2(0.5, 0.5),
+"force": 0.05,
+"thickness": 0.15
+}
+priority = 10
+coalesce_window = 0.0

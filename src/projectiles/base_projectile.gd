@@ -4,7 +4,8 @@ extends Area2D
 
 # --- Node References ---
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
-@onready var visual: ColorRect = $ColorRect
+# Visual is now resolved dynamically to support Sprites or ColorRects
+var visual: CanvasItem 
 
 # --- Public Properties ---
 @export var speed: float = 400.0
@@ -21,8 +22,13 @@ var _lifetime_timer: Timer
 
 # --- Godot Lifecycle ---
 func _ready() -> void:
+	# Dynamic visual resolution
+	if has_node("ColorRect"):
+		visual = $ColorRect
+	elif has_node("VisualSprite"):
+		visual = $VisualSprite
+
 	# Programmatically create a timer for every projectile instance.
-	# This avoids duplicating the node in every projectile scene.
 	_lifetime_timer = Timer.new()
 	_lifetime_timer.name = "LifetimeTimer"
 	_lifetime_timer.one_shot = true

@@ -5,12 +5,10 @@ extends BaseProjectile
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
 
+@onready var flame_trail: GPUParticles2D = %FlameTrail
 
 func _ready() -> void:
 	super._ready()
-	# Visual only; movement & collision handled by BaseProjectile.
-	if is_instance_valid(visual):
-		visual.color = Palette.COLOR_PLAYER_PROJECTILE
 
 
 # Ensure the speed is set every time this instance is (re)activated by the pool.
@@ -19,6 +17,16 @@ func activate(p_dependencies: Dictionary) -> void:
 	super.activate(p_dependencies)
 	# Then apply player-shot-specific runtime defaults so they apply on reuse.
 	speed = default_speed
+	
+	if is_instance_valid(flame_trail):
+		flame_trail.restart()
+		flame_trail.emitting = true
+
+
+func deactivate() -> void:
+	if is_instance_valid(flame_trail):
+		flame_trail.emitting = false
+	super.deactivate()
 
 
 func _on_area_entered(area: Area2D) -> void:

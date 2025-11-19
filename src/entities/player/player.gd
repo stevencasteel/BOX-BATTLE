@@ -217,7 +217,8 @@ func _die() -> void:
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": false})
+		# CRITICAL FIX: Set preserve_final_state to TRUE so player stays dissolved (invisible)
+		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 		if is_instance_valid(tween):
 			await tween.finished
 

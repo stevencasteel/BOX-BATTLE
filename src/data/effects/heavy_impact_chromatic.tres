@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://heavy_impact_chromatic"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/shader_effect.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://chromatic_material" path="res://materials/chromatic_material.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_script")
+material = ExtResource("2_mat")
+duration = 0.3
+params = {
+"offset_strength": 8.0
+}
+priority = 5
+coalesce_window = 0.1

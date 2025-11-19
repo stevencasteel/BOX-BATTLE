@@ -115,29 +115,353 @@ Loading resource: res://assets/audio/sfx/sfx_ui_move.mp3
 Loading resource: res://.godot/imported/sfx_ui_move.mp3-22d501a1c652a7c7f2af3e97d97a2b16.mp3str
 Loading resource: res://assets/audio/sfx/sfx_ui_select.mp3
 Loading resource: res://.godot/imported/sfx_ui_select.mp3-3073366784d3e7caa5d5c9691f71648c.mp3str
-Loading resource: res://src/scenes/menus/options_screen.tscn
-Loading resource: res://src/scenes/menus/options_screen.gd
+Loading resource: res://src/scenes/loading/loading_screen.tscn
+Loading resource: res://src/scenes/loading/loading_screen.gd
+Starting shader pre-warming...
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/player/player.gd
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/health_component.tscn
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/components/base_state_machine.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/components/fx_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.gd
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.gd
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.gd
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.gd
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/entities/components/status_effect_component.tscn
+Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
+Loading resource: res://materials/entity_hit_flash_material.tres
+Loading resource: res://shaders/entity/red_hit_flash_test.gdshader
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/core/data/effects/player_hit_spark_effect.tres
+Loading resource: res://src/core/data/effects/dissolve_effect.tres
+Loading resource: res://materials/dissolve_material.tres
+Loading resource: res://shaders/entity/dissolve.gdshader
+Loading resource: res://assets/textures/noise_texture.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Loading resource: res://src/entities/player/states/state_move.gd
+Loading resource: res://src/entities/player/states/state_jump.gd
+Loading resource: res://src/entities/player/states/state_fall.gd
+Loading resource: res://src/entities/player/states/state_dash.gd
+Loading resource: res://src/entities/player/states/state_wall_slide.gd
+Loading resource: res://src/entities/player/states/state_attack.gd
+Loading resource: res://src/entities/player/states/state_hurt.gd
+Loading resource: res://src/entities/player/states/state_heal.gd
+Loading resource: res://src/entities/player/states/state_pogo.gd
+Loading resource: res://src/entities/boss/base_boss.tscn
+Loading resource: res://src/entities/boss/base_boss.gd
+Loading resource: res://src/entities/components/melee_component.tscn
+Loading resource: res://src/entities/components/melee_component.gd
+Loading resource: res://src/entities/components/telegraph_component.tscn
+Loading resource: res://src/entities/components/telegraph_component.gd
+Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
+Loading resource: res://src/core/data/effects/boss_death_shake.tres
+Loading resource: res://src/entities/archetypes/boss_archetype.tres
+Loading resource: res://src/entities/components/projectile_shooter_component.tscn
+Loading resource: res://src/entities/components/projectile_shooter_component.gd
+Loading resource: res://src/entities/boss/data/default_boss_behavior.tres
+Loading resource: res://src/entities/boss/attack_patterns/single_shot.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.gd
+Loading resource: res://src/entities/boss/attack_patterns/volley_3_shot.tres
+Loading resource: res://src/combat/attack_logic/volley_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/lunge_attack.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.gd
+Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
+Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.gd
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
+Loading resource: res://src/entities/minions/movement_logic/patrol_movement_logic.gd
+Loading resource: res://src/entities/boss/data/boss_state_machine_config.tres
+Loading resource: res://src/entities/boss/states/state_boss_idle.gd
+Loading resource: res://src/entities/boss/states/state_boss_attack.gd
+Loading resource: res://src/entities/boss/states/state_boss_cooldown.gd
+Loading resource: res://src/entities/boss/states/state_boss_patrol.gd
+Loading resource: res://src/data/combat/attacks/boss_quick_swipe.tres
+Loading resource: res://src/entities/boss/states/state_boss_lunge.gd
+Loading resource: res://src/entities/boss/states/state_boss_melee.gd
+Loading resource: res://src/data/combat/attacks/boss_lunge_melee.tres
+Shader pre-warming complete.
+Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
+Loading resource: res://materials/entity_hit_flash_material.tres
+Loading resource: res://shaders/entity/red_hit_flash_test.gdshader
+Loading resource: res://src/core/data/effects/dissolve_effect.tres
+Loading resource: res://materials/dissolve_material.tres
+Loading resource: res://shaders/entity/dissolve.gdshader
+Loading resource: res://assets/textures/noise_texture.tres
+FXManager: Starting shader pre-warm...
+FXManager: Shader pre-warm complete.
+Loading resource: res://src/data/encounters/encounter_00.tres
+Loading resource: res://src/entities/boss/base_boss.tscn
+Loading resource: res://src/entities/components/melee_component.tscn
+Loading resource: res://src/core/data/effects/boss_phase_change_shake.tres
+Loading resource: res://src/core/data/effects/boss_death_shake.tres
+Loading resource: res://src/entities/archetypes/boss_archetype.tres
+Loading resource: res://src/entities/components/health_component.tscn
+Loading resource: res://src/entities/components/base_state_machine.tscn
+Loading resource: res://src/entities/components/fx_component.tscn
+Loading resource: res://src/entities/components/projectile_shooter_component.tscn
+Loading resource: res://src/entities/components/status_effect_component.tscn
+Loading resource: res://src/entities/boss/data/default_boss_behavior.tres
+Loading resource: res://src/entities/boss/attack_patterns/single_shot.tres
+Loading resource: res://src/combat/attack_logic/projectile_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/volley_3_shot.tres
+Loading resource: res://src/combat/attack_logic/volley_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/lunge_attack.tres
+Loading resource: res://src/combat/attack_logic/lunge_logic.tres
+Loading resource: res://src/entities/boss/attack_patterns/volley_5_shot.tres
+Loading resource: res://src/entities/boss/attack_patterns/homing_omni_burst_pattern.tres
+Loading resource: res://src/combat/attack_logic/homing_omni_burst_logic.tres
+Loading resource: res://src/entities/boss/data/boss_patrol_movement.tres
+Loading resource: res://src/entities/boss/data/boss_state_machine_config.tres
+Loading resource: res://src/data/layouts/layout_00.tres
+Loading resource: res://src/entities/minions/turret.tscn
+Loading resource: res://src/entities/minions/minion.gd
+Loading resource: res://src/entities/archetypes/minion_archetype.tres
+Loading resource: res://src/entities/minions/data/turret_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/stationary_movement.tres
+Loading resource: res://src/entities/minions/movement_logic/stationary_movement_logic.gd
+Loading resource: res://src/entities/minions/data/minion_state_machine_config.tres
+Loading resource: res://src/entities/minions/states/state_minion_idle.gd
+Loading resource: res://src/entities/minions/states/state_minion_attack.gd
+Loading resource: res://src/entities/minions/states/state_minion_melee.gd
+Loading resource: res://src/data/combat/attacks/lancer_poke.tres
+Loading resource: res://src/entities/minions/states/state_minion_patrol.gd
+Loading resource: res://src/entities/states/state_entity_fall.gd
+Loading resource: res://src/entities/spawners/patrolling_lancer_spawner.tscn
+Loading resource: res://src/entities/spawners/spawner.tscn
+Loading resource: res://src/entities/spawners/spawner.gd
+Loading resource: res://src/entities/minions/patrolling_lancer.tscn
+Loading resource: res://src/entities/minions/data/patrolling_lancer_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/patrol_movement.tres
+Loading resource: res://src/entities/minions/flying_patroller.tscn
+Loading resource: res://src/entities/minions/data/flying_patroller_behavior.tres
+Loading resource: res://src/entities/minions/movement_logic/flying_patrol.tres
+Loading resource: res://src/entities/minions/movement_logic/flying_patrol_movement_logic.gd
+Loading resource: res://src/combat/attack_logic/minion_volley_3_shot.tres
+Loading resource: res://src/core/sequencing/steps/wait_step.gd
+Loading resource: res://src/core/sequencing/steps/emit_step.gd
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Loading resource: res://src/ui/game_hud/game_hud.tscn
+Loading resource: res://src/ui/game_hud/game_hud.gd
+Loading resource: res://src/ui/themes/main_theme.tres
+Loading resource: res://src/scenes/game/encounter_scene.tscn
+Loading resource: res://src/scenes/game/encounter_scene.gd
+Loading resource: res://src/data/dialogue/test_conversation.tres
+Loading resource: res://src/data/effects/boss_shockwave_effect.tres
+Loading resource: res://materials/shockwave_material.tres
+Loading resource: res://shaders/fullscreen/shockwave.gdshader
+Loading resource: res://src/scenes/game/post_process_manager.gd
+Loading resource: res://src/data/effects/heavy_impact_chromatic.tres
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Failed loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Loading resource: res://shaders/fullscreen/vignette.gdshader
+Loading resource: res://src/core/systems/camera_shaker.tscn
+Loading resource: res://src/ui/dev/debug_overlay.tscn
+Loading resource: res://src/ui/dev/debug_overlay.gd
+Loading resource: res://addons/gut/fonts/AnonymousPro-Regular.ttf
+Loading resource: res://.godot/imported/AnonymousPro-Regular.ttf-856c843fd6f89964d2ca8d8ff1724f13.fontdata
+Loading resource: res://src/scenes/game_over/game_over_screen.tscn
+Loading resource: res://src/scenes/game_over/game_over_screen.gd
 Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
+Loading resource: res://assets/fonts/font_main_black.ttf
+Loading resource: res://.godot/imported/font_main_black.ttf-766d9cc0a208469438ff831535d8483c.fontdata
+Loading resource: res://assets/fonts/font_main_bold.ttf
+Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
+Loading resource: res://src/scenes/menus/title_screen.tscn
+Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
+Loading resource: res://src/ui/components/logo_display/logo_display.tscn
+Loading resource: res://assets/sprites/ui/logos/newgrounds_logo.png
+Loading resource: res://.godot/imported/newgrounds_logo.png-2977cde893870d21b7f84cd17b13c225.ctex
+Loading resource: res://assets/sprites/ui/logos/godot_logo.png
+Loading resource: res://.godot/imported/godot_logo.png-2c4abc4be94a9a8ee3cb014f11b6a489.ctex
+Loading resource: res://assets/sprites/ui/logos/itch_logo.png
+Loading resource: res://.godot/imported/itch_logo.png-55a8cdb2f6f34f33f1968a45adf238ea.ctex
 Loading resource: res://src/ui/components/mute_button/mute_button.tscn
 Loading resource: res://assets/fonts/font_main_bold.ttf
 Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
-Loading resource: res://src/scenes/menus/controls_screen.tscn
-Loading resource: res://src/scenes/menus/controls_screen.gd
-Loading resource: res://src/ui/components/control_setting_row/control_setting_row.tscn
-Loading resource: res://src/ui/components/control_setting_row/control_setting_row.gd
+Loading resource: res://src/scenes/loading/loading_screen.tscn
+Starting shader pre-warming...
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Shader pre-warming complete.
+FXManager: Starting shader pre-warm...
+FXManager: Shader pre-warm complete.
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Loading resource: res://src/ui/game_hud/game_hud.tscn
+Loading resource: res://src/ui/themes/main_theme.tres
+Loading resource: res://src/scenes/game/encounter_scene.tscn
+Loading resource: res://src/data/effects/boss_shockwave_effect.tres
+Loading resource: res://materials/shockwave_material.tres
+Loading resource: res://shaders/fullscreen/shockwave.gdshader
+Loading resource: res://src/data/effects/heavy_impact_chromatic.tres
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Failed loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Loading resource: res://shaders/fullscreen/vignette.gdshader
+Loading resource: res://src/core/systems/camera_shaker.tscn
+Loading resource: res://src/ui/dev/debug_overlay.tscn
+Loading resource: res://addons/gut/fonts/AnonymousPro-Regular.ttf
+Loading resource: res://.godot/imported/AnonymousPro-Regular.ttf-856c843fd6f89964d2ca8d8ff1724f13.fontdata
+Loading resource: res://src/scenes/victory/victory_screen.tscn
+Loading resource: res://src/scenes/victory/victory_screen.gd
 Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
-Loading resource: res://src/ui/components/mute_button/mute_button.tscn
-Loading resource: res://assets/audio/sfx/sfx_ui_back.mp3
-Loading resource: res://.godot/imported/sfx_ui_back.mp3-358be61abf136e7b6152e5b6ad330de8.mp3str
-Loading resource: res://src/scenes/menus/options_screen.tscn
+Loading resource: res://assets/fonts/font_main_black.ttf
+Loading resource: res://.godot/imported/font_main_black.ttf-766d9cc0a208469438ff831535d8483c.fontdata
+Loading resource: res://assets/fonts/font_main_bold.ttf
+Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
+Loading resource: res://src/scenes/menus/title_screen.tscn
 Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
+Loading resource: res://src/ui/components/logo_display/logo_display.tscn
+Loading resource: res://assets/sprites/ui/logos/newgrounds_logo.png
+Loading resource: res://.godot/imported/newgrounds_logo.png-2977cde893870d21b7f84cd17b13c225.ctex
+Loading resource: res://assets/sprites/ui/logos/godot_logo.png
+Loading resource: res://.godot/imported/godot_logo.png-2c4abc4be94a9a8ee3cb014f11b6a489.ctex
+Loading resource: res://assets/sprites/ui/logos/itch_logo.png
+Loading resource: res://.godot/imported/itch_logo.png-55a8cdb2f6f34f33f1968a45adf238ea.ctex
 Loading resource: res://src/ui/components/mute_button/mute_button.tscn
+Loading resource: res://assets/fonts/font_main_bold.ttf
+Loading resource: res://.godot/imported/font_main_bold.ttf-9c8e8c80d56466685f104c94b744fa18.fontdata
+Loading resource: res://src/scenes/loading/loading_screen.tscn
+Starting shader pre-warming...
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Shader pre-warming complete.
+FXManager: Starting shader pre-warm...
+FXManager: Shader pre-warm complete.
+Loading resource: res://src/entities/player/player.tscn
+Loading resource: res://src/entities/archetypes/player_archetype.tres
+Loading resource: res://src/entities/components/combat_component.tscn
+Loading resource: res://src/entities/components/input_component.tscn
+Loading resource: res://src/entities/player/components/player_physics_component.tscn
+Loading resource: res://src/entities/player/components/player_resource_component.tscn
+Loading resource: res://src/entities/player/components/jump_component.tscn
+Loading resource: res://src/entities/player/components/dash_component.tscn
+Loading resource: res://src/entities/player/components/heal_component.tscn
+Loading resource: res://src/entities/player/components/charge_attack_component.tscn
+Loading resource: res://src/entities/player/components/pogo_component.tscn
+Loading resource: res://src/core/data/effects/player_damage_shake.tres
+Loading resource: res://src/entities/player/data/player_state_machine_config.tres
+Loading resource: res://src/ui/game_hud/game_hud.tscn
+Loading resource: res://src/ui/themes/main_theme.tres
+Loading resource: res://src/scenes/game/encounter_scene.tscn
+Loading resource: res://src/data/effects/boss_shockwave_effect.tres
+Loading resource: res://materials/shockwave_material.tres
+Loading resource: res://shaders/fullscreen/shockwave.gdshader
+Loading resource: res://src/data/effects/heavy_impact_chromatic.tres
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://materials/chromatic_material.tres
+Loading resource: res://shaders/fullscreen/chromatic_aberration.gdshader
+Loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Failed loading resource: res://shaders/fullscreen/vignette_material_placeholder.tres
+Loading resource: res://shaders/fullscreen/vignette.gdshader
+Loading resource: res://src/core/systems/camera_shaker.tscn
+Loading resource: res://src/ui/dev/debug_overlay.tscn
+Loading resource: res://addons/gut/fonts/AnonymousPro-Regular.ttf
+Loading resource: res://.godot/imported/AnonymousPro-Regular.ttf-856c843fd6f89964d2ca8d8ff1724f13.fontdata
 XR: Clearing primary interface
 XR: Removed interface "Native mobile"
 XR: Removed interface "OpenXR"
-Leaked instance: SceneTreeTimer:9223372133474765051
-Leaked instance: SceneTreeTimer:9223372129783777537
-Leaked instance: SceneTreeTimer:9223372138742810903
+Leaked instance: GDScriptNativeClass:9223372049974559412
+Leaked instance: GDScript:9223372083445106088 - Resource path: res://src/core/building/terrain_builder.gd
+Leaked instance: Node:189012117759 - Node path: 
+Leaked instance: Node:164215392512 - Node path: 
+Leaked instance: SceneTreeTimer:9223372129716668673
+Leaked instance: Node:231743686969 - Node path: 
+Leaked instance: SceneTreeTimer:9223372302152895343
+Leaked instance: Node:273418292149 - Node path: 
+Leaked instance: SceneTreeTimer:9223372304904358955
+Leaked instance: Node:248067918902 - Node path: 
+Leaked instance: Node:289742523484 - Node path: 
+Leaked instance: SceneTreeTimer:9223372342250442254
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
-Orphan StringName: timeout (static: 1, total: 4)
-StringName: 1 unclaimed string names at exit.
+Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
+Orphan StringName: _enter_tree (static: 0, total: 6)
+Orphan StringName: _set_path_cache (static: 0, total: 1)
+Orphan StringName: _reset_state (static: 0, total: 1)
+Orphan StringName: _unhandled_input (static: 0, total: 6)
+Orphan StringName: _ready (static: 0, total: 6)
+Orphan StringName: _exit_tree (static: 0, total: 6)
+Orphan StringName: _create_solid_tile (static: 0, total: 1)
+Orphan StringName: _setup_local_to_scene (static: 0, total: 1)
+Orphan StringName: _create_hazard_tile (static: 0, total: 1)
+Orphan StringName: _input (static: 0, total: 6)
+Orphan StringName: _shortcut_input (static: 0, total: 6)
+Orphan StringName: timeout (static: 2, total: 6)
+Orphan StringName: _process (static: 0, total: 6)
+Orphan StringName: _create_oneway_platform (static: 0, total: 1)
+Orphan StringName: _create_background_tile (static: 0, total: 1)
+Orphan StringName: Node (static: 5, total: 6)
+Orphan StringName: _unhandled_key_input (static: 0, total: 6)
+Orphan StringName: build_terrain_async (static: 0, total: 1)
+Orphan StringName: _get_configuration_warnings (static: 0, total: 6)
+Orphan StringName: fill_viewport (static: 0, total: 1)
+Orphan StringName: _get_rid (static: 0, total: 1)
+Orphan StringName: TerrainBuilder (static: 0, total: 3)
+Orphan StringName: _physics_process (static: 0, total: 6)
+StringName: 23 unclaimed string names at exit.

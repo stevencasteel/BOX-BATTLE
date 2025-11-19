@@ -13,11 +13,22 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.26.0] - N/A - 11/19/2025                               ██   ║
+║   ██           [0.26.0] - VISUAL JUICE & FX - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
-
-
+║                                                                                ║
+║   █  Visual Effects (Shaders)                                                  ║
+║      ░ ■ Implemented 'PostProcessManager' to handle stacked fullscreen effects.║
+║      ░ ■ Added 'Shockwave' distortion shader for Boss death.                   ║
+║      ░ ■ Added 'Chromatic Aberration' glitch effect for Boss phase changes.    ║
+║      ░ ■ Added pulsing 'Red Vignette' for low health (1 HP) state.             ║
+║                                                                                ║
+║   █  Polish                                                                    ║
+║      ░ ■ Refactored Player Projectile: Now uses a Green Fireball visual with   ║
+║      ░   a non-duplicating particle trail and green impact sparks.              ║
+║      ░ ■ Added 'Slow Motion' (Time Scale) effects on Player Death and Victory. ║
+║      ░ ■ Fixed 'FXPlayground' to support testing of fullscreen shaders.        ║
+║                                                                                ║
 
 
 

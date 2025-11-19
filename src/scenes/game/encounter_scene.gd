@@ -3,8 +3,12 @@
 class_name EncounterScene
 extends ISceneController
 
+# --- Editor Properties ---
+@export var _boss_death_shockwave: ShaderEffect
+
 # --- Node References ---
 @onready var camera: Camera2D = $Camera2D
+@onready var post_process_manager = $PostProcessLayer
 
 # --- Private Member Variables ---
 var _level_container: Node = null
@@ -51,7 +55,6 @@ func _ready() -> void:
 	_initialize_camera_shaker()
 	_initialize_debug_inspector()
 
-	# Use TargetingSystem to find player safely
 	var player_node: Node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.died.connect(_on_player_died)
@@ -154,6 +157,9 @@ func _on_spawn_boss_requested(_payload) -> void:
 
 func _on_player_died() -> void:
 	SaveManager.record_loss()
+	# Slow Motion Death
+	Engine.time_scale = 0.2
+	await get_tree().create_timer(0.5, true, false, true).timeout
 	SceneManager.go_to_game_over()
 
 
@@ -163,19 +169,38 @@ func _on_boss_died(payload: BossDiedEvent) -> void:
 		player_node.set_physics_process(false)
 	
 	var boss_node: Node = payload.boss_node
+	var rect = post_process_manager.get_shockwave_rect()
 
+	if is_instance_valid(_boss_death_shockwave) and is_instance_valid(boss_node) and is_instance_valid(rect):
+		var viewport_size = get_viewport().get_visible_rect().size
+		var canvas_transform = get_viewport().get_canvas_transform()
+		var screen_pos = canvas_transform * boss_node.global_position
+		var uv_center = screen_pos / viewport_size
+		
+		FXManager.apply_shader_effect(
+			rect, 
+			_boss_death_shockwave, 
+			{"center": uv_center},
+			{}
+		)
+
+	# Slow Motion Victory Moment
+	Engine.time_scale = 0.15
+	
 	_deactivate_all_minions()
 
-	var wait_step := WaitStep.new()
-	wait_step.duration = 2.0
-	var death_sequence: Array[SequenceStep] = [wait_step]
-
-	_sequence_handle = Sequencer.run_sequence(death_sequence)
-	await _sequence_handle.finished
-
+	# Note: Timers are affected by time_scale, so 2.0 seconds becomes much longer.
+	# We use a SceneTreeTimer ignoring time scale for logic flow, or adjust duration.
+	# Here we want the visual slow mo to last a bit, then speed up or exit.
+	# Let's keep slow mo for the explosion duration.
+	
+	# 1.0s real time wait for explosion juice
+	await get_tree().create_timer(1.0, true, false, true).timeout 
+	
 	if is_instance_valid(boss_node):
 		boss_node.queue_free()
 
-	if is_instance_valid(_sequence_handle):
-		SaveManager.record_win()
-		SceneManager.go_to_victory()
+	# Restore time scale before victory screen
+	Engine.time_scale = 1.0
+	SaveManager.record_win()
+	SceneManager.go_to_victory()
