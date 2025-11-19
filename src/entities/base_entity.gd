@@ -27,6 +27,10 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		_player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		teardown()
+
 
 # --- Public Methods ---
 

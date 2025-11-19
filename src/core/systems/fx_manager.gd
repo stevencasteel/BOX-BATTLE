@@ -43,7 +43,10 @@ func apply_shader_effect(
 
 	increment_shader_count()
 
-	var tween: Tween = create_tween().set_parallel(false)
+	# FIX: Create the tween on the target node, not on FXManager (self).
+	# This ensures the tween is automatically killed if the target node is freed.
+	var tween: Tween = target_node.create_tween().set_parallel(false)
+	
 	tween.tween_property(
 		material_instance, "shader_parameter/fx_progress", 1.0, effect.duration
 	)

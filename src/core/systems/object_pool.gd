@@ -18,11 +18,19 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	for i in range(get_child_count() - 1, -1, -1):
-		var child: Node = get_child(i)
-		for j in range(child.get_child_count() - 1, -1, -1):
-			child.get_child(j).free()
-		child.free()
+	# Hard cleanup to prevent leaks on exit
+	for pool_name in _pools:
+		var pool = _pools[pool_name]
+		# Free inactive items
+		for item in pool.inactive:
+			if is_instance_valid(item):
+				item.free()
+		# Free active items (children of container)
+		if is_instance_valid(pool.container):
+			for child in pool.container.get_children():
+				child.free()
+			pool.container.free()
+	
 	_pools.clear()
 
 

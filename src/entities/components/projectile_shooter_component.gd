@@ -45,7 +45,9 @@ func fire_volley(shot_count: int, delay: float) -> void:
 	if is_instance_valid(_active_volley_tween):
 		_active_volley_tween.kill()
 	
-	_active_volley_tween = _owner.get_tree().create_tween()
+	# FIX: Bind tween to self (Component) so it dies when we die. 
+	# Do NOT bind to get_tree().
+	_active_volley_tween = create_tween()
 	
 	for i in range(shot_count):
 		_active_volley_tween.tween_callback(fire_shot_at_player)
@@ -59,7 +61,6 @@ func fire_shot_at_player() -> void:
 		return
 
 	# If the owner is marked as dead via internal flags, don't fire.
-	# We check for the generic '_is_dead' property if it exists.
 	if _owner.get("_is_dead"):
 		return
 
@@ -76,10 +77,8 @@ func fire_shot_at_player() -> void:
 	var direction = (_player_node.global_position - _owner.global_position).normalized()
 	
 	# Update facing direction data if the entity tracks the player
-	# (This mimics the old _update_player_tracking side effect)
 	if "facing_direction" in _entity_data and not is_zero_approx(direction.x):
 		_entity_data.facing_direction = sign(direction.x)
-		# We leave the visual flipping to the State or Entity script to avoid visual conflicts.
 
 	# Configure the shot
 	if "direction" in shot:

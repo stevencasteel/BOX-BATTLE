@@ -49,6 +49,10 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
 
 	if is_instance_valid(_pogo_hitbox):
+		# Pogo specific: Ensure we can hit the ground (World/Platforms)
+		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
+		_pogo_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
+		
 		if not _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
 			_pogo_hitbox.hit_detected.connect(_on_pogo_hit_detected)
 
@@ -165,7 +169,10 @@ func _on_pogo_hit_detected(target: Node) -> void:
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 
-	if target is StaticBody2D and target.is_in_group(Identifiers.Groups.WORLD):
+	# Check physics bodies (World, Platforms)
+	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
+		should_bounce = true
+	elif target.is_in_group(Identifiers.Groups.WORLD):
 		should_bounce = true
 
 	if should_bounce:

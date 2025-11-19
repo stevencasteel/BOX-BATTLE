@@ -82,7 +82,8 @@ func _execute_attack_sequence() -> void:
 		)
 		await telegraph.telegraph_finished
 		
-		if not is_instance_valid(self):
+		# GUARD CLAUSE: Check if we are still valid after the wait
+		if not is_instance_valid(self) or not is_instance_valid(_owner) or not is_instance_valid(collision_shape):
 			return
 
 	# --- 2. Attack Phase ---
@@ -100,10 +101,10 @@ func _execute_attack_sequence() -> void:
 	
 	collision_shape.disabled = false
 	
-	var timer = get_tree().create_timer(_current_attack_data.duration)
-	await timer.timeout
+	await get_tree().create_timer(_current_attack_data.duration).timeout
 	
-	if not is_instance_valid(self):
+	# GUARD CLAUSE: Check if we are still valid after the wait
+	if not is_instance_valid(self) or not is_instance_valid(hitbox) or not is_instance_valid(collision_shape):
 		return
 		
 	# --- 3. Cleanup ---

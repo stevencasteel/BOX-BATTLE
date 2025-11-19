@@ -328,10 +328,9 @@ Leaked instance: GDScript:9223372086532113846 - Resource path: res://src/api/com
 Leaked instance: GDScript:9223372090894190013 - Resource path: res://src/entities/components/base_state_machine.gd
 Leaked instance: GDScript:9223372091246511551 - Resource path: res://src/entities/components/base_state.gd
 Leaked instance: SceneTreeTimer:9223372124264073439
-Leaked instance: Node:150860728544 - Node path: 
 Leaked instance: GDScript:9223372126344448245 - Resource path: res://src/entities/player/player.gd
-Leaked instance: SceneTreeTimer:9223372227326511355
-Leaked instance: GDScript:9223372134800165124 - Resource path: res://src/entities/boss/attack_patterns/attack_pattern.gd
+Leaked instance: SceneTreeTimer:9223372223182539008
+Leaked instance: GDScript:9223372135152486660 - Resource path: res://src/entities/boss/attack_patterns/attack_pattern.gd
 Leaked instance: GDScript:9223372129112688909 - Resource path: res://src/entities/player/data/player_state_data.gd
 Leaked instance: GDScript:9223372129263683854 - Resource path: res://src/entities/player/data/player_combat_data.gd
 Leaked instance: GDScript:9223372129414678799 - Resource path: res://src/entities/player/components/player_resource_component.gd
@@ -342,8 +341,9 @@ Leaked instance: GDScript:9223372130219985171 - Resource path: res://src/entitie
 Leaked instance: GDScript:9223372130337425684 - Resource path: res://src/entities/player/data/player_physics_data.gd
 Leaked instance: GDScript:9223372130589083925 - Resource path: res://src/entities/player/components/player_physics_component.gd
 Leaked instance: GDScript:9223372131109177624 - Resource path: res://src/core/events/typed_events/player_healing_charges_changed_event.gd
-Leaked instance: GDScript:9223372136142342431 - Resource path: res://src/combat/attack_logic/attack_logic.gd
-Leaked instance: Node:170590735307 - Node path: 
+Leaked instance: GDScript:9223372136494663967 - Resource path: res://src/combat/attack_logic/attack_logic.gd
+Leaked instance: Node:151196272929 - Node path: 
+Leaked instance: Node:170926279627 - Node path: 
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
 Resource still in use: res://src/core/events/event_bus.gd (GDScript)
 Resource still in use: res://src/core/sequencing/sequence_step.gd (GDScript)
@@ -410,6 +410,7 @@ Orphan StringName: max_health (static: 0, total: 18)
 Orphan StringName: _set_path_cache (static: 0, total: 47)
 Orphan StringName: _on_health_changed (static: 0, total: 9)
 Orphan StringName: _reset_state (static: 0, total: 47)
+Orphan StringName: PhysicsBody2D (static: 0, total: 1)
 Orphan StringName: change_state (static: 0, total: 7)
 Orphan StringName: state_attack_script (static: 0, total: 4)
 Orphan StringName: name (static: 0, total: 3)
@@ -464,7 +465,7 @@ Orphan StringName: get_file (static: 0, total: 1)
 Orphan StringName: apply_horizontal_movement (static: 0, total: 3)
 Orphan StringName: InputComponent (static: 0, total: 3)
 Orphan StringName: knockback_speed (static: 0, total: 7)
-Orphan StringName: StaticBody2D (static: 1, total: 3)
+Orphan StringName: StaticBody2D (static: 1, total: 2)
 Orphan StringName: _next_id (static: 0, total: 4)
 Orphan StringName: _setup_local_to_scene (static: 0, total: 47)
 Orphan StringName: LevelLayout (static: 0, total: 4)
@@ -479,7 +480,7 @@ Orphan StringName: _subscribers (static: 0, total: 3)
 Orphan StringName: res://src/entities/player/components/player_physics_component.gd (static: 0, total: 15)
 Orphan StringName: determination_per_charge (static: 0, total: 7)
 Orphan StringName: terrain_data (static: 0, total: 4)
-Orphan StringName: collision_mask (static: 0, total: 3)
+Orphan StringName: collision_mask (static: 0, total: 4)
 Orphan StringName: PlayerConfig (static: 0, total: 5)
 Orphan StringName: level_layout (static: 0, total: 4)
 Orphan StringName: _shake_timer (static: 0, total: 4)
@@ -789,7 +790,7 @@ Orphan StringName: res://src/entities/player/data/player_state_data.gd (static: 
 Orphan StringName: is_invincible (static: 0, total: 5)
 Orphan StringName: merge (static: 0, total: 1)
 Orphan StringName: LevelBuildData.MinionSpawnData (static: 0, total: 1)
-Orphan StringName: teardown (static: 0, total: 44)
+Orphan StringName: teardown (static: 0, total: 45)
 Orphan StringName: RefCounted (static: 2, total: 5)
 Orphan StringName: register_camera_shaker (static: 0, total: 3)
 Orphan StringName: attack (static: 0, total: 1)
@@ -820,7 +821,7 @@ Orphan StringName: is_zero_approx (static: 0, total: 1)
 Orphan StringName: DamageInfo (static: 0, total: 7)
 Orphan StringName: healing_timer (static: 0, total: 3)
 Orphan StringName: fill_viewport (static: 0, total: 3)
-Orphan StringName: _notification (static: 0, total: 9)
+Orphan StringName: _notification (static: 0, total: 12)
 Orphan StringName: @group_8_Sequencing (static: 0, total: 2)
 Orphan StringName: ui_right (static: 1, total: 2)
 Orphan StringName: PlayerStateData (static: 0, total: 8)
@@ -865,7 +866,7 @@ Orphan StringName: _get_rid (static: 0, total: 47)
 Orphan StringName: _health_component (static: 0, total: 6)
 Orphan StringName: require_component (static: 0, total: 3)
 Orphan StringName: sign (static: 0, total: 2)
-Orphan StringName: res://src/entities/base_entity.gd (static: 0, total: 13)
+Orphan StringName: res://src/entities/base_entity.gd (static: 0, total: 14)
 Orphan StringName: dash_speed (static: 0, total: 6)
 Orphan StringName: res://src/core/data/config/enemy_config.gd (static: 0, total: 1)
 Orphan StringName: state_move_script (static: 0, total: 4)
@@ -905,7 +906,7 @@ Orphan StringName: PogoHitbox (static: 0, total: 1)
 Orphan StringName: res://src/entities/components/hitbox_component.gd (static: 0, total: 6)
 Orphan StringName: ENEMY_CONFIG (static: 0, total: 2)
 Orphan StringName: res://src/data/layouts/level_layout.gd (static: 0, total: 3)
-Orphan StringName: collision_layer (static: 0, total: 6)
+Orphan StringName: collision_layer (static: 0, total: 7)
 Orphan StringName: EventBus (static: 0, total: 2)
 Orphan StringName: @group_22_Dash (static: 0, total: 3)
-StringName: 517 unclaimed string names at exit.
+StringName: 518 unclaimed string names at exit.
