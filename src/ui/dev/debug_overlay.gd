@@ -132,7 +132,8 @@ func _update_entity_info() -> void:
 
 func _update_player_specific_info() -> void:
 	var p_data = _target_entity.entity_data
-	var timers_text = "Timers: DashCD[%.2f] AtkCD[%.2f]" % [p_data.dash_cooldown_timer, p_data.attack_cooldown_timer]
+	# UPDATE: Access timers via sub-resources (physics/combat)
+	var timers_text = "Timers: DashCD[%.2f] AtkCD[%.2f]" % [p_data.physics.dash_cooldown_timer, p_data.combat.attack_cooldown_timer]
 	timers_label.text = timers_text
 	
 	var input_comp: InputComponent = _target_entity.get_component(InputComponent)

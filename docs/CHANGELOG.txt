@@ -29,7 +29,11 @@
 ║      ░ ■ Updated `Boss` and `Minion` archetypes to use the new component.      ║
 ║      ░ ■ Updated `ProjectileLogic` (Attack Strategy) to use the new component. ║
 ║      ░ ■ Cleaned up unused tween references in entity classes.                 ║
-
+║   █  Data Architecture                                                         ║
+║      ░ ■ Segregated `PlayerStateData` into `PlayerPhysicsData` and             ║
+║      ░   `PlayerCombatData` sub-resources.                                     ║
+║      ░ ■ Updated all Player States and Components to use the new data paths.   ║
+║      ░ ■ Enforced Interface Segregation Principle for Player data.             ║
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

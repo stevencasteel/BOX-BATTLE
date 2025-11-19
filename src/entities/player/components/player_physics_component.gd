@@ -28,8 +28,8 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
-		p_data.wall_coyote_timer = p_data.config.wall_coyote_time
-		p_data.last_wall_normal = owner_node.get_wall_normal()
+		p_data.physics.wall_coyote_timer = p_data.config.wall_coyote_time
+		p_data.physics.last_wall_normal = owner_node.get_wall_normal()
 
 
 # --- Private Methods ---
@@ -38,8 +38,8 @@ func _physics_process(delta: float) -> void:
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(p_data):
 		return
-	p_data.coyote_timer = max(0.0, p_data.coyote_timer - delta)
-	p_data.wall_coyote_timer = max(0.0, p_data.wall_coyote_timer - delta)
+	p_data.physics.coyote_timer = max(0.0, p_data.physics.coyote_timer - delta)
+	p_data.physics.wall_coyote_timer = max(0.0, p_data.physics.wall_coyote_timer - delta)
 
 
 # --- Public Methods ---
@@ -66,7 +66,7 @@ func apply_horizontal_movement() -> void:
 	var move_axis = input_component.buffer.get("move_axis", 0.0)
 	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
-		p_data.facing_direction = sign(move_axis)
+		p_data.physics.facing_direction = sign(move_axis)
 
 
 ## Applies gravity to the vertical velocity.
@@ -109,16 +109,16 @@ func can_wall_slide() -> bool:
 		return false
 	var move_axis = ic.buffer.get("move_axis", 0.0)
 	return (
-		p_data.wall_coyote_timer > 0
+		p_data.physics.wall_coyote_timer > 0
 		and not owner_node.is_on_floor()
 		and move_axis != 0
-		and sign(move_axis) == -p_data.last_wall_normal.x
+		and sign(move_axis) == -p_data.physics.last_wall_normal.x
 	)
 
 
 ## Applies the velocity and resets timers for a wall jump.
 func perform_wall_jump() -> void:
 	owner_node.velocity.y = -p_data.config.wall_jump_force_y
-	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.wall_jump_force_x
-	p_data.coyote_timer = 0
-	p_data.wall_coyote_timer = 0
+	owner_node.velocity.x = p_data.physics.last_wall_normal.x * p_data.config.wall_jump_force_x
+	p_data.physics.coyote_timer = 0
+	p_data.physics.wall_coyote_timer = 0

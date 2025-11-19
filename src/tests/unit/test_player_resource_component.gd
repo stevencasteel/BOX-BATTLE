@@ -31,7 +31,8 @@ func before_each():
 	_player_data = PlayerStateData.new()
 	_player_data.config = PlayerConfig # UPDATE
 	# Explicitly set max charges for clarity in tests
-	_player_data.max_healing_charges = 3
+	# UPDATE: Data is now nested in 'combat'
+	_player_data.combat.max_healing_charges = 3
 
 	_resource_component = PlayerResourceComponent.new()
 	mock_owner.add_child(_resource_component)
@@ -42,33 +43,33 @@ func before_each():
 
 # --- The Tests ---
 func test_on_damage_dealt_increments_determination():
-	_player_data.determination_counter = 0
+	_player_data.combat.determination_counter = 0
 	_resource_component.on_damage_dealt()
-	assert_eq(_player_data.determination_counter, 1, "Determination should increment by 1.")
+	assert_eq(_player_data.combat.determination_counter, 1, "Determination should increment by 1.")
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 
 func test_healing_charge_gained_at_threshold():
-	_player_data.healing_charges = 0
+	_player_data.combat.healing_charges = 0
 	# UPDATE: determination_per_charge (removed player_ prefix)
-	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
+	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
 
-	assert_eq(_player_data.healing_charges, 1, "Should gain 1 healing charge at the threshold.")
-	assert_eq(_player_data.determination_counter, 0, "Determination should reset to 0.")
+	assert_eq(_player_data.combat.healing_charges, 1, "Should gain 1 healing charge at the threshold.")
+	assert_eq(_player_data.combat.determination_counter, 0, "Determination should reset to 0.")
 	assert_true(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 	var payload = _fake_event_bus.get_payload_for_event(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED)
 	assert_eq(payload.current_charges, 1, "Event payload should contain the new charge count.")
 
 func test_healing_charges_are_capped():
-	_player_data.healing_charges = _player_data.max_healing_charges
+	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges
 	# UPDATE: determination_per_charge
-	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
+	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
-	assert_eq(_player_data.healing_charges, _player_data.max_healing_charges, "Charges should not exceed max.")
+	assert_eq(_player_data.combat.healing_charges, _player_data.combat.max_healing_charges, "Charges should not exceed max.")
 	assert_eq(
-		_player_data.determination_counter,
+		_player_data.combat.determination_counter,
 		PlayerConfig.determination_per_charge - 1,
 		"Determination should not increment if charges are max."
 	)
@@ -76,15 +77,15 @@ func test_healing_charges_are_capped():
 
 func test_consume_charge_decrements_and_emits_event():
 	# Start with a valid number of charges (at max) and consume one.
-	_player_data.healing_charges = _player_data.max_healing_charges # Starts at 3
+	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges # Starts at 3
 	_resource_component.consume_healing_charge()
-	assert_eq(_player_data.healing_charges, 2, "Healing charges should decrement by 1.")
+	assert_eq(_player_data.combat.healing_charges, 2, "Healing charges should decrement by 1.")
 	assert_true(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 	var payload = _fake_event_bus.get_payload_for_event(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED)
 	assert_eq(payload.current_charges, 2, "Event payload should contain the correct new charge count.")
 
 func test_consume_charge_does_nothing_at_zero():
-	_player_data.healing_charges = 0
+	_player_data.combat.healing_charges = 0
 	_resource_component.consume_healing_charge()
-	assert_eq(_player_data.healing_charges, 0, "Healing charges should remain 0.")
+	assert_eq(_player_data.combat.healing_charges, 0, "Healing charges should remain 0.")
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))

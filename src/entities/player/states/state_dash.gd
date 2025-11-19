@@ -10,9 +10,9 @@ func enter(_msg := {}):
 	_health = owner.get_component(HealthComponent)
 	_physics = owner.get_component(PlayerPhysicsComponent)
 
-	state_data.can_dash = false
-	state_data.dash_duration_timer = state_data.config.dash_duration
-	state_data.dash_cooldown_timer = state_data.config.dash_cooldown
+	state_data.physics.can_dash = false
+	state_data.physics.dash_duration_timer = state_data.config.dash_duration
+	state_data.physics.dash_cooldown_timer = state_data.config.dash_cooldown
 
 	_invincibility_token = _health.grant_invincibility(self)
 
@@ -35,7 +35,7 @@ func exit():
 
 
 func process_physics(_delta: float):
-	if state_data.dash_duration_timer <= 0:
+	if state_data.physics.dash_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -45,4 +45,4 @@ func _get_dash_direction():
 		return Vector2.UP
 	if ic.buffer.get("down"):
 		return Vector2.DOWN
-	return Vector2(state_data.facing_direction, 0)
+	return Vector2(state_data.physics.facing_direction, 0)

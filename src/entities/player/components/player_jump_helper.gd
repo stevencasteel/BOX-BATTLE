@@ -17,18 +17,18 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 		return false
 
 	# 1. Wall Jump (Highest Priority)
-	if p_data.wall_coyote_timer > 0:
+	if p_data.physics.wall_coyote_timer > 0:
 		physics.perform_wall_jump()
 		sm.change_state(Identifiers.PlayerStates.JUMP)
 		return true
 
 	# 2. Ground Jump (includes coyote time)
-	if owner.is_on_floor() or p_data.coyote_timer > 0:
+	if owner.is_on_floor() or p_data.physics.coyote_timer > 0:
 		sm.change_state(Identifiers.PlayerStates.JUMP)
 		return true
 
 	# 3. Air Jump
-	if p_data.air_jumps_left > 0:
+	if p_data.physics.air_jumps_left > 0:
 		sm.change_state(Identifiers.PlayerStates.JUMP, {"is_air_jump": true})
 		return true
 

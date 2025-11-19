@@ -26,25 +26,25 @@ func teardown() -> void:
 
 ## Called when the player successfully deals damage to an enemy.
 func on_damage_dealt() -> void:
-	if p_data.healing_charges >= p_data.config.max_healing_charges:
+	if p_data.combat.healing_charges >= p_data.combat.max_healing_charges:
 		return
 
-	p_data.determination_counter += 1
-	if p_data.determination_counter >= p_data.config.determination_per_charge:
-		p_data.determination_counter = 0
-		p_data.healing_charges += 1
+	p_data.combat.determination_counter += 1
+	if p_data.combat.determination_counter >= p_data.config.determination_per_charge:
+		p_data.combat.determination_counter = 0
+		p_data.combat.healing_charges += 1
 		_emit_healing_charges_changed_event()
 
 
 ## Consumes one healing charge.
 func consume_healing_charge() -> void:
-	if p_data.healing_charges > 0:
-		p_data.healing_charges -= 1
+	if p_data.combat.healing_charges > 0:
+		p_data.combat.healing_charges -= 1
 		_emit_healing_charges_changed_event()
 
 
 # --- Private Methods ---
 func _emit_healing_charges_changed_event() -> void:
 	var ev = PlayerHealingChargesChangedEvent.new()
-	ev.current_charges = p_data.healing_charges
+	ev.current_charges = p_data.combat.healing_charges
 	_event_bus.emit(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED, ev)

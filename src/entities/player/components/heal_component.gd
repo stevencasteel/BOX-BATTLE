@@ -29,7 +29,7 @@ func _physics_process(_delta: float) -> void:
 
 		if (
 			is_holding_down
-			and _p_data.healing_charges > 0
+			and _p_data.combat.healing_charges > 0
 			and _owner_node.is_on_floor()
 			and is_zero_approx(_owner_node.velocity.x)
 		):

@@ -1,42 +1,24 @@
 # src/entities/player/data/player_state_data.gd
 @tool
 ## A Resource that holds all shared runtime state data for the Player.
+## Acts as a container for domain-specific data chunks.
 class_name PlayerStateData
 extends Resource
 
+# --- Sub-Data Containers ---
+var physics: PlayerPhysicsData = PlayerPhysicsData.new()
+var combat: PlayerCombatData = PlayerCombatData.new()
+
 # --- Configuration References ---
+# These remain global as they are read-only configs used by everything.
 var config: PlayerConfig
 var world_config: WorldConfig
 
-# --- Health & Combat ---
+# --- Health ---
+# Health is core enough to remain on the root or move to a HealthData.
+# For now, we keep basic health stats here to avoid over-fragmentation,
+# as HealthComponent manages these directly.
 var max_health: int = 5
-var max_healing_charges: int = 1
 var health: int = 5:
 	set(value):
 		health = clamp(value, 0, max_health)
-var healing_charges: int = 0:
-	set(value):
-		healing_charges = clamp(value, 0, max_healing_charges)
-var determination_counter: int = 0
-var hit_targets_this_swing: Dictionary = {}
-
-# --- Physics & Movement ---
-var air_jumps_left: int = 0
-var facing_direction: int = 1
-var last_wall_normal: Vector2 = Vector2.ZERO
-var can_dash: bool = true
-var pogo_fall_prevention_timer: float = 0.0
-
-# --- Timers ---
-var coyote_timer: float = 0.0
-var wall_coyote_timer: float = 0.0
-var dash_duration_timer: float = 0.0
-var dash_cooldown_timer: float = 0.0
-var attack_duration_timer: float = 0.0
-var attack_cooldown_timer: float = 0.0
-var knockback_timer: float = 0.0
-
-# --- State Flags ---
-var is_charging: bool = false
-var charge_timer: float = 0.0
-var is_pogo_attack: bool = false

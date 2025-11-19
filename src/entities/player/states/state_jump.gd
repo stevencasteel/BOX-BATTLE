@@ -11,17 +11,17 @@ func enter(msg := {}) -> void:
 	_input = owner.get_component(InputComponent)
 
 	if msg.get("is_air_jump", false):
-		state_data.air_jumps_left -= 1
+		state_data.physics.air_jumps_left -= 1
 
 	_physics.jump(state_data.config.jump_force)
-	state_data.coyote_timer = 0
+	state_data.physics.coyote_timer = 0
 
 
 func process_physics(delta: float) -> void:
 	_physics.apply_horizontal_movement()
 
 	if _input.buffer.get("jump_just_pressed"):
-		if state_data.air_jumps_left > 0:
+		if state_data.physics.air_jumps_left > 0:
 			_perform_air_jump()
 
 	if _input.buffer.get("jump_released"):
@@ -45,5 +45,5 @@ func _apply_gravity(delta: float) -> void:
 
 
 func _perform_air_jump() -> void:
-	state_data.air_jumps_left -= 1
+	state_data.physics.air_jumps_left -= 1
 	_physics.jump(state_data.config.jump_force)

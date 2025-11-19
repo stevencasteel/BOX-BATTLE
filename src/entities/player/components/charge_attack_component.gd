@@ -24,18 +24,18 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	# 1. Update Timers
-	if _p_data.is_charging and _input_component.buffer.get("attack_pressed"):
-		_p_data.charge_timer += delta
+	if _p_data.combat.is_charging and _input_component.buffer.get("attack_pressed"):
+		_p_data.combat.charge_timer += delta
 
 	# 2. Handle Inputs
-	if _input_component.buffer.get("attack_just_pressed") and _p_data.attack_cooldown_timer <= 0:
-		_p_data.is_charging = true
-		_p_data.charge_timer = 0.0
+	if _input_component.buffer.get("attack_just_pressed") and _p_data.combat.attack_cooldown_timer <= 0:
+		_p_data.combat.is_charging = true
+		_p_data.combat.charge_timer = 0.0
 
 	if _input_component.buffer.get("attack_released"):
-		if _p_data.is_charging:
+		if _p_data.combat.is_charging:
 			_try_execute_attack()
-			_p_data.is_charging = false
+			_p_data.combat.is_charging = false
 
 func _try_execute_attack() -> void:
 	# Guard against race condition where state machine is cleared (player death)
@@ -45,7 +45,7 @@ func _try_execute_attack() -> void:
 	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
 		return
 
-	if _p_data.charge_timer >= _p_data.config.charge_time:
+	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
 		_combat_component.fire_shot()
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})

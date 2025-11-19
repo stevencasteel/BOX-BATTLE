@@ -28,8 +28,8 @@ func _physics_process(delta: float) -> void:
 
 	if (
 		_input_component.buffer.get("dash_pressed")
-		and _p_data.can_dash
-		and _p_data.dash_cooldown_timer <= 0
+		and _p_data.physics.can_dash
+		and _p_data.physics.dash_cooldown_timer <= 0
 	):
 		_state_machine.change_state(Identifiers.PlayerStates.DASH, {})
 
@@ -43,5 +43,5 @@ func teardown() -> void:
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(_p_data):
 		return
-	_p_data.dash_cooldown_timer = max(0.0, _p_data.dash_cooldown_timer - delta)
-	_p_data.dash_duration_timer = max(0.0, _p_data.dash_duration_timer - delta)
+	_p_data.physics.dash_cooldown_timer = max(0.0, _p_data.physics.dash_cooldown_timer - delta)
+	_p_data.physics.dash_duration_timer = max(0.0, _p_data.physics.dash_duration_timer - delta)

@@ -76,13 +76,13 @@ func teardown() -> void:
 
 ## Fires a player projectile from the object pool.
 func fire_shot() -> void:
-	p_data.attack_cooldown_timer = p_data.config.attack_cooldown
+	p_data.combat.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
 	if not shot:
 		return
 
-	var shot_dir = Vector2(p_data.facing_direction, 0)
+	var shot_dir = Vector2(p_data.physics.facing_direction, 0)
 	# We assume InputComponent is updating the buffer elsewhere
 	# Ideally, direction should be passed in or read from p_data if generalized
 	if Input.is_action_pressed("ui_up"):
@@ -105,20 +105,20 @@ func fire_shot() -> void:
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(p_data):
 		return
-	p_data.attack_cooldown_timer = max(0.0, p_data.attack_cooldown_timer - delta)
-	p_data.attack_duration_timer = max(0.0, p_data.attack_duration_timer - delta)
+	p_data.combat.attack_cooldown_timer = max(0.0, p_data.combat.attack_cooldown_timer - delta)
+	p_data.combat.attack_duration_timer = max(0.0, p_data.combat.attack_duration_timer - delta)
 	# Pogo fall prevention is loosely related to combat timing
-	p_data.pogo_fall_prevention_timer = max(0.0, p_data.pogo_fall_prevention_timer - delta)
+	p_data.combat.pogo_fall_prevention_timer = max(0.0, p_data.combat.pogo_fall_prevention_timer - delta)
 
 
 # --- Private Signal Handlers ---
 
 func _on_melee_hit_detected(target: Node) -> void:
 	var target_id = target.get_instance_id()
-	if p_data.hit_targets_this_swing.has(target_id):
+	if p_data.combat.hit_targets_this_swing.has(target_id):
 		return
 
-	p_data.hit_targets_this_swing[target_id] = true
+	p_data.combat.hit_targets_this_swing[target_id] = true
 	
 	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
@@ -141,7 +141,7 @@ func _on_melee_hit_detected(target: Node) -> void:
 
 
 func _on_pogo_hit_detected(target: Node) -> void:
-	if not p_data.is_pogo_attack:
+	if not p_data.combat.is_pogo_attack:
 		return
 	if not is_instance_valid(target):
 		return

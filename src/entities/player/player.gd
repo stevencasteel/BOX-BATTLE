@@ -58,9 +58,9 @@ func _ready() -> void:
 
 	# Post-Build Init
 	visual_sprite.color = Palette.COLOR_PLAYER
-	entity_data.healing_charges = 0
+	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
-	entity_data.determination_counter = 0
+	entity_data.combat.determination_counter = 0
 
 
 func _physics_process(delta: float) -> void:
@@ -205,14 +205,12 @@ func _die() -> void:
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(entity_data):
 		return
-
-	# MOVED TO COMPONENTS:
-	# - coyote_timer, wall_coyote_timer -> PlayerPhysicsComponent
-	# - dash_cooldown_timer, dash_duration_timer -> DashComponent
-	# - attack_duration, attack_cooldown, pogo_timer -> CombatComponent
-	# - charge_timer -> ChargeAttackComponent
 	
-	entity_data.knockback_timer = max(0.0, entity_data.knockback_timer - delta)
+	entity_data.physics.knockback_timer = max(0.0, entity_data.physics.knockback_timer - delta)
+	
+	var ic: InputComponent = get_component(InputComponent)
+	if entity_data.combat.is_charging and is_instance_valid(ic) and ic.buffer.get("attack_pressed"):
+		entity_data.combat.charge_timer += delta
 
 
 # --- Signal Handlers ---
@@ -231,8 +229,8 @@ func _on_pogo_bounce_requested() -> void:
 	if physics:
 		physics.perform_pogo_bounce()
 	
-	entity_data.can_dash = true
-	entity_data.air_jumps_left = entity_data.config.max_air_jumps
+	entity_data.physics.can_dash = true
+	entity_data.physics.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
 
 
