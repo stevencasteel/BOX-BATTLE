@@ -95,6 +95,13 @@ func setup_components(
 	base_shared_deps["grid_utils"] = s.grid_utils
 	base_shared_deps["audio_manager"] = AudioManager # Autoload
 
+	# DIP: Auto-extract DamageResponseConfig if present in the main config.
+	# This decouples HealthComponent from PlayerConfig/EnemyConfig.
+	if base_shared_deps.has("config"):
+		var cfg = base_shared_deps["config"]
+		if cfg and cfg.get("damage_response") != null:
+			base_shared_deps["damage_config"] = cfg.damage_response
+
 	for child in get_children():
 		if not (child is IComponent):
 			continue

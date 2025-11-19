@@ -1,12 +1,19 @@
-[gd_resource type="Resource" script_class="EnemyConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=4 format=3 uid="uid://cm4r58pku22ug"]
 
-[ext_resource type="Script" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c1ran020tmpwh" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
+
+[sub_resource type="Resource" id="Resource_dmg"]
+script = ExtResource("2_dmg_resp")
+invincibility_duration = 0.1
+knockback_speed = 0.0
+hazard_knockback_speed = 0.0
 
 [resource]
 script = ExtResource("1_script")
 boss_health = 30
 boss_patrol_speed = 100.0
-boss_invincibility_duration = 0.1
+damage_response = SubResource("Resource_dmg")
 boss_lunge_speed = 1200.0
 homing_shot_damage = 1
 homing_shot_speed = 250.0

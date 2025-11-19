@@ -6,6 +6,7 @@ const HealthComponent = preload("res://src/entities/components/health_component.
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/api/combat/damage_info.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
 const IFXManager = preload("res://src/api/interfaces/IFXManager.gd")
@@ -50,12 +51,20 @@ func before_each() -> void:
 
 	var vfx = VFXEffect.new()
 	vfx.pool_key = "test_hit_spark"
+	
+	# Create specific damage config for test
+	var damage_config = DamageResponseConfig.new()
+	damage_config.invincibility_duration = 1.0
+	damage_config.knockback_speed = 100.0
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": PlayerConfig, # UPDATE
+		"config": PlayerConfig, # Legacy
+		"damage_config": damage_config, # DIP Injection
 		"services": _fake_services,
-		"hit_spark_effect": vfx
+		"hit_spark_effect": vfx,
+		"event_bus": _fake_services.event_bus, # Direct injection
+		"fx_manager": _fake_services.fx_manager # Direct injection
 	}
 	_health_component.setup(_mock_owner, dependencies)
 

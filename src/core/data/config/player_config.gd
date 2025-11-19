@@ -9,10 +9,12 @@ extends Resource
 @export_range(1, 10, 1) var max_healing_charges: int = 1
 @export_range(0.1, 5.0, 0.1) var heal_duration: float = 2.0
 @export_range(1, 100, 1) var determination_per_charge: int = 10
-@export_range(0.1, 5.0, 0.1) var invincibility_duration: float = 1.5
-@export_range(100, 1500, 25) var knockback_speed: float = 400.0
+
+## Configuration for how the player reacts to taking damage (Invincibility, Knockback force).
+@export var damage_response: DamageResponseConfig
+
+## How long the player loses control when hurt (StateHurt duration).
 @export_range(0.05, 0.5, 0.01) var knockback_duration: float = 0.1
-@export_range(100, 1500, 25) var hazard_knockback_speed: float = 400.0
 
 @export_group("Movement & Physics")
 @export_range(100, 1000, 5) var move_speed: float = 450.0

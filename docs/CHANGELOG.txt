@@ -15,7 +15,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR  - 11/18/2025              ██   ║
+║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR  - 11/18/2025              ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture & SOLID                                                      ║
@@ -36,9 +36,17 @@
 ║      ░   `ProjectileShooterComponent` to request specific interfaces instead   ║
 ║      ░   of the monolithic Service Locator.                                    ║
 ║                                                                                ║
-
-
-
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Dependency Inversion Principle (DIP) to Health Configuration. ║
+║      ░ ■ Created `DamageResponseConfig` resource to standardize how entities   ║
+║      ░   react to damage (Invincibility, Knockback).                           ║
+║      ░ ■ Refactored `HealthComponent` to depend on this abstract config        ║
+║      ░   instead of checking concrete entity groups (Player/Enemy).            ║
+║      ░ ■ Updated `BaseEntity` to automatically extract and inject this config  ║
+║      ░   during the build process.                                             ║
+║      ░ ■ Migrated `PlayerConfig` and `EnemyConfig` to use the new sub-resource.║
+║                                                                                ║
 
 
 
