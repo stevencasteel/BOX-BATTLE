@@ -10,6 +10,11 @@ func enter(_msg := {}) -> void:
 	# UPDATE: config.max_air_jumps
 	state_data.physics.air_jumps_left = state_data.config.max_air_jumps
 	state_data.physics.can_dash = true
+	
+	# Jump Buffer Check: If the player pressed jump right before landing, execute it now.
+	if state_data.physics.jump_buffer_timer > 0:
+		state_data.physics.jump_buffer_timer = 0.0
+		state_machine.change_state(Identifiers.PlayerStates.JUMP)
 
 
 func process_physics(delta: float) -> void:

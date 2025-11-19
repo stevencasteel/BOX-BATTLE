@@ -3,11 +3,21 @@
 class_name ChargeAttackComponent
 extends IComponent
 
+# --- Constants ---
+const AURA_SCENE = preload("res://src/vfx/aura_charge_green.tscn")
+const SPLASH_SCENE = preload("res://src/vfx/splash_charge_green.tscn")
+# Delay visuals to prevent aura flashing during normal melee taps.
+const AURA_START_DELAY: float = 0.25
+
+# --- Dependencies ---
 var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
 var _combat_component: CombatComponent
+
+# --- Visual State ---
+var _aura_instance: Node2D
 
 func _ready() -> void:
 	process_priority = 0
@@ -18,6 +28,12 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
+	
+	# Instantiate the aura and attach it to the player so it follows them
+	if is_instance_valid(_owner_node):
+		_aura_instance = AURA_SCENE.instantiate()
+		_aura_instance.emitting = false
+		_owner_node.add_child(_aura_instance)
 
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -29,7 +45,15 @@ func _physics_process(delta: float) -> void:
 	if _p_data.combat.is_charging and _input_component.buffer.get("attack_pressed"):
 		_p_data.combat.charge_timer += delta
 
-	# 2. Handle Inputs
+	# 2. Update Visuals
+	# Only emit if we are charging AND have held the button longer than the delay.
+	var should_emit = _p_data.combat.is_charging and _p_data.combat.charge_timer >= AURA_START_DELAY
+	
+	if is_instance_valid(_aura_instance):
+		if _aura_instance.emitting != should_emit:
+			_aura_instance.emitting = should_emit
+
+	# 3. Handle Inputs
 	if _input_component.buffer.get("attack_just_pressed") and _p_data.combat.attack_cooldown_timer <= 0:
 		_p_data.combat.is_charging = true
 		_p_data.combat.charge_timer = 0.0
@@ -50,13 +74,30 @@ func _try_execute_attack() -> void:
 
 	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
 		_combat_component.fire_shot()
+		_spawn_release_splash()
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
 	else:
 		_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
 
+func _spawn_release_splash() -> void:
+	if not is_instance_valid(_owner_node):
+		return
+		
+	var splash = SPLASH_SCENE.instantiate()
+	# Calculate same offset as CombatComponent (facing * 60)
+	var offset = Vector2(_p_data.physics.facing_direction * 60, 0)
+	splash.global_position = _owner_node.global_position + offset
+	splash.emitting = true
+	
+	# Add to tree root so it doesn't move with player
+	_owner_node.get_tree().current_scene.add_child(splash)
+
 func teardown() -> void:
 	set_physics_process(false)
+	if is_instance_valid(_aura_instance):
+		_aura_instance.queue_free()
+	_aura_instance = null
 	_owner_node = null
 	_p_data = null
 	_state_machine = null

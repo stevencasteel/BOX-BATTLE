@@ -119,16 +119,18 @@ Loading resource: res://src/scenes/menus/save_select_screen.gd
 Loading resource: res://src/ui/components/styled_menu_item/styled_menu_item.tscn
 Loading resource: res://src/ui/components/save_slot_button/save_slot_button.tscn
 Loading resource: user://save_slot_00.tres
+Loading resource: user://save_slot_01.tres
 Loading resource: user://save_slot_02.tres
-Loading resource: res://assets/audio/sfx/sfx_ui_select.mp3
-Loading resource: res://.godot/imported/sfx_ui_select.mp3-3073366784d3e7caa5d5c9691f71648c.mp3str
 Loading resource: user://save_slot_00.tres
 Loading resource: user://save_slot_00.tres
+Loading resource: res://assets/audio/sfx/sfx_game_start.mp3
+Loading resource: res://.godot/imported/sfx_game_start.mp3-67b4c3c0b75f65d9f43acb0dabc27dba.mp3str
 Loading resource: res://src/scenes/loading/loading_screen.tscn
 Loading resource: res://src/scenes/loading/loading_screen.gd
 Starting shader pre-warming...
 Loading resource: res://src/entities/player/player.tscn
 Loading resource: res://src/entities/player/player.gd
+Loading resource: res://src/vfx/splash_heal_purple.tscn
 Loading resource: res://src/entities/archetypes/player_archetype.tres
 Loading resource: res://src/entities/components/health_component.tscn
 Loading resource: res://src/entities/components/combat_component.tscn
@@ -145,6 +147,8 @@ Loading resource: res://src/entities/player/components/heal_component.tscn
 Loading resource: res://src/entities/player/components/heal_component.gd
 Loading resource: res://src/entities/player/components/charge_attack_component.tscn
 Loading resource: res://src/entities/player/components/charge_attack_component.gd
+Loading resource: res://src/vfx/aura_charge_green.tscn
+Loading resource: res://src/vfx/splash_charge_green.tscn
 Loading resource: res://src/entities/player/components/pogo_component.tscn
 Loading resource: res://src/entities/components/status_effect_component.tscn
 Loading resource: res://src/data/effects/entity_hit_flash_effect.tres
@@ -165,7 +169,9 @@ Loading resource: res://src/entities/player/states/state_wall_slide.gd
 Loading resource: res://src/entities/player/states/state_attack.gd
 Loading resource: res://src/entities/player/states/state_hurt.gd
 Loading resource: res://src/entities/player/states/state_heal.gd
+Loading resource: res://src/vfx/aura_heal_purple.tscn
 Loading resource: res://src/entities/player/states/state_pogo.gd
+WorkerThreadPool: 8 threads, 2 max low-priority.
 Loading resource: res://src/entities/boss/base_boss.tscn
 Loading resource: res://src/entities/boss/base_boss.gd
 Loading resource: res://src/entities/components/melee_component.tscn
@@ -300,53 +306,250 @@ XR: Clearing primary interface
 XR: Removed interface "Native mobile"
 XR: Removed interface "OpenXR"
 Leaked instance: GDScriptNativeClass:9223372049974559412
-Leaked instance: GDScriptNativeClass:9223372049991336629
+Leaked instance: GDScriptNativeClass:9223372050125554365
+Leaked instance: GDScriptNativeClass:9223372052742800217
+Leaked instance: GDScript:9223372068966368608 - Resource path: res://src/core/data/audio/audio_cue.gd
+Leaked instance: GDScript:9223372074402186626 - Resource path: res://src/core/data/config/player_config.gd
+Leaked instance: GDScript:9223372074704176516 - Resource path: res://src/core/data/config/damage_response_config.gd
+Leaked instance: RectangleShape2D:9223372075006166407 - Resource path: res://src/entities/player/data/forward_attack_shape.tres
+Leaked instance: RectangleShape2D:9223372075106829705 - Resource path: res://src/entities/player/data/upward_attack_shape.tres
+Leaked instance: Resource:9223372075408819594 - Resource path: res://src/data/player_config.tres::Resource_dmg
+Leaked instance: Resource:9223372075425596811 - Resource path: res://src/data/player_config.tres
+Leaked instance: Resource:9223372075358487949 - Resource path: res://src/data/audio/sfx_player_impact.tres
+Leaked instance: AudioStreamMP3:9223372075308156302 - Resource path: res://assets/audio/sfx/sfx_ui_error.mp3
+Leaked instance: GDScript:9223372076381898127 - Resource path: res://src/core/data/config/world_config.gd
+Leaked instance: Resource:9223372076616779152 - Resource path: res://src/data/world_config.tres
 Leaked instance: GDScript:9223372083445106088 - Resource path: res://src/core/building/terrain_builder.gd
+Leaked instance: GDScript:9223372095038162379 - Resource path: res://src/entities/components/base_state.gd
+Leaked instance: Resource:9223372233852848354 - Resource path: 
+Leaked instance: Resource:9223372233869625571 - Resource path: 
+Leaked instance: Resource:9223372233836071142 - Resource path: 
 Leaked instance: SceneTreeTimer:9223372129884440830
-Leaked instance: Node:187451836679 - Node path: 
-Leaked instance: Node:213473298701 - Node path: 
-Leaked instance: PackedScene:9223372190315972981 - Resource path: res://src/entities/components/telegraph_component.tscn
-Leaked instance: GDScript:9223372190081091961 - Resource path: res://src/entities/components/telegraph_component.gd
-Leaked instance: SceneState:9223372190332750213
-Leaked instance: Tween:9223372264974585307
+Leaked instance: Node:173728073985 - Node path: 
+Leaked instance: GDScript:9223372160351865102 - Resource path: res://src/entities/player/states/state_move.gd
+Leaked instance: GDScript:9223372144547727657 - Resource path: res://src/entities/player/data/player_state_data.gd
+Leaked instance: GDScript:9223372144698722602 - Resource path: res://src/entities/player/data/player_combat_data.gd
+Leaked instance: GDScript:9223372146074454322 - Resource path: res://src/entities/player/data/player_physics_data.gd
+Leaked instance: GDScript:9223372146594548020 - Resource path: res://src/core/data/base_entity_data.gd
+Leaked instance: GDScript:9223372161157171514 - Resource path: res://src/entities/player/states/state_jump.gd
+Leaked instance: GDScript:9223372162147027260 - Resource path: res://src/entities/player/states/state_fall.gd
+Leaked instance: GDScript:9223372164277733693 - Resource path: res://src/entities/player/states/state_wall_slide.gd
+Leaked instance: GDScript:9223372163220769087 - Resource path: res://src/entities/player/states/state_dash.gd
+Leaked instance: Resource:9223372169294121280 - Resource path: 
+Leaked instance: GDScript:9223372165334698305 - Resource path: res://src/entities/player/states/state_attack.gd
+Leaked instance: GDScript:9223372166190336323 - Resource path: res://src/entities/player/states/state_hurt.gd
+Leaked instance: Resource:9223372169310898500 - Resource path: 
+Leaked instance: Resource:9223372169327675718 - Resource path: 
+Leaked instance: Object:132707780952
+Leaked instance: Object:132724558169
+Leaked instance: Object:132741335386
+Leaked instance: Object:132758112603
+Leaked instance: Object:132774889820
+Leaked instance: Object:132791667037
+Leaked instance: Object:132808444254
+Leaked instance: Object:133378869616
+Leaked instance: Object:133395646833
+Leaked instance: Object:133412424050
+Leaked instance: Object:133429201267
+Leaked instance: Object:133445978484
+Leaked instance: Object:133462755701
+Leaked instance: Object:133479532918
+Leaked instance: Node:198893898733 - Node path: 
+Leaked instance: Object:197249731587
+Leaked instance: Object:197266508804
+Leaked instance: Object:197283286021
+Leaked instance: Object:197300063238
+Leaked instance: Object:197316840455
+Leaked instance: Object:197333617672
+Leaked instance: Object:197350394889
+Leaked instance: Object:198457691209
+Leaked instance: Object:198474468426
+Leaked instance: Object:198491245643
+Leaked instance: Object:198508022860
+Leaked instance: Object:198524800077
+Leaked instance: Object:198541577294
+Leaked instance: Object:198558354511
 Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
+Resource still in use: res://src/core/data/audio/audio_cue.gd (GDScript)
+Resource still in use: res://src/core/data/config/player_config.gd (GDScript)
+Resource still in use: res://src/core/data/config/damage_response_config.gd (GDScript)
+Resource still in use: res://src/entities/player/data/forward_attack_shape.tres (RectangleShape2D)
+Resource still in use: res://src/entities/player/data/upward_attack_shape.tres (RectangleShape2D)
+Resource still in use: res://assets/audio/sfx/sfx_ui_error.mp3 (AudioStreamMP3)
+Resource still in use: res://src/data/audio/sfx_player_impact.tres (Resource)
+Resource still in use: res://src/data/player_config.tres::Resource_dmg (Resource)
+Resource still in use: res://src/data/player_config.tres (Resource)
+Resource still in use: res://src/core/data/config/world_config.gd (GDScript)
+Resource still in use: res://src/data/world_config.tres (Resource)
 Resource still in use: res://src/core/building/terrain_builder.gd (GDScript)
-Resource still in use: res://src/entities/components/telegraph_component.gd (GDScript)
-Resource still in use: res://src/entities/components/telegraph_component.tscn (PackedScene)
+Resource still in use: res://src/entities/components/base_state.gd (GDScript)
+Resource still in use: res://src/entities/player/data/player_state_data.gd (GDScript)
+Resource still in use: res://src/entities/player/data/player_combat_data.gd (GDScript)
+Resource still in use: res://src/entities/player/data/player_physics_data.gd (GDScript)
+Resource still in use: res://src/core/data/base_entity_data.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_move.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_jump.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_fall.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_dash.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_wall_slide.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_attack.gd (GDScript)
+Resource still in use: res://src/entities/player/states/state_hurt.gd (GDScript)
+Orphan StringName: pogo_force (static: 0, total: 6)
+Orphan StringName: max_air_jumps (static: 0, total: 6)
+Orphan StringName: wall_slide_speed (static: 0, total: 6)
 Orphan StringName: _enter_tree (static: 0, total: 2)
-Orphan StringName: _set_path_cache (static: 0, total: 3)
-Orphan StringName: _reset_state (static: 0, total: 3)
+Orphan StringName: max_health (static: 0, total: 13)
+Orphan StringName: _set_path_cache (static: 0, total: 30)
+Orphan StringName: _reset_state (static: 0, total: 30)
+Orphan StringName: @group_6_Randomization (static: 0, total: 3)
 Orphan StringName: _unhandled_input (static: 0, total: 2)
 Orphan StringName: _ready (static: 0, total: 2)
-Orphan StringName: script (static: 0, total: 1)
+Orphan StringName: @group_2_Invincibility (static: 0, total: 3)
+Orphan StringName: _invincibility_token (static: 0, total: 7)
+Orphan StringName: charge_timer (static: 0, total: 6)
+Orphan StringName: AudioCue (static: 0, total: 4)
 Orphan StringName: _exit_tree (static: 0, total: 2)
+Orphan StringName: knockback_duration (static: 0, total: 6)
+Orphan StringName: attack_duration_timer (static: 0, total: 6)
+Orphan StringName: _apply_gravity (static: 0, total: 2)
+Orphan StringName: HealthComponent (static: 0, total: 1)
+Orphan StringName: state_data (static: 0, total: 38)
+Orphan StringName: hit_stop_boss_phase_change (static: 0, total: 6)
+Orphan StringName: process_physics (static: 0, total: 8)
 Orphan StringName: _create_solid_tile (static: 0, total: 1)
-Orphan StringName: _setup_local_to_scene (static: 0, total: 3)
-Orphan StringName: color (static: 0, total: 1)
-Orphan StringName: TelegraphComponent (static: 0, total: 4)
+Orphan StringName: dash_cooldown (static: 0, total: 6)
+Orphan StringName: DamageResponseConfig (static: 0, total: 4)
+Orphan StringName: dash_cooldown_timer (static: 0, total: 6)
+Orphan StringName: SFX (static: 0, total: 3)
+Orphan StringName: coyote_timer (static: 0, total: 6)
+Orphan StringName: physics (static: 0, total: 5)
+Orphan StringName: InputComponent (static: 0, total: 4)
+Orphan StringName: knockback_speed (static: 0, total: 6)
+Orphan StringName: _setup_local_to_scene (static: 0, total: 30)
+Orphan StringName: world_config (static: 0, total: 6)
+Orphan StringName: determination_per_charge (static: 0, total: 6)
+Orphan StringName: PlayerConfig (static: 0, total: 3)
+Orphan StringName: @group_15_Wall Interaction (static: 0, total: 3)
+Orphan StringName: _get_beat_count (static: 0, total: 1)
+Orphan StringName: Shape2D (static: 0, total: 4)
+Orphan StringName: health (static: 0, total: 7)
+Orphan StringName: velocity (static: 0, total: 6)
+Orphan StringName: healing_charges (static: 0, total: 6)
 Orphan StringName: _create_hazard_tile (static: 0, total: 1)
-Orphan StringName: ColorRect (static: 1, total: 4)
-Orphan StringName: telegraph_finished (static: 0, total: 3)
-Orphan StringName: finished (static: 0, total: 1)
-Orphan StringName: _input (static: 0, total: 2)
-Orphan StringName: offset_bottom (static: 0, total: 1)
+Orphan StringName: wall_coyote_timer (static: 0, total: 6)
+Orphan StringName: hit_stop_player_hurt (static: 0, total: 6)
+Orphan StringName: _get_stream_name (static: 0, total: 1)
+Orphan StringName: @group_24_Combat (static: 0, total: 3)
+Orphan StringName: @healing_charges_setter (static: 0, total: 1)
+Orphan StringName: @group_4_Knockback (static: 0, total: 3)
+Orphan StringName: "src/entities/player/states/state_jump.gd" (static: 0, total: 1)
+Orphan StringName: max_healing_charges (static: 0, total: 12)
+Orphan StringName: PlayerPhysicsData (static: 0, total: 4)
+Orphan StringName: _health (static: 0, total: 7)
+Orphan StringName: jump_buffer (static: 0, total: 6)
+Orphan StringName: _input (static: 0, total: 30)
+Orphan StringName: bus (static: 0, total: 6)
+Orphan StringName: _perform_air_jump (static: 0, total: 1)
+Orphan StringName: forward_attack_shape (static: 0, total: 5)
+Orphan StringName: "src/entities/player/states/state_wall_slide.gd" (static: 0, total: 1)
+Orphan StringName: wall_jump_force_x (static: 0, total: 6)
+Orphan StringName: wall_jump_force_y (static: 0, total: 6)
+Orphan StringName: config (static: 0, total: 6)
+Orphan StringName: Resource (static: 2, total: 29)
+Orphan StringName: charge_time (static: 0, total: 6)
+Orphan StringName: @group_7_Movement & Physics (static: 0, total: 3)
+Orphan StringName: invincibility_duration (static: 0, total: 6)
+Orphan StringName: close_range_threshold (static: 0, total: 6)
+Orphan StringName: hit_stop_player_melee_close (static: 0, total: 6)
+Orphan StringName: upward_attack_shape (static: 0, total: 5)
+Orphan StringName: AudioStream (static: 0, total: 2)
+Orphan StringName: _has_loop (static: 0, total: 1)
+Orphan StringName: dash_duration (static: 0, total: 6)
+Orphan StringName: wall_coyote_time (static: 0, total: 6)
+Orphan StringName: audio_cue (static: 0, total: 5)
+Orphan StringName: jump_force (static: 0, total: 6)
+Orphan StringName: exit (static: 0, total: 4)
+Orphan StringName: WorldConfig (static: 0, total: 5)
+Orphan StringName: _get_bar_beats (static: 0, total: 1)
+Orphan StringName: fast_fall_gravity_multiplier (static: 0, total: 6)
+Orphan StringName: hazard_knockback_speed (static: 0, total: 6)
+Orphan StringName: state_machine (static: 0, total: 38)
+Orphan StringName: determination_counter (static: 0, total: 6)
+Orphan StringName: _player (static: 0, total: 7)
 Orphan StringName: _shortcut_input (static: 0, total: 2)
 Orphan StringName: timeout (static: 2, total: 3)
-Orphan StringName: Node2D (static: 1, total: 3)
+Orphan StringName: knockback_timer (static: 0, total: 6)
+Orphan StringName: services (static: 0, total: 6)
+Orphan StringName: _init (static: 0, total: 1)
+Orphan StringName: _is_monophonic (static: 0, total: 1)
+Orphan StringName: attack_cooldown_timer (static: 0, total: 6)
+Orphan StringName: _get_dash_direction (static: 0, total: 1)
+Orphan StringName: volume_db (static: 0, total: 6)
+Orphan StringName: coyote_time (static: 0, total: 6)
+Orphan StringName: heal_duration (static: 0, total: 6)
+Orphan StringName: PlayerStateAttack (static: 0, total: 3)
+Orphan StringName: @group_0_Sound Source (static: 0, total: 3)
 Orphan StringName: _process (static: 0, total: 2)
+Orphan StringName: jump_release_dampener (static: 0, total: 6)
+Orphan StringName: stream (static: 0, total: 5)
+Orphan StringName: attack_cooldown (static: 0, total: 6)
+Orphan StringName: dash_duration_timer (static: 0, total: 6)
+Orphan StringName: last_wall_normal (static: 0, total: 6)
+Orphan StringName: _get_bpm (static: 0, total: 1)
 Orphan StringName: _create_oneway_platform (static: 0, total: 1)
-Orphan StringName: start_telegraph (static: 0, total: 1)
-Orphan StringName: . (static: 1, total: 2)
+Orphan StringName: process_input (static: 0, total: 1)
+Orphan StringName: PlayerPhysicsComponent (static: 0, total: 7)
+Orphan StringName: @group_20_Dash (static: 0, total: 3)
+Orphan StringName: can_dash (static: 0, total: 6)
+Orphan StringName: _get_parameter_list (static: 0, total: 1)
+Orphan StringName: facing_direction (static: 0, total: 13)
+Orphan StringName: _instantiate_playback (static: 0, total: 1)
+Orphan StringName: attack_friction (static: 0, total: 6)
+Orphan StringName: hit_stop_boss_death (static: 0, total: 6)
 Orphan StringName: _create_background_tile (static: 0, total: 1)
-Orphan StringName: Node (static: 5, total: 6)
+Orphan StringName: pogo_fall_prevention_timer (static: 0, total: 6)
+Orphan StringName: Node (static: 5, total: 54)
+Orphan StringName: @health_setter (static: 0, total: 2)
 Orphan StringName: _unhandled_key_input (static: 0, total: 2)
+Orphan StringName: "src/entities/player/states/state_fall.gd" (static: 0, total: 1)
+Orphan StringName: hit_targets_this_swing (static: 0, total: 5)
 Orphan StringName: build_terrain_async (static: 0, total: 1)
-Orphan StringName: Visual (static: 0, total: 1)
+Orphan StringName: @group_0_Health & Resources (static: 0, total: 3)
+Orphan StringName: owner (static: 0, total: 38)
+Orphan StringName: @group_0_Feedback (static: 0, total: 3)
+Orphan StringName: teardown (static: 0, total: 1)
+Orphan StringName: Object (static: 2, total: 3)
+Orphan StringName: "src/entities/player/states/state_move.gd" (static: 0, total: 1)
+Orphan StringName: combat (static: 0, total: 5)
+Orphan StringName: "src/entities/player/states/state_dash.gd" (static: 0, total: 1)
+Orphan StringName: @group_2_Mixing (static: 0, total: 3)
+Orphan StringName: air_jumps_left (static: 0, total: 6)
+Orphan StringName: _physics (static: 0, total: 49)
 Orphan StringName: _get_configuration_warnings (static: 0, total: 2)
+Orphan StringName: pitch_randomness (static: 0, total: 6)
 Orphan StringName: fill_viewport (static: 0, total: 1)
-Orphan StringName: visual (static: 0, total: 3)
-Orphan StringName: _get_rid (static: 0, total: 3)
-Orphan StringName: offset_right (static: 0, total: 1)
+Orphan StringName: jump_buffer_timer (static: 0, total: 6)
+Orphan StringName: PlayerStateData (static: 0, total: 3)
+Orphan StringName: is_pogo_attack (static: 0, total: 6)
+Orphan StringName: is_charging (static: 0, total: 6)
+Orphan StringName: PlayerCombatData (static: 0, total: 4)
+Orphan StringName: pitch_scale (static: 0, total: 6)
+Orphan StringName: @group_0_Physics (static: 0, total: 3)
+Orphan StringName: "src/entities/player/states/state_hurt.gd" (static: 0, total: 1)
+Orphan StringName: get_pitch (static: 0, total: 1)
+Orphan StringName: BaseState (static: 0, total: 3)
+Orphan StringName: BaseEntityData (static: 0, total: 3)
+Orphan StringName: _dash_direction (static: 0, total: 7)
+Orphan StringName: _get_rid (static: 0, total: 30)
+Orphan StringName: JumpHelper (static: 0, total: 1)
+Orphan StringName: dash_speed (static: 0, total: 6)
+Orphan StringName: _get_length (static: 0, total: 1)
+Orphan StringName: @group_2_Juice & Feedback (Hit-Stop) (static: 0, total: 3)
+Orphan StringName: damage_response (static: 0, total: 5)
+Orphan StringName: gravity (static: 0, total: 6)
 Orphan StringName: TerrainBuilder (static: 0, total: 3)
+Orphan StringName: enter (static: 0, total: 8)
 Orphan StringName: _physics_process (static: 0, total: 2)
-StringName: 36 unclaimed string names at exit.
+Orphan StringName: attack_duration (static: 0, total: 6)
+Orphan StringName: move_speed (static: 0, total: 6)
+StringName: 158 unclaimed string names at exit.

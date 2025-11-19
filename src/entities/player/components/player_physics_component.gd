@@ -22,12 +22,16 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(owner_node):
 		return
 
-	_update_timers(delta)
+	# --- Jump Buffering Logic ---
+	# We poll input here so buffering works in ALL states (Attack, Fall, etc.)
+	var input_comp: InputComponent = owner_node.get_component(InputComponent)
+	if is_instance_valid(input_comp) and input_comp.buffer.get("jump_just_pressed"):
+		p_data.physics.jump_buffer_timer = p_data.config.jump_buffer
 
-	owner_node.move_and_slide()
+	_update_timers(delta)
 	
-	if not is_instance_valid(owner_node):
-		return
+	# Note: move_and_slide() is now called by the owner entity (Player.gd).
+	# This component simply processes state based on the results of that movement.
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
 		p_data.physics.wall_coyote_timer = p_data.config.wall_coyote_time
@@ -42,6 +46,7 @@ func _update_timers(delta: float) -> void:
 		return
 	p_data.physics.coyote_timer = max(0.0, p_data.physics.coyote_timer - delta)
 	p_data.physics.wall_coyote_timer = max(0.0, p_data.physics.wall_coyote_timer - delta)
+	p_data.physics.jump_buffer_timer = max(0.0, p_data.physics.jump_buffer_timer - delta)
 
 
 # --- Public Methods ---

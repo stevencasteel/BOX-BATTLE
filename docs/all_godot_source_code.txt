@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Wed Nov 19 11:52:00 CST 2025
+Generated on: Wed Nov 19 15:51:16 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -31,8 +31,11 @@ PROJECT DIRECTORY STRUCTURE:
 ├── export_presets.cfg
 ├── icon.svg
 ├── materials
+│   ├── chromatic_material.tres
 │   ├── dissolve_material.tres
-│   └── entity_hit_flash_material.tres
+│   ├── entity_hit_flash_material.tres
+│   ├── shockwave_material.tres
+│   └── vignette_material.tres
 ├── pico.save
 ├── progess
 │   └── progress_001-1.jpg
@@ -43,6 +46,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   ├── red_hit_flash_test.gdshader
 │   │   └── red_hit_flash_test.gdshader.save
 │   ├── fullscreen
+│   │   ├── chromatic_aberration.gdshader
+│   │   ├── shockwave.gdshader
+│   │   └── vignette.gdshader
 │   ├── includes
 │   │   ├── color.gdshaderinc
 │   │   ├── common_math.gdshaderinc
@@ -110,7 +116,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   │   ├── screen_shake_effect.gd
 │   │   │   │   ├── shader_effect.gd
 │   │   │   │   └── vfx_effect.gd
-│   │   │   └── game_state_data.gd
+│   │   │   ├── game_state_data.gd
+│   │   │   └── save_data.gd
 │   │   ├── events
 │   │   │   ├── event_bus.gd
 │   │   │   ├── event_catalog.gd
@@ -145,7 +152,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── pooling
 │   │   │   │   ├── pool_definition.gd
 │   │   │   │   └── pool_manifest.gd
-│   │   │   └── scene_manager.gd
+│   │   │   ├── save_manager.gd
+│   │   │   ├── scene_manager.gd
+│   │   │   └── targeting_system.gd
 │   │   └── util
 │   │       ├── asset_paths.gd
 │   │       ├── combat_utils.gd
@@ -172,7 +181,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── dialogue_line.gd
 │   │   │   └── test_conversation.tres
 │   │   ├── effects
-│   │   │   └── entity_hit_flash_effect.tres
+│   │   │   ├── boss_shockwave_effect.tres
+│   │   │   ├── entity_hit_flash_effect.tres
+│   │   │   └── heavy_impact_chromatic.tres
 │   │   ├── encounters
 │   │   │   ├── encounter_00.tres
 │   │   │   └── encounter_data.gd
@@ -320,7 +331,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   ├── scenes
 │   │   ├── game
 │   │   │   ├── encounter_scene.gd
-│   │   │   └── encounter_scene.tscn
+│   │   │   ├── encounter_scene.tscn
+│   │   │   └── post_process_manager.gd
 │   │   ├── game_over
 │   │   │   ├── game_over_screen.gd
 │   │   │   └── game_over_screen.tscn
@@ -338,6 +350,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── credits_screen.tscn
 │   │   │   ├── options_screen.gd
 │   │   │   ├── options_screen.tscn
+│   │   │   ├── save_select_screen.gd
+│   │   │   ├── save_select_screen.tscn
 │   │   │   ├── sound_screen.gd
 │   │   │   ├── sound_screen.tscn
 │   │   │   ├── title_screen.gd
@@ -372,6 +386,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── mute_button
 │   │   │   │   ├── mute_button.gd
 │   │   │   │   └── mute_button.tscn
+│   │   │   ├── save_slot_button
+│   │   │   │   ├── save_slot_button.gd
+│   │   │   │   └── save_slot_button.tscn
 │   │   │   ├── sound_setting_row
 │   │   │   │   ├── sound_setting_row.gd
 │   │   │   │   └── sound_setting_row.tscn
@@ -399,7 +416,7 @@ PROJECT DIRECTORY STRUCTURE:
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-89 directories, 302 files
+90 directories, 318 files
 
 
 =====================================
@@ -415,88 +432,142 @@ FILE: ./.gutconfig.json
 =====================================
 FILE: ./tools/fx_playground.tscn
 =====================================
-[gd_scene load_steps=5 format=3 uid="uid://qfvxrbic3utx"]
+[gd_scene load_steps=8 format=3 uid="uid://qfvxrbic3utx"]
 
 [ext_resource type="Script" uid="uid://chl2ii0j6x47a" path="res://tools/fx_playground.gd" id="1_script"]
-[ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="2_effect"]
 [ext_resource type="PackedScene" uid="uid://g7h8jaj0k1l2" path="res://src/entities/components/fx_component.tscn" id="3_fx_component"]
-[ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="4_dissolve_effect"]
+[ext_resource type="PackedScene" uid="uid://cmdkxwvysirh1" path="res://src/projectiles/player_shot.tscn" id="4_projectile_scene"]
+[ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="5_hit_flash"]
+[ext_resource type="Resource" path="res://src/data/effects/boss_shockwave_effect.tres" id="6_shockwave"]
 
-[node name="FXPlayground" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.2
+glow_blend_mode = 0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_post"]
+
+[node name="FXPlayground" type="Node2D"]
 script = ExtResource("1_script")
-_hit_flash_effect = ExtResource("2_effect")
-_dissolve_effect = ExtResource("4_dissolve_effect")
+_player_shot_scene = ExtResource("4_projectile_scene")
+_hit_flash_effect = ExtResource("5_hit_flash")
+_shockwave_effect = ExtResource("6_shockwave")
 
-[node name="BackgroundColor" type="ColorRect" parent="."]
-layout_mode = 1
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_glow")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(500, 500)
+
+[node name="Background" type="ColorRect" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 1000.0
+offset_bottom = 1000.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.1, 0.1, 0.1, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
-layout_mode = 1
+[node name="Grid" type="CPUParticles2D" parent="Background"]
+position = Vector2(500, 500)
+amount = 20
+lifetime = 4.0
+emission_shape = 3
+emission_rect_extents = Vector2(500, 500)
+gravity = Vector2(0, 0)
+scale_amount_min = 2.0
+scale_amount_max = 2.0
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TestSubject" type="ColorRect" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 60)
+offset_left = 700.0
+offset_top = 470.0
+offset_right = 760.0
+offset_bottom = 530.0
+color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="FXComponent" parent="TestSubject" instance=ExtResource("3_fx_component")]
+
+[node name="TargetMarker" type="Marker2D" parent="."]
+position = Vector2(730, 500)
+
+[node name="SpawnMarker" type="Marker2D" parent="."]
+position = Vector2(200, 500)
+
+[node name="PostProcessLayer" type="CanvasLayer" parent="."]
+
+[node name="PostProcessRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_post")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
 
-[node name="TestSubject" type="ColorRect" parent="CenterContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 200)
-layout_mode = 2
-color = Color(0.8, 0.8, 0.8, 1)
+[node name="UI" type="CanvasLayer" parent="."]
 
-[node name="FXComponent" parent="CenterContainer/TestSubject" instance=ExtResource("3_fx_component")]
+[node name="Panel" type="Panel" parent="UI"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 320.0
+offset_bottom = 400.0
 
-[node name="ButtonGrid" type="GridContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="UI/Panel"]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -225.0
-offset_top = -125.0
-offset_right = 225.0
-offset_bottom = -25.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
 grow_horizontal = 2
-grow_vertical = 0
-columns = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
 
-[node name="ButtonRed" type="Button" parent="ButtonGrid"]
-custom_minimum_size = Vector2(200, 40)
+[node name="Label" type="Label" parent="UI/Panel/VBox"]
 layout_mode = 2
-text = "Play Hit-Flash (Red)"
+text = "FX PLAYGROUND"
+horizontal_alignment = 1
 
-[node name="ButtonBlue" type="Button" parent="ButtonGrid"]
-custom_minimum_size = Vector2(200, 40)
+[node name="BtnShot" type="Button" parent="UI/Panel/VBox"]
 layout_mode = 2
-text = "Play Hit-Flash (Blue)"
+text = "Fire Projectile (Space)"
 
-[node name="ButtonDissolve" type="Button" parent="ButtonGrid"]
-custom_minimum_size = Vector2(200, 40)
+[node name="BtnShockwave" type="Button" parent="UI/Panel/VBox"]
 layout_mode = 2
-text = "Play Dissolve"
+text = "Trigger Shockwave (E)"
 
-[node name="ButtonPlaceholder" type="Button" parent="ButtonGrid"]
-custom_minimum_size = Vector2(200, 40)
+[node name="BtnFlash" type="Button" parent="UI/Panel/VBox"]
 layout_mode = 2
-disabled = true
-text = "(Future Effect)"
+text = "Test Hit Flash (F)"
 
-[connection signal="pressed" from="ButtonGrid/ButtonRed" to="." method="_on_button_red_pressed"]
-[connection signal="pressed" from="ButtonGrid/ButtonBlue" to="." method="_on_button_blue_pressed"]
-[connection signal="pressed" from="ButtonGrid/ButtonDissolve" to="." method="_on_button_dissolve_pressed"]
+[node name="BtnSlowMo" type="Button" parent="UI/Panel/VBox"]
+layout_mode = 2
+toggle_mode = true
+text = "Toggle Slow-Mo"
+
+[node name="HSeparator" type="HSeparator" parent="UI/Panel/VBox"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="UI/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ready"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="UI/Panel/VBox/BtnShot" to="." method="_on_btn_shot_pressed"]
+[connection signal="pressed" from="UI/Panel/VBox/BtnShockwave" to="." method="_on_btn_shockwave_pressed"]
+[connection signal="pressed" from="UI/Panel/VBox/BtnFlash" to="." method="_on_btn_flash_pressed"]
+[connection signal="toggled" from="UI/Panel/VBox/BtnSlowMo" to="." method="_on_btn_slow_mo_toggled"]
 
 
 =====================================
@@ -547,61 +618,94 @@ FILE: ./tools/fx_playground.gd
 =====================================
 # tools/fx_playground.gd
 @tool
-extends Control
+extends Node2D
 
+# --- Resources ---
+@export var _player_shot_scene: PackedScene
 @export var _hit_flash_effect: ShaderEffect
-@export var _dissolve_effect: ShaderEffect
+# We will inject the Shockwave effect resource here once created
+@export var _shockwave_effect: ShaderEffect 
 
+# --- Nodes ---
 @onready var test_subject: ColorRect = %TestSubject
 @onready var fx_component: FXComponent = %TestSubject/FXComponent
-
+@onready var post_process_rect: ColorRect = %PostProcessRect
+@onready var status_label: Label = %StatusLabel
 
 func _ready() -> void:
-	if not Engine.is_editor_hint():
-		# When running the scene, the ServiceLocator autoload is
-		# available globally. We must provide it to the component's setup
-		# method to satisfy its dependency contract.
-		var dependencies = {
-			"visual_node": test_subject,
-			"fx_manager": ServiceLocator.fx_manager,
-			"hit_effect": _hit_flash_effect # Provide a default hit effect
-		}
-		fx_component.setup(test_subject, dependencies)
-		test_subject.visible = true
-
-
-func _on_button_red_pressed() -> void:
-	if not is_instance_valid(_hit_flash_effect):
-		print("ERROR: No Hit Flash ShaderEffect resource assigned.")
+	if Engine.is_editor_hint():
 		return
-	test_subject.visible = true
+		
+	# Mock Service Setup for Playground
+	# We manually wire the subject's FX component since it's not a full Entity
+	var deps = {
+		"visual_node": test_subject,
+		"fx_manager": ServiceLocator.fx_manager,
+		"hit_effect": _hit_flash_effect
+	}
+	fx_component.setup(test_subject, deps)
+	
+	# Register camera for shake testing
+	ServiceLocator.fx_manager.register_camera_shaker($Camera2D.get_child(0) if $Camera2D.get_child_count() > 0 else null)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_accept"): # Space
+		_on_btn_shot_pressed()
+	elif event.is_action_pressed("ui_attack"): # C / E
+		_on_btn_shockwave_pressed()
+
+
+func _on_btn_shot_pressed() -> void:
+	status_label.text = "Firing Projectile..."
+	var shot = _player_shot_scene.instantiate()
+	shot.position = $SpawnMarker.position
+	
+	# Fake the pool/combat deps for the projectile
+	var deps = {
+		"object_pool": ServiceLocator.object_pool,
+		"combat_utils": ServiceLocator.combat_utils
+	}
+	
+	# Manually add to tree (bypassing pool for simple test)
+	add_child(shot)
+	shot.activate(deps)
+	
+	# Aim at target
+	shot.direction = (test_subject.global_position - shot.global_position).normalized()
+	shot.look_at(test_subject.global_position)
+
+
+func _on_btn_shockwave_pressed() -> void:
+	status_label.text = "Shockwave Triggered!"
+	if _shockwave_effect:
+		# We will implement this in FXManager later
+		ServiceLocator.fx_manager.apply_shader_effect(post_process_rect, _shockwave_effect, {}, {})
+	else:
+		status_label.text = "No Shockwave Resource assigned!"
+
+
+func _on_btn_flash_pressed() -> void:
+	status_label.text = "Hit Flash"
 	fx_component.play_effect(_hit_flash_effect)
 
 
-func _on_button_blue_pressed() -> void:
-	if not is_instance_valid(_hit_flash_effect):
-		print("ERROR: No Hit Flash ShaderEffect resource assigned.")
-		return
-
-	test_subject.visible = true
-	var overrides = {"tint_color": Color.BLUE}
-	fx_component.play_effect(_hit_flash_effect, overrides)
+func _on_btn_slow_mo_toggled(toggled_on: bool) -> void:
+	Engine.time_scale = 0.2 if toggled_on else 1.0
+	status_label.text = "Time Scale: " + str(Engine.time_scale)
 
 
-func _on_button_dissolve_pressed() -> void:
-	if not is_instance_valid(_dissolve_effect):
-		print("ERROR: No Dissolve ShaderEffect resource assigned.")
-		return
+=====================================
+FILE: ./materials/chromatic_material.tres
+=====================================
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://chromatic_material"]
 
-	test_subject.visible = true
-	if test_subject.material:
-		test_subject.material = null
+[ext_resource type="Shader" path="res://shaders/fullscreen/chromatic_aberration.gdshader" id="1_shader"]
 
-	var effect_tween: Tween = fx_component.play_effect(_dissolve_effect)
-	if is_instance_valid(effect_tween):
-		await effect_tween.finished
-		# After dissolving, make the subject invisible but still present.
-		test_subject.visible = false
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/offset_strength = 10.0
+shader_parameter/fx_progress = 0.0
 
 
 =====================================
@@ -621,6 +725,20 @@ shader_parameter/border_width = 0.02
 
 
 =====================================
+FILE: ./materials/vignette_material.tres
+=====================================
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://vignette_material"]
+
+[ext_resource type="Shader" path="res://shaders/fullscreen/vignette.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/vignette_color = Color(0.5, 0, 0, 1)
+shader_parameter/intensity = 0.0
+shader_parameter/pulse_speed = 3.0
+
+
+=====================================
 FILE: ./materials/entity_hit_flash_material.tres
 =====================================
 [gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://entity_hit_flash_mat"]
@@ -631,6 +749,21 @@ FILE: ./materials/entity_hit_flash_material.tres
 shader = ExtResource("1_shader")
 shader_parameter/fx_progress = 0.0
 shader_parameter/tint_color = Color(1, 0, 0, 1)
+
+=====================================
+FILE: ./materials/shockwave_material.tres
+=====================================
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://shockwave_material"]
+
+[ext_resource type="Shader" path="res://shaders/fullscreen/shockwave.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/center = Vector2(0.5, 0.5)
+shader_parameter/force = 0.02
+shader_parameter/fx_progress = 0.0
+shader_parameter/thickness = 0.1
+
 
 =====================================
 FILE: ./docs/TODO.txt
@@ -646,45 +779,15 @@ FILE: ./docs/TODO.txt
 ║                        Strategic Development Plan & Backlog                     ║
 ╚═════════════════════════════════════════════════════════════════════════════════╝
 
-█  IMMEDIATE REFACTORING (The "Gemini v3" Diet)
-   Goal: Reduce boilerplate, token usage, and coupling.
 
-   □  Split 'God Config' (CombatConfig):
-      - Create PlayerConfig, WorldConfig, and EnemyConfig resources.
-      - Update components to request specific configs, not the monolith.
-   □  Genericize State Machine:
-      - Create src/entities/common_states/ (StateIdle, StatePatrol).
-      - Delete specific implementations (StateBossPatrol, StateMinionIdle).
-   □  Remove EntityBuilder:
-      - Hydrate BaseEntity directly from EntityArchetype + ServiceLocator.
-      - Remove hardcoded _build_player/_build_boss logic.
 
-█  PHASE 2: GAME LOOP & PROGRESSION
-   Goal: Turn the encounter prototype into a playable loop.
+   □  Audio Polish:
+      - Add specific SFX for different surface materials (footsteps).
+      - Implement dynamic music mixing (low pass filter on pause/low health).
 
-   □  Persistence:
-      - Create SaveManager (ConfigFile).
-      - Create WorldState resource (track defeated bosses).
-   □  Meta-Game UI:
-      - Implement Stage Select Screen.
-      - Connect Boss Death -> Victory -> Stage Select flow.
+   ░  subtle dust when entity lands or jumps from surfce (floor or wall)
 
-█  PHASE 3: POLISH & JUICE
-   Goal: Production-quality feel and accessibility.
 
-   □  Advanced Shaders:
-      - Implement Fullscreen Shockwave effect.
-      - Add chromatic aberration/distortion for heavy impacts.
-   □  Accessibility:
-      - Localization support (tr keys).
-      - Control Remapping implementation in Settings.
-   □  Combat Depth:
-      - Implement Stun/Poise system for Bosses.
-
-█  FUTURE / WISHLIST
-   ░  Fast-Fall mechanics.
-   ░  Boss Rush Mode.
-   ░  Diegetic UI elements.
 
 =====================================
 FILE: ./docs/last_commit_command.txt
@@ -910,17 +1013,117 @@ FILE: ./docs/CHANGELOG.txt
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.27.0] - CURRENT - 11/19/2025                               ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.25.0] - CURRENT UNTITLED - 11/19/2025                           ██   ║
+║   ██           [0.26.0] - VISUAL JUICE & FX & MULTI-SLOT SAVE SYSTEM - 11/19/2025                               ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+║                                                                                ║
+║   █  Visual Effects (Shaders)                                                  ║
+║      ░ ■ Implemented 'PostProcessManager' to handle stacked fullscreen effects.║
+║      ░ ■ Added 'Shockwave' distortion shader for Boss death.                   ║
+║      ░ ■ Added 'Chromatic Aberration' glitch effect for Boss phase changes.    ║
+║      ░ ■ Added pulsing 'Red Vignette' for low health (1 HP) state.             ║
+║                                                                                ║
+║   █  Polish                                                                    ║
+║      ░ ■ Refactored Player Projectile: Now uses a Green Fireball visual with   ║
+║      ░   a non-duplicating particle trail and green impact sparks.              ║
+║      ░ ■ Added 'Slow Motion' (Time Scale) effects on Player Death and Victory. ║
+║      ░ ■ Fixed 'FXPlayground' to support testing of fullscreen shaders.        ║
+║                                                                                ║
+║                                                                                ║
+║   █  Persistence Upgrade                                                       ║
+║      ░ ■ Refactored 'SaveManager' to support 3 distinct save slots.            ║
+║      ░ ■ Implemented File Operations: Create, Load, Copy, and Erase slots.     ║
+║      ░ ■ Added file path management using 'take_over_path' for safe duplication.║
+║                                                                                ║
+║   █  UI & Meta-Game                                                            ║
+║      ░ ■ Created 'SaveSelectScreen': A hub for managing game data before play. ║
+║      ░ ■ Created 'SaveSlotButton': Reusable component displaying Wins/Losses.  ║
+║      ░ ■ Implemented "Copy Mode" and "Erase Mode" UI logic.                    ║
+║      ░ ■ Updated 'TitleScreen' navigation flow.                                ║
+║                                                                                ║
+║   █  Developer Tools                                                           ║
+║      ░ ■ Added TAB shortcut in Main Menu to instantly start a fresh run in     ║
+║      ░   Slot 0 for rapid iteration.                                           ║
+
+
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER & INPUT REMAPPING & ACCESSIBILITY - 11/19/2025      ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
+║   █  Architecture & Decoupling                                                 ║
+║      ░ ■ Implemented 'TargetingSystem': A centralized service for entities to  ║
+║      ░   register/find targets, removing brittle 'get_tree()' group lookups.   ║
+║      ░ ■ Centralized Input Identifiers: Created 'Identifiers.Actions' to       ║
+║      ░   replace magic strings ("ui_left") throughout the codebase.            ║
+║      ░ ■ Resolved Cyclic Dependencies: Removed strict static typing in         ║
+║      ░   Component and State scripts referencing their owners. Replaced with   ║
+║      ░   runtime checks to prevent parser lock-ups in the Editor.              ║
+║                                                                                ║
+║   █  Code Quality                                                              ║
+║      ░ ■ Refactored 'BaseEntity' initialization to ensure Archetypes build     ║
+║      ░   components before configuration injection occurs.                     ║
+║      ░ ■ Updated 'InputComponent' and 'MenuManager' to use the new identifiers.║
+║      ░ ■ Hardened 'ArenaBuilder' to prevent type errors during hot-reloads.    ║
+║                                                                                ║
 
-
-
-
-
+║   █  New Systems                                                               ║
+║      ░ ■ Implemented 'SaveManager': Handles serialization of gameplay stats    ║
+║      ░   (Wins/Losses) to 'user://save_data.tres'.                             ║
+║      ░ ■ Upgraded 'Settings': Audio preferences (Volume/Mute) now persist to   ║
+║      ░   'user://options.cfg'.                                                 ║
+║                                                                                ║
+║   █  UI & Gameplay Integration                                                 ║
+║      ░ ■ Debug Overlay: Added persistent Wins/Losses tracker to the HUD.       ║
+║      ░ ■ EncounterScene: Now automatically records match results to disk upon  ║
+║      ░   Player death or Boss defeat.                                          ║
+║      ░ ■ Hardened 'ServiceLocator' to expose the new SaveManager.              ║
+║                                                                                ║
+║                                                                                ║
+║   █  Input System                                                              ║
+║      ░ ■ Implemented runtime Input Remapping backend in 'Settings'.            ║
+║      ░ ■ Added 'Input Presets' system:                                         ║
+║      ░   - Default 1 (ZXC + Arrows/WASD)                                       ║
+║      ░   - Default 2 (.,/ + WASD)                                              ║
+║      ░   - Custom (Automatically set on manual rebind)                         ║
+║      ░ ■ Input configuration is now serialized to 'user://options.cfg'.        ║
+║                                                                                ║
+║   █  User Interface                                                            ║
+║      ░ ■ Created 'ControlsScreen' with dynamic binding rows.                   ║
+║      ░ ■ Created 'ControlSettingRow' component with "Press any key" detection. ║
+║      ░ ■ Added visual/audio feedback (Cursors, SFX) to all control UI elements.║
+║      ░ ■ Added "Fixed Controls" reference panel for hardcoded inputs.          ║
+║                                                                                ║
 
 
 
@@ -1602,6 +1805,104 @@ void fragment() {
 }
 
 =====================================
+FILE: ./shaders/fullscreen/shockwave.gdshader
+=====================================
+shader_type canvas_item;
+
+uniform vec2 center = vec2(0.5, 0.5);
+uniform float force : hint_range(0.0, 0.5) = 0.05;
+uniform float fx_progress : hint_range(0.0, 1.0) = 0.0;
+uniform float thickness : hint_range(0.0, 0.5) = 0.1;
+
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+
+void fragment() {
+	// FIX: Optimization/Bugfix. If progress is 0, do no math, return original pixel.
+	// This prevents the "center warping" artifact when the effect is idle.
+	if (fx_progress <= 0.001) {
+		COLOR = texture(screen_texture, SCREEN_UV);
+	} else {
+		float ratio = SCREEN_PIXEL_SIZE.x / SCREEN_PIXEL_SIZE.y;
+		vec2 scaled_uv = (SCREEN_UV - vec2(0.5, 0.0)) / vec2(ratio, 1.0) + vec2(0.5, 0.0);
+		vec2 scaled_center = (center - vec2(0.5, 0.0)) / vec2(ratio, 1.0) + vec2(0.5, 0.0);
+		
+		float dist = length(scaled_uv - scaled_center);
+		
+		float ripple_freq = 20.0; 
+		float ripple = sin((dist - fx_progress) * ripple_freq);
+		float mask = smoothstep(0.25, 0.0, abs(dist - fx_progress));
+		float dist_scale = 1.0 + (dist * 2.0); 
+		
+		vec2 disp = normalize(scaled_uv - scaled_center) * ripple * force * mask * dist_scale;
+		
+		COLOR = texture(screen_texture, SCREEN_UV - disp);
+	}
+}
+
+
+=====================================
+FILE: ./shaders/fullscreen/vignette.gdshader
+=====================================
+shader_type canvas_item;
+
+uniform vec4 vignette_color : source_color = vec4(0.7, 0.0, 0.0, 1.0);
+uniform float intensity : hint_range(0.0, 1.0) = 0.0;
+uniform float pulse_speed : hint_range(0.0, 10.0) = 3.0;
+
+void fragment() {
+	vec2 uv = SCREEN_UV - 0.5;
+	float dist = length(uv);
+	
+	// FIX: Tightened gradient. 
+	// Starts at 0.35 (near center) to ensure visibility.
+	// Reaches full strength at 0.85 (visible corners). 
+	// Previous was 1.2, which pushed the red too far off-screen.
+	float mask = smoothstep(0.35, 0.85, dist);
+	
+	// Heartbeat Pulse Math
+	float base_pulse = sin(TIME * pulse_speed);
+	float heartbeat = pow(0.5 * (base_pulse + 1.0), 2.0); 
+	
+	float pulse_mod = 0.3 + (heartbeat * 0.7);
+	
+	vec4 output = vignette_color;
+	output.a = mask * intensity * pulse_mod;
+	
+	COLOR = output;
+}
+
+
+=====================================
+FILE: ./shaders/fullscreen/chromatic_aberration.gdshader
+=====================================
+shader_type canvas_item;
+
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform float offset_strength : hint_range(0.0, 50.0) = 2.0;
+uniform float fx_progress : hint_range(0.0, 1.0) = 0.0;
+
+void fragment() {
+	// Center Mask: Prevent warping in the middle of the screen
+	float dist = length(SCREEN_UV - 0.5);
+	// smoothstep(inner_radius, outer_radius, value)
+	// This creates a hole in the center (0.0) blending to full strength (1.0) at the edges
+	float center_mask = smoothstep(0.0, 0.6, dist);
+
+	// Apply mask to intensity
+	float intensity = fx_progress * offset_strength * center_mask;
+
+	vec2 uv = SCREEN_UV;
+	
+	// Simple blur approximation: sample further apart for R/B channels
+	vec4 red = texture(screen_texture, uv + vec2(SCREEN_PIXEL_SIZE.x * intensity, 0.0));
+	vec4 green = texture(screen_texture, uv);
+	vec4 blue = texture(screen_texture, uv - vec2(SCREEN_PIXEL_SIZE.x * intensity, 0.0));
+	
+	COLOR = vec4(red.r, green.g, blue.b, 1.0);
+}
+
+
+=====================================
 FILE: ./project.godot
 =====================================
 ; Engine configuration file.
@@ -1617,7 +1918,7 @@ config_version=5
 [application]
 
 config/name="BOX BATTLE"
-config/version="0.25.0"
+config/version="0.26.0"
 run/main_scene="res://src/scenes/main/main.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
@@ -1647,6 +1948,8 @@ Palette="*res://src/core/util/palette.gd"
 PhysicsLayers="*res://src/core/util/physics_layers.gd"
 FXManagerAdapter="*res://src/core/systems/fx_bindings/fx_manager_adapter.gd"
 ObjectPoolAdapter="*res://src/core/systems/pool_bindings/object_pool_adapter.gd"
+TargetingSystem="*res://src/core/systems/targeting_system.gd"
+SaveManager="*res://src/core/systems/save_manager.gd"
 
 [display]
 
@@ -2049,10 +2352,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if menu_items.is_empty():
 		return
 
-	if event.is_action_pressed("ui_down"):
+	if event.is_action_pressed(Identifiers.Actions.MOVE_DOWN):
 		_change_selection(1)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_up"):
+	elif event.is_action_pressed(Identifiers.Actions.MOVE_UP):
 		_change_selection(-1)
 		get_viewport().set_input_as_handled()
 
@@ -2324,33 +2627,39 @@ func _on_audio_settings_changed() -> void:
 =====================================
 FILE: ./src/ui/components/control_setting_row/control_setting_row.tscn
 =====================================
-[gd_scene load_steps=4 format=3 uid="uid://cgt6j1h2w3k4m"]
+[gd_scene load_steps=3 format=3 uid="uid://cgt6j1h2w3k4m"]
 
 [ext_resource type="Script" uid="uid://cl6kmmhf3qt04" path="res://src/ui/components/control_setting_row/control_setting_row.gd" id="1_control_row_script"]
 [ext_resource type="FontFile" uid="uid://hypwi2d6bj7t" path="res://assets/fonts/font_main_bold.ttf" id="2_font_bold"]
-[ext_resource type="FontFile" uid="uid://d3jqjftjdw5hh" path="res://assets/fonts/font_main_regular.ttf" id="3_font_regular"]
 
 [node name="ControlSettingRow" type="HBoxContainer"]
-size_flags_horizontal = 4
-theme_override_constants/separation = 40
+custom_minimum_size = Vector2(900, 60)
+offset_right = 900.0
+offset_bottom = 60.0
+theme_override_constants/separation = 20
+alignment = 1
 script = ExtResource("1_control_row_script")
 
 [node name="ActionLabel" type="Label" parent="."]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
+size_flags_vertical = 1
 theme_override_fonts/font = ExtResource("2_font_bold")
-theme_override_font_sizes/font_size = 36
-text = "Action"
+theme_override_font_sizes/font_size = 32
+text = "Action Name"
 horizontal_alignment = 2
+vertical_alignment = 1
 
-[node name="KeysLabel" type="Label" parent="."]
+[node name="RebindButton" type="Button" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(500, 0)
+custom_minimum_size = Vector2(400, 50)
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_font_regular")
-theme_override_font_sizes/font_size = 36
-text = "Keys"
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "Key"
+
+[connection signal="pressed" from="RebindButton" to="." method="_on_rebind_button_pressed"]
 
 
 =====================================
@@ -2358,35 +2667,94 @@ FILE: ./src/ui/components/control_setting_row/control_setting_row.gd
 =====================================
 # src/ui/components/control_setting_row/control_setting_row.gd
 @tool
-## A self-contained UI component for a single row in the controls menu.
-## Manages its own labels and layout.
+## A UI component representing a single remappable action.
+## Handles listening for input and updating the Settings singleton.
 class_name ControlSettingRow
 extends HBoxContainer
 
 # --- Node References ---
 @onready var action_label: Label = %ActionLabel
-@onready var keys_label: Label = %KeysLabel
+@onready var rebind_button: Button = %RebindButton
 
-# --- Public Properties ---
-@export var action_text: String = "Action":
-	set(value):
-		action_text = value
-		if is_instance_valid(action_label):
-			action_label.text = action_text
+# --- Private Variables ---
+var _action_name: String = ""
+var _is_listening: bool = false
 
-@export var keys_text: String = "Keys":
-	set(value):
-		keys_text = value
-		if is_instance_valid(keys_label):
-			keys_label.text = keys_text
+# --- Godot Lifecycle ---
 
-
-# --- Godot Lifecycle Methods ---
 func _ready() -> void:
+	# Ensure visual state matches current settings on load
+	if not _action_name.is_empty():
+		_update_display()
+	
+	if not Engine.is_editor_hint():
+		rebind_button.mouse_entered.connect(_on_hover_started)
+		rebind_button.mouse_exited.connect(_on_hover_ended)
+
+func _input(event: InputEvent) -> void:
+	if not _is_listening:
+		return
+		
+	# Filter out non-input events (like mouse movement)
+	if event is InputEventMouseMotion:
+		return
+
+	# Allow canceling with Escape (if it's not the key being bound)
+	if event.is_action_pressed("ui_cancel"):
+		_is_listening = false
+		_update_display()
+		get_viewport().set_input_as_handled()
+		return
+
+	# Accept Key or Mouse Button
+	if event is InputEventKey or event is InputEventMouseButton:
+		if event.is_pressed():
+			_apply_rebind(event)
+			get_viewport().set_input_as_handled()
+
+
+# --- Public API ---
+
+func setup(action: String, display_name: String) -> void:
+	_action_name = action
 	if is_instance_valid(action_label):
-		action_label.text = action_text
-	if is_instance_valid(keys_label):
-		keys_label.text = keys_text
+		action_label.text = display_name
+	_update_display()
+
+
+# --- Private Logic ---
+
+func _update_display() -> void:
+	if not is_instance_valid(rebind_button):
+		return
+		
+	if _is_listening:
+		rebind_button.text = "Press any key..."
+	else:
+		rebind_button.text = Settings.get_input_label(_action_name)
+
+
+func _apply_rebind(event: InputEvent) -> void:
+	Settings.remap_action(_action_name, event)
+	_is_listening = false
+	_update_display()
+
+
+# --- Signal Handlers ---
+
+func _on_rebind_button_pressed() -> void:
+	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	_is_listening = true
+	_update_display()
+
+
+func _on_hover_started() -> void:
+	CursorManager.set_pointer_state(true)
+	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+
+
+func _on_hover_ended() -> void:
+	CursorManager.set_pointer_state(false)
 
 
 =====================================
@@ -2708,6 +3076,160 @@ func _on_mute_button_pressed() -> void:
 	is_muted = not is_muted
 	set_mute_state(is_muted)
 	mute_toggled.emit(is_muted)
+
+=====================================
+FILE: ./src/ui/components/save_slot_button/save_slot_button.gd
+=====================================
+# src/ui/components/save_slot_button/save_slot_button.gd
+@tool
+class_name SaveSlotButton
+extends Control
+
+# Emitted for generic UI feedback (Sound) - 0 arguments
+signal pressed
+# Emitted for logic - 1 argument
+signal slot_chosen(slot_index)
+
+@export var slot_index: int = 0
+
+@onready var slot_label: Label = %SlotLabel
+@onready var info_label: Label = %InfoLabel
+
+var is_hovered: bool = false
+var is_selected: bool = false
+var _data_summary: Dictionary = {}
+
+func _ready() -> void:
+	focus_mode = FOCUS_ALL
+	mouse_filter = MOUSE_FILTER_STOP
+	
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	focus_entered.connect(_on_focus_entered)
+	focus_exited.connect(_on_focus_exited)
+	
+	refresh()
+
+func refresh() -> void:
+	if not is_instance_valid(slot_label): return
+	
+	slot_label.text = "SLOT %d" % (slot_index + 1)
+	
+	if Engine.is_editor_hint():
+		return
+		
+	_data_summary = SaveManager.get_slot_summary(slot_index)
+	if _data_summary.get("empty"):
+		info_label.text = "NEW GAME"
+		info_label.modulate = Palette.COLOR_TEXT_DISABLED
+	else:
+		info_label.text = "WINS: %d  |  LOSSES: %d" % [_data_summary.wins, _data_summary.losses]
+		info_label.modulate = Palette.COLOR_TEXT_PRIMARY
+	
+	queue_redraw()
+
+func _gui_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_accept") and has_focus():
+		get_viewport().set_input_as_handled()
+		_trigger_press()
+		return
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed():
+		_trigger_press()
+
+func _trigger_press() -> void:
+	pressed.emit()
+	slot_chosen.emit(slot_index)
+
+func _draw() -> void:
+	var bg_color = Palette.COLOR_UI_PANEL_BG
+	var border_color = Palette.COLOR_UI_ACCENT_PRIMARY
+	var border_width = 3.0
+
+	if is_hovered or is_selected or has_focus():
+		bg_color = Palette.COLOR_UI_ACCENT_PRIMARY
+		border_color = Palette.get_color(4)
+		info_label.modulate = Palette.COLOR_BACKGROUND
+		slot_label.modulate = Palette.COLOR_BACKGROUND
+		
+		var glow_rect = Rect2(Vector2.ZERO, size).grow(10)
+		draw_rect(glow_rect, Color(Palette.COLOR_UI_GLOW.r, Palette.COLOR_UI_GLOW.g, Palette.COLOR_UI_GLOW.b, 0.2))
+	else:
+		slot_label.modulate = Palette.COLOR_TEXT_PRIMARY
+		if _data_summary.get("empty", true):
+			info_label.modulate = Palette.COLOR_TEXT_DISABLED
+		else:
+			info_label.modulate = Palette.COLOR_TEXT_PRIMARY
+
+	draw_rect(Rect2(Vector2.ZERO, size), bg_color)
+	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, border_width)
+
+func _on_mouse_entered() -> void:
+	is_hovered = true
+	grab_focus()
+	CursorManager.set_pointer_state(true)
+	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+	queue_redraw()
+
+func _on_mouse_exited() -> void:
+	is_hovered = false
+	CursorManager.set_pointer_state(false)
+	queue_redraw()
+
+func _on_focus_entered() -> void:
+	queue_redraw()
+
+func _on_focus_exited() -> void:
+	queue_redraw()
+
+
+=====================================
+FILE: ./src/ui/components/save_slot_button/save_slot_button.tscn
+=====================================
+[gd_scene load_steps=3 format=3 uid="uid://save_slot_button_scene"]
+
+[ext_resource type="Script" path="res://src/ui/components/save_slot_button/save_slot_button.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://hypwi2d6bj7t" path="res://assets/fonts/font_main_bold.ttf" id="2_font"]
+
+[node name="SaveSlotButton" type="Control"]
+custom_minimum_size = Vector2(600, 100)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_script")
+
+[node name="SlotLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 30.0
+offset_top = -25.0
+offset_right = 200.0
+offset_bottom = 25.0
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 32
+text = "SLOT 1"
+
+[node name="InfoLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -20.0
+offset_right = -30.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "EMPTY"
+horizontal_alignment = 2
+
 
 =====================================
 FILE: ./src/ui/components/custom_slider/custom_slider.tscn
@@ -3197,6 +3719,7 @@ var _target_entity: Node = null
 var _services: ServiceLocator
 var _pool_labels: Dictionary = {}
 var _invincibility_debug_token: int = 0
+var _stats_label: Label = null
 
 # --- Godot Lifecycle Methods ---
 
@@ -3215,6 +3738,15 @@ func _ready() -> void:
 	entity_panel.add_theme_stylebox_override("panel", panel_style)
 	global_panel.add_theme_stylebox_override("panel", panel_style)
 
+	# Dynamically add a Stats label to the global panel
+	var global_vbox = global_panel.get_node("Margin/GlobalInfoVBox")
+	_stats_label = Label.new()
+	_stats_label.add_theme_font_override("font", load("res://addons/gut/fonts/AnonymousPro-Regular.ttf"))
+	_stats_label.add_theme_font_size_override("font_size", 20)
+	# Insert it after FPS label
+	global_vbox.add_child(_stats_label)
+	global_vbox.move_child(_stats_label, 1)
+
 
 func _process(_delta: float) -> void:
 	_update_global_info()
@@ -3222,13 +3754,13 @@ func _process(_delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("debug_toggle_collision"):
+	if event.is_action_pressed(Identifiers.Actions.DEBUG_COLLISION):
 		toggle_collision_button.button_pressed = not toggle_collision_button.button_pressed
 	
-	if event.is_action_pressed("debug_toggle_invincibility"):
+	if event.is_action_pressed(Identifiers.Actions.DEBUG_INVINCIBILITY):
 		toggle_invincibility_button.button_pressed = not toggle_invincibility_button.button_pressed
 
-	if event.is_action_pressed("debug_pause_game"):
+	if event.is_action_pressed(Identifiers.Actions.PAUSE):
 		pause_button.button_pressed = not pause_button.button_pressed
 
 
@@ -3248,6 +3780,12 @@ func _update_global_info() -> void:
 	if is_instance_valid(_services):
 		var fx_stats = _services.fx_manager.get_debug_stats()
 		fx_label.text = "FX: Shaders[%d] VFX[%d]" % [fx_stats.active_shaders, fx_stats.active_vfx]
+
+		# Update persistent stats
+		if _services.save_manager and _services.save_manager.current_save:
+			var save = _services.save_manager.current_save
+			if is_instance_valid(_stats_label):
+				_stats_label.text = "Stats: Wins[%d] Losses[%d]" % [save.total_wins, save.total_losses]
 
 		var pool_stats: Dictionary = _services.object_pool.get_pool_stats()
 		for pool_name in pool_stats:
@@ -3294,7 +3832,7 @@ func _update_entity_info() -> void:
 	if is_instance_valid(state_machine):
 		state_history_label.text = "History: %s" % ", ".join(state_machine.state_history)
 
-	if _target_entity is Player:
+	if _target_entity.is_in_group(Identifiers.Groups.PLAYER):
 		_update_player_specific_info()
 	else:
 		timers_label.text = "Timers:"
@@ -3324,7 +3862,10 @@ func _on_toggle_collision_toggled(button_pressed: bool) -> void:
 
 
 func _on_toggle_invincibility_toggled(button_pressed: bool) -> void:
-	var player: Player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER) as Player
+	if not is_instance_valid(_services) or not is_instance_valid(_services.targeting_system):
+		return
+		
+	var player = _services.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if not is_instance_valid(player):
 		return
 
@@ -3499,13 +4040,15 @@ func _prewarm_shaders() -> void:
 
 		prewarm_viewport.add_child(instance)
 
-		if instance is Player:
+		# Use Group checks instead of static type checks to prevent parser cycles
+		if instance.is_in_group(Identifiers.Groups.PLAYER):
 			instance.velocity.x = 100
 			var sm: BaseStateMachine = instance.get_component(BaseStateMachine)
 			if is_instance_valid(sm) and sm.has_method("change_state"):
 				sm.change_state(Identifiers.PlayerStates.ATTACK)
-		elif instance is BaseBoss:
-			instance.velocity.x = 100
+		elif instance.is_in_group(Identifiers.Groups.ENEMY):
+			if "velocity" in instance:
+				instance.velocity.x = 100
 
 		await get_tree().process_frame
 		instance.queue_free()
@@ -3515,14 +4058,72 @@ func _prewarm_shaders() -> void:
 =====================================
 FILE: ./src/scenes/game/encounter_scene.tscn
 =====================================
-[gd_scene load_steps=2 format=3 uid="uid://game_scene_unique_id"]
+[gd_scene load_steps=8 format=3 uid="uid://game_scene_unique_id"]
 
 [ext_resource type="Script" path="res://src/scenes/game/encounter_scene.gd" id="1_game_script"]
+[ext_resource type="Resource" uid="uid://boss_shockwave_effect" path="res://src/data/effects/boss_shockwave_effect.tres" id="2_shockwave"]
+[ext_resource type="Script" path="res://src/scenes/game/post_process_manager.gd" id="3_post_process"]
+[ext_resource type="Resource" uid="uid://heavy_impact_chromatic" path="res://src/data/effects/heavy_impact_chromatic.tres" id="4_chromatic_res"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shock"]
+resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_chrom"]
+resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
+resource_local_to_scene = true
 
 [node name="EncounterScene" type="Node"]
 script = ExtResource("1_game_script")
+_boss_death_shockwave = ExtResource("2_shockwave")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="PostProcessLayer" type="CanvasLayer" parent="."]
+layer = 100
+script = ExtResource("3_post_process")
+chromatic_resource = ExtResource("4_chromatic_res")
+
+[node name="BackBufferCopy1" type="BackBufferCopy" parent="PostProcessLayer"]
+copy_mode = 2
+
+[node name="ShockwaveRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_shock")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
+[node name="BackBufferCopy2" type="BackBufferCopy" parent="PostProcessLayer"]
+copy_mode = 2
+
+[node name="ChromaticRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_chrom")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
+[node name="VignetteRect" type="ColorRect" parent="PostProcessLayer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_vig")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
 
 =====================================
 FILE: ./src/scenes/game/encounter_scene.gd
@@ -3532,8 +4133,12 @@ FILE: ./src/scenes/game/encounter_scene.gd
 class_name EncounterScene
 extends ISceneController
 
+# --- Editor Properties ---
+@export var _boss_death_shockwave: ShaderEffect
+
 # --- Node References ---
 @onready var camera: Camera2D = $Camera2D
+@onready var post_process_manager = $PostProcessLayer
 
 # --- Private Member Variables ---
 var _level_container: Node = null
@@ -3580,23 +4185,23 @@ func _ready() -> void:
 	_initialize_camera_shaker()
 	_initialize_debug_inspector()
 
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	var player_node: Node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.died.connect(_on_player_died)
 
 
 func _unhandled_input(_event: InputEvent) -> void:
-	if Input.is_action_just_pressed("debug_toggle_overlay"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_OVERLAY):
 		if is_instance_valid(_debug_overlay):
 			_debug_overlay.visible = not _debug_overlay.visible
 
-	if Input.is_action_just_pressed("debug_dialogue"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_DIALOGUE):
 		if DialogueManager.is_conversation_active():
 			DialogueManager.end_conversation()
 		else:
 			DialogueManager.start_conversation(TestConversation)
 
-	if Input.is_action_just_pressed("debug_cycle_target"):
+	if Input.is_action_just_pressed(Identifiers.Actions.DEBUG_CYCLE_TARGET):
 		if is_instance_valid(_debug_overlay) and _debug_overlay.visible:
 			_cycle_debug_target()
 
@@ -3620,11 +4225,11 @@ func scene_exiting() -> void:
 
 # --- Private Methods ---
 func _cleanup_entities() -> void:
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	var player_node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node) and player_node.has_method("teardown"):
 		player_node.teardown()
 
-	var enemy_nodes: Array[Node] = get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY)
+	var enemy_nodes: Array = ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY)
 	for enemy in enemy_nodes:
 		if is_instance_valid(enemy) and enemy.has_method("teardown"):
 			enemy.teardown()
@@ -3645,8 +4250,8 @@ func _initialize_debug_inspector() -> void:
 	add_child(_debug_overlay)
 	_debug_overlay.visible = false
 
-	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
-	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
+	_inspectable_entities.append(ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER))
+	_inspectable_entities.append_array(ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY))
 
 	if not _inspectable_entities.is_empty():
 		_debug_overlay.set_target(_inspectable_entities[0])
@@ -3654,8 +4259,8 @@ func _initialize_debug_inspector() -> void:
 
 func _cycle_debug_target() -> void:
 	_inspectable_entities.clear()
-	_inspectable_entities.append(get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER))
-	_inspectable_entities.append_array(get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY))
+	_inspectable_entities.append(ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER))
+	_inspectable_entities.append_array(ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY))
 	_inspectable_entities = _inspectable_entities.filter(func(e): return is_instance_valid(e))
 
 	if _inspectable_entities.is_empty():
@@ -3668,7 +4273,7 @@ func _cycle_debug_target() -> void:
 
 
 func _deactivate_all_minions() -> void:
-	var minions: Array[Node] = get_tree().get_nodes_in_group(Identifiers.Groups.ENEMY)
+	var minions = ServiceLocator.targeting_system.get_all(Identifiers.Groups.ENEMY)
 	for minion in minions:
 		if minion.has_method("deactivate"):
 			minion.deactivate()
@@ -3681,31 +4286,151 @@ func _on_spawn_boss_requested(_payload) -> void:
 
 
 func _on_player_died() -> void:
+	SaveManager.record_loss()
+	# Slow Motion Death
+	Engine.time_scale = 0.2
+	await get_tree().create_timer(0.5, true, false, true).timeout
 	SceneManager.go_to_game_over()
 
 
 func _on_boss_died(payload: BossDiedEvent) -> void:
-	var player_node: Node = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	var player_node = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
 	if is_instance_valid(player_node):
 		player_node.set_physics_process(false)
 	
-	# UPDATE: Using typed payload property
 	var boss_node: Node = payload.boss_node
+	var rect = post_process_manager.get_shockwave_rect()
 
+	if is_instance_valid(_boss_death_shockwave) and is_instance_valid(boss_node) and is_instance_valid(rect):
+		var viewport_size = get_viewport().get_visible_rect().size
+		var canvas_transform = get_viewport().get_canvas_transform()
+		var screen_pos = canvas_transform * boss_node.global_position
+		var uv_center = screen_pos / viewport_size
+		
+		FXManager.apply_shader_effect(
+			rect, 
+			_boss_death_shockwave, 
+			{"center": uv_center},
+			{}
+		)
+
+	# Slow Motion Victory Moment
+	Engine.time_scale = 0.15
+	
 	_deactivate_all_minions()
 
-	var wait_step := WaitStep.new()
-	wait_step.duration = 2.0
-	var death_sequence: Array[SequenceStep] = [wait_step]
-
-	_sequence_handle = Sequencer.run_sequence(death_sequence)
-	await _sequence_handle.finished
-
+	# Note: Timers are affected by time_scale, so 2.0 seconds becomes much longer.
+	# We use a SceneTreeTimer ignoring time scale for logic flow, or adjust duration.
+	# Here we want the visual slow mo to last a bit, then speed up or exit.
+	# Let's keep slow mo for the explosion duration.
+	
+	# 1.0s real time wait for explosion juice
+	await get_tree().create_timer(1.0, true, false, true).timeout 
+	
 	if is_instance_valid(boss_node):
 		boss_node.queue_free()
 
-	if is_instance_valid(_sequence_handle):
-		SceneManager.go_to_victory()
+	# Restore time scale before victory screen
+	Engine.time_scale = 1.0
+	SaveManager.record_win()
+	SceneManager.go_to_victory()
+
+
+=====================================
+FILE: ./src/scenes/game/post_process_manager.gd
+=====================================
+# src/scenes/game/post_process_manager.gd
+## Manages the stack of fullscreen shaders (Shockwave, Chromatic, Vignette).
+extends Node
+
+# --- Node References ---
+@onready var shockwave_rect: ColorRect = %ShockwaveRect
+@onready var chromatic_rect: ColorRect = %ChromaticRect
+@onready var vignette_rect: ColorRect = %VignetteRect
+
+# --- State ---
+var _is_low_health: bool = false
+var _player_health_token: int = 0
+var _boss_phase_token: int = 0
+
+# --- Lifecycle ---
+
+func _ready() -> void:
+	# Load Materials
+	shockwave_rect.material = load("res://materials/shockwave_material.tres").duplicate()
+	chromatic_rect.material = load("res://materials/chromatic_material.tres").duplicate()
+	
+	if FileAccess.file_exists("res://materials/vignette_material.tres"):
+		vignette_rect.material = load("res://materials/vignette_material.tres").duplicate()
+	else:
+		var mat = ShaderMaterial.new()
+		mat.shader = load("res://shaders/fullscreen/vignette.gdshader")
+		vignette_rect.material = mat
+
+	# Reset
+	vignette_rect.visible = false
+	chromatic_rect.material.set_shader_parameter("fx_progress", 0.0)
+	shockwave_rect.material.set_shader_parameter("fx_progress", 0.0)
+	
+	_player_health_token = EventBus.on(EventCatalog.PLAYER_HEALTH_CHANGED, _on_player_health_changed)
+	_boss_phase_token = EventBus.on(EventCatalog.BOSS_PHASE_CHANGED, _on_boss_phase_changed)
+	
+	# Initial check
+	await get_tree().process_frame
+	_check_low_health_status()
+
+func _exit_tree() -> void:
+	EventBus.off(_player_health_token)
+	EventBus.off(_boss_phase_token)
+
+# --- Event Handlers ---
+
+func _on_player_health_changed(payload: PlayerHealthChangedEvent) -> void:
+	var is_crit = payload.current_health <= 1
+	
+	if is_crit != _is_low_health:
+		_is_low_health = is_crit
+		_update_vignette_state()
+	
+	# FIX: Removed chromatic aberration trigger from here.
+	# It will now only happen on Boss Phase Change.
+
+func _on_boss_phase_changed(_payload: BossPhaseChangedEvent) -> void:
+	# Trigger heavy glitch on phase change
+	_trigger_chromatic_pulse(0.6) 
+
+func _check_low_health_status() -> void:
+	if not ServiceLocator.targeting_system: return
+	
+	var player = ServiceLocator.targeting_system.get_first(Identifiers.Groups.PLAYER)
+	if is_instance_valid(player) and player.entity_data:
+		var hp = player.entity_data.health
+		if hp <= 1:
+			_is_low_health = true
+			_update_vignette_state()
+
+func _update_vignette_state() -> void:
+	if _is_low_health:
+		vignette_rect.visible = true
+		var mat = vignette_rect.material as ShaderMaterial
+		# FIX: Increased intensity to 1.0 (max) for stronger effect
+		mat.set_shader_parameter("intensity", 1.0)
+	else:
+		vignette_rect.visible = false
+
+func _trigger_chromatic_pulse(duration: float = 0.3) -> void:
+	var mat = chromatic_rect.material as ShaderMaterial
+	var tween = create_tween()
+	
+	var attack_dur = min(0.05, duration * 0.2)
+	var decay_dur = duration - attack_dur
+	
+	tween.tween_property(mat, "shader_parameter/fx_progress", 1.0, attack_dur).from(0.0).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUINT)
+	tween.tween_property(mat, "shader_parameter/fx_progress", 0.0, decay_dur).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+# --- Public API for EncounterScene ---
+func get_shockwave_rect() -> ColorRect:
+	return shockwave_rect
 
 
 =====================================
@@ -3995,7 +4720,6 @@ func _ready() -> void:
 
 		# --- Initialize Common Navigation & Feedback ---
 		var focusable_items: Array[Control] = [start_button, options_button, exit_button]
-		# Construct the array in a single statement to preserve its type.
 		var all_items: Array[Control] = [
 			start_button, options_button, exit_button, 
 			newgrounds_logo, godot_logo, itch_logo
@@ -4005,9 +4729,19 @@ func _ready() -> void:
 		await get_tree().process_frame
 		start_button.grab_focus()
 
+func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint(): return
+	
+	# DEV SHORTCUT: TAB starts fresh game in Slot 0
+	# We use _input to catch it before Control nodes consume "ui_focus_next"
+	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
+		get_viewport().set_input_as_handled() # Prevent focus change
+		SaveManager.create_new_slot(0)
+		SceneManager.start_game(AssetPaths.ENCOUNTER_00)
+
 # --- Unique Signal Handlers ---
 func _on_start_button_pressed() -> void:
-	SceneManager.start_game(AssetPaths.ENCOUNTER_00)
+	SceneManager.go_to_scene(AssetPaths.SCENE_SAVE_SELECT_SCREEN)
 
 func _on_options_button_pressed() -> void:
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)
@@ -4069,6 +4803,7 @@ func _on_any_item_pressed() -> void:
 
 func _on_any_item_focused() -> void:
 	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+
 
 =====================================
 FILE: ./src/scenes/menus/credits_screen.gd
@@ -4329,6 +5064,121 @@ size_flags_horizontal = 8
 size_flags_vertical = 0
 
 =====================================
+FILE: ./src/scenes/menus/save_select_screen.tscn
+=====================================
+[gd_scene load_steps=6 format=3 uid="uid://save_select_screen"]
+
+[ext_resource type="Script" path="res://src/scenes/menus/save_select_screen.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://cgt63w7k4w5gq" path="res://src/ui/components/styled_menu_item/styled_menu_item.tscn" id="2_btn"]
+[ext_resource type="PackedScene" uid="uid://save_slot_button_scene" path="res://src/ui/components/save_slot_button/save_slot_button.tscn" id="3_slot"]
+[ext_resource type="FontFile" uid="uid://b41cqy3luy6se" path="res://assets/fonts/font_main_black.ttf" id="4_font"]
+[ext_resource type="FontFile" uid="uid://hypwi2d6bj7t" path="res://assets/fonts/font_main_bold.ttf" id="5_font_bold"]
+
+[node name="SaveSelectScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="BackgroundColor" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 64
+text = "SELECT DATA"
+horizontal_alignment = 1
+
+[node name="ModeLabel" type="Label" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = ExtResource("5_font_bold")
+theme_override_font_sizes/font_size = 24
+text = " "
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="SlotsVBox" type="VBoxContainer" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 20
+
+[node name="Slot0" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 0
+
+[node name="Slot1" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 1
+
+[node name="Slot2" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+layout_mode = 2
+slot_index = 2
+
+[node name="Spacer2" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="UtilityHBox" type="HBoxContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="BtnCopy" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+text = "COPY"
+font_size = 32
+
+[node name="BtnErase" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+text = "ERASE"
+font_size = 32
+
+[node name="Spacer3" type="Control" parent="MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="BackButton" parent="MainVBox" instance=ExtResource("2_btn")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(600, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "BACK"
+font_size = 48
+
+
+=====================================
 FILE: ./src/scenes/menus/options_screen.gd
 =====================================
 # src/scenes/menus/options_screen.gd
@@ -4378,6 +5228,159 @@ func _on_credits_button_pressed() -> void:
 func _on_back_button_pressed() -> void:
 	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
 	SceneManager.go_to_scene(AssetPaths.SCENE_TITLE_SCREEN)
+
+=====================================
+FILE: ./src/scenes/menus/save_select_screen.gd
+=====================================
+# src/scenes/menus/save_select_screen.gd
+extends "res://src/scenes/menus/base_menu_screen.gd"
+
+@onready var slots_vbox: VBoxContainer = %SlotsVBox
+@onready var back_button: StyledMenuItem = %BackButton
+@onready var btn_copy: StyledMenuItem = %BtnCopy
+@onready var btn_erase: StyledMenuItem = %BtnErase
+@onready var title_label: Label = %TitleLabel
+@onready var mode_label: Label = %ModeLabel
+
+# States
+enum Mode { NORMAL, COPY_SELECT_SOURCE, COPY_SELECT_DEST, ERASE }
+var _current_mode: Mode = Mode.NORMAL
+var _copy_source_index: int = -1
+
+func _ready() -> void:
+	# Connect Slot Signals
+	for child in slots_vbox.get_children():
+		if child is SaveSlotButton:
+			child.slot_chosen.connect(_on_slot_chosen)
+
+	btn_copy.pressed.connect(_on_copy_mode_pressed)
+	btn_erase.pressed.connect(_on_erase_mode_pressed)
+	back_button.pressed.connect(_on_back_pressed)
+	
+	# Setup Nav
+	var nav_items: Array[Control] = []
+	for child in slots_vbox.get_children():
+		nav_items.append(child)
+	nav_items.append(btn_copy)
+	nav_items.append(btn_erase)
+	nav_items.append(back_button)
+	
+	setup_menu_navigation(nav_items, nav_items)
+	
+	_set_mode(Mode.NORMAL)
+	
+	# Focus first slot
+	await get_tree().process_frame
+	if slots_vbox.get_child_count() > 0:
+		slots_vbox.get_child(0).grab_focus()
+
+func _refresh_slots() -> void:
+	for child in slots_vbox.get_children():
+		if child is SaveSlotButton:
+			child.refresh()
+
+func _set_mode(mode: Mode) -> void:
+	_current_mode = mode
+	
+	# FIX: Moved reset logic inside the match block.
+	# We do NOT want to reset _copy_source_index when entering COPY_SELECT_DEST.
+	
+	match _current_mode:
+		Mode.NORMAL:
+			_copy_source_index = -1
+			title_label.text = "SELECT DATA"
+			title_label.add_theme_color_override("font_color", Color.WHITE)
+			mode_label.text = " "
+			btn_copy.text = "COPY"
+			btn_erase.text = "ERASE"
+		
+		Mode.COPY_SELECT_SOURCE:
+			_copy_source_index = -1
+			title_label.text = "COPY DATA"
+			title_label.add_theme_color_override("font_color", Color(0.4, 0.8, 1.0))
+			mode_label.text = "Select SOURCE Slot"
+			btn_copy.text = "CANCEL"
+			btn_erase.text = "ERASE"
+
+		Mode.COPY_SELECT_DEST:
+			# Do not reset _copy_source_index here!
+			mode_label.text = "Select DESTINATION Slot"
+			
+		Mode.ERASE:
+			_copy_source_index = -1
+			title_label.text = "ERASE DATA"
+			title_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
+			mode_label.text = "Select Slot to DELETE"
+			btn_copy.text = "COPY"
+			btn_erase.text = "CANCEL"
+
+func _on_slot_chosen(index: int) -> void:
+	# Sound is played by SaveSlotButton 'pressed' signal for generic feedback,
+	# but we play specific success/fail sounds here.
+	
+	match _current_mode:
+		Mode.NORMAL:
+			# Play
+			var summary = SaveManager.get_slot_summary(index)
+			if summary.get("empty", true):
+				SaveManager.create_new_slot(index)
+			else:
+				SaveManager.load_slot(index)
+			
+			AudioManager.play_sfx(AssetPaths.SFX_GAME_START)
+			SceneManager.start_game(AssetPaths.ENCOUNTER_00)
+
+		Mode.COPY_SELECT_SOURCE:
+			var summary = SaveManager.get_slot_summary(index)
+			if summary.get("empty", true):
+				# Cannot copy empty slot
+				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+				return
+			
+			_copy_source_index = index
+			_set_mode(Mode.COPY_SELECT_DEST) # Update UI text
+			AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+
+		Mode.COPY_SELECT_DEST:
+			if index == _copy_source_index:
+				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+				return
+				
+			var success = SaveManager.copy_slot(_copy_source_index, index)
+			if success:
+				AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+				_refresh_slots()
+				_set_mode(Mode.NORMAL)
+			else:
+				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+
+		Mode.ERASE:
+			SaveManager.erase_slot(index)
+			AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+			_refresh_slots()
+			_set_mode(Mode.NORMAL)
+
+func _on_copy_mode_pressed() -> void:
+	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	if _current_mode == Mode.COPY_SELECT_SOURCE or _current_mode == Mode.COPY_SELECT_DEST:
+		_set_mode(Mode.NORMAL) # Toggle Off
+	else:
+		_set_mode(Mode.COPY_SELECT_SOURCE)
+
+func _on_erase_mode_pressed() -> void:
+	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	if _current_mode == Mode.ERASE:
+		_set_mode(Mode.NORMAL) # Toggle Off
+	else:
+		_set_mode(Mode.ERASE)
+
+func _on_back_pressed() -> void:
+	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
+	if _current_mode != Mode.NORMAL:
+		_set_mode(Mode.NORMAL)
+	else:
+		SceneManager.go_to_title_screen()
+
 
 =====================================
 FILE: ./src/scenes/menus/sound_screen.gd
@@ -4449,31 +5452,114 @@ func _on_back_button_pressed() -> void:
 FILE: ./src/scenes/menus/controls_screen.gd
 =====================================
 # src/scenes/menus/controls_screen.gd
-## The controller for the controls display screen.
+## The controller for the controls configuration screen.
+## Dynamically populates the list based on Settings.remappable_actions.
 @tool
 extends "res://src/scenes/menus/base_menu_screen.gd"
 
+# --- Constants ---
+const ROW_SCENE = preload("res://src/ui/components/control_setting_row/control_setting_row.tscn")
+
 # --- Node References ---
 @onready var back_button: StyledMenuItem = %BackButton
+@onready var controls_vbox: VBoxContainer = %ControlsVBox
+@onready var preset_button: Button = %PresetButton
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
 	back_button.text = "BACK"
 
 	if not Engine.is_editor_hint():
+		_update_preset_display()
+		_populate_controls_list()
+		
 		# --- Connect Unique Action Signals ---
 		back_button.pressed.connect(_on_back_button_pressed)
+		
+		# Connect Preset Button Hover (Cursor Logic)
+		preset_button.mouse_entered.connect(CursorManager.set_pointer_state.bind(true))
+		preset_button.mouse_exited.connect(CursorManager.set_pointer_state.bind(false))
+		
+		# Listen for settings changes to update UI
+		Settings.input_settings_changed.connect(_on_settings_changed)
 
-		# --- Initialize Common Navigation & Feedback ---
-		setup_menu_navigation([back_button], [back_button])
+		setup_menu_navigation([back_button], [back_button, preset_button])
 
 		await get_tree().process_frame
 		back_button.grab_focus()
 
-# --- Unique Signal Handlers ---
+func _exit_tree() -> void:
+	if not Engine.is_editor_hint():
+		if Settings.input_settings_changed.is_connected(_on_settings_changed):
+			Settings.input_settings_changed.disconnect(_on_settings_changed)
+		
+		# Disconnect signals to be safe (though not strictly necessary on exit)
+		if is_instance_valid(preset_button):
+			if preset_button.mouse_entered.is_connected(CursorManager.set_pointer_state):
+				preset_button.mouse_entered.disconnect(CursorManager.set_pointer_state)
+			if preset_button.mouse_exited.is_connected(CursorManager.set_pointer_state):
+				preset_button.mouse_exited.disconnect(CursorManager.set_pointer_state)
+
+
+# --- Private Methods ---
+
+func _populate_controls_list() -> void:
+	if not is_instance_valid(controls_vbox):
+		return
+
+	# Clear existing rows
+	for child in controls_vbox.get_children():
+		child.queue_free()
+	
+	# Generate rows from Settings
+	for action in Settings.remappable_actions:
+		var row = ROW_SCENE.instantiate()
+		controls_vbox.add_child(row)
+		
+		var display_name = _get_friendly_name(action)
+		row.setup(action, display_name)
+
+
+func _get_friendly_name(action: String) -> String:
+	var clean = action.replace("ui_", "").replace("debug_", "")
+	return clean.capitalize()
+
+
+func _update_preset_display() -> void:
+	if is_instance_valid(preset_button):
+		preset_button.text = Settings.current_input_preset
+
+
+# --- Signal Handlers ---
+
+func _on_settings_changed() -> void:
+	_update_preset_display()
+	# Re-populate to show new keys
+	_populate_controls_list()
+
+
 func _on_back_button_pressed() -> void:
 	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)
+
+
+func _on_preset_button_pressed() -> void:
+	var presets = Settings.get_available_presets()
+	var current = Settings.current_input_preset
+	var idx = presets.find(current)
+	
+	# Cycle to next preset
+	var next_idx = (idx + 1) % presets.size()
+	var next_preset = presets[next_idx]
+	
+	# Skip "Custom" in the cycle if we are manually cycling
+	if next_preset == "Custom":
+		next_idx = (next_idx + 1) % presets.size()
+		next_preset = presets[next_idx]
+		
+	Settings.apply_preset(next_preset)
+	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+
 
 =====================================
 FILE: ./src/scenes/menus/controls_screen.tscn
@@ -4484,7 +5570,7 @@ FILE: ./src/scenes/menus/controls_screen.tscn
 [ext_resource type="PackedScene" uid="uid://cgt63w7k4w5gq" path="res://src/ui/components/styled_menu_item/styled_menu_item.tscn" id="2_styled_menu_item"]
 [ext_resource type="FontFile" uid="uid://b41cqy3luy6se" path="res://assets/fonts/font_main_black.ttf" id="3_font_black"]
 [ext_resource type="PackedScene" uid="uid://d1g2h3i4j5k6l" path="res://src/ui/components/mute_button/mute_button.tscn" id="4_mute_button"]
-[ext_resource type="PackedScene" uid="uid://cgt6j1h2w3k4m" path="res://src/ui/components/control_setting_row/control_setting_row.tscn" id="5_control_row"]
+[ext_resource type="FontFile" uid="uid://hypwi2d6bj7t" path="res://assets/fonts/font_main_bold.ttf" id="5_font_bold"]
 
 [node name="ControlsScreen" type="Control"]
 layout_mode = 3
@@ -4515,78 +5601,98 @@ theme_override_constants/separation = 0
 alignment = 1
 
 [node name="TopSpacer" type="Control" parent="MainVBox"]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="MainVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.972549, 0.972549, 0.972549, 1)
 theme_override_fonts/font = ExtResource("3_font_black")
-theme_override_font_sizes/font_size = 128
+theme_override_font_sizes/font_size = 64
 text = "CONTROLS"
 horizontal_alignment = 1
 
-[node name="TitleMenuSpacer" type="Control" parent="MainVBox"]
-custom_minimum_size = Vector2(0, 14.1)
+[node name="Spacer" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="ControlsVBox" type="VBoxContainer" parent="MainVBox"]
-unique_name_in_owner = true
+[node name="PresetContainer" type="HBoxContainer" parent="MainVBox"]
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_constants/separation = 20
 alignment = 1
+theme_override_constants/separation = 20
 
-[node name="ControlSettingRow" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
+[node name="PresetLabel" type="Label" parent="MainVBox/PresetContainer"]
 layout_mode = 2
-action_text = "Movement"
-keys_text = "Arrow Keys / WASD / Mouse"
+theme_override_fonts/font = ExtResource("5_font_bold")
+theme_override_font_sizes/font_size = 32
+text = "Preset:"
 
-[node name="ControlSettingRow2" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
+[node name="PresetButton" type="Button" parent="MainVBox/PresetContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
-action_text = "Primary Action"
-keys_text = "X / . / Space / Left-Click"
+focus_mode = 0
+theme_override_font_sizes/font_size = 28
+text = "Default"
 
-[node name="ControlSettingRow3" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
+[node name="Spacer2" type="Control" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
-action_text = "Secondary Action"
-keys_text = "C / , / Shift / Right-Click"
 
-[node name="ControlSettingRow4" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
-layout_mode = 2
-action_text = "Tertiary Action"
-keys_text = "Z / / / Ctrl / Middle-Click"
-
-[node name="ControlSettingRow5" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
-layout_mode = 2
-action_text = "Heal"
-keys_text = "Down + Jump"
-
-[node name="ControlSettingRow6" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
-layout_mode = 2
-action_text = "Pause / Menu"
-keys_text = "Enter / P / Escape"
-
-[node name="ControlSettingRow7" parent="MainVBox/ControlsVBox" instance=ExtResource("5_control_row")]
-layout_mode = 2
-action_text = "Back / Cancel"
-keys_text = "Escape / Backspace"
-
-[node name="ExpandSpacer" type="Control" parent="MainVBox"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ControlsVBox" type="VBoxContainer" parent="MainVBox/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Spacer3" type="Control" parent="MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="FixedControlsPanel" type="PanelContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = null
+
+[node name="FixedControlsVBox" type="VBoxContainer" parent="MainVBox/FixedControlsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Label" type="Label" parent="MainVBox/FixedControlsPanel/FixedControlsVBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("5_font_bold")
+theme_override_font_sizes/font_size = 24
+text = "FIXED CONTROLS"
+horizontal_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="MainVBox/FixedControlsPanel/FixedControlsVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Heal: Down + Jump (Ground)  |  Charge: Hold Attack
+Debug: Y  |  Pause: Enter / P / Esc"
+horizontal_alignment = 1
+
+[node name="Spacer4" type="Control" parent="MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 50)
 
 [node name="BackButton" parent="MainVBox" instance=ExtResource("2_styled_menu_item")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(700, 100)
+custom_minimum_size = Vector2(700, 80)
 layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 2
 text = "BACK"
-font_size = 64
+font_size = 48
 
 [node name="BottomSpacer" type="Control" parent="MainVBox"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
 [node name="MuteButtonContainer" type="MarginContainer" parent="."]
@@ -4604,6 +5710,9 @@ theme_override_constants/margin_right = 40
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
+
+[connection signal="pressed" from="MainVBox/PresetContainer/PresetButton" to="." method="_on_preset_button_pressed"]
+
 
 =====================================
 FILE: ./src/scenes/game_over/game_over_screen.tscn
@@ -5105,6 +6214,8 @@ const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 # --- Service References ---
 @onready var fx_manager: IFXManager = get_node("/root/FXManagerAdapter")
 @onready var object_pool: IObjectPool = get_node("/root/ObjectPoolAdapter")
+@onready var targeting_system = get_node("/root/TargetingSystem")
+@onready var save_manager = get_node("/root/SaveManager")
 @onready var event_bus = get_node("/root/EventBus")
 @onready var sequencer = get_node("/root/Sequencer")
 @onready var combat_utils = get_node("/root/CombatUtils")
@@ -5296,10 +6407,10 @@ func get_color(index: int) -> Color:
 FILE: ./src/core/util/identifiers.gd
 =====================================
 # src/core/util/identifiers.gd
+@tool
 ## An autoloaded singleton that provides a central authority for all string-based
 ## identifiers used in the project.
 extends Node
-
 
 ## A container for all physics group names.
 class Groups:
@@ -5313,7 +6424,6 @@ class Groups:
 	const SENSORS = "sensors"
 	const DAMAGEABLE = "damageable"
 
-
 ## A container for all ObjectPool keys.
 class Pools:
 	const PLAYER_SHOTS = &"player_shots"
@@ -5322,6 +6432,28 @@ class Pools:
 	const HOMING_BOSS_SHOTS = &"homing_boss_shots"
 	const HIT_SPARKS = &"hit_sparks"
 
+## A container for all Input Map action names.
+class Actions:
+	# Gameplay
+	const MOVE_LEFT = "ui_left"
+	const MOVE_RIGHT = "ui_right"
+	const MOVE_UP = "ui_up"
+	const MOVE_DOWN = "ui_down"
+	const JUMP = "ui_jump"
+	const ATTACK = "ui_attack"
+	const DASH = "ui_dash"
+	
+	# UI / System
+	const UI_ACCEPT = "ui_accept"
+	const UI_CANCEL = "ui_cancel"
+	const PAUSE = "debug_pause_game" # Often mapped to Start/Esc
+
+	# Debug
+	const DEBUG_OVERLAY = "debug_toggle_overlay"
+	const DEBUG_CYCLE_TARGET = "debug_cycle_target"
+	const DEBUG_DIALOGUE = "debug_dialogue"
+	const DEBUG_COLLISION = "debug_toggle_collision"
+	const DEBUG_INVINCIBILITY = "debug_toggle_invincibility"
 
 ## Shared state keys used by multiple entity types.
 class CommonStates:
@@ -5330,7 +6462,6 @@ class CommonStates:
 	const MELEE = &"melee"
 	const ATTACK = &"attack"
 	const FALL = &"fall"
-
 
 ## Container for all Player state keys.
 class PlayerStates:
@@ -5344,7 +6475,6 @@ class PlayerStates:
 	const HEAL = &"heal"
 	const POGO = &"pogo"
 
-
 ## Container for all Boss state keys.
 class BossStates:
 	const IDLE = &"idle"
@@ -5353,7 +6483,6 @@ class BossStates:
 	const PATROL = &"patrol"
 	const LUNGE = &"lunge"
 	const FALL = &"fall"
-
 
 ## Container for all Minion state keys.
 class MinionStates:
@@ -5405,6 +6534,7 @@ const SCENE_OPTIONS_SCREEN = "res://src/scenes/menus/options_screen.tscn"
 const SCENE_SOUND_SCREEN = "res://src/scenes/menus/sound_screen.tscn"
 const SCENE_CONTROLS_SCREEN = "res://src/scenes/menus/controls_screen.tscn"
 const SCENE_CREDITS_SCREEN = "res://src/scenes/menus/credits_screen.tscn"
+const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn" # NEW
 
 # --- UI COMPONENTS ---
 const SCENE_STYLED_MENU_ITEM = "res://src/ui/components/styled_menu_item/styled_menu_item.tscn"
@@ -5836,6 +6966,58 @@ func get_pool_stats() -> Dictionary:
 	return _real_object_pool.get_pool_stats()
 
 =====================================
+FILE: ./src/core/systems/targeting_system.gd
+=====================================
+# src/core/systems/targeting_system.gd
+## An autoloaded singleton that acts as a registry for active game entities.
+##
+## This decouples logic from the SceneTree group system, allowing for faster
+## lookups and easier dependency mocking in tests.
+extends Node
+
+# Map<group_id, Array[Node]>
+var _targets: Dictionary = {}
+
+# --- Public API ---
+
+## Registers a node as a target within a specific group.
+func register(node: Node, group_id: String) -> void:
+	if not is_instance_valid(node):
+		return
+		
+	if not _targets.has(group_id):
+		_targets[group_id] = []
+		
+	if not _targets[group_id].has(node):
+		_targets[group_id].append(node)
+
+
+## Unregisters a node from a specific group.
+func unregister(node: Node, group_id: String) -> void:
+	if _targets.has(group_id):
+		_targets[group_id].erase(node)
+
+
+## Returns the first registered node in a group, or null if empty.
+func get_first(group_id: String) -> Node:
+	if _targets.has(group_id) and not _targets[group_id].is_empty():
+		# Return the first valid instance
+		for node in _targets[group_id]:
+			if is_instance_valid(node):
+				return node
+	return null
+
+
+## Returns all registered nodes in a group.
+func get_all(group_id: String) -> Array:
+	if _targets.has(group_id):
+		# Filter out any invalid references on the fly
+		_targets[group_id] = _targets[group_id].filter(func(n): return is_instance_valid(n))
+		return _targets[group_id]
+	return []
+
+
+=====================================
 FILE: ./src/core/systems/dialogue_manager.gd
 =====================================
 # src/core/systems/dialogue_manager.gd
@@ -6035,6 +7217,9 @@ func go_to_victory() -> void:
 func _switch_to_scene(path: String) -> void:
 	# --- Announce Pre-Transition Cleanup ---
 	EventBus.emit(EventCatalog.SCENE_TRANSITION_STARTED)
+	
+	# Reset time scale in case we are coming from a slow-mo death state
+	Engine.time_scale = 1.0
 
 	# 1. Call the formal teardown method on the current scene controller if it exists.
 	var current_scene = get_tree().current_scene
@@ -6047,6 +7232,7 @@ func _switch_to_scene(path: String) -> void:
 
 	# 3. Change the scene.
 	get_tree().call_deferred("change_scene_to_file", path)
+
 
 =====================================
 FILE: ./src/core/systems/object_pool.gd
@@ -6630,59 +7816,359 @@ func _on_shader_effect_finished(target_node: CanvasItem, preserve_final_state: b
 
 
 =====================================
+FILE: ./src/core/systems/save_manager.gd
+=====================================
+# src/core/systems/save_manager.gd
+## An autoloaded singleton responsible for serializing game progression.
+## Manages multiple save slots (0, 1, 2).
+extends Node
+
+signal current_save_updated
+
+const MAX_SLOTS = 3
+const SAVE_FILE_TEMPLATE = "user://save_slot_%02d.tres"
+
+var current_slot_index: int = -1
+var current_save: SaveData = null
+
+func _ready() -> void:
+	pass
+
+# --- Slot Management API ---
+
+func get_slot_path(index: int) -> String:
+	return SAVE_FILE_TEMPLATE % index
+
+func slot_exists(index: int) -> bool:
+	return FileAccess.file_exists(get_slot_path(index))
+
+func get_slot_summary(index: int) -> Dictionary:
+	if not slot_exists(index):
+		return {"empty": true}
+	
+	# Force ignore cache to ensure we see disk changes immediately (e.g. after copy/erase)
+	var data = ResourceLoader.load(get_slot_path(index), "", ResourceLoader.CACHE_MODE_IGNORE) as SaveData
+	if not data:
+		return {"empty": true, "corrupt": true}
+	
+	return {
+		"empty": false,
+		"wins": data.total_wins,
+		"losses": data.total_losses
+	}
+
+func load_slot(index: int) -> bool:
+	if not slot_exists(index):
+		return false
+	
+	var data = ResourceLoader.load(get_slot_path(index), "", ResourceLoader.CACHE_MODE_IGNORE) as SaveData
+	if data:
+		current_slot_index = index
+		current_save = data
+		current_save_updated.emit()
+		return true
+	return false
+
+func create_new_slot(index: int) -> void:
+	var new_data = SaveData.new()
+	# Initialize defaults here if needed
+	current_slot_index = index
+	current_save = new_data
+	_save_to_disk()
+	current_save_updated.emit()
+
+func erase_slot(index: int) -> void:
+	if slot_exists(index):
+		DirAccess.remove_absolute(get_slot_path(index))
+	
+	if current_slot_index == index:
+		current_save = null
+		current_slot_index = -1
+
+func copy_slot(from_index: int, to_index: int) -> bool:
+	if not slot_exists(from_index):
+		push_error("SaveManager: Source slot %d does not exist." % from_index)
+		return false
+	
+	var source_data = ResourceLoader.load(get_slot_path(from_index), "", ResourceLoader.CACHE_MODE_IGNORE) as SaveData
+	if not source_data:
+		push_error("SaveManager: Failed to load source slot %d." % from_index)
+		return false
+		
+	# Duplicate with sub-resources (true) to ensure independence
+	var new_data = source_data.duplicate(true)
+	
+	# Critical: Tell the resource it belongs to the new path
+	var dest_path = get_slot_path(to_index)
+	new_data.take_over_path(dest_path)
+	
+	var err = ResourceSaver.save(new_data, dest_path)
+	if err != OK:
+		push_error("SaveManager: Failed to save copy to %s (Error %d)" % [dest_path, err])
+		return false
+		
+	return true
+
+# --- Runtime API ---
+
+func record_win() -> void:
+	if not current_save: return
+	current_save.total_wins += 1
+	_save_to_disk()
+
+func record_loss() -> void:
+	if not current_save: return
+	current_save.total_losses += 1
+	_save_to_disk()
+
+func _save_to_disk() -> void:
+	if current_save and current_slot_index >= 0:
+		ResourceSaver.save(current_save, get_slot_path(current_slot_index))
+
+
+=====================================
 FILE: ./src/core/data/config/settings.gd
 =====================================
 # src/core/data/config/settings.gd
 ## An autoloaded singleton that manages persistent game settings.
-##
-## This script uses property setters to automatically emit the
-## [signal audio_settings_changed] signal whenever a value is modified,
-## allowing other systems to react dynamically.
+## Handles Audio levels, Input remapping, and Input Presets.
 extends Node
 
 # --- Signals ---
-## Emitted whenever any audio-related setting is changed.
 signal audio_settings_changed
+signal input_settings_changed
+
+# --- Constants ---
+const CONFIG_PATH = "user://options.cfg"
+
+# --- Input Settings ---
+var _default_inputs: Dictionary = {}
+var remappable_actions: Array = []
+
+# Tracks the active preset name. If the user manually rebinds, this becomes "Custom".
+var current_input_preset: String = "Default 1"
 
 # --- Audio Settings ---
 @export var master_volume: float = 1.0:
 	set(value):
-		var clamped_value = clampf(value, 0.0, 1.0)
-		if not is_equal_approx(master_volume, clamped_value):
-			master_volume = clamped_value
+		var clamped = clampf(value, 0.0, 1.0)
+		if not is_equal_approx(master_volume, clamped):
+			master_volume = clamped
 			audio_settings_changed.emit()
+			_save_config()
 
 @export var music_volume: float = 1.0:
 	set(value):
-		var clamped_value = clampf(value, 0.0, 1.0)
-		if not is_equal_approx(music_volume, clamped_value):
-			music_volume = clamped_value
+		var clamped = clampf(value, 0.0, 1.0)
+		if not is_equal_approx(music_volume, clamped):
+			music_volume = clamped
 			audio_settings_changed.emit()
+			_save_config()
 
 @export var sfx_volume: float = 1.0:
 	set(value):
-		var clamped_value = clampf(value, 0.0, 1.0)
-		if not is_equal_approx(sfx_volume, clamped_value):
-			sfx_volume = clamped_value
+		var clamped = clampf(value, 0.0, 1.0)
+		if not is_equal_approx(sfx_volume, clamped):
+			sfx_volume = clamped
 			audio_settings_changed.emit()
+			_save_config()
 
 @export var master_muted: bool = false:
 	set(value):
 		if master_muted != value:
 			master_muted = value
 			audio_settings_changed.emit()
+			_save_config()
 
-@export var music_muted: bool = true:
+@export var music_muted: bool = false:
 	set(value):
 		if music_muted != value:
 			music_muted = value
 			audio_settings_changed.emit()
+			_save_config()
 
 @export var sfx_muted: bool = false:
 	set(value):
 		if sfx_muted != value:
 			sfx_muted = value
 			audio_settings_changed.emit()
+			_save_config()
+
+# --- Lifecycle ---
+
+func _ready() -> void:
+	call_deferred("_initialize")
+
+func _initialize() -> void:
+	_define_remappable_actions()
+	_capture_default_inputs()
+	_load_config()
+
+# --- Input Management ---
+
+func _define_remappable_actions() -> void:
+	# Order matters for the UI list
+	remappable_actions = [
+		Identifiers.Actions.MOVE_UP,
+		Identifiers.Actions.MOVE_LEFT,
+		Identifiers.Actions.MOVE_DOWN,
+		Identifiers.Actions.MOVE_RIGHT,
+		Identifiers.Actions.JUMP,
+		Identifiers.Actions.ATTACK,
+		Identifiers.Actions.DASH
+	]
+
+func _capture_default_inputs() -> void:
+	for action in remappable_actions:
+		_default_inputs[action] = InputMap.action_get_events(action)
+
+func remap_action(action: String, new_event: InputEvent) -> void:
+	if not remappable_actions.has(action):
+		return
+	
+	InputMap.action_erase_events(action)
+	InputMap.action_add_event(action, new_event)
+	
+	current_input_preset = "Custom"
+	input_settings_changed.emit()
+	_save_config()
+
+func get_input_label(action: String) -> String:
+	var events = InputMap.action_get_events(action)
+	if events.is_empty():
+		return "None"
+	
+	var event = events[0]
+	if event is InputEventKey:
+		return OS.get_keycode_string(event.physical_keycode)
+	elif event is InputEventMouseButton:
+		var btn_name = "Mouse " + str(event.button_index)
+		if event.button_index == MOUSE_BUTTON_LEFT: btn_name = "L-Click"
+		if event.button_index == MOUSE_BUTTON_RIGHT: btn_name = "R-Click"
+		if event.button_index == MOUSE_BUTTON_MIDDLE: btn_name = "M-Click"
+		return btn_name
+	
+	return "Unknown"
+
+# --- Presets API ---
+
+func get_available_presets() -> Array[String]:
+	return ["Default 1", "Default 2", "Custom"]
+
+func apply_preset(preset_name: String) -> void:
+	var map = {}
+	
+	# Default 1: Arrows/WASD + ZXC
+	if preset_name == "Default 1":
+		map = {
+			Identifiers.Actions.MOVE_UP: [_create_key(KEY_UP), _create_key(KEY_W)],
+			Identifiers.Actions.MOVE_LEFT: [_create_key(KEY_LEFT), _create_key(KEY_A)],
+			Identifiers.Actions.MOVE_DOWN: [_create_key(KEY_DOWN), _create_key(KEY_S)],
+			Identifiers.Actions.MOVE_RIGHT: [_create_key(KEY_RIGHT), _create_key(KEY_D)],
+			Identifiers.Actions.JUMP: [_create_key(KEY_X)],
+			Identifiers.Actions.ATTACK: [_create_key(KEY_C)],
+			Identifiers.Actions.DASH: [_create_key(KEY_Z)]
+		}
+		
+	# Default 2: WASD + .,/
+	elif preset_name == "Default 2":
+		map = {
+			Identifiers.Actions.MOVE_UP: [_create_key(KEY_W)],
+			Identifiers.Actions.MOVE_LEFT: [_create_key(KEY_A)],
+			Identifiers.Actions.MOVE_DOWN: [_create_key(KEY_S)],
+			Identifiers.Actions.MOVE_RIGHT: [_create_key(KEY_D)],
+			Identifiers.Actions.JUMP: [_create_key(KEY_PERIOD)],
+			Identifiers.Actions.ATTACK: [_create_key(KEY_COMMA)],
+			Identifiers.Actions.DASH: [_create_key(KEY_SLASH)]
+		}
+	
+	# Custom: Fully Empty (User must bind)
+	elif preset_name == "Custom":
+		for action in remappable_actions:
+			map[action] = []
+
+	if map.is_empty() and preset_name != "Custom":
+		return
+
+	# Apply
+	for action in remappable_actions:
+		if map.has(action):
+			InputMap.action_erase_events(action)
+			for event in map[action]:
+				InputMap.action_add_event(action, event)
+	
+	current_input_preset = preset_name
+	input_settings_changed.emit()
+	_save_config()
+
+# --- Helper Factories ---
+func _create_key(keycode: int) -> InputEventKey:
+	var ev = InputEventKey.new()
+	ev.physical_keycode = keycode
+	return ev
+
+# --- Persistence Logic ---
+
+func _save_config() -> void:
+	var config = ConfigFile.new()
+	
+	# Audio
+	config.set_value("audio", "master_volume", master_volume)
+	config.set_value("audio", "music_volume", music_volume)
+	config.set_value("audio", "sfx_volume", sfx_volume)
+	config.set_value("audio", "master_muted", master_muted)
+	config.set_value("audio", "music_muted", music_muted)
+	config.set_value("audio", "sfx_muted", sfx_muted)
+	
+	# Input Meta
+	config.set_value("input", "preset", current_input_preset)
+	
+	# Input Bindings (Only save if Custom)
+	if current_input_preset == "Custom":
+		for action in remappable_actions:
+			var events = InputMap.action_get_events(action)
+			if not events.is_empty():
+				config.set_value("input_custom", action, events[0])
+
+	config.save(CONFIG_PATH)
+
+func _load_config() -> void:
+	var config = ConfigFile.new()
+	var err = config.load(CONFIG_PATH)
+	if err != OK:
+		apply_preset("Default 1")
+		return 
+
+	# Audio
+	master_volume = config.get_value("audio", "master_volume", 1.0)
+	music_volume = config.get_value("audio", "music_volume", 1.0)
+	sfx_volume = config.get_value("audio", "sfx_volume", 1.0)
+	master_muted = config.get_value("audio", "master_muted", false)
+	music_muted = config.get_value("audio", "music_muted", false)
+	sfx_muted = config.get_value("audio", "sfx_muted", false)
+	
+	# Input
+	var saved_preset = config.get_value("input", "preset", "Default 1")
+	# Map legacy names to new ones if needed
+	if saved_preset == "Default": saved_preset = "Default 1"
+	if saved_preset == "Alt": saved_preset = "Default 2"
+	
+	if saved_preset != "Custom":
+		apply_preset(saved_preset)
+	else:
+		current_input_preset = "Custom"
+		# Clear first so we only have loaded bindings
+		for action in remappable_actions:
+			InputMap.action_erase_events(action)
+			
+		for action in remappable_actions:
+			if config.has_section_key("input_custom", action):
+				var saved_event = config.get_value("input_custom", action)
+				if saved_event is InputEvent:
+					InputMap.action_add_event(action, saved_event)
+	
+	audio_settings_changed.emit()
+	input_settings_changed.emit()
 
 
 =====================================
@@ -6903,6 +8389,19 @@ var health: int = 1:
 		health = clamp(value, 0, max_health)
 
 var facing_direction: float = 1.0
+
+
+=====================================
+FILE: ./src/core/data/save_data.gd
+=====================================
+# src/core/data/save_data.gd
+@tool
+## A resource container for persistent player progression stats.
+class_name SaveData
+extends Resource
+
+@export var total_wins: int = 0
+@export var total_losses: int = 0
 
 
 =====================================
@@ -7415,9 +8914,13 @@ func spawn_boss_async() -> Node:
 	var boss_scene: PackedScene = _current_build_data.encounter_data_resource.boss_scene
 	if not boss_scene:
 		return null
-	var instance: BaseEntity = boss_scene.instantiate()
-	instance.global_position = _current_build_data.boss_spawn_pos
-	instance.inject_dependencies(ServiceLocator)
+	var instance: Node = boss_scene.instantiate() # Weakened type
+	if instance is Node2D:
+		instance.global_position = _current_build_data.boss_spawn_pos
+	
+	if instance is BaseEntity:
+		instance.inject_dependencies(ServiceLocator)
+	
 	_current_level_container.add_child(instance)
 	await get_tree().process_frame
 
@@ -7429,9 +8932,13 @@ func spawn_boss_async() -> Node:
 
 # --- Private Methods ---
 func _spawn_player_async() -> void:
-	var instance: BaseEntity = load(AssetPaths.SCENE_PLAYER).instantiate()
-	instance.global_position = _current_build_data.player_spawn_pos
-	instance.inject_dependencies(ServiceLocator)
+	var instance: Node = load(AssetPaths.SCENE_PLAYER).instantiate() # Weakened type
+	if instance is Node2D:
+		instance.global_position = _current_build_data.player_spawn_pos
+	
+	if instance is BaseEntity:
+		instance.inject_dependencies(ServiceLocator)
+	
 	_current_level_container.add_child(instance)
 	await get_tree().process_frame
 
@@ -7484,13 +8991,12 @@ func get_telegraph_info(_owner: BaseEntity, _pattern: AttackPattern) -> Dictiona
 
 
 func execute(owner: BaseEntity, pattern: AttackPattern) -> Callable:
-	var boss_owner := owner as BaseBoss
-	if not is_instance_valid(boss_owner):
-		push_warning("LungeLogic can only be executed by a BaseBoss.")
+	if not owner.is_in_group(Identifiers.Groups.ENEMY):
+		push_warning("LungeLogic can only be executed by an Enemy.")
 		return Callable()
 
 	var lunge_params = {"pattern": pattern}
-	var sm: BaseStateMachine = boss_owner.get_component(BaseStateMachine)
+	var sm: BaseStateMachine = owner.get_component(BaseStateMachine)
 	return sm.change_state.bind(Identifiers.BossStates.LUNGE, lunge_params)
 
 
@@ -8264,8 +9770,8 @@ FILE: ./src/vfx/hit_spark.tscn
 [ext_resource type="Script" path="res://src/vfx/hit_spark.gd" id="1_hit_spark_script"]
 
 [sub_resource type="Gradient" id="Gradient_1"]
-offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+offsets = PackedFloat32Array(0, 0.18, 0.65, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.4, 1, 0.4, 1, 0.1, 0.6, 0.1, 1, 0, 0.2, 0, 0)
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_1"]
 gradient = SubResource("Gradient_1")
@@ -8278,7 +9784,7 @@ point_count = 2
 curve = SubResource("Curve_1")
 
 [sub_resource type="Gradient" id="Gradient_2"]
-colors = PackedColorArray(1, 0.898039, 0.4, 1, 1, 1, 1, 1)
+colors = PackedColorArray(0.7, 1, 0.7, 1, 0.2, 1, 0.2, 1)
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_2"]
 gradient = SubResource("Gradient_2")
@@ -8286,31 +9792,31 @@ gradient = SubResource("Gradient_2")
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
 particle_flag_disable_z = true
 emission_shape = 1
-emission_sphere_radius = 1.0
+emission_sphere_radius = 2.0
 direction = Vector3(1, 0, 0)
-spread = 90.0
-initial_velocity_min = 150.0
-initial_velocity_max = 400.0
+spread = 180.0
+initial_velocity_min = 200.0
+initial_velocity_max = 500.0
 gravity = Vector3(0, 0, 0)
-damping_min = 200.0
-damping_max = 300.0
-scale_min = 1.5
-scale_max = 2.5
+damping_min = 800.0
+damping_max = 1200.0
+scale_min = 2.0
+scale_max = 4.0
 scale_curve = SubResource("CurveTexture_1")
 color_ramp = SubResource("GradientTexture1D_1")
 color_initial_ramp = SubResource("GradientTexture1D_2")
 
 [node name="HitSpark" type="GPUParticles2D"]
 emitting = false
-amount = 30
+amount = 24
 process_material = SubResource("ParticleProcessMaterial_1")
-lifetime = 0.35
+lifetime = 0.4
 one_shot = true
 explosiveness = 1.0
-local_coords = true
 fixed_fps = 60
 script = ExtResource("1_hit_spark_script")
 metadata/pool_name = &"hit_sparks"
+
 
 =====================================
 FILE: ./src/api/combat/damage_info.gd
@@ -8617,12 +10123,55 @@ func teardown() -> void:
 =====================================
 FILE: ./src/projectiles/player_shot.tscn
 =====================================
-[gd_scene load_steps=3 format=3 uid="uid://cmdkxwvysirh1"]
+[gd_scene load_steps=10 format=3 uid="uid://cmdkxwvysirh1"]
 
 [ext_resource type="Script" path="res://src/projectiles/player_shot.gd" id="1_4wg7x"]
 
+[sub_resource type="Gradient" id="Gradient_trail"]
+offsets = PackedFloat32Array(0, 0.2, 1)
+colors = PackedColorArray(0.6, 1, 0.6, 1, 0.2, 1, 0.2, 1, 0, 0.2, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_trail"]
+gradient = SubResource("Gradient_trail")
+
+[sub_resource type="Curve" id="Curve_scale"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_scale"]
+curve = SubResource("Curve_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_flame"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 4.0
+direction = Vector3(-1, 0, 0)
+spread = 15.0
+initial_velocity_min = 50.0
+initial_velocity_max = 150.0
+gravity = Vector3(0, 0, 0)
+scale_min = 4.0
+scale_max = 8.0
+scale_curve = SubResource("CurveTexture_scale")
+color_ramp = SubResource("GradientTexture1D_trail")
+turbulence_enabled = true
+turbulence_noise_strength = 2.0
+
+[sub_resource type="Gradient" id="Gradient_orb"]
+interpolation_mode = 2
+offsets = PackedFloat32Array(0, 0.2, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.5, 1, 0.5, 1, 0, 0.8, 0, 1, 0, 0.2, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_orb"]
+gradient = SubResource("Gradient_orb")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playershot"]
-size = Vector2(40, 40)
+size = Vector2(20, 20)
 
 [node name="PlayerShot" type="Area2D" groups=["player_projectile"]]
 collision_layer = 1024
@@ -8630,12 +10179,16 @@ collision_mask = 148
 script = ExtResource("1_4wg7x")
 metadata/pool_name = &"player_shots"
 
-[node name="ColorRect" type="ColorRect" parent="."]
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-color = Color(0.92549, 0.92549, 0.92549, 1)
+[node name="FlameTrail" type="GPUParticles2D" parent="."]
+unique_name_in_owner = true
+amount = 40
+process_material = SubResource("ParticleProcessMaterial_flame")
+lifetime = 0.4
+local_coords = false
+fixed_fps = 60
+
+[node name="VisualSprite" type="Sprite2D" parent="."]
+texture = SubResource("GradientTexture2D_orb")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_playershot")
@@ -8647,6 +10200,7 @@ rect = Rect2(-20, -20, 40, 40)
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
+
 
 =====================================
 FILE: ./src/projectiles/turret_shot.tscn
@@ -8738,12 +10292,10 @@ extends BaseProjectile
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
 
+@onready var flame_trail: GPUParticles2D = %FlameTrail
 
 func _ready() -> void:
 	super._ready()
-	# Visual only; movement & collision handled by BaseProjectile.
-	if is_instance_valid(visual):
-		visual.color = Palette.COLOR_PLAYER_PROJECTILE
 
 
 # Ensure the speed is set every time this instance is (re)activated by the pool.
@@ -8752,6 +10304,16 @@ func activate(p_dependencies: Dictionary) -> void:
 	super.activate(p_dependencies)
 	# Then apply player-shot-specific runtime defaults so they apply on reuse.
 	speed = default_speed
+	
+	if is_instance_valid(flame_trail):
+		flame_trail.restart()
+		flame_trail.emitting = true
+
+
+func deactivate() -> void:
+	if is_instance_valid(flame_trail):
+		flame_trail.emitting = false
+	super.deactivate()
 
 
 func _on_area_entered(area: Area2D) -> void:
@@ -8934,7 +10496,8 @@ extends Area2D
 
 # --- Node References ---
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
-@onready var visual: ColorRect = $ColorRect
+# Visual is now resolved dynamically to support Sprites or ColorRects
+var visual: CanvasItem 
 
 # --- Public Properties ---
 @export var speed: float = 400.0
@@ -8951,8 +10514,13 @@ var _lifetime_timer: Timer
 
 # --- Godot Lifecycle ---
 func _ready() -> void:
+	# Dynamic visual resolution
+	if has_node("ColorRect"):
+		visual = $ColorRect
+	elif has_node("VisualSprite"):
+		visual = $VisualSprite
+
 	# Programmatically create a timer for every projectile instance.
-	# This avoids duplicating the node in every projectile scene.
 	_lifetime_timer = Timer.new()
 	_lifetime_timer.name = "LifetimeTimer"
 	_lifetime_timer.one_shot = true
@@ -9445,6 +11013,46 @@ hit_stop_boss_death = 0.1
 
 
 =====================================
+FILE: ./src/data/effects/boss_shockwave_effect.tres
+=====================================
+[gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://boss_shockwave_effect"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/shader_effect.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://shockwave_material" path="res://materials/shockwave_material.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_script")
+material = ExtResource("2_mat")
+duration = 0.8
+params = {
+"center": Vector2(0.5, 0.5),
+"force": 0.05,
+"thickness": 0.15
+}
+priority = 10
+coalesce_window = 0.0
+
+
+=====================================
+FILE: ./src/data/effects/heavy_impact_chromatic.tres
+=====================================
+[gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://heavy_impact_chromatic"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/shader_effect.gd" id="1_script"]
+[ext_resource type="Material" uid="uid://chromatic_material" path="res://materials/chromatic_material.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_script")
+material = ExtResource("2_mat")
+duration = 0.3
+params = {
+"offset_strength": 8.0
+}
+priority = 5
+coalesce_window = 0.1
+
+
+=====================================
 FILE: ./src/data/effects/entity_hit_flash_effect.tres
 =====================================
 [gd_resource type="Resource" script_class="ShaderEffect" load_steps=3 format=3 uid="uid://entity_hit_flash_effect"]
@@ -9512,20 +11120,36 @@ var _player: CharacterBody2D
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
-	_build_from_archetype()
-	if not Engine.is_editor_hint():
-		_player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+	
+	# Deferred build to ensure Autoloads are ready
+	call_deferred("build_entity")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
+
+func _exit_tree() -> void:
+	# Defined to allow subclasses to call super._exit_tree() safely
+	pass
 
 
 # --- Public Methods ---
 
 ## The main entry point for self-construction.
 func build_entity() -> void:
-	_services = ServiceLocator
+	if _components_initialized:
+		return
+		
+	if not _services:
+		_services = ServiceLocator
+	
+	# Safely access targeting system if available
+	if _services and _services.get("targeting_system"):
+		_player = _services.targeting_system.get_first(Identifiers.Groups.PLAYER)
+	
+	# CRITICAL: Instantiate components from the archetype before configuration
+	_build_from_archetype()
+	
 	_on_build() 
 
 
@@ -9564,6 +11188,10 @@ func teardown() -> void:
 	for child in get_children():
 		if child is IComponent:
 			child.teardown()
+	
+	_components.clear()
+	_components_by_interface.clear()
+	_components_initialized = false
 
 
 func setup_components(
@@ -9582,7 +11210,10 @@ func setup_components(
 	base_shared_deps["object_pool"] = s.object_pool
 	base_shared_deps["combat_utils"] = s.combat_utils
 	base_shared_deps["grid_utils"] = s.grid_utils
-	base_shared_deps["audio_manager"] = AudioManager # Autoload
+	base_shared_deps["audio_manager"] = AudioManager
+	
+	if s.get("targeting_system"):
+		base_shared_deps["targeting_system"] = s.targeting_system
 
 	# DIP: Auto-extract DamageResponseConfig if present in the main config.
 	if base_shared_deps.has("config"):
@@ -10109,7 +11740,8 @@ func enter(msg := {}) -> void:
 	_decide_next_action()
 
 func _decide_next_action() -> void:
-	var boss = owner as BaseBoss
+	# Removed strict casting to avoid cyclic dep
+	var boss = owner
 	if boss.current_attack_patterns.is_empty():
 		push_warning("BossStateIdle: No attack patterns. Defaulting to Cooldown.")
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
@@ -10117,6 +11749,7 @@ func _decide_next_action() -> void:
 
 	var chosen_pattern: AttackPattern = boss.current_attack_patterns.pick_random()
 	state_machine.change_state(Identifiers.BossStates.ATTACK, {"pattern": chosen_pattern})
+
 
 =====================================
 FILE: ./src/entities/boss/states/state_boss_lunge.gd
@@ -10127,7 +11760,7 @@ extends BaseState
 class_name BossStateLunge
 
 # --- Private Member Variables ---
-var _boss: BaseBoss
+var _boss # Untyped
 var _health: HealthComponent
 var _lunge_duration: float
 var _invincibility_token: int
@@ -10136,7 +11769,7 @@ var _invincibility_token: int
 
 
 func enter(msg := {}) -> void:
-	self._boss = owner as BaseBoss
+	self._boss = owner
 	if not _boss:
 		return
 
@@ -10159,6 +11792,7 @@ func process_physics(delta: float) -> void:
 	if _lunge_duration <= 0:
 		# UPDATE: Use constant
 		state_machine.change_state(Identifiers.CommonStates.MELEE)
+
 
 =====================================
 FILE: ./src/entities/boss/states/state_boss_cooldown.gd
@@ -10187,13 +11821,13 @@ const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _current_pattern: AttackPattern
-var _boss: BaseBoss
+var _boss # Untyped to avoid cycles
 
 # --- State Lifecycle ---
 
 
 func enter(msg := {}) -> void:
-	self._boss = owner as BaseBoss
+	self._boss = owner
 	if not _boss:
 		push_error("BossStateAttack: Owner is not a BaseBoss. Aborting.")
 		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
@@ -10292,22 +11926,23 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: BossBehavior
-@export var state_machine_config: StateMachineConfig
+@export var behavior: BossBehavior = null
+@export var state_machine_config: StateMachineConfig = null
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var phase_change_shake_effect: ScreenShakeEffect
-@export var death_shake_effect: ScreenShakeEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var phase_change_shake_effect: ScreenShakeEffect = null
+@export var death_shake_effect: ScreenShakeEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
+
 @export_group("State Scripts")
-@export var state_idle_script: Script
-@export var state_attack_script: Script
-@export var state_cooldown_script: Script
-@export var state_patrol_script: Script
-@export var state_lunge_script: Script
-@export var state_melee_script: Script
+@export var state_idle_script: Script = null
+@export var state_attack_script: Script = null
+@export var state_cooldown_script: Script = null
+@export var state_patrol_script: Script = null
+@export var state_lunge_script: Script = null
+@export var state_melee_script: Script = null
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -10342,6 +11977,8 @@ func _ready() -> void:
 
 	if not is_in_group(Identifiers.Groups.ENEMY):
 		add_to_group(Identifiers.Groups.ENEMY)
+	
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.ENEMY)
 
 	_initialize_data()
 	
@@ -10355,6 +11992,12 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 	move_and_slide()
+
+
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
 
 
 # --- Internal Build Logic ---
@@ -10413,6 +12056,9 @@ func teardown() -> void:
 		if hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
 			hc.health_threshold_reached.disconnect(_on_health_threshold_reached)
 
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 	super.teardown()
 	entity_data = null
 
@@ -10452,6 +12098,8 @@ func _die() -> void:
 	collision_layer = 0
 	collision_mask = 0
 	set_physics_process(false)
+
+	ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
 
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
@@ -11601,30 +13249,30 @@ var buffer: Dictionary = {}
 
 # --- Godot Lifecycle Methods ---
 
-
 func _ready() -> void:
 	process_priority = -100
 
-
 func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
+
 	if not is_instance_valid(owner_node):
 		return
 
 	buffer.clear()
-	buffer["move_axis"] = Input.get_axis("ui_left", "ui_right")
-	buffer["up"] = Input.is_action_pressed("ui_up")
-	buffer["down"] = Input.is_action_pressed("ui_down")
-	buffer["jump_just_pressed"] = Input.is_action_just_pressed("ui_jump")
-	buffer["jump_held"] = Input.is_action_pressed("ui_jump")
-	buffer["jump_released"] = Input.is_action_just_released("ui_jump")
-	buffer["attack_pressed"] = Input.is_action_pressed("ui_attack")
-	buffer["attack_just_pressed"] = Input.is_action_just_pressed("ui_attack")
-	buffer["attack_released"] = Input.is_action_just_released("ui_attack")
-	buffer["dash_pressed"] = Input.is_action_just_pressed("ui_dash")
+	buffer["move_axis"] = Input.get_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT)
+	buffer["up"] = Input.is_action_pressed(Identifiers.Actions.MOVE_UP)
+	buffer["down"] = Input.is_action_pressed(Identifiers.Actions.MOVE_DOWN)
+	buffer["jump_just_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.JUMP)
+	buffer["jump_held"] = Input.is_action_pressed(Identifiers.Actions.JUMP)
+	buffer["jump_released"] = Input.is_action_just_released(Identifiers.Actions.JUMP)
+	buffer["attack_pressed"] = Input.is_action_pressed(Identifiers.Actions.ATTACK)
+	buffer["attack_just_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.ATTACK)
+	buffer["attack_released"] = Input.is_action_just_released(Identifiers.Actions.ATTACK)
+	buffer["dash_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.DASH)
 
 
 # --- Public Methods ---
-
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
@@ -11633,7 +13281,6 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	if not p_data:
 		push_error("InputComponent.setup: Missing 'data_resource' dependency.")
 		return
-
 
 func teardown() -> void:
 	set_physics_process(false)
@@ -12075,6 +13722,7 @@ var _owner: Node2D
 var _entity_data: Resource # BossStateData or MinionStateData
 var _object_pool: IObjectPool
 var _combat_utils: Node
+var _targeting_system: Node
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -12087,6 +13735,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._entity_data = p_dependencies.get("data_resource")
 	self._object_pool = p_dependencies.get("object_pool")
 	self._combat_utils = p_dependencies.get("combat_utils")
+	self._targeting_system = p_dependencies.get("targeting_system")
 	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
@@ -12094,7 +13743,11 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
-		_player_node = _owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+		# Use the TargetingSystem if available, otherwise fallback to global ServiceLocator for robustness
+		if not _targeting_system:
+			_targeting_system = ServiceLocator.targeting_system
+		
+		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 
 func teardown() -> void:
@@ -12105,6 +13758,7 @@ func teardown() -> void:
 	_object_pool = null
 	_combat_utils = null
 	_player_node = null
+	_targeting_system = null
 
 
 # --- Public API ---
@@ -12124,7 +13778,14 @@ func fire_volley(shot_count: int, delay: float) -> void:
 
 ## Fires a single shot directly at the player's current position.
 func fire_shot_at_player() -> void:
-	if not is_instance_valid(_owner) or not is_instance_valid(_player_node):
+	if not is_instance_valid(_owner):
+		return
+		
+	# Refresh player reference if needed
+	if not is_instance_valid(_player_node) and is_instance_valid(_targeting_system):
+		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
+
+	if not is_instance_valid(_player_node):
 		return
 
 	# If the owner is marked as dead via internal flags, don't fire.
@@ -12283,11 +13944,11 @@ FILE: ./src/entities/states/state_entity_fall.gd
 class_name StateEntityFall
 extends BaseState
 
-var _entity: BaseEntity
+var _entity # Untyped to avoid cyclic parser error
 
 
 func enter(_msg := {}) -> void:
-	self._entity = owner as BaseEntity
+	self._entity = owner
 
 
 func process_physics(delta: float) -> void:
@@ -12304,10 +13965,12 @@ func process_physics(delta: float) -> void:
 	# Check for landing
 	if _entity.is_on_floor():
 		var idle_state_key = Identifiers.MinionStates.IDLE
-		if _entity is BaseBoss:
+		if _entity.is_in_group(Identifiers.Groups.ENEMY) and _entity.has_method("get_health_thresholds"):
+			# Duck-typing check for Boss
 			idle_state_key = Identifiers.BossStates.IDLE
 		
 		state_machine.change_state(idle_state_key)
+
 
 =====================================
 FILE: ./src/entities/minions/minion.gd
@@ -12320,13 +13983,13 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: MinionBehavior
-@export var state_machine_config: StateMachineConfig
+@export var behavior: MinionBehavior = null
+@export var state_machine_config: StateMachineConfig = null
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -12353,6 +14016,8 @@ func _ready() -> void:
 	super._ready()
 	if Engine.is_editor_hint():
 		return
+	
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.ENEMY)
 
 	_initialize_data()
 	build_entity()
@@ -12377,9 +14042,17 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
 
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 
 # --- Public Methods ---
 func teardown() -> void:
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.ENEMY)
+
 	super.teardown()
 	entity_data = null
 
@@ -12704,12 +14377,12 @@ extends BaseState
 const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
-var _minion: Minion
+var _minion # Untyped
 var _current_pattern: AttackPattern
 
 
 func enter(msg := {}) -> void:
-	self._minion = owner as Minion
+	self._minion = owner
 	if not is_instance_valid(_minion):
 		state_machine.change_state(Identifiers.MinionStates.IDLE)
 		return
@@ -12781,11 +14454,11 @@ FILE: ./src/entities/minions/states/state_minion_patrol.gd
 class_name MinionStatePatrol
 extends StateEntityPatrol
 
-var _minion: Minion
+var _minion # Untyped
 
 func enter(msg := {}) -> void:
 	super.enter(msg)
-	_minion = owner as Minion
+	_minion = owner
 
 func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
@@ -12796,7 +14469,6 @@ func _check_interrupts() -> bool:
 		if _minion.get_component(MeleeComponent):
 			_minion.velocity = Vector2.ZERO
 			_minion.attack_timer.stop() 
-			# UPDATE: Use constant
 			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
@@ -12832,11 +14504,11 @@ const LancerPokeData = preload("res://src/data/combat/attacks/lancer_poke.tres")
 
 # --- Private Member Variables ---
 var _melee_component: MeleeComponent
-var _minion: Minion
+var _minion # Untyped
 
 
 func enter(_msg := {}) -> void:
-	self._minion = owner as Minion
+	self._minion = owner
 	_minion.velocity = Vector2.ZERO
 	_melee_component = _minion.get_component(MeleeComponent)
 	
@@ -12857,7 +14529,6 @@ func exit() -> void:
 func process_physics(_delta: float) -> void:
 	# If the player leaves the melee zone during the attack, immediately go back to patrolling.
 	if not state_data.is_player_in_melee_range:
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return
 
@@ -12870,8 +14541,8 @@ func _on_attack_finished() -> void:
 			_minion.attack_timer.wait_time = 2.0 
 			_minion.attack_timer.start()
 		
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)
+
 
 =====================================
 FILE: ./src/entities/minions/states/state_minion_idle.gd
@@ -12881,11 +14552,11 @@ FILE: ./src/entities/minions/states/state_minion_idle.gd
 class_name MinionStateIdle
 extends StateEntityIdle
 
-var _minion: Minion
+var _minion # Untyped
 
 func enter(msg := {}) -> void:
 	super.enter(msg)
-	_minion = owner as Minion
+	_minion = owner
 
 func _check_interrupts() -> bool:
 	if not is_instance_valid(_minion):
@@ -12894,7 +14565,6 @@ func _check_interrupts() -> bool:
 	# 1. Melee Check
 	if state_data.is_player_in_melee_range and _minion.attack_timer.is_stopped():
 		if _minion.get_component(MeleeComponent):
-			# UPDATE
 			state_machine.change_state(Identifiers.CommonStates.MELEE)
 			return true
 
@@ -12906,11 +14576,11 @@ func _check_interrupts() -> bool:
 
 	# 3. Default to Patrol if ready
 	if _minion.attack_timer.is_stopped():
-		# UPDATE
 		state_machine.change_state(Identifiers.CommonStates.PATROL)
 		return true
 		
 	return false
+
 
 =====================================
 FILE: ./src/entities/minions/patrolling_lancer.tscn
@@ -13305,13 +14975,13 @@ const ACTION_ALLOWED_STATES = [
 
 # --- Editor Properties ---
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect
-@export var damage_shake_effect: ScreenShakeEffect
-@export var hit_spark_effect: VFXEffect
-@export var dissolve_effect: ShaderEffect
+@export var hit_flash_effect: ShaderEffect = null
+@export var damage_shake_effect: ScreenShakeEffect = null
+@export var hit_spark_effect: VFXEffect = null
+@export var dissolve_effect: ShaderEffect = null
 
 @export_group("Configuration")
-@export var state_machine_config: StateMachineConfig
+@export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -13329,7 +14999,9 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
+	# Registration
 	add_to_group(Identifiers.Groups.PLAYER)
+	ServiceLocator.targeting_system.register(self, Identifiers.Groups.PLAYER)
 	
 	# Setup Data
 	entity_data = PlayerStateData.new()
@@ -13348,6 +15020,12 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+
+
+func _exit_tree() -> void:
+	super._exit_tree()
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
 
 
 # --- Internal Build Logic ---
@@ -13455,6 +15133,9 @@ func teardown() -> void:
 	
 	if is_instance_valid(hurtbox):
 		hurtbox.teardown()
+	
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
 
 	super.teardown()
 	entity_data = null
@@ -13482,7 +15163,9 @@ func _die() -> void:
 	collision_mask = 0
 	set_physics_process(false)
 	
-	# Stop hurtbox processing immediately
+	if not Engine.is_editor_hint():
+		ServiceLocator.targeting_system.unregister(self, Identifiers.Groups.PLAYER)
+	
 	if is_instance_valid(hurtbox):
 		hurtbox.teardown()
 
@@ -13492,7 +15175,8 @@ func _die() -> void:
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": false})
+		# CRITICAL FIX: Set preserve_final_state to TRUE so player stays dissolved (invisible)
+		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 		if is_instance_valid(tween):
 			await tween.finished
 
@@ -13673,12 +15357,12 @@ extends RefCounted
 # --- Public Methods ---
 
 ## Checks all possible jump conditions in a prioritized order and executes one if valid.
-static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
+static func try_jump(owner: Node, p_data: Resource) -> bool:
 	if not is_instance_valid(owner):
 		return false
 
-	var physics: PlayerPhysicsComponent = owner.get_component(PlayerPhysicsComponent)
-	var sm: BaseStateMachine = owner.get_component(BaseStateMachine)
+	var physics = owner.get_component(PlayerPhysicsComponent)
+	var sm = owner.get_component(BaseStateMachine)
 
 	if not is_instance_valid(physics) or not is_instance_valid(sm):
 		return false
@@ -13703,7 +15387,7 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 
 
 ## Checks if the player is attempting to drop through a one-way platform.
-static func try_platform_drop(owner: Player) -> bool:
+static func try_platform_drop(owner: Node) -> bool:
 	if not is_instance_valid(owner) or not owner is CharacterBody2D:
 		return false
 
@@ -13717,7 +15401,10 @@ static func try_platform_drop(owner: Player) -> bool:
 		and floor_collider.is_in_group(Identifiers.Groups.ONEWAY_PLATFORMS)
 	):
 		owner.position.y += 2 # Nudge the player down to clear the platform
-		owner.get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
+		# We access the state machine via component lookup to avoid type dependency
+		var sm = owner.get_component(BaseStateMachine)
+		if sm:
+			sm.change_state(Identifiers.PlayerStates.FALL)
 		return true
 
 	return false
@@ -13756,7 +15443,7 @@ extends IComponent
 
 const JumpHelper = preload("res://src/entities/player/components/player_jump_helper.gd")
 
-var _owner_node: Player
+var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
@@ -13765,22 +15452,26 @@ func _ready() -> void:
 	process_priority = 0
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	_owner_node = p_owner as Player
+	_owner_node = p_owner
 	_p_data = p_dependencies.get("data_resource")
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 
 func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(_owner_node) or not is_instance_valid(_state_machine):
 		return
 	
-	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
-		return
+	# Check constant on the script resource to avoid cyclic reference to Player class
+	if not _state_machine.get_current_state_key() in Identifiers.PlayerStates.MOVE: # Fallback check
+		# We rely on the string keys matching identifiers
+		var key = _state_machine.get_current_state_key()
+		if key != Identifiers.PlayerStates.MOVE and key != Identifiers.PlayerStates.FALL and key != Identifiers.PlayerStates.JUMP and key != Identifiers.PlayerStates.WALL_SLIDE:
+			return
 
 	if _input_component.buffer.get("jump_just_pressed"):
 		var is_holding_down = _input_component.buffer.get("down", false)
-		
-		# Note: Heal logic is now in HealComponent, so we don't check it here.
 		
 		if is_holding_down:
 			if JumpHelper.try_platform_drop(_owner_node):
@@ -13795,6 +15486,7 @@ func teardown() -> void:
 	_state_machine = null
 	_input_component = null
 
+
 =====================================
 FILE: ./src/entities/player/components/dash_component.gd
 =====================================
@@ -13803,7 +15495,7 @@ FILE: ./src/entities/player/components/dash_component.gd
 class_name DashComponent
 extends IComponent
 
-var _owner_node: Player
+var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
@@ -13812,18 +15504,22 @@ func _ready() -> void:
 	process_priority = 0
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	_owner_node = p_owner as Player
+	_owner_node = p_owner
 	_p_data = p_dependencies.get("data_resource")
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(_owner_node):
 		return
 
 	_update_timers(delta)
 
-	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+	# Basic state check without Player class ref
+	var state = _state_machine.get_current_state_key()
+	if state == Identifiers.PlayerStates.ATTACK or state == Identifiers.PlayerStates.HURT or state == Identifiers.PlayerStates.HEAL or state == Identifiers.PlayerStates.DASH:
 		return
 
 	if (
@@ -13855,7 +15551,7 @@ FILE: ./src/entities/player/components/heal_component.gd
 class_name HealComponent
 extends IComponent
 
-var _owner_node: Player
+var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
@@ -13864,16 +15560,20 @@ func _ready() -> void:
 	process_priority = 0
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	_owner_node = p_owner as Player
+	_owner_node = p_owner
 	_p_data = p_dependencies.get("data_resource")
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 
 func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(_owner_node):
 		return
 
-	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+	var state = _state_machine.get_current_state_key()
+	# Allow heal only in actionable states (reusing MOVE for grounded/idle state logic)
+	if state != Identifiers.PlayerStates.MOVE and state != Identifiers.PlayerStates.FALL and state != Identifiers.PlayerStates.JUMP:
 		return
 
 	if _input_component.buffer.get("jump_just_pressed"):
@@ -13916,7 +15616,7 @@ class_name PlayerPhysicsComponent
 extends IComponent
 
 # --- Member Variables ---
-var owner_node: Player
+var owner_node # Typed as Player in logic
 var p_data: PlayerStateData
 
 # --- Godot Lifecycle Methods ---
@@ -13927,6 +15627,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(owner_node):
 		return
 
@@ -13956,7 +15658,7 @@ func _update_timers(delta: float) -> void:
 
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	self.owner_node = p_owner as Player
+	self.owner_node = p_owner
 	self.p_data = p_dependencies.get("data_resource")
 
 
@@ -14053,7 +15755,7 @@ FILE: ./src/entities/player/components/charge_attack_component.gd
 class_name ChargeAttackComponent
 extends IComponent
 
-var _owner_node: Player
+var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
@@ -14063,13 +15765,15 @@ func _ready() -> void:
 	process_priority = 0
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	_owner_node = p_owner as Player
+	_owner_node = p_owner
 	_p_data = p_dependencies.get("data_resource")
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_instance_valid(_owner_node):
 		return
 	
@@ -14092,7 +15796,8 @@ func _try_execute_attack() -> void:
 	if _state_machine.states.is_empty():
 		return
 
-	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
+	var state = _state_machine.get_current_state_key()
+	if state == Identifiers.PlayerStates.HURT or state == Identifiers.PlayerStates.DASH or state == Identifiers.PlayerStates.HEAL:
 		return
 
 	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
@@ -14373,12 +16078,12 @@ extends BaseState
 
 var _input: InputComponent
 var _physics: PlayerPhysicsComponent
-var _player: Player
+var _player # Untyped
 
 # --- State Lifecycle ---
 
 func enter(_msg := {}) -> void:
-	_player = owner as Player
+	_player = owner
 	_input = owner.get_component(InputComponent)
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	
@@ -14421,12 +16126,12 @@ class_name PlayerStatePogo
 extends BaseState
 
 var _physics: PlayerPhysicsComponent
-var _player: Player
+var _player # Untyped
 
 # --- State Lifecycle ---
 
 func enter(_msg := {}) -> void:
-	_player = owner as Player
+	_player = owner
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	
 	state_data.combat.is_pogo_attack = true

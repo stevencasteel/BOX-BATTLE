@@ -18,11 +18,39 @@
 
 
 
+cat <<EOF > docs/CHANGELOG.txt
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║   ██████╗██╗  ██╗ █████╗ ███╗   ██╗ ██████╗ ███████╗██╗      ██████╗  ██████╗  ║
+║  ██╔════╝██║  ██║██╔══██╗████╗  ██║██╔════╝ ██╔════╝██║     ██╔═══██╗██╔════╝  ║
+║  ██║     ███████║███████║██╔██╗ ██║██║  ███╗█████╗  ██║     ██║   ██║██║  ███╗ ║
+║  ██║     ██╔══██║██╔══██║██║╚██╗██║██║   ██║██╔══╝  ██║     ██║   ██║██║   ██║ ║
+║  ╚██████╗██║  ██║██║  ██║██║ ╚████║╚██████╔╝███████╗███████╗╚██████╔╝╚██████╔╝ ║
+║   ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚═════╝  ║
+║                                                                                ║
+║                  A log of all notable changes to the project.                  ║
+║                                                                                ║
+╠════════════════════════════════════════════════════════════════════════════════╣
 
-
-
-
-
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Physics & Controls                                                        ║
+║      ░ ■ Standardized Physics: Player entity now drives 'move_and_slide',      ║
+║      ░   resolving execution order issues with components.                     ║
+║      ░ ■ Jump Buffering: Added 0.1s input buffer for smoother landing jumps.   ║
+║                                                                                ║
+║   █  Visual Effects & Juice                                                    ║
+║      ░ ■ Added 'Super Saiyan' style charging auras (Green for Attack,          ║
+║      ░   Purple for Heal) with crackling turbulence and ramp-up.               ║
+║      ░ ■ Added splash VFX for Fireball release and Heal completion.            ║
+║      ░ ■ Implemented 0.15s delay on Charge Aura to prevent flashing on taps.   ║
+║                                                                                ║
+║   █  Balance & Tuning                                                          ║
+║      ░ ■ Reduced Healing Charge cost: Determination required lowered from      ║
+║      ░   10 hits to 5 hits.                                                    ║
+║                                                                                ║
 
 
 

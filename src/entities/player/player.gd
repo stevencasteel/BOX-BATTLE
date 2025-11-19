@@ -14,6 +14,7 @@ const ACTION_ALLOWED_STATES = [
 	&"jump",
 	&"wall_slide"
 ]
+const HEAL_SPLASH_SCENE = preload("res://src/vfx/splash_heal_purple.tscn")
 
 # --- Editor Properties ---
 @export_group("Juice & Feedback")
@@ -26,11 +27,11 @@ const ACTION_ALLOWED_STATES = [
 @export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
-@onready var visual_sprite: ColorRect = $ColorRect
-@onready var healing_timer: Timer = $HealingTimer
-@onready var melee_hitbox: HitboxComponent = $MeleeHitbox
-@onready var pogo_hitbox: HitboxComponent = $PogoHitbox
-@onready var hurtbox: HurtboxComponent = $Hurtbox
+@onready var visual_sprite: ColorRect = get_node("ColorRect")
+@onready var healing_timer: Timer = get_node("HealingTimer")
+@onready var melee_hitbox: HitboxComponent = get_node("MeleeHitbox")
+@onready var pogo_hitbox: HitboxComponent = get_node("PogoHitbox")
+@onready var hurtbox: HurtboxComponent = get_node("Hurtbox")
 
 # --- Data ---
 var entity_data: PlayerStateData
@@ -62,6 +63,9 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+	
+	# Centralized Physics Movement
+	move_and_slide()
 
 
 func _exit_tree() -> void:
@@ -217,7 +221,6 @@ func _die() -> void:
 
 	var fc: FXComponent = get_component(FXComponent)
 	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		# CRITICAL FIX: Set preserve_final_state to TRUE so player stays dissolved (invisible)
 		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 		if is_instance_valid(tween):
 			await tween.finished
@@ -244,6 +247,14 @@ func _on_healing_timer_timeout() -> void:
 		entity_data.health += 1
 		get_component(PlayerResourceComponent).consume_healing_charge()
 		_on_health_changed(entity_data.health, entity_data.max_health)
+		
+		# Visual Feedback
+		if is_instance_valid(HEAL_SPLASH_SCENE):
+			var splash = HEAL_SPLASH_SCENE.instantiate()
+			splash.global_position = global_position
+			splash.emitting = true
+			get_tree().current_scene.add_child(splash)
+			
 		sm.change_state(Identifiers.PlayerStates.MOVE)
 
 

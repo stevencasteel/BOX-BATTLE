@@ -18,3 +18,4 @@ var wall_coyote_timer: float = 0.0
 var dash_duration_timer: float = 0.0
 var dash_cooldown_timer: float = 0.0
 var knockback_timer: float = 0.0
+var jump_buffer_timer: float = 0.0 # Tracks recent jump inputs
