@@ -82,6 +82,7 @@ func _on_build() -> void:
 	var fc: FXComponent = get_component(FXComponent)
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
+	var pc: PogoComponent = get_component(PogoComponent)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -118,12 +119,16 @@ func _on_build() -> void:
 			"fx_manager": _services.fx_manager,
 			"combat_utils": _services.combat_utils,
 			"services": _services,
-			"melee_hitbox": melee_hitbox,
-			"pogo_hitbox": pogo_hitbox
+			"melee_hitbox": melee_hitbox
+			# Pogo hitbox removed from here
 			},
 		rc: {
 			"event_bus": _services.event_bus
-			}
+			},
+		pc: {
+			"pogo_hitbox": pogo_hitbox,
+			"services": _services
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
@@ -132,11 +137,14 @@ func _on_build() -> void:
 		hurtbox.setup(self, {"services": _services})
 
 	# --- Wire signals between components ---
-	if cc and rc:
-		if not cc.damage_dealt.is_connected(rc.on_damage_dealt):
+	if rc:
+		if cc and not cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.connect(rc.on_damage_dealt)
-		if not cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
-			cc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
+		if pc and not pc.damage_dealt.is_connected(rc.on_damage_dealt):
+			pc.damage_dealt.connect(rc.on_damage_dealt)
+
+	if pc and not pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
+		pc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
 
 	if healing_timer and not healing_timer.timeout.is_connected(_on_healing_timer_timeout):
 		healing_timer.timeout.connect(_on_healing_timer_timeout)
@@ -145,12 +153,17 @@ func _on_build() -> void:
 # --- Public Methods ---
 func teardown() -> void:
 	var cc: CombatComponent = get_component(CombatComponent)
-	if is_instance_valid(cc):
-		var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
-		if is_instance_valid(rc) and cc.damage_dealt.is_connected(rc.on_damage_dealt):
+	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
+	var pc: PogoComponent = get_component(PogoComponent)
+
+	if is_instance_valid(rc):
+		if is_instance_valid(cc) and cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.disconnect(rc.on_damage_dealt)
-		if cc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
-			cc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
+		if is_instance_valid(pc) and pc.damage_dealt.is_connected(rc.on_damage_dealt):
+			pc.damage_dealt.disconnect(rc.on_damage_dealt)
+
+	if is_instance_valid(pc) and pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
+		pc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
 
 	if is_instance_valid(healing_timer):
 		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):

@@ -12,6 +12,36 @@
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██               [0.23.0] - SRP POGO REFACTOR - 11/18/2025              ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Single Responsibility Principle (SRP) to `CombatComponent`.   ║
+║      ░ ■ Extracted `PogoComponent` to handle all downward strike and bounce    ║
+║      ░   mechanics separately from projectile/melee logic.                     ║
+║      ░ ■ Updated `PlayerArchetype` and `Player.gd` to include and wire the     ║
+║      ░   new component.                                                        ║
+║      ░ ■ Cleaned `CombatComponent`, removing legacy pogo detection code.       ║
+║                                                                                ║
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██             [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025    ██.  ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -42,17 +72,8 @@
 ║      ░   monitoring was active.                                                ║
 
 
-
-
-
-
-
-
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██                  [0.21.0] - PLAYER & SENSOR REFACTOR & PHYSICS & FSM CLEANUP- 11/18/2025  ██           ██   ║
+║   ██   [0.21.0] - PLAYER & SENSOR REFACTOR & PHYSICS & FSM CLEANUP- 11/18/2025  ██  ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture                                                              ║

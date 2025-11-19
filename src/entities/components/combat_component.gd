@@ -1,12 +1,11 @@
 # src/entities/components/combat_component.gd
 @tool
-## Centralizes all player combat logic, such as firing projectiles and pogo attacks.
+## Centralizes player offensive logic (Melee & Projectiles), excluding Pogo.
 class_name CombatComponent
 extends IComponent
 
 # --- Signals ---
 signal damage_dealt
-signal pogo_bounce_requested
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
@@ -18,7 +17,6 @@ var _services: ServiceLocator
 
 # --- Hitbox References ---
 var _melee_hitbox: HitboxComponent
-var _pogo_hitbox: HitboxComponent
 
 # --- Godot Lifecycle Methods ---
 
@@ -42,19 +40,10 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	# Inject Hitboxes
 	_melee_hitbox = p_dependencies.get("melee_hitbox")
-	_pogo_hitbox = p_dependencies.get("pogo_hitbox")
 	
 	if is_instance_valid(_melee_hitbox):
 		if not _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
-
-	if is_instance_valid(_pogo_hitbox):
-		# Pogo specific: Ensure we can hit the ground (World/Platforms)
-		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
-		_pogo_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
-		
-		if not _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
-			_pogo_hitbox.hit_detected.connect(_on_pogo_hit_detected)
 
 	assert(is_instance_valid(_object_pool), "CombatComponent requires an IObjectPool.")
 	assert(is_instance_valid(_fx_manager), "CombatComponent requires an IFXManager.")
@@ -64,9 +53,6 @@ func teardown() -> void:
 	set_physics_process(false)
 	if is_instance_valid(_melee_hitbox) and _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 		_melee_hitbox.hit_detected.disconnect(_on_melee_hit_detected)
-		
-	if is_instance_valid(_pogo_hitbox) and _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
-		_pogo_hitbox.hit_detected.disconnect(_on_pogo_hit_detected)
 
 	owner_node = null
 	p_data = null
@@ -75,7 +61,6 @@ func teardown() -> void:
 	_combat_utils = null
 	_services = null
 	_melee_hitbox = null
-	_pogo_hitbox = null
 
 
 ## Fires a player projectile from the object pool.
@@ -88,7 +73,6 @@ func fire_shot() -> void:
 
 	var shot_dir = Vector2(p_data.physics.facing_direction, 0)
 	# We assume InputComponent is updating the buffer elsewhere
-	# Ideally, direction should be passed in or read from p_data if generalized
 	if Input.is_action_pressed("ui_up"):
 		shot_dir = Vector2.UP
 	elif Input.is_action_pressed("ui_down"):
@@ -111,8 +95,6 @@ func _update_timers(delta: float) -> void:
 		return
 	p_data.combat.attack_cooldown_timer = max(0.0, p_data.combat.attack_cooldown_timer - delta)
 	p_data.combat.attack_duration_timer = max(0.0, p_data.combat.attack_duration_timer - delta)
-	# Pogo fall prevention is loosely related to combat timing
-	p_data.combat.pogo_fall_prevention_timer = max(0.0, p_data.combat.pogo_fall_prevention_timer - delta)
 
 
 # --- Private Signal Handlers ---
@@ -142,38 +124,3 @@ func _on_melee_hit_detected(target: Node) -> void:
 				_fx_manager.request_hit_stop(
 					p_data.world_config.hit_stop_player_melee_close
 				)
-
-
-func _on_pogo_hit_detected(target: Node) -> void:
-	if not p_data.combat.is_pogo_attack:
-		return
-	if not is_instance_valid(target):
-		return
-
-	var should_bounce = false
-
-	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-		should_bounce = true
-		_object_pool.return_instance.call_deferred(target)
-
-	var damageable = _combat_utils.find_damageable(target)
-	if is_instance_valid(damageable):
-		should_bounce = true
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1
-		damage_info.source_node = owner_node
-		damage_info.bypass_invincibility = true
-		damage_info.impact_position = target.global_position
-		damage_info.impact_normal = Vector2.UP
-		var damage_result = damageable.apply_damage(damage_info)
-		if damage_result.was_damaged:
-			damage_dealt.emit()
-
-	# Check physics bodies (World, Platforms)
-	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
-		should_bounce = true
-	elif target.is_in_group(Identifiers.Groups.WORLD):
-		should_bounce = true
-
-	if should_bounce:
-		pogo_bounce_requested.emit()
