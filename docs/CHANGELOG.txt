@@ -13,7 +13,25 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER - 11/19/2025      ██   ║
+║   ██           [0.26.0] - N/A - 11/19/2025                               ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER & INPUT REMAPPING & ACCESSIBILITY - 11/19/2025      ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
@@ -45,12 +63,21 @@
 ║      ░   Player death or Boss defeat.                                          ║
 ║      ░ ■ Hardened 'ServiceLocator' to expose the new SaveManager.              ║
 ║                                                                                ║
-
-
-
-
-
-
+║                                                                                ║
+║   █  Input System                                                              ║
+║      ░ ■ Implemented runtime Input Remapping backend in 'Settings'.            ║
+║      ░ ■ Added 'Input Presets' system:                                         ║
+║      ░   - Default 1 (ZXC + Arrows/WASD)                                       ║
+║      ░   - Default 2 (.,/ + WASD)                                              ║
+║      ░   - Custom (Automatically set on manual rebind)                         ║
+║      ░ ■ Input configuration is now serialized to 'user://options.cfg'.        ║
+║                                                                                ║
+║   █  User Interface                                                            ║
+║      ░ ■ Created 'ControlsScreen' with dynamic binding rows.                   ║
+║      ░ ■ Created 'ControlSettingRow' component with "Press any key" detection. ║
+║      ░ ■ Added visual/audio feedback (Cursors, SFX) to all control UI elements.║
+║      ░ ■ Added "Fixed Controls" reference panel for hardcoded inputs.          ║
+║                                                                                ║
 
 
 
