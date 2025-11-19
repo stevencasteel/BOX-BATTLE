@@ -12,6 +12,16 @@
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.25.0] - CURRENT UNTITLED - 11/19/2025                           ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
 
 
 
@@ -54,10 +64,16 @@
 ║      ░ ■ Fixed a crash in `HurtboxComponent` where it attempted to process     ║
 ║      ░   collisions after the owner entity had been destroyed in the same      ║
 ║      ░   frame.                                                                ║
+║                                                                                ║║                                                                                ║
+║   █  Systems Architecture                                                      ║
+║      ░ ■ Implemented `StatusEffect` system (Open/Closed Principle).            ║
+║      ░   - Created `StatusEffectComponent` to manage buffs/debuffs.            ║
+║      ░   - Refactored `HealthComponent` to use `InvincibilityEffect` instead   ║
+║      ░     of hardcoded tokens.                                                ║
+║      ░ ■ Hardened Audio System (Dependency Inversion).                         ║
+║      ░   - Fixed cyclic dependency issues with `AudioCue` resource loading.    ║
+║      ░   - Renamed `AudioCue` constant in `AudioManager` to avoid shadowing.   ║
 ║                                                                                ║
-
-
-
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR & OCP TELEGRAPH REFACTOR - 11/19/2025              ██   ║
@@ -101,11 +117,6 @@
 ║      ░   custom `telegraph_scene` references, enabling visual customization    ║
 ║      ░   without code modification.                                            ║
 ║                                                                                ║
-
-
-
-
-
 
 
 

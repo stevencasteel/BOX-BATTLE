@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=14 format=3 uid="uid://player_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=15 format=3 uid="uid://player_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://src/entities/player/components/heal_component.tscn" id="12_heal"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/charge_attack_component.tscn" id="13_charge"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/pogo_component.tscn" id="14_pogo"]
+[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="15_status"]
 
 [resource]
 script = ExtResource("1_archetype")
@@ -28,5 +29,6 @@ components = [
 	ExtResource("11_dash"),
 	ExtResource("12_heal"),
 	ExtResource("13_charge"),
-	ExtResource("14_pogo")
+	ExtResource("14_pogo"),
+	ExtResource("15_status")
 ]
