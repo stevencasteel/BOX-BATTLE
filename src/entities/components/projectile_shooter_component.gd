@@ -7,8 +7,9 @@ extends IComponent
 
 # --- Dependencies ---
 var _owner: Node2D
-var _services: ServiceLocator
 var _entity_data: Resource # BossStateData or MinionStateData
+var _object_pool: IObjectPool
+var _combat_utils: Node
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -18,12 +19,14 @@ var _player_node: Node2D
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._owner = p_owner as Node2D
-	self._services = p_dependencies.get("services")
 	self._entity_data = p_dependencies.get("data_resource")
+	self._object_pool = p_dependencies.get("object_pool")
+	self._combat_utils = p_dependencies.get("combat_utils")
 	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
-	assert(is_instance_valid(_services), "ProjectileShooterComponent requires a ServiceLocator.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
+	assert(is_instance_valid(_object_pool), "ProjectileShooterComponent requires 'object_pool'.")
+	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
 		_player_node = _owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
@@ -33,8 +36,9 @@ func teardown() -> void:
 	if is_instance_valid(_active_volley_tween):
 		_active_volley_tween.kill()
 	_owner = null
-	_services = null
 	_entity_data = null
+	_object_pool = null
+	_combat_utils = null
 	_player_node = null
 
 
@@ -45,8 +49,6 @@ func fire_volley(shot_count: int, delay: float) -> void:
 	if is_instance_valid(_active_volley_tween):
 		_active_volley_tween.kill()
 	
-	# FIX: Bind tween to self (Component) so it dies when we die. 
-	# Do NOT bind to get_tree().
 	_active_volley_tween = create_tween()
 	
 	for i in range(shot_count):
@@ -69,7 +71,7 @@ func fire_shot_at_player() -> void:
 		push_warning("Entity '%s' tried to fire but has no 'projectile_pool_key'." % _owner.name)
 		return
 
-	var shot: Node = _services.object_pool.get_instance(pool_key)
+	var shot: Node = _object_pool.get_instance(pool_key)
 	if not shot:
 		return
 
@@ -87,8 +89,8 @@ func fire_shot_at_player() -> void:
 		shot.global_position = _owner.global_position
 	
 	var dependencies = {
-		"object_pool": _services.object_pool,
-		"combat_utils": _services.combat_utils
+		"object_pool": _object_pool,
+		"combat_utils": _combat_utils
 	}
 	
 	if shot.has_method("activate"):

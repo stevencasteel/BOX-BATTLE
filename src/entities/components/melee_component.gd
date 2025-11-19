@@ -22,7 +22,8 @@ const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _owner: BaseEntity
-var _services: ServiceLocator
+var _combat_utils: Node
+var _fx_manager: IFXManager
 var _current_attack_data: MeleeAttackData
 var _hit_targets_this_swing: Dictionary = {}
 var _is_attacking: bool = false
@@ -30,9 +31,12 @@ var _is_attacking: bool = false
 # --- IComponent Contract ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._owner = p_owner as BaseEntity
-	self._services = p_dependencies.get("services")
+	self._combat_utils = p_dependencies.get("combat_utils")
+	self._fx_manager = p_dependencies.get("fx_manager")
+	
 	assert(is_instance_valid(_owner), "MeleeComponent must be owned by a BaseEntity.")
-	assert(is_instance_valid(_services), "MeleeComponent requires a ServiceLocator.")
+	assert(is_instance_valid(_combat_utils), "MeleeComponent requires 'combat_utils'.")
+	assert(is_instance_valid(_fx_manager), "MeleeComponent requires 'fx_manager'.")
 	
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	hitbox.area_entered.connect(_on_hitbox_area_entered)
@@ -45,7 +49,8 @@ func teardown() -> void:
 		if hitbox.area_entered.is_connected(_on_hitbox_area_entered):
 			hitbox.area_entered.disconnect(_on_hitbox_area_entered)
 	_owner = null
-	_services = null
+	_combat_utils = null
+	_fx_manager = null
 
 
 # --- Public API ---
@@ -124,7 +129,7 @@ func _process_hit(collider: Node) -> void:
 
 	_hit_targets_this_swing[target_id] = true
 	
-	var damageable: IDamageable = _services.combat_utils.find_damageable(collider)
+	var damageable: IDamageable = _combat_utils.find_damageable(collider)
 	if is_instance_valid(damageable):
 		var damage_info := DamageInfo.new()
 		damage_info.amount = _current_attack_data.damage_amount
@@ -135,14 +140,14 @@ func _process_hit(collider: Node) -> void:
 		var result := damageable.apply_damage(damage_info)
 		if result.was_damaged:
 			if is_instance_valid(_current_attack_data.hit_spark_effect):
-				_services.fx_manager.play_vfx(
+				_fx_manager.play_vfx(
 					_current_attack_data.hit_spark_effect,
 					damage_info.impact_position,
 					damage_info.impact_normal
 				)
 			
 			if _current_attack_data.hit_stop_duration > 0.0:
-				_services.fx_manager.request_hit_stop(_current_attack_data.hit_stop_duration)
+				_fx_manager.request_hit_stop(_current_attack_data.hit_stop_duration)
 			
 			hit_confirmed.emit()
 

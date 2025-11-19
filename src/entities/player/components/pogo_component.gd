@@ -13,7 +13,7 @@ var _owner_node: CharacterBody2D
 var _p_data: PlayerStateData
 var _hitbox: HitboxComponent
 var _object_pool: IObjectPool
-var _combat_utils: Node # Service
+var _combat_utils: Node 
 
 # --- Godot Lifecycle ---
 
@@ -27,14 +27,13 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_p_data = p_dependencies.get("data_resource")
 	_hitbox = p_dependencies.get("pogo_hitbox")
 	
-	var services = p_dependencies.get("services")
-	if services:
-		_object_pool = services.object_pool
-		_combat_utils = services.combat_utils
+	_object_pool = p_dependencies.get("object_pool")
+	_combat_utils = p_dependencies.get("combat_utils")
 
 	assert(is_instance_valid(_owner_node), "PogoComponent requires a CharacterBody2D owner.")
 	assert(is_instance_valid(_p_data), "PogoComponent requires PlayerStateData.")
-	assert(is_instance_valid(_object_pool), "PogoComponent requires IObjectPool.")
+	assert(is_instance_valid(_object_pool), "PogoComponent requires 'object_pool'.")
+	assert(is_instance_valid(_combat_utils), "PogoComponent requires 'combat_utils'.")
 	
 	if is_instance_valid(_hitbox):
 		# Configure hitbox specifically for Pogo

@@ -13,7 +13,6 @@ var p_data: PlayerStateData
 var _object_pool: IObjectPool
 var _fx_manager: IFXManager
 var _combat_utils: Node
-var _services: ServiceLocator
 
 # --- Hitbox References ---
 var _melee_hitbox: HitboxComponent
@@ -36,7 +35,6 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._object_pool = p_dependencies.get("object_pool")
 	self._fx_manager = p_dependencies.get("fx_manager")
 	self._combat_utils = p_dependencies.get("combat_utils")
-	self._services = p_dependencies.get("services")
 	
 	# Inject Hitboxes
 	_melee_hitbox = p_dependencies.get("melee_hitbox")
@@ -45,8 +43,9 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 		if not _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
 
-	assert(is_instance_valid(_object_pool), "CombatComponent requires an IObjectPool.")
-	assert(is_instance_valid(_fx_manager), "CombatComponent requires an IFXManager.")
+	assert(is_instance_valid(_object_pool), "CombatComponent requires 'object_pool'.")
+	assert(is_instance_valid(_fx_manager), "CombatComponent requires 'fx_manager'.")
+	assert(is_instance_valid(_combat_utils), "CombatComponent requires 'combat_utils'.")
 
 
 func teardown() -> void:
@@ -59,7 +58,6 @@ func teardown() -> void:
 	_object_pool = null
 	_fx_manager = null
 	_combat_utils = null
-	_services = null
 	_melee_hitbox = null
 
 

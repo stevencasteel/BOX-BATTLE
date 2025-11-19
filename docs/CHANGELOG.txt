@@ -15,7 +15,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██               [0.23.0] - SRP POGO REFACTOR - 11/18/2025              ██   ║
+║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR  - 11/18/2025              ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture & SOLID                                                      ║
@@ -26,9 +26,16 @@
 ║      ░   new component.                                                        ║
 ║      ░ ■ Cleaned `CombatComponent`, removing legacy pogo detection code.       ║
 ║                                                                                ║
-
-
-
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Interface Segregation Principle (ISP) to Entity composition.  ║
+║      ░ ■ Refactored `BaseEntity` to deconstruct the `ServiceLocator` into      ║
+║      ░   discrete dependencies (`object_pool`, `fx_manager`, etc.) before      ║
+║      ░   passing them to components.                                           ║
+║      ░ ■ Updated `CombatComponent`, `MeleeComponent`, `PogoComponent`, and     ║
+║      ░   `ProjectileShooterComponent` to request specific interfaces instead   ║
+║      ░   of the monolithic Service Locator.                                    ║
+║                                                                                ║
 
 
 

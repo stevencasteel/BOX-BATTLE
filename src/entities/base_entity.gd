@@ -84,10 +84,16 @@ func setup_components(
 		return
 
 	var base_shared_deps = shared_dependencies.duplicate()
-	if _services:
-		base_shared_deps["services"] = _services
-	else:
-		base_shared_deps["services"] = ServiceLocator
+	
+	# ISP: Deconstruct ServiceLocator so components can request specific interfaces
+	var s = _services if _services else ServiceLocator
+	base_shared_deps["services"] = s # Legacy support
+	base_shared_deps["event_bus"] = s.event_bus
+	base_shared_deps["fx_manager"] = s.fx_manager
+	base_shared_deps["object_pool"] = s.object_pool
+	base_shared_deps["combat_utils"] = s.combat_utils
+	base_shared_deps["grid_utils"] = s.grid_utils
+	base_shared_deps["audio_manager"] = AudioManager # Autoload
 
 	for child in get_children():
 		if not (child is IComponent):
