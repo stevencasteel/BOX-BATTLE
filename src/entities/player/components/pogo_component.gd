@@ -73,12 +73,14 @@ func _on_hit_detected(target: Node) -> void:
 	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		should_bounce = true
-		var damage_info = DamageInfo.new()
-		damage_info.amount = 1 # Standard pogo damage
-		damage_info.source_node = _owner_node
-		damage_info.bypass_invincibility = true # Pogo often pierces i-frames
-		damage_info.impact_position = target.global_position
-		damage_info.impact_normal = Vector2.UP
+		# DRY: Use factory method (Pogo pierces i-frames)
+		var damage_info = _combat_utils.create_damage_info(
+			1,
+			_owner_node,
+			target.global_position,
+			Vector2.UP,
+			true 
+		)
 		
 		var result = damageable.apply_damage(damage_info)
 		if result.was_damaged:

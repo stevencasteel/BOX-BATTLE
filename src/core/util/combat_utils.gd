@@ -15,6 +15,7 @@ func find_entity_root(from_node: Node) -> BaseEntity:
 		
 	return null
 
+
 ## Finds the IDamageable component on a target node by first finding the
 ## target's entity root, then asking for the component.
 func find_damageable(from_node: Node) -> IDamageable:
@@ -35,3 +36,20 @@ func find_damageable(from_node: Node) -> IDamageable:
 		return from_node
 		
 	return null
+
+
+## Factory method to create a standard DamageInfo resource.
+func create_damage_info(
+	amount: int, 
+	source: Node, 
+	position: Vector2 = Vector2.ZERO, 
+	normal: Vector2 = Vector2.ZERO,
+	bypass_iframe: bool = false
+) -> DamageInfo:
+	var info = DamageInfo.new()
+	info.amount = amount
+	info.source_node = source
+	info.impact_position = position
+	info.impact_normal = normal
+	info.bypass_invincibility = bypass_iframe
+	return info

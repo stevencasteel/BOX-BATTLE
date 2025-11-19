@@ -141,11 +141,15 @@ func _process_hit(collider: Node) -> void:
 	
 	var damageable: IDamageable = _combat_utils.find_damageable(collider)
 	if is_instance_valid(damageable):
-		var damage_info := DamageInfo.new()
-		damage_info.amount = _current_attack_data.damage_amount
-		damage_info.source_node = _owner
-		damage_info.impact_position = collider.global_position
-		damage_info.impact_normal = (collider.global_position - _owner.global_position).normalized()
+		var impact_normal = (collider.global_position - _owner.global_position).normalized()
+		
+		# DRY: Use factory method
+		var damage_info = _combat_utils.create_damage_info(
+			_current_attack_data.damage_amount,
+			_owner,
+			collider.global_position,
+			impact_normal
+		)
 		
 		var result := damageable.apply_damage(damage_info)
 		if result.was_damaged:

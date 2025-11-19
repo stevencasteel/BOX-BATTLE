@@ -18,7 +18,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR - 11/19/2025          ██   ║
+║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR & DRY DAMAGE REFACTOR - 11/19/2025          ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture & SOLID                                                      ║
@@ -32,9 +32,14 @@
 ║      ░   hardcoded state lists from source code.                               ║
 ║      ░ ■ Fixed bug where entities defaulted to 1 HP due to uninitialized       ║
 ║      ░   base data values.                                                     ║
+║                                                                                ║                                                                                ║
+║   █  Architecture & Code Quality                                               ║
+║      ░ ■ Applied "Don't Repeat Yourself" (DRY) to Damage Logic.                ║
+║      ░ ■ Implemented `CombatUtils.create_damage_info()` factory method to      ║
+║      ░   centralize the creation of damage payloads.                           ║
+║      ░ ■ Refactored `MeleeComponent`, `PogoComponent`, `HurtboxComponent`,     ║
+║      ░   and `BaseProjectile` to use the factory, removing boilerplate code.   ║
 ║                                                                                ║
-
-
 
 
 

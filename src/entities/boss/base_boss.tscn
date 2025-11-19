@@ -10,7 +10,7 @@
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="18_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://cypy26d84f23b" path="res://src/entities/boss/data/default_boss_behavior.tres" id="19_default_behavior"]
 [ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/components/sensor_component.gd" id="20_sensor_script"]
-[ext_resource type="Resource" path="res://src/entities/boss/data/boss_state_machine_config.tres" id="21_sm_config"]
+[ext_resource type="Resource" uid="uid://s5xi3ciavs2n" path="res://src/entities/boss/data/boss_state_machine_config.tres" id="21_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bossbody"]
 size = Vector2(60, 60)

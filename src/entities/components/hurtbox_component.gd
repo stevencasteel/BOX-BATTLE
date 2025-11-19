@@ -91,12 +91,15 @@ func _process_contact(target: Node) -> void:
 	if not is_threat:
 		return
 
-	# Calculate Impact Data
-	var damage_info = DamageInfo.new()
-	damage_info.amount = 1 # Default contact damage
-	damage_info.source_node = target
-	damage_info.impact_position = global_position
-	damage_info.impact_normal = (global_position - target.global_position).normalized()
+	var impact_normal = (global_position - target.global_position).normalized()
+	
+	# DRY: Use factory method
+	var damage_info = _combat_utils.create_damage_info(
+		1, # Default contact damage
+		target,
+		global_position,
+		impact_normal
+	)
 
 	# Apply Damage
 	var result = _health_component.apply_damage(damage_info)

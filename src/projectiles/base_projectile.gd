@@ -77,11 +77,15 @@ func _handle_collision(target: Node) -> void:
 
 	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
-		var damage_info := DamageInfo.new()
-		damage_info.amount = damage
-		damage_info.source_node = self
-		damage_info.impact_position = global_position
-		damage_info.impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
+		var impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
+		
+		# DRY: Use factory method
+		var damage_info = _combat_utils.create_damage_info(
+			damage,
+			self,
+			global_position,
+			impact_normal
+		)
 		damageable.apply_damage(damage_info)
 
 	_object_pool.return_instance.call_deferred(self)
