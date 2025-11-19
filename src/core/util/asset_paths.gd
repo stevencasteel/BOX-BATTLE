@@ -27,7 +27,7 @@ const SCENE_BOSS_SHOT = "res://src/projectiles/boss_shot.tscn"
 const SCENE_HOMING_BOSS_SHOT = "res://src/projectiles/homing_boss_shot.tscn"
 const SCENE_TELEGRAPH_COMPONENT = "res://src/entities/components/telegraph_component.tscn"
 const SCENE_TURRET = "res://src/entities/minions/turret.tscn"
-const SCENE_MINION_SHOT = "res://src/projectiles/turret_shot.tscn" # This path is still correct
+const SCENE_MINION_SHOT = "res://src/projectiles/turret_shot.tscn"
 
 # --- UI & SCENES ---
 const SCENE_GAME_HUD = "res://src/ui/game_hud/game_hud.tscn"
@@ -38,7 +38,7 @@ const SCENE_OPTIONS_SCREEN = "res://src/scenes/menus/options_screen.tscn"
 const SCENE_SOUND_SCREEN = "res://src/scenes/menus/sound_screen.tscn"
 const SCENE_CONTROLS_SCREEN = "res://src/scenes/menus/controls_screen.tscn"
 const SCENE_CREDITS_SCREEN = "res://src/scenes/menus/credits_screen.tscn"
-const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn" # NEW
+const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn"
 
 # --- UI COMPONENTS ---
 const SCENE_STYLED_MENU_ITEM = "res://src/ui/components/styled_menu_item/styled_menu_item.tscn"
@@ -74,6 +74,7 @@ const SFX_UI_ERROR = "res://assets/audio/sfx/sfx_ui_error.mp3"
 const SFX_UI_MOVE = "res://assets/audio/sfx/sfx_ui_move.mp3"
 const SFX_UI_SELECT = "res://assets/audio/sfx/sfx_ui_select.mp3"
 const SFX_GAME_START = "res://assets/audio/sfx/sfx_game_start.mp3"
+const SFX_UI_SLIDER_TICK = "res://assets/audio/sfx/sfx_ui_slider_tick.mp3"
 
 
 # --- Validation System ---

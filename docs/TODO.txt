@@ -15,5 +15,6 @@
       - Add specific SFX for different surface materials (footsteps).
       - Implement dynamic music mixing (low pass filter on pause/low health).
 
-   ░  subtle dust when entity lands or jumps from surfce (floor or wall)
-
+   □  Visual Polish:
+      - Add subtle dust particles when entity lands or jumps from surface (floor or wall).
+      - Add "Ghost Trail" effect for the Dash mechanic (currently standard particles).

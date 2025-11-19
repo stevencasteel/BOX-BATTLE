@@ -52,7 +52,10 @@ cat <<EOF > docs/CHANGELOG.txt
 ║      ░   10 hits to 5 hits.                                                    ║
 ║                                                                                ║
 
-
+║   █  UI & Audio Polish                                                         ║
+║      ░ ■ Added tactile 'Tick' SFX to volume sliders in the Options Menu.       ║
+║      ░   - Ticks only occur on intervals of 5 (5, 10, 15...) to reduce fatigue.║
+║      ░   - Logic handles drag events vs clicks intelligently.                  ║
 
 
 

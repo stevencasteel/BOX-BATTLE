@@ -19,17 +19,17 @@
 *   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
 
 ## 2. Entity Pattern: Composition + Archetypes
-*   **BaseEntity:** Generic shell (`CharacterBody2D`).
+*   **BaseEntity:** Generic shell (`CharacterBody2D`). Responsible for `move_and_slide()` physics execution.
 *   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
-*   **EntityBuilder:** Static utility that hydrates the entity, instantiates components, and wires dependencies.
 *   **Components:** Single-responsibility nodes (Health, Input, Physics).
+    *   *Physics Authority:* Components (e.g., `PlayerPhysicsComponent`) calculate and modify `velocity`. The Owner Entity applies that velocity via `move_and_slide()`.
 
 ## 3. Logic Pattern: State Machines & Strategy
 *   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
 *   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
 
 ## 4. Data Pattern: Resource-Driven
-*   **Config:** All tuning numbers live in `CombatConfig.tres` (soon to be split).
+*   **Config:** All tuning numbers live in Config Resources (`PlayerConfig`, `EnemyConfig`).
 *   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
 
 ## 5. Communication Rules

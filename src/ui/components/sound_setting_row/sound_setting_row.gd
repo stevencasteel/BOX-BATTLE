@@ -23,6 +23,7 @@ signal mute_toggled(is_muted: bool)
 			name_label.text = setting_name
 
 var is_muted: bool = false
+var _last_percent_value: int = -1
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
@@ -42,8 +43,12 @@ func _ready() -> void:
 func set_slider_value(value: float) -> void:
 	if is_instance_valid(value_slider):
 		value_slider.set_value(value)
+	
+	# Initialize tracking variable
+	_last_percent_value = int(value * 100)
+	
 	if is_instance_valid(value_label):
-		value_label.text = str(int(value * 100))
+		value_label.text = str(_last_percent_value)
 
 
 ## Sets the visual state of the checkbox without emitting a signal.
@@ -60,8 +65,23 @@ func set_mute_state(p_is_muted: bool) -> void:
 
 # --- Signal Handlers ---
 func _on_slider_value_changed(value: float) -> void:
+	var current_percent = int(value * 100)
+	
 	if is_instance_valid(value_label):
-		value_label.text = str(int(value * 100))
+		value_label.text = str(current_percent)
+	
+	# AUDIO LOGIC (Before Emit)
+	if not Engine.is_editor_hint():
+		# If initialized and value actually changed
+		if _last_percent_value != -1 and current_percent != _last_percent_value:
+			# Only play sound on intervals of 5 (0, 5, 10, 15...)
+			if current_percent % 5 == 0:
+				AudioManager.play_sfx(AssetPaths.SFX_UI_SLIDER_TICK)
+		
+		# Update local tracker immediately
+		_last_percent_value = current_percent
+
+	# EMIT SIGNAL (After Audio)
 	value_changed.emit(value)
 
 
