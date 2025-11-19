@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Tue Nov 18 17:20:40 CST 2025
+Generated on: Tue Nov 18 18:30:09 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -223,6 +223,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── input_component.tscn
 │   │   │   ├── melee_component.gd
 │   │   │   ├── melee_component.tscn
+│   │   │   ├── projectile_shooter_component.gd
+│   │   │   ├── projectile_shooter_component.tscn
 │   │   │   ├── sensor_component.gd
 │   │   │   ├── telegraph_component.gd
 │   │   │   └── telegraph_component.tscn
@@ -267,6 +269,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   │   └── player_resource_component.tscn
 │   │   │   ├── data
 │   │   │   │   ├── forward_attack_shape.tres
+│   │   │   │   ├── player_combat_data.gd
+│   │   │   │   ├── player_physics_data.gd
 │   │   │   │   ├── player_state_data.gd
 │   │   │   │   └── upward_attack_shape.tres
 │   │   │   ├── player.gd
@@ -379,7 +383,7 @@ PROJECT DIRECTORY STRUCTURE:
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-87 directories, 284 files
+87 directories, 288 files
 
 
 =====================================
@@ -889,6 +893,30 @@ FILE: ./docs/CHANGELOG.txt
 ║                  A log of all notable changes to the project.                  ║
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                  [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025 ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Refactoring                                                               ║
+║      ░ ■ Decentralized timer management from `Player.gd` to components.        ║
+║      ░ ■ `PlayerPhysicsComponent`: Manages coyote and wall coyote timers.      ║
+║      ░ ■ `DashComponent`: Manages dash duration and cooldown timers.           ║
+║      ░ ■ `CombatComponent`: Manages attack duration, cooldown, and pogo timers.║
+║      ░ ■ `ChargeAttackComponent`: Manages charge duration timer.               ║
+║      ░ ■ Reduced `Player.gd` responsibility significantly (SRP).               ║
+║   █  Architecture & Code Quality                                               ║
+║      ░ ■ Created `ProjectileShooterComponent` to handle all projectile firing. ║
+║      ░ ■ Refactored `BaseEntity` to remove legacy shooting methods (LSP Fix).  ║
+║      ░ ■ Updated `Boss` and `Minion` archetypes to use the new component.      ║
+║      ░ ■ Updated `ProjectileLogic` (Attack Strategy) to use the new component. ║
+║      ░ ■ Cleaned up unused tween references in entity classes.                 ║
+║   █  Data Architecture                                                         ║
+║      ░ ■ Segregated `PlayerStateData` into `PlayerPhysicsData` and             ║
+║      ░   `PlayerCombatData` sub-resources.                                     ║
+║      ░ ■ Updated all Player States and Components to use the new data paths.   ║
+║      ░ ■ Enforced Interface Segregation Principle for Player data.             ║
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -3145,7 +3173,8 @@ func _update_entity_info() -> void:
 
 func _update_player_specific_info() -> void:
 	var p_data = _target_entity.entity_data
-	var timers_text = "Timers: DashCD[%.2f] AtkCD[%.2f]" % [p_data.dash_cooldown_timer, p_data.attack_cooldown_timer]
+	# UPDATE: Access timers via sub-resources (physics/combat)
+	var timers_text = "Timers: DashCD[%.2f] AtkCD[%.2f]" % [p_data.physics.dash_cooldown_timer, p_data.combat.attack_cooldown_timer]
 	timers_label.text = timers_text
 	
 	var input_comp: InputComponent = _target_entity.get_component(InputComponent)
@@ -5893,11 +5922,19 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-	for i in range(get_child_count() - 1, -1, -1):
-		var child: Node = get_child(i)
-		for j in range(child.get_child_count() - 1, -1, -1):
-			child.get_child(j).free()
-		child.free()
+	# Hard cleanup to prevent leaks on exit
+	for pool_name in _pools:
+		var pool = _pools[pool_name]
+		# Free inactive items
+		for item in pool.inactive:
+			if is_instance_valid(item):
+				item.free()
+		# Free active items (children of container)
+		if is_instance_valid(pool.container):
+			for child in pool.container.get_children():
+				child.free()
+			pool.container.free()
+	
 	_pools.clear()
 
 
@@ -6281,7 +6318,10 @@ func apply_shader_effect(
 
 	increment_shader_count()
 
-	var tween: Tween = create_tween().set_parallel(false)
+	# FIX: Create the tween on the target node, not on FXManager (self).
+	# This ensures the tween is automatically killed if the target node is freed.
+	var tween: Tween = target_node.create_tween().set_parallel(false)
+	
 	tween.tween_property(
 		material_instance, "shader_parameter/fx_progress", 1.0, effect.duration
 	)
@@ -7218,7 +7258,7 @@ FILE: ./src/combat/attack_logic/projectile_logic.gd
 =====================================
 # src/combat/attack_logic/projectile_logic.gd
 @tool
-## Concrete AttackLogic for firing one or more projectiles.
+## Concrete AttackLogic for firing one or more projectiles via the ProjectileShooterComponent.
 class_name ProjectileLogic
 extends AttackLogic
 
@@ -7229,10 +7269,17 @@ func get_telegraph_info(owner: BaseEntity, _pattern: AttackPattern) -> Dictionar
 
 
 func execute(owner: BaseEntity, pattern: AttackPattern) -> Callable:
+	# Fetch the new component
+	var shooter: ProjectileShooterComponent = owner.get_component(ProjectileShooterComponent)
+	
+	if not is_instance_valid(shooter):
+		push_warning("ProjectileLogic: Entity '%s' lacks a ProjectileShooterComponent." % owner.name)
+		return Callable()
+
 	if pattern.projectile_count <= 1:
-		return owner.fire_shot_at_player.bind()
+		return shooter.fire_shot_at_player.bind()
 	else:
-		return owner.fire_volley.bind(pattern.projectile_count, pattern.volley_delay)
+		return shooter.fire_volley.bind(pattern.projectile_count, pattern.volley_delay)
 
 
 =====================================
@@ -7492,7 +7539,8 @@ func before_each():
 	_player_data = PlayerStateData.new()
 	_player_data.config = PlayerConfig # UPDATE
 	# Explicitly set max charges for clarity in tests
-	_player_data.max_healing_charges = 3
+	# UPDATE: Data is now nested in 'combat'
+	_player_data.combat.max_healing_charges = 3
 
 	_resource_component = PlayerResourceComponent.new()
 	mock_owner.add_child(_resource_component)
@@ -7503,33 +7551,33 @@ func before_each():
 
 # --- The Tests ---
 func test_on_damage_dealt_increments_determination():
-	_player_data.determination_counter = 0
+	_player_data.combat.determination_counter = 0
 	_resource_component.on_damage_dealt()
-	assert_eq(_player_data.determination_counter, 1, "Determination should increment by 1.")
+	assert_eq(_player_data.combat.determination_counter, 1, "Determination should increment by 1.")
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 
 func test_healing_charge_gained_at_threshold():
-	_player_data.healing_charges = 0
+	_player_data.combat.healing_charges = 0
 	# UPDATE: determination_per_charge (removed player_ prefix)
-	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
+	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
 
-	assert_eq(_player_data.healing_charges, 1, "Should gain 1 healing charge at the threshold.")
-	assert_eq(_player_data.determination_counter, 0, "Determination should reset to 0.")
+	assert_eq(_player_data.combat.healing_charges, 1, "Should gain 1 healing charge at the threshold.")
+	assert_eq(_player_data.combat.determination_counter, 0, "Determination should reset to 0.")
 	assert_true(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 	var payload = _fake_event_bus.get_payload_for_event(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED)
 	assert_eq(payload.current_charges, 1, "Event payload should contain the new charge count.")
 
 func test_healing_charges_are_capped():
-	_player_data.healing_charges = _player_data.max_healing_charges
+	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges
 	# UPDATE: determination_per_charge
-	_player_data.determination_counter = PlayerConfig.determination_per_charge - 1
+	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
-	assert_eq(_player_data.healing_charges, _player_data.max_healing_charges, "Charges should not exceed max.")
+	assert_eq(_player_data.combat.healing_charges, _player_data.combat.max_healing_charges, "Charges should not exceed max.")
 	assert_eq(
-		_player_data.determination_counter,
+		_player_data.combat.determination_counter,
 		PlayerConfig.determination_per_charge - 1,
 		"Determination should not increment if charges are max."
 	)
@@ -7537,18 +7585,19 @@ func test_healing_charges_are_capped():
 
 func test_consume_charge_decrements_and_emits_event():
 	# Start with a valid number of charges (at max) and consume one.
-	_player_data.healing_charges = _player_data.max_healing_charges # Starts at 3
+	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges # Starts at 3
 	_resource_component.consume_healing_charge()
-	assert_eq(_player_data.healing_charges, 2, "Healing charges should decrement by 1.")
+	assert_eq(_player_data.combat.healing_charges, 2, "Healing charges should decrement by 1.")
 	assert_true(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 	var payload = _fake_event_bus.get_payload_for_event(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED)
 	assert_eq(payload.current_charges, 2, "Event payload should contain the correct new charge count.")
 
 func test_consume_charge_does_nothing_at_zero():
-	_player_data.healing_charges = 0
+	_player_data.combat.healing_charges = 0
 	_resource_component.consume_healing_charge()
-	assert_eq(_player_data.healing_charges, 0, "Healing charges should remain 0.")
+	assert_eq(_player_data.combat.healing_charges, 0, "Healing charges should remain 0.")
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
+
 
 =====================================
 FILE: ./src/tests/unit/test_health_component.gd
@@ -9097,6 +9146,7 @@ extends CharacterBody2D
 @export var archetype: EntityArchetype
 
 # --- Public Member Variables ---
+@warning_ignore("unused_private_class_variable")
 var _is_dead: bool = false
 
 # --- Private Member Variables ---
@@ -9105,7 +9155,6 @@ var _services
 var _components: Dictionary = {}
 var _components_by_interface: Dictionary = {}
 var _player: CharacterBody2D
-var _active_attack_tween: Tween
 
 
 # --- Godot Lifecycle Methods ---
@@ -9115,6 +9164,10 @@ func _ready() -> void:
 	_build_from_archetype()
 	if not Engine.is_editor_hint():
 		_player = get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		teardown()
 
 
 # --- Public Methods ---
@@ -9215,50 +9268,12 @@ func setup_components(
 	_components_initialized = true
 
 
-# --- Generic Attack Implementations ---
-func fire_volley(shot_count: int, delay: float) -> void:
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
-	_active_attack_tween = get_tree().create_tween()
-	for i in range(shot_count):
-		_active_attack_tween.tween_callback(fire_shot_at_player)
-		if i < shot_count - 1:
-			_active_attack_tween.tween_interval(delay)
-
-
-func fire_shot_at_player() -> void:
-	if _is_dead or not is_instance_valid(_player):
-		return
-
-	var pool_key: StringName = self.entity_data.projectile_pool_key
-	if pool_key == &"":
-		push_warning("Entity '%s' tried to fire a shot but has no 'projectile_pool_key' in its data." % name)
-		return
-
-	var shot: Node = _services.object_pool.get_instance(pool_key)
-	if not shot:
-		return
-
-	_update_player_tracking()
-
-	shot.direction = (_player.global_position - global_position).normalized()
-	shot.global_position = global_position
-	var dependencies = {
-		"object_pool": _services.object_pool,
-		"combat_utils": _services.combat_utils
-	}
-	shot.activate(dependencies)
-
-
 # --- Protected Virtual Methods (for children to override) ---
 
 func _on_build() -> void:
 	pass
 
-func _update_player_tracking() -> void:
-	pass 
-
-# NEW: Virtual signal handlers
+# Virtual signal handlers
 func _on_entity_died() -> void:
 	pass
 
@@ -9417,34 +9432,34 @@ components = [
 =====================================
 FILE: ./src/entities/archetypes/boss_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=5 format=3 uid="uid://boss_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=6 format=3 uid="uid://boss_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
 [ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="3_fsm"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="4_fx"]
+[ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/components/projectile_shooter_component.tscn" id="5_shooter"]
 
 [resource]
 script = ExtResource("1_archetype")
+components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter")]
 
-; --- Core Components ---
-components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx")]
 
 =====================================
 FILE: ./src/entities/archetypes/minion_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=5 format=3 uid="uid://turret_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=6 format=3 uid="uid://turret_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
 [ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="3_fsm"]
 [ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="4_fx"]
+[ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/components/projectile_shooter_component.tscn" id="5_shooter"]
 
 [resource]
 script = ExtResource("1_archetype")
+components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx"), ExtResource("5_shooter")]
 
-; --- Core Components ---
-components = [ExtResource("2_health"), ExtResource("3_fsm"), ExtResource("4_fx")]
 
 =====================================
 FILE: ./src/entities/archetypes/entity_archetype.gd
@@ -10086,9 +10101,6 @@ func _die() -> void:
 	collision_mask = 0
 	set_physics_process(false)
 
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
-
 	if is_instance_valid(death_shake_effect):
 		_services.fx_manager.request_screen_shake(death_shake_effect)
 	
@@ -10446,9 +10458,6 @@ FILE: ./src/entities/components/telegraph_component.gd
 # src/entities/components/telegraph_component.gd
 @tool
 ## A self-contained, reusable component for displaying attack telegraphs.
-##
-## It shows a visual warning for a set duration, then emits a signal
-## and automatically frees itself from the scene tree.
 class_name TelegraphComponent
 extends Node2D
 
@@ -10461,7 +10470,6 @@ signal telegraph_finished
 
 # --- Public Methods ---
 
-
 ## Configures and starts the telegraph visual and timer.
 func start_telegraph(duration: float, p_size: Vector2, p_position: Vector2, p_color: Color) -> void:
 	self.global_position = p_position
@@ -10471,7 +10479,8 @@ func start_telegraph(duration: float, p_size: Vector2, p_position: Vector2, p_co
 	visual.position = -p_size / 2.0
 
 	var tween = create_tween()
-	await tween.tween_interval(duration).finished
+	tween.tween_interval(duration)
+	await tween.finished
 
 	if is_instance_valid(self):
 		telegraph_finished.emit()
@@ -10514,6 +10523,16 @@ var _services: ServiceLocator
 var _melee_hitbox: HitboxComponent
 var _pogo_hitbox: HitboxComponent
 
+# --- Godot Lifecycle Methods ---
+
+func _ready() -> void:
+	process_priority = 0
+
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(owner_node):
+		return
+	_update_timers(delta)
+
 # --- Public Methods ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
@@ -10533,6 +10552,10 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 			_melee_hitbox.hit_detected.connect(_on_melee_hit_detected)
 
 	if is_instance_valid(_pogo_hitbox):
+		# Pogo specific: Ensure we can hit the ground (World/Platforms)
+		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
+		_pogo_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
+		
 		if not _pogo_hitbox.hit_detected.is_connected(_on_pogo_hit_detected):
 			_pogo_hitbox.hit_detected.connect(_on_pogo_hit_detected)
 
@@ -10541,6 +10564,7 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 
 func teardown() -> void:
+	set_physics_process(false)
 	if is_instance_valid(_melee_hitbox) and _melee_hitbox.hit_detected.is_connected(_on_melee_hit_detected):
 		_melee_hitbox.hit_detected.disconnect(_on_melee_hit_detected)
 		
@@ -10559,13 +10583,13 @@ func teardown() -> void:
 
 ## Fires a player projectile from the object pool.
 func fire_shot() -> void:
-	p_data.attack_cooldown_timer = p_data.config.attack_cooldown
+	p_data.combat.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
 	if not shot:
 		return
 
-	var shot_dir = Vector2(p_data.facing_direction, 0)
+	var shot_dir = Vector2(p_data.physics.facing_direction, 0)
 	# We assume InputComponent is updating the buffer elsewhere
 	# Ideally, direction should be passed in or read from p_data if generalized
 	if Input.is_action_pressed("ui_up"):
@@ -10583,14 +10607,25 @@ func fire_shot() -> void:
 	shot.activate(dependencies)
 
 
+# --- Private Methods ---
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(p_data):
+		return
+	p_data.combat.attack_cooldown_timer = max(0.0, p_data.combat.attack_cooldown_timer - delta)
+	p_data.combat.attack_duration_timer = max(0.0, p_data.combat.attack_duration_timer - delta)
+	# Pogo fall prevention is loosely related to combat timing
+	p_data.combat.pogo_fall_prevention_timer = max(0.0, p_data.combat.pogo_fall_prevention_timer - delta)
+
+
 # --- Private Signal Handlers ---
 
 func _on_melee_hit_detected(target: Node) -> void:
 	var target_id = target.get_instance_id()
-	if p_data.hit_targets_this_swing.has(target_id):
+	if p_data.combat.hit_targets_this_swing.has(target_id):
 		return
 
-	p_data.hit_targets_this_swing[target_id] = true
+	p_data.combat.hit_targets_this_swing[target_id] = true
 	
 	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
@@ -10613,7 +10648,7 @@ func _on_melee_hit_detected(target: Node) -> void:
 
 
 func _on_pogo_hit_detected(target: Node) -> void:
-	if not p_data.is_pogo_attack:
+	if not p_data.combat.is_pogo_attack:
 		return
 	if not is_instance_valid(target):
 		return
@@ -10637,7 +10672,10 @@ func _on_pogo_hit_detected(target: Node) -> void:
 		if damage_result.was_damaged:
 			damage_dealt.emit()
 
-	if target is StaticBody2D and target.is_in_group(Identifiers.Groups.WORLD):
+	# Check physics bodies (World, Platforms)
+	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
+		should_bounce = true
+	elif target.is_in_group(Identifiers.Groups.WORLD):
 		should_bounce = true
 
 	if should_bounce:
@@ -10795,6 +10833,18 @@ monitorable = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
 shape = SubResource("RectangleShape2D_placeholder")
 disabled = true
+
+=====================================
+FILE: ./src/entities/components/projectile_shooter_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3 uid="uid://projectile_shooter_component_scene"]
+
+[ext_resource type="Script" path="res://src/entities/components/projectile_shooter_component.gd" id="1_shooter_script"]
+
+[node name="ProjectileShooterComponent" type="Node2D"]
+script = ExtResource("1_shooter_script")
+metadata/REQUIRED_DEPS = PackedStringArray("services", "data_resource")
+
 
 =====================================
 FILE: ./src/entities/components/telegraph_component.tscn
@@ -11355,7 +11405,8 @@ func _execute_attack_sequence() -> void:
 		)
 		await telegraph.telegraph_finished
 		
-		if not is_instance_valid(self):
+		# GUARD CLAUSE: Check if we are still valid after the wait
+		if not is_instance_valid(self) or not is_instance_valid(_owner) or not is_instance_valid(collision_shape):
 			return
 
 	# --- 2. Attack Phase ---
@@ -11373,10 +11424,10 @@ func _execute_attack_sequence() -> void:
 	
 	collision_shape.disabled = false
 	
-	var timer = get_tree().create_timer(_current_attack_data.duration)
-	await timer.timeout
+	await get_tree().create_timer(_current_attack_data.duration).timeout
 	
-	if not is_instance_valid(self):
+	# GUARD CLAUSE: Check if we are still valid after the wait
+	if not is_instance_valid(self) or not is_instance_valid(hitbox) or not is_instance_valid(collision_shape):
 		return
 		
 	# --- 3. Cleanup ---
@@ -11514,6 +11565,106 @@ func _on_body_exited(body: Node) -> void:
 		_active_targets.erase(body)
 		_update_state_property()
 		target_exited.emit(body)
+
+
+=====================================
+FILE: ./src/entities/components/projectile_shooter_component.gd
+=====================================
+# src/entities/components/projectile_shooter_component.gd
+@tool
+## A component responsible for firing projectiles.
+## It handles object pooling and targeting logic for ranged attacks.
+class_name ProjectileShooterComponent
+extends IComponent
+
+# --- Dependencies ---
+var _owner: Node2D
+var _services: ServiceLocator
+var _entity_data: Resource # BossStateData or MinionStateData
+
+# --- Private Variables ---
+var _active_volley_tween: Tween
+var _player_node: Node2D
+
+# --- IComponent Contract ---
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	self._owner = p_owner as Node2D
+	self._services = p_dependencies.get("services")
+	self._entity_data = p_dependencies.get("data_resource")
+	
+	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
+	assert(is_instance_valid(_services), "ProjectileShooterComponent requires a ServiceLocator.")
+	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
+	
+	if not Engine.is_editor_hint():
+		_player_node = _owner.get_tree().get_first_node_in_group(Identifiers.Groups.PLAYER)
+
+
+func teardown() -> void:
+	if is_instance_valid(_active_volley_tween):
+		_active_volley_tween.kill()
+	_owner = null
+	_services = null
+	_entity_data = null
+	_player_node = null
+
+
+# --- Public API ---
+
+## Fires a sequence of shots with a delay between them.
+func fire_volley(shot_count: int, delay: float) -> void:
+	if is_instance_valid(_active_volley_tween):
+		_active_volley_tween.kill()
+	
+	# FIX: Bind tween to self (Component) so it dies when we die. 
+	# Do NOT bind to get_tree().
+	_active_volley_tween = create_tween()
+	
+	for i in range(shot_count):
+		_active_volley_tween.tween_callback(fire_shot_at_player)
+		if i < shot_count - 1:
+			_active_volley_tween.tween_interval(delay)
+
+
+## Fires a single shot directly at the player's current position.
+func fire_shot_at_player() -> void:
+	if not is_instance_valid(_owner) or not is_instance_valid(_player_node):
+		return
+
+	# If the owner is marked as dead via internal flags, don't fire.
+	if _owner.get("_is_dead"):
+		return
+
+	var pool_key: StringName = _entity_data.projectile_pool_key
+	if pool_key == &"":
+		push_warning("Entity '%s' tried to fire but has no 'projectile_pool_key'." % _owner.name)
+		return
+
+	var shot: Node = _services.object_pool.get_instance(pool_key)
+	if not shot:
+		return
+
+	# Calculate direction to player
+	var direction = (_player_node.global_position - _owner.global_position).normalized()
+	
+	# Update facing direction data if the entity tracks the player
+	if "facing_direction" in _entity_data and not is_zero_approx(direction.x):
+		_entity_data.facing_direction = sign(direction.x)
+
+	# Configure the shot
+	if "direction" in shot:
+		shot.direction = direction
+	if "global_position" in shot:
+		shot.global_position = _owner.global_position
+	
+	var dependencies = {
+		"object_pool": _services.object_pool,
+		"combat_utils": _services.combat_utils
+	}
+	
+	if shot.has_method("activate"):
+		shot.activate(dependencies)
 
 
 =====================================
@@ -11837,9 +11988,6 @@ func _die() -> void:
 	collision_layer = 0
 	collision_mask = 0
 	deactivate()
-
-	if is_instance_valid(_active_attack_tween):
-		_active_attack_tween.kill()
 
 	var fc: FXComponent = get_component(FXComponent)
 	var death_tween: Tween = fc.play_effect(dissolve_effect)
@@ -12659,9 +12807,9 @@ func _ready() -> void:
 
 	# Post-Build Init
 	visual_sprite.color = Palette.COLOR_PLAYER
-	entity_data.healing_charges = 0
+	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
-	entity_data.determination_counter = 0
+	entity_data.combat.determination_counter = 0
 
 
 func _physics_process(delta: float) -> void:
@@ -12806,20 +12954,12 @@ func _die() -> void:
 func _update_timers(delta: float) -> void:
 	if not is_instance_valid(entity_data):
 		return
-
-	entity_data.coyote_timer = max(0.0, entity_data.coyote_timer - delta)
-	entity_data.wall_coyote_timer = max(0.0, entity_data.wall_coyote_timer - delta)
-	entity_data.dash_cooldown_timer = max(0.0, entity_data.dash_cooldown_timer - delta)
-	entity_data.dash_duration_timer = max(0.0, entity_data.dash_duration_timer - delta)
-	entity_data.attack_duration_timer = max(0.0, entity_data.attack_duration_timer - delta)
-	entity_data.attack_cooldown_timer = max(0.0, entity_data.attack_cooldown_timer - delta)
-	entity_data.knockback_timer = max(0.0, entity_data.knockback_timer - delta)
-	entity_data.pogo_fall_prevention_timer = max(
-		0.0, entity_data.pogo_fall_prevention_timer - delta
-	)
+	
+	entity_data.physics.knockback_timer = max(0.0, entity_data.physics.knockback_timer - delta)
+	
 	var ic: InputComponent = get_component(InputComponent)
-	if entity_data.is_charging and is_instance_valid(ic) and ic.buffer.get("attack_pressed"):
-		entity_data.charge_timer += delta
+	if entity_data.combat.is_charging and is_instance_valid(ic) and ic.buffer.get("attack_pressed"):
+		entity_data.combat.charge_timer += delta
 
 
 # --- Signal Handlers ---
@@ -12838,8 +12978,8 @@ func _on_pogo_bounce_requested() -> void:
 	if physics:
 		physics.perform_pogo_bounce()
 	
-	entity_data.can_dash = true
-	entity_data.air_jumps_left = entity_data.config.max_air_jumps
+	entity_data.physics.can_dash = true
+	entity_data.physics.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -12893,18 +13033,18 @@ static func try_jump(owner: Player, p_data: PlayerStateData) -> bool:
 		return false
 
 	# 1. Wall Jump (Highest Priority)
-	if p_data.wall_coyote_timer > 0:
+	if p_data.physics.wall_coyote_timer > 0:
 		physics.perform_wall_jump()
 		sm.change_state(Identifiers.PlayerStates.JUMP)
 		return true
 
 	# 2. Ground Jump (includes coyote time)
-	if owner.is_on_floor() or p_data.coyote_timer > 0:
+	if owner.is_on_floor() or p_data.physics.coyote_timer > 0:
 		sm.change_state(Identifiers.PlayerStates.JUMP)
 		return true
 
 	# 3. Air Jump
-	if p_data.air_jumps_left > 0:
+	if p_data.physics.air_jumps_left > 0:
 		sm.change_state(Identifiers.PlayerStates.JUMP, {"is_air_jump": true})
 		return true
 
@@ -13014,17 +13154,19 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_owner_node):
 		return
+
+	_update_timers(delta)
 
 	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
 		return
 
 	if (
 		_input_component.buffer.get("dash_pressed")
-		and _p_data.can_dash
-		and _p_data.dash_cooldown_timer <= 0
+		and _p_data.physics.can_dash
+		and _p_data.physics.dash_cooldown_timer <= 0
 	):
 		_state_machine.change_state(Identifiers.PlayerStates.DASH, {})
 
@@ -13034,6 +13176,13 @@ func teardown() -> void:
 	_p_data = null
 	_state_machine = null
 	_input_component = null
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(_p_data):
+		return
+	_p_data.physics.dash_cooldown_timer = max(0.0, _p_data.physics.dash_cooldown_timer - delta)
+	_p_data.physics.dash_duration_timer = max(0.0, _p_data.physics.dash_duration_timer - delta)
+
 
 =====================================
 FILE: ./src/entities/player/components/heal_component.gd
@@ -13069,7 +13218,7 @@ func _physics_process(_delta: float) -> void:
 
 		if (
 			is_holding_down
-			and _p_data.healing_charges > 0
+			and _p_data.combat.healing_charges > 0
 			and _owner_node.is_on_floor()
 			and is_zero_approx(_owner_node.velocity.x)
 		):
@@ -13081,6 +13230,7 @@ func teardown() -> void:
 	_p_data = null
 	_state_machine = null
 	_input_component = null
+
 
 =====================================
 FILE: ./src/entities/player/components/player_physics_component.tscn
@@ -13098,7 +13248,7 @@ FILE: ./src/entities/player/components/player_physics_component.gd
 # src/entities/player/components/player_physics_component.gd
 @tool
 ## Manages all direct physics interactions for the player character.
-## Acts as the gatekeeper for the 'velocity' property.
+## Acts as the gatekeeper for the 'velocity' property and physics timers.
 class_name PlayerPhysicsComponent
 extends IComponent
 
@@ -13113,9 +13263,11 @@ func _ready() -> void:
 	process_priority = -50
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(owner_node):
 		return
+
+	_update_timers(delta)
 
 	owner_node.move_and_slide()
 	
@@ -13123,8 +13275,18 @@ func _physics_process(_delta: float) -> void:
 		return
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
-		p_data.wall_coyote_timer = p_data.config.wall_coyote_time
-		p_data.last_wall_normal = owner_node.get_wall_normal()
+		p_data.physics.wall_coyote_timer = p_data.config.wall_coyote_time
+		p_data.physics.last_wall_normal = owner_node.get_wall_normal()
+
+
+# --- Private Methods ---
+
+
+func _update_timers(delta: float) -> void:
+	if not is_instance_valid(p_data):
+		return
+	p_data.physics.coyote_timer = max(0.0, p_data.physics.coyote_timer - delta)
+	p_data.physics.wall_coyote_timer = max(0.0, p_data.physics.wall_coyote_timer - delta)
 
 
 # --- Public Methods ---
@@ -13151,7 +13313,7 @@ func apply_horizontal_movement() -> void:
 	var move_axis = input_component.buffer.get("move_axis", 0.0)
 	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
-		p_data.facing_direction = sign(move_axis)
+		p_data.physics.facing_direction = sign(move_axis)
 
 
 ## Applies gravity to the vertical velocity.
@@ -13194,19 +13356,19 @@ func can_wall_slide() -> bool:
 		return false
 	var move_axis = ic.buffer.get("move_axis", 0.0)
 	return (
-		p_data.wall_coyote_timer > 0
+		p_data.physics.wall_coyote_timer > 0
 		and not owner_node.is_on_floor()
 		and move_axis != 0
-		and sign(move_axis) == -p_data.last_wall_normal.x
+		and sign(move_axis) == -p_data.physics.last_wall_normal.x
 	)
 
 
 ## Applies the velocity and resets timers for a wall jump.
 func perform_wall_jump() -> void:
 	owner_node.velocity.y = -p_data.config.wall_jump_force_y
-	owner_node.velocity.x = p_data.last_wall_normal.x * p_data.config.wall_jump_force_x
-	p_data.coyote_timer = 0
-	p_data.wall_coyote_timer = 0
+	owner_node.velocity.x = p_data.physics.last_wall_normal.x * p_data.config.wall_jump_force_x
+	p_data.physics.coyote_timer = 0
+	p_data.physics.wall_coyote_timer = 0
 
 
 =====================================
@@ -13244,29 +13406,33 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
 
-# FIX: Renamed delta to _delta to suppress unused parameter warning
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_owner_node):
 		return
 	
-	if _input_component.buffer.get("attack_just_pressed") and _p_data.attack_cooldown_timer <= 0:
-		_p_data.is_charging = true
-		_p_data.charge_timer = 0.0
+	# 1. Update Timers
+	if _p_data.combat.is_charging and _input_component.buffer.get("attack_pressed"):
+		_p_data.combat.charge_timer += delta
+
+	# 2. Handle Inputs
+	if _input_component.buffer.get("attack_just_pressed") and _p_data.combat.attack_cooldown_timer <= 0:
+		_p_data.combat.is_charging = true
+		_p_data.combat.charge_timer = 0.0
 
 	if _input_component.buffer.get("attack_released"):
-		if _p_data.is_charging:
+		if _p_data.combat.is_charging:
 			_try_execute_attack()
-			_p_data.is_charging = false
+			_p_data.combat.is_charging = false
 
 func _try_execute_attack() -> void:
-	# FIX: Guard against race condition where state machine is cleared (player death)
+	# Guard against race condition where state machine is cleared (player death)
 	if _state_machine.states.is_empty():
 		return
 
 	if not _state_machine.get_current_state_key() in Player.ACTION_ALLOWED_STATES:
 		return
 
-	if _p_data.charge_timer >= _p_data.config.charge_time:
+	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
 		_combat_component.fire_shot()
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
@@ -13324,27 +13490,27 @@ func teardown() -> void:
 
 ## Called when the player successfully deals damage to an enemy.
 func on_damage_dealt() -> void:
-	if p_data.healing_charges >= p_data.config.max_healing_charges:
+	if p_data.combat.healing_charges >= p_data.combat.max_healing_charges:
 		return
 
-	p_data.determination_counter += 1
-	if p_data.determination_counter >= p_data.config.determination_per_charge:
-		p_data.determination_counter = 0
-		p_data.healing_charges += 1
+	p_data.combat.determination_counter += 1
+	if p_data.combat.determination_counter >= p_data.config.determination_per_charge:
+		p_data.combat.determination_counter = 0
+		p_data.combat.healing_charges += 1
 		_emit_healing_charges_changed_event()
 
 
 ## Consumes one healing charge.
 func consume_healing_charge() -> void:
-	if p_data.healing_charges > 0:
-		p_data.healing_charges -= 1
+	if p_data.combat.healing_charges > 0:
+		p_data.combat.healing_charges -= 1
 		_emit_healing_charges_changed_event()
 
 
 # --- Private Methods ---
 func _emit_healing_charges_changed_event() -> void:
 	var ev = PlayerHealingChargesChangedEvent.new()
-	ev.current_charges = p_data.healing_charges
+	ev.current_charges = p_data.combat.healing_charges
 	_event_bus.emit(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED, ev)
 
 
@@ -13364,17 +13530,17 @@ func enter(msg := {}) -> void:
 	_input = owner.get_component(InputComponent)
 
 	if msg.get("is_air_jump", false):
-		state_data.air_jumps_left -= 1
+		state_data.physics.air_jumps_left -= 1
 
 	_physics.jump(state_data.config.jump_force)
-	state_data.coyote_timer = 0
+	state_data.physics.coyote_timer = 0
 
 
 func process_physics(delta: float) -> void:
 	_physics.apply_horizontal_movement()
 
 	if _input.buffer.get("jump_just_pressed"):
-		if state_data.air_jumps_left > 0:
+		if state_data.physics.air_jumps_left > 0:
 			_perform_air_jump()
 
 	if _input.buffer.get("jump_released"):
@@ -13398,7 +13564,7 @@ func _apply_gravity(delta: float) -> void:
 
 
 func _perform_air_jump() -> void:
-	state_data.air_jumps_left -= 1
+	state_data.physics.air_jumps_left -= 1
 	_physics.jump(state_data.config.jump_force)
 
 
@@ -13417,9 +13583,9 @@ func enter(_msg := {}):
 	_health = owner.get_component(HealthComponent)
 	_physics = owner.get_component(PlayerPhysicsComponent)
 
-	state_data.can_dash = false
-	state_data.dash_duration_timer = state_data.config.dash_duration
-	state_data.dash_cooldown_timer = state_data.config.dash_cooldown
+	state_data.physics.can_dash = false
+	state_data.physics.dash_duration_timer = state_data.config.dash_duration
+	state_data.physics.dash_cooldown_timer = state_data.config.dash_cooldown
 
 	_invincibility_token = _health.grant_invincibility(self)
 
@@ -13442,7 +13608,7 @@ func exit():
 
 
 func process_physics(_delta: float):
-	if state_data.dash_duration_timer <= 0:
+	if state_data.physics.dash_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -13452,7 +13618,7 @@ func _get_dash_direction():
 		return Vector2.UP
 	if ic.buffer.get("down"):
 		return Vector2.DOWN
-	return Vector2(state_data.facing_direction, 0)
+	return Vector2(state_data.physics.facing_direction, 0)
 
 
 =====================================
@@ -13496,14 +13662,14 @@ var _input: InputComponent
 func enter(_msg := {}):
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	_input = owner.get_component(InputComponent)
-	state_data.can_dash = true
+	state_data.physics.can_dash = true
 	# UPDATE: config.max_air_jumps
-	state_data.air_jumps_left = state_data.config.max_air_jumps
+	state_data.physics.air_jumps_left = state_data.config.max_air_jumps
 
 
 func exit():
-	if state_data.last_wall_normal != Vector2.ZERO:
-		state_data.facing_direction = sign(state_data.last_wall_normal.x)
+	if state_data.physics.last_wall_normal != Vector2.ZERO:
+		state_data.physics.facing_direction = sign(state_data.physics.last_wall_normal.x)
 
 
 func process_physics(delta: float):
@@ -13513,7 +13679,7 @@ func process_physics(delta: float):
 	var wall_slide_speed = state_data.config.wall_slide_speed
 	owner.velocity.y = min(owner.velocity.y + gravity * delta, wall_slide_speed)
 
-	state_data.facing_direction = sign(-state_data.last_wall_normal.x)
+	state_data.physics.facing_direction = sign(-state_data.physics.last_wall_normal.x)
 
 	if _input.buffer.get("jump_just_pressed"):
 		_physics.perform_wall_jump()
@@ -13521,17 +13687,18 @@ func process_physics(delta: float):
 		return
 
 	var move_axis = _input.buffer.get("move_axis", 0.0)
-	if move_axis * -state_data.last_wall_normal.x < 0.8:
+	if move_axis * -state_data.physics.last_wall_normal.x < 0.8:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 		return
 
-	if state_data.wall_coyote_timer <= 0:
+	if state_data.physics.wall_coyote_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 		return
 
 	if owner.is_on_floor():
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
 		return
+
 
 =====================================
 FILE: ./src/entities/player/states/state_attack.gd
@@ -13552,16 +13719,16 @@ func enter(_msg := {}) -> void:
 	_input = owner.get_component(InputComponent)
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	
-	state_data.hit_targets_this_swing.clear()
+	state_data.combat.hit_targets_this_swing.clear()
 	
-	state_data.attack_duration_timer = state_data.config.attack_duration
-	state_data.attack_cooldown_timer = state_data.config.attack_cooldown
+	state_data.combat.attack_duration_timer = state_data.config.attack_duration
+	state_data.combat.attack_cooldown_timer = state_data.config.attack_cooldown
 	
 	var is_up_attack = _input.buffer.get("up", false)
 	
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		var shape = state_data.config.forward_attack_shape
-		var offset = Vector2(state_data.facing_direction * 60, 0)
+		var offset = Vector2(state_data.physics.facing_direction * 60, 0)
 		if is_up_attack:
 			shape = state_data.config.upward_attack_shape
 			offset = Vector2(0, -40)
@@ -13569,7 +13736,7 @@ func enter(_msg := {}) -> void:
 
 
 func exit() -> void:
-	state_data.hit_targets_this_swing.clear()
+	state_data.combat.hit_targets_this_swing.clear()
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		_player.melee_hitbox.deactivate()
 
@@ -13578,7 +13745,7 @@ func process_physics(delta: float) -> void:
 	if is_instance_valid(_physics):
 		_physics.apply_friction(state_data.config.attack_friction, delta)
 
-	if state_data.attack_duration_timer <= 0:
+	if state_data.combat.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -13599,18 +13766,17 @@ func enter(_msg := {}) -> void:
 	_player = owner as Player
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	
-	state_data.is_pogo_attack = true
-	state_data.attack_duration_timer = state_data.config.attack_duration
+	state_data.combat.is_pogo_attack = true
+	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	
 	# Direct Actuation
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
-		# Passing null shape reuses the one defined in the scene (if specific logic isn't needed)
-		# or we could define a pogo_shape in PlayerConfig.
+		# Passing null shape reuses the one defined in the scene
 		_player.pogo_hitbox.activate(null, Vector2(0, 40))
 
 
 func exit() -> void:
-	state_data.is_pogo_attack = false
+	state_data.combat.is_pogo_attack = false
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
 		_player.pogo_hitbox.deactivate()
 
@@ -13619,11 +13785,37 @@ func process_physics(delta: float) -> void:
 	_physics.apply_gravity(delta)
 
 	if owner.is_on_floor():
+		# FIX: Manually check for ground overlap to ensure bounce triggers
+		# before we transition to MOVE state (Landing).
+		if _check_pogo_ground_bounce():
+			return
+
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
 		return
 
-	if state_data.attack_duration_timer <= 0:
+	if state_data.combat.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
+
+
+func _check_pogo_ground_bounce() -> bool:
+	if not is_instance_valid(_player) or not is_instance_valid(_player.pogo_hitbox):
+		return false
+		
+	var bodies = _player.pogo_hitbox.get_overlapping_bodies()
+	for body in bodies:
+		if body == owner: continue
+		
+		if body is PhysicsBody2D:
+			var layer = body.collision_layer
+			# Check for World(128) or Platform(2)
+			if (layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
+				# Valid ground hit found!
+				# We manually trigger the bounce logic on the player.
+				if _player.has_method("_on_pogo_bounce_requested"):
+					_player._on_pogo_bounce_requested()
+				return true
+				
+	return false
 
 
 =====================================
@@ -13638,8 +13830,8 @@ var _physics: PlayerPhysicsComponent
 
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
-	state_data.knockback_timer = state_data.config.knockback_duration
-	state_data.is_charging = false
+	state_data.physics.knockback_timer = state_data.config.knockback_duration
+	state_data.combat.is_charging = false
 	owner._cancel_heal()
 
 
@@ -13648,7 +13840,7 @@ func process_physics(delta: float) -> void:
 	# Apply high drag/friction during knockback
 	owner.velocity.x = move_toward(owner.velocity.x, 0, 800 * delta)
 
-	if state_data.knockback_timer <= 0:
+	if state_data.physics.knockback_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
@@ -13706,13 +13898,13 @@ var _physics: PlayerPhysicsComponent
 func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	# UPDATE: config.max_air_jumps
-	state_data.air_jumps_left = state_data.config.max_air_jumps
-	state_data.can_dash = true
+	state_data.physics.air_jumps_left = state_data.config.max_air_jumps
+	state_data.physics.can_dash = true
 
 
 func process_physics(delta: float) -> void:
 	# UPDATE: config.coyote_time
-	state_data.coyote_timer = state_data.config.coyote_time
+	state_data.physics.coyote_timer = state_data.config.coyote_time
 
 	_physics.apply_gravity(delta)
 	_physics.apply_horizontal_movement()
@@ -13721,51 +13913,35 @@ func process_physics(delta: float) -> void:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 		return
 
+
 =====================================
 FILE: ./src/entities/player/data/player_state_data.gd
 =====================================
 # src/entities/player/data/player_state_data.gd
 @tool
 ## A Resource that holds all shared runtime state data for the Player.
+## Acts as a container for domain-specific data chunks.
 class_name PlayerStateData
 extends Resource
 
+# --- Sub-Data Containers ---
+var physics: PlayerPhysicsData = PlayerPhysicsData.new()
+var combat: PlayerCombatData = PlayerCombatData.new()
+
 # --- Configuration References ---
+# These remain global as they are read-only configs used by everything.
 var config: PlayerConfig
 var world_config: WorldConfig
 
-# --- Health & Combat ---
+# --- Health ---
+# Health is core enough to remain on the root or move to a HealthData.
+# For now, we keep basic health stats here to avoid over-fragmentation,
+# as HealthComponent manages these directly.
 var max_health: int = 5
-var max_healing_charges: int = 1
 var health: int = 5:
 	set(value):
 		health = clamp(value, 0, max_health)
-var healing_charges: int = 0:
-	set(value):
-		healing_charges = clamp(value, 0, max_healing_charges)
-var determination_counter: int = 0
-var hit_targets_this_swing: Dictionary = {}
 
-# --- Physics & Movement ---
-var air_jumps_left: int = 0
-var facing_direction: int = 1
-var last_wall_normal: Vector2 = Vector2.ZERO
-var can_dash: bool = true
-var pogo_fall_prevention_timer: float = 0.0
-
-# --- Timers ---
-var coyote_timer: float = 0.0
-var wall_coyote_timer: float = 0.0
-var dash_duration_timer: float = 0.0
-var dash_cooldown_timer: float = 0.0
-var attack_duration_timer: float = 0.0
-var attack_cooldown_timer: float = 0.0
-var knockback_timer: float = 0.0
-
-# --- State Flags ---
-var is_charging: bool = false
-var charge_timer: float = 0.0
-var is_pogo_attack: bool = false
 
 =====================================
 FILE: ./src/entities/player/data/upward_attack_shape.tres
@@ -13774,6 +13950,58 @@ FILE: ./src/entities/player/data/upward_attack_shape.tres
 
 [resource]
 size = Vector2(40, 40)
+
+
+=====================================
+FILE: ./src/entities/player/data/player_combat_data.gd
+=====================================
+# src/entities/player/data/player_combat_data.gd
+@tool
+class_name PlayerCombatData
+extends Resource
+
+# --- Resources ---
+var max_healing_charges: int = 1
+var healing_charges: int = 0:
+	set(value):
+		healing_charges = clamp(value, 0, max_healing_charges)
+var determination_counter: int = 0
+
+# --- State ---
+var hit_targets_this_swing: Dictionary = {}
+var is_charging: bool = false
+var is_pogo_attack: bool = false
+
+# --- Timers ---
+var attack_duration_timer: float = 0.0
+var attack_cooldown_timer: float = 0.0
+var charge_timer: float = 0.0
+var pogo_fall_prevention_timer: float = 0.0
+
+
+=====================================
+FILE: ./src/entities/player/data/player_physics_data.gd
+=====================================
+# src/entities/player/data/player_physics_data.gd
+@tool
+class_name PlayerPhysicsData
+extends Resource
+
+# --- State ---
+var facing_direction: int = 1
+var air_jumps_left: int = 0
+var last_wall_normal: Vector2 = Vector2.ZERO
+var velocity: Vector2 = Vector2.ZERO # Cached velocity for some state calculations
+
+# --- Flags ---
+var can_dash: bool = true
+
+# --- Timers ---
+var coyote_timer: float = 0.0
+var wall_coyote_timer: float = 0.0
+var dash_duration_timer: float = 0.0
+var dash_cooldown_timer: float = 0.0
+var knockback_timer: float = 0.0
 
 
 =====================================

@@ -13,7 +13,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██                  [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025 ██   ║
+║   ██             [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025    ██.  ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Refactoring                                                               ║
@@ -34,6 +34,21 @@
 ║      ░   `PlayerCombatData` sub-resources.                                     ║
 ║      ░ ■ Updated all Player States and Components to use the new data paths.   ║
 ║      ░ ■ Enforced Interface Segregation Principle for Player data.             ║
+║   █  Gameplay Logic                                                            ║
+║      ░ ■ Fixed Pogo attack not bouncing when performed while standing on the   ║
+║      ░   ground. Implemented immediate PhysicsShapeQuery in `StatePogo` to     ║
+║      ░   handle frame-perfect ground detection.                                ║
+║      ░ ■ Fixed error where `StatePogo` attempted to check overlaps before      ║
+║      ░   monitoring was active.                                                ║
+
+
+
+
+
+
+
+
+
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -52,7 +67,7 @@
 ║      ░ ■ Refactored `Minion` and `BaseBoss` to use `SensorComponent`.          ║
 ║      ░ ■ Removed boilerplate signal handling for player detection in entities. ║
 ║      ░ ■ Sensors now auto-update entity state data via property reflection.    ║
-                                                             ║
+                                                                            ║
 ║      ░ ■ Centralized physics authority in `PlayerPhysicsComponent` API.        ║
 ║      ░ ■ Refactored Player States (`Jump`, `Dash`, `Hurt`) to use Physics API  ║
 ║      ░   instead of manipulating velocity directly.                            ║
