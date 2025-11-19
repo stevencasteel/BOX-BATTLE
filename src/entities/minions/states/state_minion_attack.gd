@@ -4,7 +4,7 @@ class_name MinionStateAttack
 extends BaseState
 
 # --- Constants ---
-const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
+const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Private Member Variables ---
 var _minion: Minion
@@ -32,7 +32,12 @@ func _start_telegraph_and_attack() -> void:
 		state_machine.change_state(Identifiers.MinionStates.IDLE)
 		return
 
-	var telegraph := TelegraphScene.instantiate()
+	# OCP: Use pattern-specific telegraph if available, else default.
+	var scene_to_use = _current_pattern.telegraph_scene
+	if not scene_to_use:
+		scene_to_use = DEFAULT_TELEGRAPH_SCENE
+
+	var telegraph = scene_to_use.instantiate()
 	_minion.add_child(telegraph)
 
 	var telegraph_info: Dictionary = _current_pattern.logic.get_telegraph_info(_minion, _current_pattern)
@@ -44,13 +49,17 @@ func _start_telegraph_and_attack() -> void:
 	)
 	var telegraph_position: Vector2 = _minion.global_position + directional_offset
 
-	telegraph.start_telegraph(
-		_current_pattern.telegraph_duration,
-		telegraph_size,
-		telegraph_position,
-		Palette.COLOR_UI_PANEL_BG
-	)
-	await telegraph.telegraph_finished
+	if telegraph.has_method("start_telegraph"):
+		telegraph.start_telegraph(
+			_current_pattern.telegraph_duration,
+			telegraph_size,
+			telegraph_position,
+			Palette.COLOR_UI_PANEL_BG
+		)
+		await telegraph.telegraph_finished
+	else:
+		telegraph.queue_free()
+		await _minion.get_tree().create_timer(_current_pattern.telegraph_duration).timeout
 
 	if not is_instance_valid(_minion):
 		return

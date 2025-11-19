@@ -13,6 +13,10 @@ extends Resource
 ## The base damage dealt by the attack.
 @export var damage_amount: int = 1
 
+@export_group("Visuals")
+## The scene to instantiate for the telegraph. If null, uses the default.
+@export var telegraph_scene: PackedScene
+
 @export_group("Timing")
 ## The duration in seconds the hitbox remains active.
 @export_range(0.05, 1.0, 0.01) var duration: float = 0.15

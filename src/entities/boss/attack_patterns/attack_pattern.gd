@@ -13,6 +13,10 @@ extends Resource
 @export var attack_duration: float = 0.1
 @export var cooldown: float = 1.5
 
+@export_group("Visuals")
+## The scene to instantiate for the telegraph. If null, uses the default.
+@export var telegraph_scene: PackedScene
+
 @export_group("Attack-Specific Data")
 # These parameters now live in the AttackPattern, where they belong.
 @export var projectile_count: int = 1

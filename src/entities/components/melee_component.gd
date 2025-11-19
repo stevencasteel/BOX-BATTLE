@@ -14,7 +14,7 @@ signal hit_confirmed
 signal attack_finished
 
 # --- Constants ---
-const TelegraphScene = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
+const DEFAULT_TELEGRAPH_SCENE = preload(AssetPaths.SCENE_TELEGRAPH_COMPONENT)
 
 # --- Node References ---
 @onready var hitbox: Area2D = $Hitbox
@@ -72,20 +72,30 @@ func _execute_attack_sequence() -> void:
 	
 	# --- 1. Telegraph Phase ---
 	if _current_attack_data.telegraph_duration > 0.0:
-		var telegraph := TelegraphScene.instantiate()
+		# OCP: Use the scene defined in data, fallback to default if null.
+		var scene_to_instantiate = _current_attack_data.telegraph_scene
+		if not scene_to_instantiate:
+			scene_to_instantiate = DEFAULT_TELEGRAPH_SCENE
+			
+		var telegraph = scene_to_instantiate.instantiate()
 		_owner.add_child(telegraph)
 		
 		var telegraph_size = _current_attack_data.shape.get_rect().size
 		var telegraph_offset = _current_attack_data.offset
 		var telegraph_position = _owner.global_position + (telegraph_offset * Vector2(facing_direction, 1.0))
 		
-		telegraph.start_telegraph(
-			_current_attack_data.telegraph_duration,
-			telegraph_size,
-			telegraph_position,
-			Palette.COLOR_UI_PANEL_BG
-		)
-		await telegraph.telegraph_finished
+		# Duck-typing check to ensure the custom scene supports the API
+		if telegraph.has_method("start_telegraph"):
+			telegraph.start_telegraph(
+				_current_attack_data.telegraph_duration,
+				telegraph_size,
+				telegraph_position,
+				Palette.COLOR_UI_PANEL_BG
+			)
+			await telegraph.telegraph_finished
+		else:
+			push_warning("Telegraph scene '%s' does not implement 'start_telegraph'. Skipping wait." % telegraph.name)
+			telegraph.queue_free()
 		
 		# GUARD CLAUSE: Check if we are still valid after the wait
 		if not is_instance_valid(self) or not is_instance_valid(_owner) or not is_instance_valid(collision_shape):

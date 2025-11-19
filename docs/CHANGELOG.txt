@@ -15,7 +15,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR  - 11/18/2025              ██   ║
+║   ██               [0.23.0] - SRP POGO REFACTOR & ISP INJECTION REFACTOR & DIP CONFIG REFACTOR & OCP TELEGRAPH REFACTOR - 11/19/2025              ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture & SOLID                                                      ║
@@ -47,8 +47,15 @@
 ║      ░   during the build process.                                             ║
 ║      ░ ■ Migrated `PlayerConfig` and `EnemyConfig` to use the new sub-resource.║
 ║                                                                                ║
-
-
+║                                                                                ║
+║   █  Architecture & SOLID                                                      ║
+║      ░ ■ Applied Open/Closed Principle (OCP) to Combat Telegraphs.             ║
+║      ░ ■ Removed hardcoded scene preloads from `MeleeComponent`,               ║
+║      ░   `BossStateAttack`, and `MinionStateAttack`.                           ║
+║      ░ ■ Updated `MeleeAttackData` and `AttackPattern` resources to accept     ║
+║      ░   custom `telegraph_scene` references, enabling visual customization    ║
+║      ░   without code modification.                                            ║
+║                                                                                ║
 
 
 
