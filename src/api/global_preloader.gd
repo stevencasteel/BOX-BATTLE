@@ -17,3 +17,5 @@ func _ready() -> void:
 	preload("res://src/entities/components/hurtbox_component.gd")
 	preload("res://src/entities/components/hitbox_component.gd")
 	preload("res://src/entities/components/sensor_component.gd")
+	# Newly added:
+	preload("res://src/core/data/audio/audio_cue.gd")

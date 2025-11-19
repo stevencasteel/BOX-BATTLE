@@ -22,16 +22,9 @@ var _owner_entity: Node
 # --- Godot Lifecycle ---
 
 func _ready() -> void:
-	# Default collision configuration for a Hurtbox
-	# Layer 7 (64) = PlayerHurtbox
-	# Mask 3 (4) = Enemy, 4 (8) = Hazard, 5 (16) = EnemyProjectile
-	collision_layer = 64
-	collision_mask = 28
-	
 	# Ensure we are monitoring to detect overlaps
 	monitoring = true
-	monitorable = true # Usually true so enemies can detect "I hit the player"
-
+	monitorable = true 
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(_health_component) or _health_component.is_invincible():
@@ -48,23 +41,17 @@ func _physics_process(_delta: float) -> void:
 
 # --- Public Methods (IComponent-like Setup) ---
 
-## setup() is called manually by the entity, or we can auto-wire in _ready if simple.
-## For consistency with the project architecture, we use the setup pattern.
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_owner_entity = p_owner
 	
-	# 1. Resolve Services
 	if p_dependencies.has("services"):
 		var services = p_dependencies["services"]
 		_combat_utils = services.combat_utils
 		_object_pool = services.object_pool
 	else:
-		# Fallback to global autoloads if not injected (Safety net)
 		_combat_utils = CombatUtils
-		# Use Adapter to satisfy type hint
 		_object_pool = ObjectPoolAdapter
 
-	# 2. Resolve HealthComponent
 	if auto_wire_health and p_owner.has_method("get_component"):
 		_health_component = p_owner.get_component(HealthComponent)
 
@@ -81,7 +68,11 @@ func teardown() -> void:
 # --- Private Logic ---
 
 func _process_contact(target: Node) -> void:
-	# Double check valid targets
+	# CRITICAL FIX: Guard against mid-frame teardown.
+	# If _combat_utils became null (e.g. player died in previous iteration), stop immediately.
+	if not _combat_utils or not is_instance_valid(_health_component):
+		return
+
 	var is_threat = (
 		target.is_in_group(Identifiers.Groups.ENEMY) or 
 		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
@@ -93,23 +84,18 @@ func _process_contact(target: Node) -> void:
 
 	var impact_normal = (global_position - target.global_position).normalized()
 	
-	# DRY: Use factory method
 	var damage_info = _combat_utils.create_damage_info(
-		1, # Default contact damage
+		1, 
 		target,
 		global_position,
 		impact_normal
 	)
 
-	# Apply Damage
 	var result = _health_component.apply_damage(damage_info)
 
-	# CRASH FIX: Check validity again. The entity might have died and torn down 
-	# the components during the apply_damage call stack.
 	if not is_instance_valid(_health_component) or not _health_component.entity_data:
 		return
 
-	# Handle Post-Hit Logic
 	if result.was_damaged:
 		if _owner_entity is CharacterBody2D:
 			_owner_entity.velocity = result.knockback_velocity
@@ -121,7 +107,6 @@ func _process_contact(target: Node) -> void:
 			if is_instance_valid(sm):
 				sm.change_state(hurt_response_state)
 
-	# Cleanup Projectiles
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
 		if is_instance_valid(_object_pool):
 			_object_pool.return_instance.call_deferred(target)

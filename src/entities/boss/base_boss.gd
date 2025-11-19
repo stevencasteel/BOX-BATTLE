@@ -14,7 +14,13 @@ extends BaseEntity
 @export var death_shake_effect: ScreenShakeEffect
 @export var hit_spark_effect: VFXEffect
 @export var dissolve_effect: ShaderEffect
-
+@export_group("State Scripts")
+@export var state_idle_script: Script
+@export var state_attack_script: Script
+@export var state_cooldown_script: Script
+@export var state_patrol_script: Script
+@export var state_lunge_script: Script
+@export var state_melee_script: Script
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -47,20 +53,8 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
-	# --- PARANOID COLLISION FIX ---
-	# 1. Force Layers
-	collision_layer = 4 # Enemy(4) ONLY
-	collision_mask = 138 # Platforms(2) + Hazard(8) + SolidWorld(128)
-	
-	# 2. Force Groups
 	if not is_in_group(Identifiers.Groups.ENEMY):
 		add_to_group(Identifiers.Groups.ENEMY)
-	
-	# 3. Force Shape Active
-	if is_instance_valid(collision_shape):
-		collision_shape.disabled = false
-	else:
-		push_error("BOSS CRITICAL: CollisionShape2D not found!")
 
 	_initialize_data()
 	

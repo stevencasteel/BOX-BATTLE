@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=6 format=3 uid="uid://qddsmpr73oqo"]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=7 format=3 uid="uid://v472r2pi58n8"]
 
 [ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
 [ext_resource type="Shape2D" uid="uid://c1b2d3e4f5g6h" path="res://src/entities/player/data/forward_attack_shape.tres" id="3_shape"]
 [ext_resource type="Shape2D" uid="uid://c0dt7jqwtnbr" path="res://src/entities/player/data/upward_attack_shape.tres" id="4_shape"]
+[ext_resource type="Resource" path="res://src/data/audio/sfx_player_impact.tres" id="5_audio"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
+audio_cue = ExtResource("5_audio")
 invincibility_duration = 1.5
 knockback_speed = 400.0
 hazard_knockback_speed = 400.0

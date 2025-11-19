@@ -18,7 +18,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR & DRY DAMAGE REFACTOR - 11/19/2025          ██   ║
+║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR & DRY DAMAGE REFACTOR & AUDIO & PHYSICS HARDENING - 11/19/2025          ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architecture & SOLID                                                      ║
@@ -39,8 +39,22 @@
 ║      ░   centralize the creation of damage payloads.                           ║
 ║      ░ ■ Refactored `MeleeComponent`, `PogoComponent`, `HurtboxComponent`,     ║
 ║      ░   and `BaseProjectile` to use the factory, removing boilerplate code.   ║
+║                                                                                ║                                                                                ║
+║   █  Systems Upgrade                                                           ║
+║      ░ ■ Implemented `AudioCue` resource system.                               ║
+║      ░   - Allows designers to define pitch randomization, volume variance,    ║
+║      ░     and bus routing in the Inspector.                                   ║
+║      ░   - Updated `AudioManager` to accept Cues instead of raw paths.         ║
+║      ░ ■ Integrated Audio Cues into the `DamageResponseConfig`, enabling       ║
+║      ░   automatic impact sounds for any entity using the system.              ║
+║   █  Code Quality & Stability                                                  ║
+║      ░ ■ Physics Cleanup: Removed hardcoded collision layer overrides in       ║
+║      ░   `BaseBoss` and `HurtboxComponent`. Physics layers are now strictly    ║
+║      ░   controlled by the Scene/Inspector settings (OCP).                     ║
+║      ░ ■ Fixed a crash in `HurtboxComponent` where it attempted to process     ║
+║      ░   collisions after the owner entity had been destroyed in the same      ║
+║      ░   frame.                                                                ║
 ║                                                                                ║
-
 
 
 

@@ -1,7 +1,5 @@
 # src/entities/components/health_component.gd
 @tool
-## Manages all health, damage, and invincibility logic for an entity.
-## Implements the IDamageable interface.
 class_name HealthComponent
 extends IDamageable
 
@@ -19,19 +17,20 @@ var _max_health: int
 var _invincibility_duration: float
 var _knockback_speed: float
 var _hazard_knockback_speed: float
+var _damage_audio_cue: AudioCue # New!
 var _invincibility_tokens: Dictionary = {}
 var _next_token_id: int = 1
 var _fx_manager: IFXManager
 var _event_bus
 var _hit_spark_effect: VFXEffect
+var _audio_manager: Node # New!
 
-# --- Godot Lifecycle Methods ---
+# --- Lifecycle ---
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
 
-
-# --- Public Methods (IComponent Contract) ---
+# --- Setup ---
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
 	self.entity_data = p_dependencies.get("data_resource")
@@ -40,7 +39,12 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._event_bus = p_dependencies.get("event_bus")
 	self._hit_spark_effect = p_dependencies.get("hit_spark_effect")
 	
-	# DIP: Depend on the specific config resource, not the generic Entity Config
+	# New Dependency: AudioManager (usually singleton)
+	if p_dependencies.has("audio_manager"):
+		self._audio_manager = p_dependencies.get("audio_manager")
+	else:
+		self._audio_manager = AudioManager
+
 	var dmg_config = p_dependencies.get("damage_config")
 
 	if not entity_data or not dmg_config or not _fx_manager or not _event_bus:
@@ -49,14 +53,13 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 	_max_health = entity_data.max_health
 	
-	# Logic is now uniform for all entities
 	_invincibility_duration = dmg_config.invincibility_duration
 	_knockback_speed = dmg_config.knockback_speed
 	_hazard_knockback_speed = dmg_config.hazard_knockback_speed
+	_damage_audio_cue = dmg_config.audio_cue # Extract Cue
 
 	entity_data.health = _max_health
 	health_changed.emit(entity_data.health, _max_health)
-
 
 func teardown() -> void:
 	entity_data = null
@@ -64,14 +67,14 @@ func teardown() -> void:
 	_fx_manager = null
 	_event_bus = null
 	_hit_spark_effect = null
+	_damage_audio_cue = null
+	_audio_manager = null
 
-
-# --- Public Methods (IDamageable Contract) ---
+# --- Logic ---
 func apply_damage(damage_info: DamageInfo) -> DamageResult:
 	var result := DamageResult.new()
 
 	if not is_instance_valid(damage_info):
-		push_warning("HealthComponent received an invalid DamageInfo object.")
 		return result
 
 	if is_invincible() and not damage_info.bypass_invincibility:
@@ -92,21 +95,23 @@ func apply_damage(damage_info: DamageInfo) -> DamageResult:
 	result.was_damaged = true
 	took_damage.emit(damage_info, result)
 
+	# Visual Feedback
 	if result.was_damaged and is_instance_valid(_fx_manager) and is_instance_valid(_hit_spark_effect):
 		_fx_manager.play_vfx(
 			_hit_spark_effect, damage_info.impact_position, damage_info.impact_normal
 		)
+	
+	# Audio Feedback (New!)
+	if result.was_damaged and is_instance_valid(_damage_audio_cue) and is_instance_valid(_audio_manager):
+		_audio_manager.play_cue(_damage_audio_cue)
 
 	if entity_data.health <= 0:
 		died.emit()
 
 	return result
 
-
-# --- Public Methods (HealthComponent Specific) ---
 func is_invincible() -> bool:
 	return not _invincibility_tokens.is_empty()
-
 
 func grant_invincibility(requester: Object) -> int:
 	var token_id := _next_token_id
@@ -114,13 +119,10 @@ func grant_invincibility(requester: Object) -> int:
 	_invincibility_tokens[token_id] = requester.get_instance_id()
 	return token_id
 
-
 func release_invincibility(token: int) -> void:
 	if _invincibility_tokens.has(token):
 		_invincibility_tokens.erase(token)
 
-
-# --- Private Methods ---
 func _check_for_threshold_crossing(health_before: int, health_after: int) -> void:
 	if not owner_node.has_method("get_health_thresholds"):
 		return
@@ -130,7 +132,6 @@ func _check_for_threshold_crossing(health_before: int, health_after: int) -> voi
 	for threshold in thresholds:
 		if old_percent > threshold and new_percent <= threshold:
 			health_threshold_reached.emit(threshold)
-
 
 func _calculate_knockback(source: Node) -> Vector2:
 	if _knockback_speed == 0 or not is_instance_valid(source):

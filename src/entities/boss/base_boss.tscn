@@ -19,7 +19,7 @@ size = Vector2(60, 60)
 radius = 100.0
 
 [node name="BaseBoss" type="CharacterBody2D"]
-collision_layer = 12
+collision_layer = 4
 collision_mask = 138
 script = ExtResource("1_26qjf")
 behavior = ExtResource("19_default_behavior")
