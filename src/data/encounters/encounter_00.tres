@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="EncounterData" load_steps=9 format=3 uid="uid://4lptu40or7m1"]
+[gd_resource type="Resource" script_class="EncounterData" load_steps=8 format=3 uid="uid://4lptu40or7m1"]
 
 [ext_resource type="Script" path="res://src/data/encounters/encounter_data.gd" id="1_encounter"]
 [ext_resource type="PackedScene" uid="uid://dmej4a7ykn2q0" path="res://src/entities/enemies/bosses/base_boss.tscn" id="2_boss_scene"]
-[ext_resource type="Resource" uid="uid://bst2lw60wetic" path="res://src/data/layouts/layout_00.tres" id="3_layout"]
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://src/entities/enemies/minions/turret.tscn" id="4_turret_scene"]
 [ext_resource type="PackedScene" uid="uid://d9e8f7g6h5i4j" path="res://src/entities/enemies/spawners/patrolling_lancer_spawner.tscn" id="5_lancer_spawner"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/minions/flying_patroller.tscn" id="6_flyer_scene"]
@@ -23,10 +22,7 @@ payload = null
 [resource]
 script = ExtResource("1_encounter")
 level_scene = ExtResource("10_level_scene")
-level_layout = ExtResource("3_layout")
-player_spawn_marker = "@"
 boss_scene = ExtResource("2_boss_scene")
-boss_spawn_marker = "&"
 minion_spawns = {
 "F": ExtResource("6_flyer_scene"),
 "P": ExtResource("5_lancer_spawner"),

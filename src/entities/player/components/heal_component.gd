@@ -3,6 +3,8 @@
 class_name HealComponent
 extends IComponent
 
+const JumpHelper = preload("res://src/entities/player/components/player_jump_helper.gd")
+
 var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
@@ -36,6 +38,11 @@ func _physics_process(_delta: float) -> void:
 			and _owner_node.is_on_floor()
 			and is_zero_approx(_owner_node.velocity.x)
 		):
+			# PRIORITY FIX: If standing on a drop-through platform, 
+			# Down+Jump means "Drop", not "Heal".
+			if JumpHelper.is_standing_on_platform(_owner_node):
+				return
+
 			_state_machine.change_state(Identifiers.PlayerStates.HEAL, {})
 
 func teardown() -> void:
