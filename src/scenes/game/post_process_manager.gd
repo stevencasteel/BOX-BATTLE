@@ -16,14 +16,14 @@ var _boss_phase_token: int = 0
 
 func _ready() -> void:
 	# Load Materials
-	shockwave_rect.material = load("res://materials/shockwave_material.tres").duplicate()
-	chromatic_rect.material = load("res://materials/chromatic_material.tres").duplicate()
+	shockwave_rect.material = load("res://src/content/materials/shockwave_material.tres").duplicate()
+	chromatic_rect.material = load("res://src/content/materials/chromatic_material.tres").duplicate()
 	
-	if FileAccess.file_exists("res://materials/vignette_material.tres"):
-		vignette_rect.material = load("res://materials/vignette_material.tres").duplicate()
+	if FileAccess.file_exists("res://src/content/materials/vignette_material.tres"):
+		vignette_rect.material = load("res://src/content/materials/vignette_material.tres").duplicate()
 	else:
 		var mat = ShaderMaterial.new()
-		mat.shader = load("res://shaders/fullscreen/vignette.gdshader")
+		mat.shader = load("res://src/content/shaders/fullscreen/vignette.gdshader")
 		vignette_rect.material = mat
 
 	# Reset

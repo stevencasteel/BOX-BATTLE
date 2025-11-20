@@ -11,9 +11,6 @@
 ║                                                                                ║
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
-║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.28.0] - CURRENT - 11/19/2025                               ██   ║
-║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
 
@@ -23,7 +20,21 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025          ██   ║
+║   ██           [0.28.0] - ARCHITECTURAL REFACTOR - 11/19/2025             ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Structural Overhaul                                                       ║
+║      ░ ■ Implemented Domain-Driven Directory Structure.                        ║
+║      ░ ■ Created 'src/shared' for Interfaces (DIP) and Data Types.             ║
+║      ░ ■ Created 'src/game' for Gameplay Systems (Combat, LevelGen, VFX).      ║
+║      ░ ■ Created 'src/content' for Art/Tech-Art Assets (Shaders, Particles).   ║
+║      ░ ■ Standardized Entities:                                                ║
+║      ░   - Moved Components/Scripts to 'src/entities/_base'.                   ║
+║      ░   - Grouped Bosses and Minions under 'src/entities/enemies'.            ║
+║      ░ ■ Cleaned up Root Directory: Moved Materials and Shaders to content.    ║
+║                                                                                ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025         ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Physics & Controls                                                        ║
@@ -41,12 +52,10 @@
 ║      ░ ■ Reduced Healing Charge cost: Determination required lowered from      ║
 ║      ░   10 hits to 5 hits.                                                    ║
 ║                                                                                ║
-
 ║   █  UI & Audio Polish                                                         ║
 ║      ░ ■ Added tactile 'Tick' SFX to volume sliders in the Options Menu.       ║
 ║      ░   - Ticks only occur on intervals of 5 (5, 10, 15...) to reduce fatigue.║
 ║      ░   - Logic handles drag events vs clicks intelligently.                  ║
-
 
 ║   █  Architecture & Design Principles                                          ║
 ║      ░ ■ Applied Liskov Substitution Principle (LSP) to BaseEntity.            ║
@@ -113,12 +122,8 @@
 
 
 
-
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER & INPUT REMAPPING & ACCESSIBILITY - 11/19/2025      ██   ║
+║   ██     [0.25.0] - SYSTEM HARDENING & DECOUPLING & PERSISTENCE LAYER & INPUT REMAPPING & ACCESSIBILITY - 11/19/2025      ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
@@ -137,7 +142,6 @@
 ║      ░ ■ Updated 'InputComponent' and 'MenuManager' to use the new identifiers.║
 ║      ░ ■ Hardened 'ArenaBuilder' to prevent type errors during hot-reloads.    ║
 ║                                                                                ║
-
 ║   █  New Systems                                                               ║
 ║      ░ ■ Implemented 'SaveManager': Handles serialization of gameplay stats    ║
 ║      ░   (Wins/Losses) to 'user://save_data.tres'.                             ║
@@ -165,11 +169,6 @@
 ║      ░ ■ Added visual/audio feedback (Cursors, SFX) to all control UI elements.║
 ║      ░ ■ Added "Fixed Controls" reference panel for hardcoded inputs.          ║
 ║                                                                                ║
-
-
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.24.0] - LSP & OCP ENTITY REFACTOR & DRY DAMAGE REFACTOR & AUDIO & PHYSICS HARDENING - 11/19/2025          ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -260,9 +259,6 @@
 ║      ░   custom `telegraph_scene` references, enabling visual customization    ║
 ║      ░   without code modification.                                            ║
 ║                                                                                ║
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██             [0.22.0] - PLAYER LOGIC DECENTRALIZATION - 11/18/2025    ██.  ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -309,14 +305,13 @@
 ║      ░ ■ Refactored `Minion` and `BaseBoss` to use `SensorComponent`.          ║
 ║      ░ ■ Removed boilerplate signal handling for player detection in entities. ║
 ║      ░ ■ Sensors now auto-update entity state data via property reflection.    ║
-                                                                            ║
+
 ║      ░ ■ Centralized physics authority in `PlayerPhysicsComponent` API.        ║
 ║      ░ ■ Refactored Player States (`Jump`, `Dash`, `Hurt`) to use Physics API  ║
 ║      ░   instead of manipulating velocity directly.                            ║
 ║      ░ ■ Removed specific combat signals from generic `BaseStateMachine`.      ║
 ║      ░ ■ States now access and actuate Hitbox components directly.             ║
 ║      ░ ■ Fixed physics threading issues in `HitboxComponent` (set_deferred).   ║
-
 
 ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓    ║
 ║  ██                  [0.20.0] - CONFIG DECOUPLING - 11/XX/2025           ██    ║

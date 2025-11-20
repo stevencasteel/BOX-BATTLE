@@ -6,8 +6,8 @@
 [ext_resource type="PackedScene" path="res://src/projectiles/boss_shot.tscn" id="4_boss_shot"]
 [ext_resource type="PackedScene" path="res://src/projectiles/turret_shot.tscn" id="5_minion_shot"]
 [ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
-[ext_resource type="PackedScene" path="res://src/vfx/hit_spark.tscn" id="7_spark"]
-[ext_resource type="PackedScene" path="res://src/vfx/splash_charge_green.tscn" id="8_green_splash"]
+[ext_resource type="PackedScene" path="res://src/content/vfx/hit_spark.tscn" id="7_spark"]
+[ext_resource type="PackedScene" path="res://src/content/vfx/splash_charge_green.tscn" id="8_green_splash"]
 
 [sub_resource type="Resource" id="Resource_player"]
 script = ExtResource("1_def")

@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://g7h8i9j0k1l2"]
-
-[ext_resource type="Script" path="res://src/entities/components/fx_component.gd" id="1_fx"]
-
-[node name="FXComponent" type="Node"]
-script = ExtResource("1_fx")
-metadata/REQUIRED_DEPS = PackedStringArray("visual_node", "fx_manager")

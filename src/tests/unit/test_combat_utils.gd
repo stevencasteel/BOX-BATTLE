@@ -2,9 +2,9 @@
 extends GutTest
 
 # --- Constants ---
-const BaseEntity = preload("res://src/entities/base_entity.gd")
-const HealthComponent = preload("res://src/entities/components/health_component.gd")
-const IDamageable = preload("res://src/api/interfaces/IDamageable.gd")
+const BaseEntity = preload("res://src/entities/_base/scripts/base_entity.gd")
+const HealthComponent = preload("res://src/entities/_base/components/health_component.gd")
+const IDamageable = preload("res://src/shared/interfaces/IDamageable.gd")
 const EntityArchetype = preload("res://src/entities/archetypes/entity_archetype.gd")
 
 # --- Test Internals ---

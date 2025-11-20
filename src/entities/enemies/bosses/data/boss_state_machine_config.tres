@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=15 format=3 uid="uid://s5xi3ciavs2n"]
+
+[ext_resource type="Script" uid="uid://n65f7l7vgpyh" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" uid="uid://bhpvwtjqtlr08" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" uid="uid://dnyvyoos5kkxy" path="res://src/entities/enemies/bosses/states/state_boss_idle.gd" id="3_idle"]
+[ext_resource type="Script" uid="uid://bl6ot8t61nixu" path="res://src/entities/enemies/bosses/states/state_boss_attack.gd" id="4_attack"]
+[ext_resource type="Script" uid="uid://dgok3ph2i0i47" path="res://src/entities/enemies/bosses/states/state_boss_cooldown.gd" id="5_cooldown"]
+[ext_resource type="Script" uid="uid://bsmqi0p5h8urh" path="res://src/entities/enemies/bosses/states/state_boss_patrol.gd" id="6_patrol"]
+[ext_resource type="Script" uid="uid://b47bmwcdrdd8d" path="res://src/entities/enemies/bosses/states/state_boss_lunge.gd" id="7_lunge"]
+[ext_resource type="Script" uid="uid://cfirfsn8ugufx" path="res://src/entities/enemies/bosses/states/state_boss_melee.gd" id="8_melee"]
+
+[sub_resource type="Resource" id="Resource_idle"]
+script = ExtResource("1_def")
+key = &"idle"
+state_script = ExtResource("3_idle")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("1_def")
+key = &"attack"
+state_script = ExtResource("4_attack")
+
+[sub_resource type="Resource" id="Resource_cooldown"]
+script = ExtResource("1_def")
+key = &"cooldown"
+state_script = ExtResource("5_cooldown")
+
+[sub_resource type="Resource" id="Resource_patrol"]
+script = ExtResource("1_def")
+key = &"patrol"
+state_script = ExtResource("6_patrol")
+
+[sub_resource type="Resource" id="Resource_lunge"]
+script = ExtResource("1_def")
+key = &"lunge"
+state_script = ExtResource("7_lunge")
+
+[sub_resource type="Resource" id="Resource_melee"]
+script = ExtResource("1_def")
+key = &"melee"
+state_script = ExtResource("8_melee")
+
+[resource]
+script = ExtResource("2_cfg")
+initial_state = &"cooldown"
+states = Array[ExtResource("1_def")]([SubResource("Resource_idle"), SubResource("Resource_attack"), SubResource("Resource_cooldown"), SubResource("Resource_patrol"), SubResource("Resource_lunge"), SubResource("Resource_melee")])

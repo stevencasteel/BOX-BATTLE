@@ -29,14 +29,13 @@ echo "=====================================" >> "$OUTPUT_FILE"
 
 if command -v tree >/dev/null 2>&1; then
     # Use tree command if available
-    # EXCLUDES: assets, git, godot, tmp, addons, archive, build artifacts
-    tree -I 'assets|.git|.godot|.tmp|addons|archive|*.uid|*.import' >> "$OUTPUT_FILE"
+    # EXCLUDES: git, godot, tmp, addons, archive, build artifacts
+    tree -I '.git|.godot|.tmp|addons|archive|*.uid|*.import' >> "$OUTPUT_FILE"
 else
     # Fallback to find command
     echo "Note: 'tree' command not found, using find as fallback" >> "$OUTPUT_FILE"
     echo "" >> "$OUTPUT_FILE"
     find . -type d \
-        -not -path "./assets*" \
         -not -path "./.git*" \
         -not -path "./.godot*" \
         -not -path "./.tmp*" \
@@ -61,7 +60,6 @@ find . -type f \( \
   -name "project.godot" -o \
   -name "*.txt" \
 \) \
--not -path "./assets/*" \
 -not -path "./.git/*" \
 -not -path "./.godot/*" \
 -not -path "./addons/*" \

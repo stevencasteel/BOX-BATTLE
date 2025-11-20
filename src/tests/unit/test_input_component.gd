@@ -2,7 +2,7 @@
 extends GutTest
 
 # --- Constants ---
-const InputComponent = preload("res://src/entities/components/input_component.gd")
+const InputComponent = preload("res://src/entities/_base/components/input_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres")
 const FakeInputProvider = preload("res://src/tests/fakes/fake_input_provider.gd")

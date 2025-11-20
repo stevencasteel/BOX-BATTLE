@@ -106,7 +106,7 @@ func _cleanup_entities() -> void:
 
 
 func _initialize_camera_shaker() -> void:
-	var shaker_scene: PackedScene = load("res://src/core/systems/camera_shaker.tscn")
+	var shaker_scene: PackedScene = load("res://src/game/vfx/camera_shaker.tscn")
 	if shaker_scene:
 		_camera_shaker = shaker_scene.instantiate() as CameraShaker
 		add_child(_camera_shaker)

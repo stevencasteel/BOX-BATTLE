@@ -2,14 +2,14 @@
 extends GutTest
 
 # --- Constants ---
-const HealthComponent = preload("res://src/entities/components/health_component.gd")
+const HealthComponent = preload("res://src/entities/_base/components/health_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const DamageInfo = preload("res://src/api/combat/damage_info.gd")
+const DamageInfo = preload("res://src/shared/types/damage_info.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
 const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
-const IFXManager = preload("res://src/api/interfaces/IFXManager.gd")
+const IFXManager = preload("res://src/shared/interfaces/IFXManager.gd")
 const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---

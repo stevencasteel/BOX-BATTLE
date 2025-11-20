@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Wed Nov 19 15:51:16 CST 2025
+Generated on: Wed Nov 19 18:33:55 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -10,6 +10,64 @@ PROJECT DIRECTORY STRUCTURE:
 .
 ├── LICENSE
 ├── README.md
+├── assets
+│   ├── audio
+│   │   ├── audio-license.txt
+│   │   ├── music
+│   │   │   └── music_menu_loop.mp3
+│   │   └── sfx
+│   │       ├── sfx_game_start.mp3
+│   │       ├── sfx_ui_back.mp3
+│   │       ├── sfx_ui_error.mp3
+│   │       ├── sfx_ui_move.mp3
+│   │       ├── sfx_ui_select.mp3
+│   │       └── sfx_ui_slider_tick.mp3
+│   ├── fonts
+│   │   ├── MPLUSRounded1c-ExtraBold.ttf
+│   │   ├── MPLUSRounded1c-Light.ttf
+│   │   ├── MPLUSRounded1c-Medium.ttf
+│   │   ├── MPLUSRounded1c-Thin.ttf
+│   │   ├── OFL.txt
+│   │   ├── font_main_black.ttf
+│   │   ├── font_main_bold.ttf
+│   │   └── font_main_regular.ttf
+│   ├── sprites
+│   │   └── ui
+│   │       ├── checkbox
+│   │       │   ├── checkbox-checked.png
+│   │       │   └── checkbox-unchecked.png
+│   │       ├── cursors
+│   │       │   ├── cursor-default-black.svg
+│   │       │   ├── cursor_default_white.svg
+│   │       │   ├── cursor_default_white_filled.svg
+│   │       │   ├── sprite_cursor_default.png
+│   │       │   └── sprite_cursor_pointer.png
+│   │       ├── icons
+│   │       │   ├── icon-sound-off-black.svg
+│   │       │   ├── icon-sound-off-white.svg
+│   │       │   ├── icon-sound-on-black.svg
+│   │       │   ├── icon-sound-on-white.svg
+│   │       │   ├── icon_ui_sound_off.png
+│   │       │   └── icon_ui_sound_on.png
+│   │       ├── logos
+│   │       │   ├── godot_logo.png
+│   │       │   ├── itch_logo.png
+│   │       │   ├── newgrounds_logo.png
+│   │       │   └── unorganized
+│   │       │       ├── logo_vertical_color_dark.svg
+│   │       │       └── logo_vertical_color_light.svg
+│   │       ├── menu
+│   │       │   └── menu-item-options.png
+│   │       ├── slider
+│   │       │   ├── slider-knob.png
+│   │       │   └── slider-track.png
+│   │       └── title
+│   │           └── sprite_title_main.png
+│   ├── textures
+│   │   └── noise_texture.tres
+│   └── vfx
+│       └── particles
+│           └── README.md
 ├── default_bus_layout.tres
 ├── docs
 │   ├── ARCHITECTURE.txt
@@ -66,6 +124,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── IComponent.gd
 │   │   │   ├── IDamageable.gd
 │   │   │   ├── IFXManager.gd
+│   │   │   ├── IInputProvider.gd
 │   │   │   ├── IObjectPool.gd
 │   │   │   ├── IPoolable.gd
 │   │   │   └── ISceneController.gd
@@ -146,6 +205,8 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   │   └── fx_manager_adapter.gd
 │   │   │   ├── fx_manager.gd
 │   │   │   ├── game_manager.gd
+│   │   │   ├── input
+│   │   │   │   └── standard_input_provider.gd
 │   │   │   ├── object_pool.gd
 │   │   │   ├── pool_bindings
 │   │   │   │   └── object_pool_adapter.gd
@@ -183,6 +244,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   ├── effects
 │   │   │   ├── boss_shockwave_effect.tres
 │   │   │   ├── entity_hit_flash_effect.tres
+│   │   │   ├── green_splash_vfx.tres
 │   │   │   └── heavy_impact_chromatic.tres
 │   │   ├── encounters
 │   │   │   ├── encounter_00.tres
@@ -250,7 +312,9 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   │   ├── status_effect_component.gd
 │   │   │   ├── status_effect_component.tscn
 │   │   │   ├── telegraph_component.gd
-│   │   │   └── telegraph_component.tscn
+│   │   │   ├── telegraph_component.tscn
+│   │   │   ├── visual_component.gd
+│   │   │   └── visual_component.tscn
 │   │   ├── minions
 │   │   │   ├── data
 │   │   │   │   ├── flying_patroller_behavior.tres
@@ -363,6 +427,7 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   ├── fakes
 │   │   │   ├── fake_damageable.gd
 │   │   │   ├── fake_event_bus.gd
+│   │   │   ├── fake_input_provider.gd
 │   │   │   └── fake_service_locator.gd
 │   │   ├── integration
 │   │   ├── isolation
@@ -409,14 +474,18 @@ PROJECT DIRECTORY STRUCTURE:
 │   │   └── themes
 │   │       └── main_theme.tres
 │   └── vfx
+│       ├── aura_charge_green.tscn
+│       ├── aura_heal_purple.tscn
 │       ├── hit_spark.gd
-│       └── hit_spark.tscn
+│       ├── hit_spark.tscn
+│       ├── splash_charge_green.tscn
+│       └── splash_heal_purple.tscn
 └── tools
     ├── fx_playground.gd
     ├── fx_playground.tscn
     └── mock_entity.gd
 
-90 directories, 318 files
+109 directories, 368 files
 
 
 =====================================
@@ -785,8 +854,9 @@ FILE: ./docs/TODO.txt
       - Add specific SFX for different surface materials (footsteps).
       - Implement dynamic music mixing (low pass filter on pause/low health).
 
-   ░  subtle dust when entity lands or jumps from surfce (floor or wall)
-
+   □  Visual Polish:
+      - Add subtle dust particles when entity lands or jumps from surface (floor or wall).
+      - Add "Ghost Trail" effect for the Dash mechanic (currently standard particles).
 
 
 =====================================
@@ -921,17 +991,17 @@ FILE: ./docs/ARCHITECTURE.txt
 *   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
 
 ## 2. Entity Pattern: Composition + Archetypes
-*   **BaseEntity:** Generic shell (`CharacterBody2D`).
+*   **BaseEntity:** Generic shell (`CharacterBody2D`). Responsible for `move_and_slide()` physics execution.
 *   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
-*   **EntityBuilder:** Static utility that hydrates the entity, instantiates components, and wires dependencies.
 *   **Components:** Single-responsibility nodes (Health, Input, Physics).
+    *   *Physics Authority:* Components (e.g., `PlayerPhysicsComponent`) calculate and modify `velocity`. The Owner Entity applies that velocity via `move_and_slide()`.
 
 ## 3. Logic Pattern: State Machines & Strategy
 *   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
 *   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
 
 ## 4. Data Pattern: Resource-Driven
-*   **Config:** All tuning numbers live in `CombatConfig.tres` (soon to be split).
+*   **Config:** All tuning numbers live in Config Resources (`PlayerConfig`, `EnemyConfig`).
 *   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
 
 ## 5. Communication Rules
@@ -1014,7 +1084,7 @@ FILE: ./docs/CHANGELOG.txt
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.27.0] - CURRENT - 11/19/2025                               ██   ║
+║   ██           [0.28.0] - CURRENT - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
@@ -1024,14 +1094,57 @@ FILE: ./docs/CHANGELOG.txt
 
 
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Physics & Controls                                                        ║
+║      ░ ■ Standardized Physics: Player entity now drives 'move_and_slide',      ║
+║      ░   resolving execution order issues with components.                     ║
+║      ░ ■ Jump Buffering: Added 0.1s input buffer for smoother landing jumps.   ║
+║                                                                                ║
+║   █  Visual Effects & Juice                                                    ║
+║      ░ ■ Added 'Super Saiyan' style charging auras (Green for Attack,          ║
+║      ░   Purple for Heal) with crackling turbulence and ramp-up.               ║
+║      ░ ■ Added splash VFX for Fireball release and Heal completion.            ║
+║      ░ ■ Implemented 0.15s delay on Charge Aura to prevent flashing on taps.   ║
+║                                                                                ║
+║   █  Balance & Tuning                                                          ║
+║      ░ ■ Reduced Healing Charge cost: Determination required lowered from      ║
+║      ░   10 hits to 5 hits.                                                    ║
+║                                                                                ║
+
+║   █  UI & Audio Polish                                                         ║
+║      ░ ■ Added tactile 'Tick' SFX to volume sliders in the Options Menu.       ║
+║      ░   - Ticks only occur on intervals of 5 (5, 10, 15...) to reduce fatigue.║
+║      ░   - Logic handles drag events vs clicks intelligently.                  ║
 
 
+║   █  Architecture & Design Principles                                          ║
+║      ░ ■ Applied Liskov Substitution Principle (LSP) to BaseEntity.            ║
+║      ░   - Enforced 'get_health_thresholds()' contract in the base class.      ║
+║      ░   - Removed duck-typing/has_method checks in HealthComponent.           ║
+║      ░ ■ Applied Dependency Inversion Principle (DIP) to Visual Assets.        ║
+║      ░   - Removed hardcoded 'preload' paths for VFX in Player scripts.        ║
+║      ░   - VFX scenes (Auras, Splashes) are now injected via 'PlayerConfig'.   ║
+║      ░ ■ Applied Single Responsibility Principle (SRP) to Visual Logic.        ║
+║      ░   - Extracted 'VisualComponent' to handle sprite color and death FX.    ║
+║      ░   - Player.gd is now purely an orchestrator, delegating visuals.        ║
+║                                                                                ║
+   █  Polish & Tuning
+      ░ ■ Tuned Charge Attack: Increased aura visual delay to 0.25s to prevent
+      ░   flickering on melee taps.
+      ░ ■ Responsiveness: Removed cooldown check for starting a Charge Attack,
+      ░   allowing immediate charging after firing.
+      ░ ■ Code Cleanliness: Removed unused variables in ChargeComponent.
 
-
-
-
-
-
+         █  Combat Depth
+      ░ ■ Implemented Durability System for Charged Shots:
+      ░   - Level 2 Fireballs now have Health equal to their Damage (3).
+      ░   - Hitting enemy projectiles consumes Health but allows the fireball
+      ░     to persist if it has remaining damage potential.
+      ░   - Enables "beam struggle" style mechanics where powerful shots
+      ░     cleave through weaker enemy fire.
 
 
 
@@ -1918,7 +2031,7 @@ config_version=5
 [application]
 
 config/name="BOX BATTLE"
-config/version="0.26.0"
+config/version="0.28.0"
 run/main_scene="res://src/scenes/main/main.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
@@ -2087,6 +2200,45 @@ FILE: ./.vscode/settings.json
 {
     "godotTools.editorPath.godot4": "/Applications/Godot.app"
 }
+
+=====================================
+FILE: ./assets/textures/noise_texture.tres
+=====================================
+[gd_resource type="NoiseTexture2D" load_steps=2 format=3 uid="uid://07p7ttqtioqu"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_1"]
+noise_type = 3
+frequency = 0.4
+fractal_type = 0
+
+[resource]
+seamless = true
+noise = SubResource("FastNoiseLite_1")
+
+
+=====================================
+FILE: ./assets/vfx/particles/README.md
+=====================================
+# Particle Effects
+
+This directory will contain all `GPUParticles2D` node scenes used for visual effects like hit-sparks, explosions, and trails.
+
+=====================================
+FILE: ./assets/audio/audio-license.txt
+=====================================
+Audio Assets License
+===================
+
+All sound effects and music in this project were created by Steven Casteel using paid subscription services that grant full commercial usage rights:
+
+- Sound Effects: Generated using ElevenLabs paid tier
+- Music: Generated using Udio paid subscription
+
+Under the terms of both services' paid plans, the creator retains full ownership and distribution rights to the generated content. 
+
+These audio assets are hereby released under CC0 1.0 Universal, dedicating them to the public domain alongside the rest of this project.
+
+You may use these audio files for any purpose, including commercial use, without attribution or permission.
 
 =====================================
 FILE: ./src/ui/game_hud/game_hud.gd
@@ -3030,6 +3182,7 @@ signal mute_toggled(is_muted: bool)
 			name_label.text = setting_name
 
 var is_muted: bool = false
+var _last_percent_value: int = -1
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
@@ -3049,8 +3202,12 @@ func _ready() -> void:
 func set_slider_value(value: float) -> void:
 	if is_instance_valid(value_slider):
 		value_slider.set_value(value)
+	
+	# Initialize tracking variable
+	_last_percent_value = int(value * 100)
+	
 	if is_instance_valid(value_label):
-		value_label.text = str(int(value * 100))
+		value_label.text = str(_last_percent_value)
 
 
 ## Sets the visual state of the checkbox without emitting a signal.
@@ -3067,8 +3224,23 @@ func set_mute_state(p_is_muted: bool) -> void:
 
 # --- Signal Handlers ---
 func _on_slider_value_changed(value: float) -> void:
+	var current_percent = int(value * 100)
+	
 	if is_instance_valid(value_label):
-		value_label.text = str(int(value * 100))
+		value_label.text = str(current_percent)
+	
+	# AUDIO LOGIC (Before Emit)
+	if not Engine.is_editor_hint():
+		# If initialized and value actually changed
+		if _last_percent_value != -1 and current_percent != _last_percent_value:
+			# Only play sound on intervals of 5 (0, 5, 10, 15...)
+			if current_percent % 5 == 0:
+				AudioManager.play_sfx(AssetPaths.SFX_UI_SLIDER_TICK)
+		
+		# Update local tracker immediately
+		_last_percent_value = current_percent
+
+	# EMIT SIGNAL (After Audio)
 	value_changed.emit(value)
 
 
@@ -3076,6 +3248,7 @@ func _on_mute_button_pressed() -> void:
 	is_muted = not is_muted
 	set_mute_state(is_muted)
 	mute_toggled.emit(is_muted)
+
 
 =====================================
 FILE: ./src/ui/components/save_slot_button/save_slot_button.gd
@@ -6221,10 +6394,17 @@ const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 @onready var combat_utils = get_node("/root/CombatUtils")
 @onready var grid_utils = get_node("/root/GridUtils")
 
+# --- Non-Node Services (RefCounted) ---
+var input_provider: IInputProvider
+
 # --- Public Properties ---
 var player_config: PlayerConfig = PLAYER_CONFIG
 var enemy_config: EnemyConfig = ENEMY_CONFIG
 var world_config: WorldConfig = WORLD_CONFIG
+
+func _ready() -> void:
+	# Default to the standard input wrapper for runtime
+	input_provider = StandardInputProvider.new()
 
 
 =====================================
@@ -6523,7 +6703,7 @@ const SCENE_BOSS_SHOT = "res://src/projectiles/boss_shot.tscn"
 const SCENE_HOMING_BOSS_SHOT = "res://src/projectiles/homing_boss_shot.tscn"
 const SCENE_TELEGRAPH_COMPONENT = "res://src/entities/components/telegraph_component.tscn"
 const SCENE_TURRET = "res://src/entities/minions/turret.tscn"
-const SCENE_MINION_SHOT = "res://src/projectiles/turret_shot.tscn" # This path is still correct
+const SCENE_MINION_SHOT = "res://src/projectiles/turret_shot.tscn"
 
 # --- UI & SCENES ---
 const SCENE_GAME_HUD = "res://src/ui/game_hud/game_hud.tscn"
@@ -6534,7 +6714,7 @@ const SCENE_OPTIONS_SCREEN = "res://src/scenes/menus/options_screen.tscn"
 const SCENE_SOUND_SCREEN = "res://src/scenes/menus/sound_screen.tscn"
 const SCENE_CONTROLS_SCREEN = "res://src/scenes/menus/controls_screen.tscn"
 const SCENE_CREDITS_SCREEN = "res://src/scenes/menus/credits_screen.tscn"
-const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn" # NEW
+const SCENE_SAVE_SELECT_SCREEN = "res://src/scenes/menus/save_select_screen.tscn"
 
 # --- UI COMPONENTS ---
 const SCENE_STYLED_MENU_ITEM = "res://src/ui/components/styled_menu_item/styled_menu_item.tscn"
@@ -6570,6 +6750,7 @@ const SFX_UI_ERROR = "res://assets/audio/sfx/sfx_ui_error.mp3"
 const SFX_UI_MOVE = "res://assets/audio/sfx/sfx_ui_move.mp3"
 const SFX_UI_SELECT = "res://assets/audio/sfx/sfx_ui_select.mp3"
 const SFX_GAME_START = "res://assets/audio/sfx/sfx_game_start.mp3"
+const SFX_UI_SLIDER_TICK = "res://assets/audio/sfx/sfx_ui_slider_tick.mp3"
 
 
 # --- Validation System ---
@@ -6933,6 +7114,27 @@ class_name PoolManifest
 extends Resource
 
 @export var pools: Array[PoolDefinition] = []
+
+
+=====================================
+FILE: ./src/core/systems/input/standard_input_provider.gd
+=====================================
+# src/core/systems/input/standard_input_provider.gd
+## The concrete implementation that wraps Godot's global Input singleton.
+class_name StandardInputProvider
+extends IInputProvider
+
+func get_axis(negative_action: StringName, positive_action: StringName) -> float:
+	return Input.get_axis(negative_action, positive_action)
+
+func is_action_pressed(action: StringName) -> bool:
+	return Input.is_action_pressed(action)
+
+func is_action_just_pressed(action: StringName) -> bool:
+	return Input.is_action_just_pressed(action)
+
+func is_action_just_released(action: StringName) -> bool:
+	return Input.is_action_just_released(action)
 
 
 =====================================
@@ -8278,7 +8480,7 @@ extends Resource
 @export_range(1, 20, 1) var max_health: int = 5
 @export_range(1, 10, 1) var max_healing_charges: int = 1
 @export_range(0.1, 5.0, 0.1) var heal_duration: float = 2.0
-@export_range(1, 100, 1) var determination_per_charge: int = 10
+@export_range(1, 100, 1) var determination_per_charge: int = 5
 
 ## Configuration for how the player reacts to taking damage (Invincibility, Knockback force).
 @export var damage_response: DamageResponseConfig
@@ -8313,8 +8515,17 @@ extends Resource
 @export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
 @export_range(100, 5000, 100) var attack_friction: float = 2000.0
 @export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
+@export_range(1.0, 5.0, 0.1) var level_2_charge_time: float = 2.0
+@export var level_2_damage: int = 3
 @export_range(200, 1000, 10) var pogo_force: float = 450.0
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
+
+@export_group("Visual Effects")
+@export var vfx_charge_aura: PackedScene
+@export var vfx_charge_splash: PackedScene
+@export var vfx_heal_aura: PackedScene
+@export var vfx_heal_splash: PackedScene
+@export var vfx_dissolve: ShaderEffect
 
 
 =====================================
@@ -9179,19 +9390,16 @@ extends GutTest
 # --- Constants ---
 const InputComponent = preload("res://src/entities/components/input_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
-const GutInputSender = preload("res://addons/gut/input_sender.gd")
+const PlayerConfig = preload("res://src/data/player_config.tres")
+const FakeInputProvider = preload("res://src/tests/fakes/fake_input_provider.gd")
+const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _input_component: InputComponent
-var _input_sender: GutInputSender
+var _fake_input: FakeInputProvider
 var _mock_owner: CharacterBody2D
 
 # --- Test Lifecycle ---
-func before_all() -> void:
-	# Create a single input sender that targets the global Input singleton.
-	_input_sender = GutInputSender.new(Input)
-
 func before_each():
 	_mock_owner = CharacterBody2D.new()
 	add_child_autofree(_mock_owner)
@@ -9199,73 +9407,70 @@ func before_each():
 	_input_component = InputComponent.new()
 	_mock_owner.add_child(_input_component)
 
+	_fake_input = FakeInputProvider.new()
+
 	var dependencies = {
 		"data_resource": PlayerStateData.new(),
-		"config": PlayerConfig # UPDATE
+		"config": PlayerConfig,
+		"input_provider": _fake_input # DIP Injection
 	}
 	_input_component.setup(_mock_owner, dependencies)
 
-func after_each() -> void:
-	# Per GUT docs, always release held actions to prevent state leaking between tests.
-	_input_sender.release_all()
-	_input_sender.clear()
-	await get_tree().process_frame
-
 # --- The Tests ---
+
 func test_move_axis_is_buffered_correctly() -> void:
-	_input_sender.action_down("ui_right").wait_frames(1)
-	await _input_sender.idle
+	# 1. Test Right
+	_fake_input.set_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT, 1.0)
 	_input_component._physics_process(0.016)
-	assert_eq(_input_component.buffer.get("move_axis"), 1.0, "Move axis should be 1.0 for 'ui_right'.")
+	assert_eq(_input_component.buffer.get("move_axis"), 1.0, "Move axis should be 1.0 for Right.")
 
-	_input_sender.action_up("ui_right").action_down("ui_left").wait_frames(1)
-	await _input_sender.idle
+	# 2. Test Left
+	_fake_input.set_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT, -1.0)
 	_input_component._physics_process(0.016)
-	assert_eq(_input_component.buffer.get("move_axis"), -1.0, "Move axis should be -1.0 for 'ui_left'.")
+	assert_eq(_input_component.buffer.get("move_axis"), -1.0, "Move axis should be -1.0 for Left.")
 
-	_input_sender.action_up("ui_left").wait_frames(1)
-	await _input_sender.idle
+	# 3. Test Neutral
+	_fake_input.set_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT, 0.0)
 	_input_component._physics_process(0.016)
-	assert_eq(_input_component.buffer.get("move_axis"), 0.0, "Move axis should be 0.0 when no key is pressed.")
+	assert_eq(_input_component.buffer.get("move_axis"), 0.0, "Move axis should be 0.0 when neutral.")
 
-func test_action_just_pressed_is_buffered_for_one_frame() -> void:
-	_input_sender.action_down("ui_jump").wait_frames(1)
-	await _input_sender.idle
+func test_action_just_pressed_is_buffered() -> void:
+	# Press
+	_fake_input.set_action_just_pressed(Identifiers.Actions.JUMP, true)
 	_input_component._physics_process(0.016)
-	assert_true(_input_component.buffer.get("jump_just_pressed"), "'jump_just_pressed' should be true on the frame it is pressed.")
+	assert_true(_input_component.buffer.get("jump_just_pressed"), "jump_just_pressed should be true.")
 
-	# Advance one physics frame so the "just_pressed" condition expires.
-	await wait_physics_frames(1)
-	# note: physics frame will call _physics_process automatically, so no manual call needed
-	assert_false(_input_component.buffer.get("jump_just_pressed", false), "'jump_just_pressed' should be false on subsequent frames.")
-
-func test_action_released_is_buffered_for_one_frame() -> void:
-	_input_sender.action_down("ui_attack").wait_frames(1)
-	await _input_sender.idle
+	# Next Frame (Released)
+	_fake_input.set_action_just_pressed(Identifiers.Actions.JUMP, false)
 	_input_component._physics_process(0.016)
+	assert_false(_input_component.buffer.get("jump_just_pressed", false), "jump_just_pressed should be false on next frame.")
 
-	_input_sender.action_up("ui_attack").wait_frames(1)
-	await _input_sender.idle
+func test_action_released_is_buffered() -> void:
+	# Release
+	_fake_input.set_action_just_released(Identifiers.Actions.ATTACK, true)
 	_input_component._physics_process(0.016)
-	assert_true(_input_component.buffer.get("attack_released"), "'attack_released' should be true on the frame it is released.")
+	assert_true(_input_component.buffer.get("attack_released"), "attack_released should be true.")
 
-	# Advance one physics frame so the "attack_released" condition expires.
-	await wait_physics_frames(1)
-	assert_false(_input_component.buffer.get("attack_released", false), "'attack_released' should be false on subsequent frames.")
+	# Next Frame
+	_fake_input.set_action_just_released(Identifiers.Actions.ATTACK, false)
+	_input_component._physics_process(0.016)
+	assert_false(_input_component.buffer.get("attack_released", false), "attack_released should be false on next frame.")
 
 func test_action_held_persists_across_frames() -> void:
-	_input_sender.action_down("ui_jump").wait_frames(1)
-	await _input_sender.idle
+	# Frame 1: Pressed
+	_fake_input.set_action_pressed(Identifiers.Actions.JUMP, true)
 	_input_component._physics_process(0.016)
-	assert_true(_input_component.buffer.get("jump_held"), "'jump_held' should be true on the first frame.")
+	assert_true(_input_component.buffer.get("jump_held"), "jump_held should be true.")
 
+	# Frame 2: Still Pressed
 	_input_component._physics_process(0.016)
-	assert_true(_input_component.buffer.get("jump_held"), "'jump_held' should remain true on subsequent frames.")
+	assert_true(_input_component.buffer.get("jump_held"), "jump_held should remain true.")
 
-	_input_sender.action_up("ui_jump").wait_frames(1)
-	await _input_sender.idle
+	# Frame 3: Released
+	_fake_input.set_action_pressed(Identifiers.Actions.JUMP, false)
 	_input_component._physics_process(0.016)
-	assert_false(_input_component.buffer.get("jump_held", false), "'jump_held' should be false after being released.")
+	assert_false(_input_component.buffer.get("jump_held", false), "jump_held should be false after release.")
+
 
 =====================================
 FILE: ./src/tests/unit/test_player_resource_component.gd
@@ -9675,6 +9880,61 @@ func _ready() -> void:
 		self.combat_utils = mock_combat_utils
 
 =====================================
+FILE: ./src/tests/fakes/fake_input_provider.gd
+=====================================
+# src/tests/fakes/fake_input_provider.gd
+## A test double for IInputProvider.
+## Allows unit tests to manually set input state without touching the global Input singleton.
+class_name FakeInputProvider
+extends IInputProvider
+
+var _pressed_actions: Dictionary = {}
+var _just_pressed_actions: Dictionary = {}
+var _just_released_actions: Dictionary = {}
+var _axes: Dictionary = {}
+
+# --- Setup Methods (Test API) ---
+
+func set_action_pressed(action: StringName, pressed: bool) -> void:
+	_pressed_actions[action] = pressed
+
+func set_action_just_pressed(action: StringName, pressed: bool) -> void:
+	_just_pressed_actions[action] = pressed
+	if pressed:
+		_pressed_actions[action] = true
+
+func set_action_just_released(action: StringName, released: bool) -> void:
+	_just_released_actions[action] = released
+	if released:
+		_pressed_actions[action] = false
+
+func set_axis(negative: StringName, positive: StringName, value: float) -> void:
+	var key = "%s_%s" % [negative, positive]
+	_axes[key] = value
+
+func clear() -> void:
+	_pressed_actions.clear()
+	_just_pressed_actions.clear()
+	_just_released_actions.clear()
+	_axes.clear()
+
+# --- Interface Implementation ---
+
+func get_axis(negative_action: StringName, positive_action: StringName) -> float:
+	var key = "%s_%s" % [negative_action, positive_action]
+	return _axes.get(key, 0.0)
+
+func is_action_pressed(action: StringName) -> bool:
+	return _pressed_actions.get(action, false)
+
+func is_action_just_pressed(action: StringName) -> bool:
+	return _just_pressed_actions.get(action, false)
+
+func is_action_just_released(action: StringName) -> bool:
+	return _just_released_actions.get(action, false)
+
+
+=====================================
 FILE: ./src/tests/fakes/fake_damageable.gd
 =====================================
 # src/tests/fakes/fake_damageable.gd
@@ -9710,6 +9970,97 @@ func reset() -> void:
 	was_damage_applied = false
 	last_damage_info = null
 	return_result = DamageResult.new()
+
+
+=====================================
+FILE: ./src/vfx/splash_charge_green.tscn
+=====================================
+[gd_scene load_steps=6 format=3 uid="uid://splash_charge_green"]
+
+[ext_resource type="Script" path="res://src/vfx/hit_spark.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_splash"]
+colors = PackedColorArray(0.5, 1, 0.5, 1, 0, 0.5, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_splash"]
+gradient = SubResource("Gradient_splash")
+
+[sub_resource type="Curve" id="Curve_explode"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_explode"]
+curve = SubResource("Curve_explode")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_splash"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+gravity = Vector3(0, 0, 0)
+damping_min = 500.0
+damping_max = 500.0
+scale_min = 3.0
+scale_max = 6.0
+scale_curve = SubResource("CurveTexture_explode")
+color_ramp = SubResource("GradientTexture1D_splash")
+
+[node name="ChargeSplashGreen" type="GPUParticles2D"]
+emitting = false
+amount = 20
+process_material = SubResource("ParticleProcessMaterial_splash")
+lifetime = 0.4
+one_shot = true
+explosiveness = 1.0
+script = ExtResource("1_script")
+metadata/pool_name = &"hit_sparks" 
+# Note: Reusing hit_sparks logic/interface even if not in that pool, 
+# strictly for the 'finished' signal handling if used directly.
+
+
+=====================================
+FILE: ./src/vfx/splash_heal_purple.tscn
+=====================================
+[gd_scene load_steps=6 format=3 uid="uid://splash_heal_purple"]
+
+[ext_resource type="Script" path="res://src/vfx/hit_spark.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_burst"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.7, 0.3, 1, 1, 0.2, 0, 0.4, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_burst"]
+gradient = SubResource("Gradient_burst")
+
+[sub_resource type="Curve" id="Curve_burst"]
+_data = [Vector2(0, 0.5), 0.0, 3.0, 0, 0, Vector2(0.2, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_burst"]
+curve = SubResource("Curve_burst")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_burst"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 10.0
+direction = Vector3(0, -1, 0)
+spread = 180.0
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
+gravity = Vector3(0, 0, 0)
+scale_min = 4.0
+scale_max = 8.0
+scale_curve = SubResource("CurveTexture_burst")
+color_ramp = SubResource("GradientTexture1D_burst")
+
+[node name="HealSplashPurple" type="GPUParticles2D"]
+emitting = false
+amount = 50
+process_material = SubResource("ParticleProcessMaterial_burst")
+lifetime = 0.6
+one_shot = true
+explosiveness = 0.9
+script = ExtResource("1_script")
 
 
 =====================================
@@ -9816,6 +10167,87 @@ explosiveness = 1.0
 fixed_fps = 60
 script = ExtResource("1_hit_spark_script")
 metadata/pool_name = &"hit_sparks"
+
+
+=====================================
+FILE: ./src/vfx/aura_charge_green.tscn
+=====================================
+[gd_scene load_steps=4 format=3 uid="uid://aura_charge_green"]
+
+[sub_resource type="Gradient" id="Gradient_green"]
+offsets = PackedFloat32Array(0, 0.2, 0.8, 1)
+colors = PackedColorArray(0.8, 1, 0.8, 1, 0, 1, 0.2, 1, 0, 0.6, 0.1, 0.8, 0, 0.2, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_green"]
+gradient = SubResource("Gradient_green")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_aura"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 35.0
+direction = Vector3(0, -1, 0)
+spread = 180.0
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+gravity = Vector3(0, 0, 0)
+radial_velocity_min = -100.0
+radial_velocity_max = -20.0
+tangential_accel_min = 50.0
+tangential_accel_max = 100.0
+scale_min = 2.0
+scale_max = 5.0
+color_ramp = SubResource("GradientTexture1D_green")
+turbulence_enabled = true
+turbulence_noise_strength = 10.0
+turbulence_noise_scale = 5.0
+turbulence_noise_speed_min = 2.0
+turbulence_noise_speed_max = 4.0
+
+[node name="ChargeAuraGreen" type="GPUParticles2D"]
+amount = 60
+process_material = SubResource("ParticleProcessMaterial_aura")
+lifetime = 0.2
+fixed_fps = 60
+local_coords = true
+
+
+=====================================
+FILE: ./src/vfx/aura_heal_purple.tscn
+=====================================
+[gd_scene load_steps=4 format=3 uid="uid://aura_heal_purple"]
+
+[sub_resource type="Gradient" id="Gradient_purple"]
+offsets = PackedFloat32Array(0, 0.1, 0.7, 1)
+colors = PackedColorArray(0.8, 0.6, 1, 1, 0.6, 0.2, 1, 1, 0.3, 0, 0.6, 0.8, 0.1, 0, 0.2, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_purple"]
+gradient = SubResource("Gradient_purple")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_heal"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(25, 10, 1)
+direction = Vector3(0, -1, 0)
+spread = 0.0
+initial_velocity_min = 150.0
+initial_velocity_max = 250.0
+gravity = Vector3(0, 0, 0)
+linear_accel_min = 50.0
+linear_accel_max = 100.0
+scale_min = 2.0
+scale_max = 6.0
+color_ramp = SubResource("GradientTexture1D_purple")
+turbulence_enabled = true
+turbulence_noise_strength = 8.0
+turbulence_noise_scale = 3.0
+turbulence_noise_speed = Vector3(0, 5, 0)
+
+[node name="HealAuraPurple" type="GPUParticles2D"]
+amount = 80
+process_material = SubResource("ParticleProcessMaterial_heal")
+lifetime = 0.4
+fixed_fps = 60
+local_coords = true
 
 
 =====================================
@@ -9959,11 +10391,15 @@ func _ready() -> void:
 	preload("res://src/api/interfaces/ISceneController.gd")
 	preload("res://src/api/interfaces/IFXManager.gd")
 	preload("res://src/api/interfaces/IObjectPool.gd")
+	
+	# Input System (DIP)
+	preload("res://src/api/interfaces/IInputProvider.gd")
+	preload("res://src/core/systems/input/standard_input_provider.gd")
+
 	preload("res://src/entities/base_entity.gd")
 	preload("res://src/entities/components/hurtbox_component.gd")
 	preload("res://src/entities/components/hitbox_component.gd")
 	preload("res://src/entities/components/sensor_component.gd")
-	# Newly added:
 	preload("res://src/core/data/audio/audio_cue.gd")
 
 
@@ -9998,6 +10434,28 @@ func apply_shader_effect(
 
 ## Cancels any active shader effect on a specific node.
 func cancel_effect_on_node(_target_node: CanvasItem) -> void: pass
+
+=====================================
+FILE: ./src/api/interfaces/IInputProvider.gd
+=====================================
+# src/api/interfaces/IInputProvider.gd
+## The interface contract for checking input state.
+## Allows swapping the real Input singleton for a mock during testing.
+class_name IInputProvider
+extends RefCounted
+
+func get_axis(_negative_action: StringName, _positive_action: StringName) -> float:
+	return 0.0
+
+func is_action_pressed(_action: StringName) -> bool:
+	return false
+
+func is_action_just_pressed(_action: StringName) -> bool:
+	return false
+
+func is_action_just_released(_action: StringName) -> bool:
+	return false
+
 
 =====================================
 FILE: ./src/api/interfaces/IPoolable.gd
@@ -10123,9 +10581,10 @@ func teardown() -> void:
 =====================================
 FILE: ./src/projectiles/player_shot.tscn
 =====================================
-[gd_scene load_steps=10 format=3 uid="uid://cmdkxwvysirh1"]
+[gd_scene load_steps=11 format=3 uid="uid://cmdkxwvysirh1"]
 
 [ext_resource type="Script" path="res://src/projectiles/player_shot.gd" id="1_4wg7x"]
+[ext_resource type="Resource" uid="uid://green_splash_vfx_res" path="res://src/data/effects/green_splash_vfx.tres" id="2_vfx_res"]
 
 [sub_resource type="Gradient" id="Gradient_trail"]
 offsets = PackedFloat32Array(0, 0.2, 1)
@@ -10177,6 +10636,8 @@ size = Vector2(20, 20)
 collision_layer = 1024
 collision_mask = 148
 script = ExtResource("1_4wg7x")
+default_speed = 1000.0
+impact_vfx = ExtResource("2_vfx_res")
 metadata/pool_name = &"player_shots"
 
 [node name="FlameTrail" type="GPUParticles2D" parent="."]
@@ -10291,6 +10752,7 @@ extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
+@export var impact_vfx: VFXEffect
 
 @onready var flame_trail: GPUParticles2D = %FlameTrail
 
@@ -10319,13 +10781,59 @@ func deactivate() -> void:
 func _on_area_entered(area: Area2D) -> void:
 	if not _is_active:
 		return
-	# Player shots can destroy enemy projectiles on contact.
+	
+	# CLASH LOGIC: Player shots can destroy enemy projectiles.
+	# If we have enough damage (health), we survive the hit.
 	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
-		if is_instance_valid(_object_pool):
-			_object_pool.return_instance.call_deferred(area)
+		_handle_projectile_clash(area)
+		return # Do NOT call super, as base class would destroy us immediately.
 
-	# Then proceed with the base collision handling.
+	# Then proceed with the base collision handling for anything else.
 	super._on_area_entered(area)
+
+
+func _handle_projectile_clash(enemy_shot: Area2D) -> void:
+	# 1. Determine incoming damage
+	var incoming_dmg = 1
+	if "damage" in enemy_shot:
+		incoming_dmg = enemy_shot.damage
+	
+	# 2. Spawn Splash Visuals (Clash)
+	_spawn_impact_vfx()
+	
+	# 3. Destroy Enemy Shot (It is consumed by the blast)
+	# We use call_deferred to interact safely with the pool/tree during physics callbacks.
+	if enemy_shot.has_method("deactivate") and is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(enemy_shot)
+	else:
+		enemy_shot.queue_free()
+	
+	# 4. Apply Damage to Self (Durability)
+	damage -= incoming_dmg
+	
+	# 5. Check Survival
+	if damage <= 0:
+		if is_instance_valid(_object_pool):
+			_object_pool.return_instance.call_deferred(self)
+		else:
+			queue_free()
+	else:
+		# Visual Feedback for degradation could go here (e.g. shrink scale)
+		# For now, we just keep moving with reduced damage.
+		pass
+
+
+# Override base collision to add VFX for walls
+func _handle_collision(target: Node) -> void:
+	_spawn_impact_vfx()
+	super._handle_collision(target)
+
+
+func _spawn_impact_vfx() -> void:
+	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
+		# Spawn splash at current location
+		var normal = -direction.normalized()
+		_fx_manager.play_vfx(impact_vfx, global_position, normal)
 
 
 =====================================
@@ -10507,10 +11015,12 @@ var visual: CanvasItem
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
+var _fx_manager: IFXManager
 var _combat_utils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
 var _lifetime_timer: Timer
+var _base_scale: Vector2 = Vector2.ONE
 
 # --- Godot Lifecycle ---
 func _ready() -> void:
@@ -10519,6 +11029,8 @@ func _ready() -> void:
 		visual = $ColorRect
 	elif has_node("VisualSprite"):
 		visual = $VisualSprite
+	
+	_base_scale = scale
 
 	# Programmatically create a timer for every projectile instance.
 	_lifetime_timer = Timer.new()
@@ -10545,8 +11057,16 @@ func _screen_entered_hook() -> void:
 func activate(p_dependencies: Dictionary) -> void:
 	_object_pool = p_dependencies.get("object_pool")
 	_combat_utils = p_dependencies.get("combat_utils")
+	_fx_manager = p_dependencies.get("fx_manager") # Optional dependency
+	
 	assert(is_instance_valid(_object_pool), "BaseProjectile requires an IObjectPool dependency.")
 	assert(is_instance_valid(_combat_utils), "BaseProjectile requires a CombatUtils dependency.")
+	
+	# Override Damage & Scale if provided
+	if p_dependencies.has("damage"):
+		damage = p_dependencies.damage
+	if p_dependencies.has("scale"):
+		scale = p_dependencies.scale
 
 	_has_been_on_screen = false
 	visible = true
@@ -10563,10 +11083,14 @@ func deactivate() -> void:
 	process_mode = PROCESS_MODE_DISABLED
 	_lifetime_timer.stop()
 	
+	# Reset Transform
+	scale = _base_scale
+	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
 	_object_pool = null
 	_combat_utils = null
+	_fx_manager = null
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
@@ -10585,7 +11109,7 @@ func _handle_collision(target: Node) -> void:
 			impact_normal
 		)
 		damageable.apply_damage(damage_info)
-
+	
 	_object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---
@@ -10680,13 +11204,18 @@ hit_stop_duration = 0.02
 =====================================
 FILE: ./src/data/player_config.tres
 =====================================
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=7 format=3 uid="uid://v472r2pi58n8"]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=12 format=3 uid="uid://v472r2pi58n8"]
 
 [ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
 [ext_resource type="Shape2D" uid="uid://c1b2d3e4f5g6h" path="res://src/entities/player/data/forward_attack_shape.tres" id="3_shape"]
 [ext_resource type="Shape2D" uid="uid://c0dt7jqwtnbr" path="res://src/entities/player/data/upward_attack_shape.tres" id="4_shape"]
 [ext_resource type="Resource" path="res://src/data/audio/sfx_player_impact.tres" id="5_audio"]
+[ext_resource type="PackedScene" path="res://src/vfx/aura_charge_green.tscn" id="6_aura_charge"]
+[ext_resource type="PackedScene" path="res://src/vfx/splash_charge_green.tscn" id="7_splash_charge"]
+[ext_resource type="PackedScene" path="res://src/vfx/aura_heal_purple.tscn" id="8_aura_heal"]
+[ext_resource type="PackedScene" path="res://src/vfx/splash_heal_purple.tscn" id="9_splash_heal"]
+[ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="10_dissolve"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
@@ -10700,7 +11229,7 @@ script = ExtResource("1_script")
 max_health = 5
 max_healing_charges = 1
 heal_duration = 2.0
-determination_per_charge = 10
+determination_per_charge = 5
 damage_response = SubResource("Resource_dmg")
 knockback_duration = 0.1
 move_speed = 450.0
@@ -10723,8 +11252,15 @@ attack_cooldown = 0.12
 attack_duration = 0.1
 attack_friction = 2000.0
 charge_time = 0.35
+level_2_charge_time = 2.0
+level_2_damage = 3
 pogo_force = 450.0
 close_range_threshold = 75.0
+vfx_charge_aura = ExtResource("6_aura_charge")
+vfx_charge_splash = ExtResource("7_splash_charge")
+vfx_heal_aura = ExtResource("8_aura_heal")
+vfx_heal_splash = ExtResource("9_splash_heal")
+vfx_dissolve = ExtResource("10_dissolve")
 
 
 =====================================
@@ -10878,7 +11414,7 @@ terrain_data = [
 =====================================
 FILE: ./src/data/default_pool_manifest.tres
 =====================================
-[gd_resource type="Resource" script_class="PoolManifest" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="PoolManifest" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_definition.gd" id="1_def"]
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_manifest.gd" id="2_man"]
@@ -10887,6 +11423,7 @@ FILE: ./src/data/default_pool_manifest.tres
 [ext_resource type="PackedScene" path="res://src/projectiles/turret_shot.tscn" id="5_minion_shot"]
 [ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
 [ext_resource type="PackedScene" path="res://src/vfx/hit_spark.tscn" id="7_spark"]
+[ext_resource type="PackedScene" path="res://src/vfx/splash_charge_green.tscn" id="8_green_splash"]
 
 [sub_resource type="Resource" id="Resource_player"]
 script = ExtResource("1_def")
@@ -10918,6 +11455,12 @@ pool_key = &"hit_sparks"
 scene = ExtResource("7_spark")
 initial_size = 25
 
+[sub_resource type="Resource" id="Resource_gsplash"]
+script = ExtResource("1_def")
+pool_key = &"green_splashes"
+scene = ExtResource("8_green_splash")
+initial_size = 10
+
 [resource]
 script = ExtResource("2_man")
 pools = Array[ExtResource("1_def")]([
@@ -10925,7 +11468,8 @@ pools = Array[ExtResource("1_def")]([
     SubResource("Resource_boss"),
     SubResource("Resource_minion"),
     SubResource("Resource_homing"),
-    SubResource("Resource_spark")
+    SubResource("Resource_spark"),
+    SubResource("Resource_gsplash")
 ])
 
 
@@ -11010,6 +11554,20 @@ hit_stop_player_melee_close = 0.025
 hit_stop_player_hurt = 0.04
 hit_stop_boss_phase_change = 0.1
 hit_stop_boss_death = 0.1
+
+
+=====================================
+FILE: ./src/data/effects/green_splash_vfx.tres
+=====================================
+[gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://green_splash_vfx_res"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/vfx_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://splash_charge_green" path="res://src/vfx/splash_charge_green.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+scene = ExtResource("2_scene")
+pool_key = &"green_splashes"
 
 
 =====================================
@@ -11212,6 +11770,13 @@ func setup_components(
 	base_shared_deps["grid_utils"] = s.grid_utils
 	base_shared_deps["audio_manager"] = AudioManager
 	
+	# DIP: Inject Input Provider
+	if s.get("input_provider"):
+		base_shared_deps["input_provider"] = s.input_provider
+	else:
+		# Fallback to creating one if ServiceLocator isn't fully ready (rare)
+		base_shared_deps["input_provider"] = StandardInputProvider.new()
+	
 	if s.get("targeting_system"):
 		base_shared_deps["targeting_system"] = s.targeting_system
 
@@ -11278,6 +11843,11 @@ func _on_entity_died() -> void:
 
 func _on_health_changed(_current: int, _max: int) -> void:
 	pass
+
+## Virtual method: Returns specific health percentages (0.0 to 1.0) that trigger events.
+## Default implementation returns empty. Subclasses (e.g. BaseBoss) should override this.
+func get_health_thresholds() -> Array[float]:
+	return []
 
 
 # --- Private Methods ---
@@ -11383,7 +11953,7 @@ func _check_interrupts() -> bool:
 =====================================
 FILE: ./src/entities/archetypes/player_archetype.tres
 =====================================
-[gd_resource type="Resource" script_class="EntityArchetype" load_steps=15 format=3 uid="uid://player_archetype_resource"]
+[gd_resource type="Resource" script_class="EntityArchetype" load_steps=16 format=3 uid="uid://player_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
 [ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
@@ -11399,6 +11969,7 @@ FILE: ./src/entities/archetypes/player_archetype.tres
 [ext_resource type="PackedScene" path="res://src/entities/player/components/charge_attack_component.tscn" id="13_charge"]
 [ext_resource type="PackedScene" path="res://src/entities/player/components/pogo_component.tscn" id="14_pogo"]
 [ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="15_status"]
+[ext_resource type="PackedScene" uid="uid://visual_component_scene" path="res://src/entities/components/visual_component.tscn" id="16_visual"]
 
 [resource]
 script = ExtResource("1_archetype")
@@ -11415,7 +11986,8 @@ components = [
 	ExtResource("12_heal"),
 	ExtResource("13_charge"),
 	ExtResource("14_pogo"),
-	ExtResource("15_status")
+	ExtResource("15_status"),
+	ExtResource("16_visual")
 ]
 
 
@@ -12554,6 +13126,48 @@ script = ExtResource("1_fx")
 metadata/REQUIRED_DEPS = PackedStringArray("visual_node", "fx_manager")
 
 =====================================
+FILE: ./src/entities/components/visual_component.gd
+=====================================
+# src/entities/components/visual_component.gd
+@tool
+## Manages the entity's main visual sprite/rect state and high-level VFX sequences (Death).
+class_name VisualComponent
+extends IComponent
+
+var _visual_node: CanvasItem
+var _fx_component: FXComponent
+var _config: PlayerConfig
+
+func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
+	_visual_node = p_dependencies.get("visual_node")
+	_config = p_dependencies.get("config")
+	
+	# We can find FXComponent via the owner directly or pass it.
+	# Using owner lookup is safe here as it's a sibling component.
+	if p_owner.has_method("get_component"):
+		_fx_component = p_owner.get_component(FXComponent)
+	
+	# Set initial color if applicable
+	if is_instance_valid(_visual_node) and _visual_node is ColorRect:
+		_visual_node.color = Palette.COLOR_PLAYER
+
+
+func play_death_sequence() -> Tween:
+	if not is_instance_valid(_fx_component):
+		return null
+	
+	if not is_instance_valid(_config) or not is_instance_valid(_config.vfx_dissolve):
+		push_warning("VisualComponent: No dissolve effect configured.")
+		return null
+		
+	return _fx_component.play_effect(
+		_config.vfx_dissolve, 
+		{}, 
+		{"preserve_final_state": true}
+	)
+
+
+=====================================
 FILE: ./src/entities/components/combat_component.gd
 =====================================
 # src/entities/components/combat_component.gd
@@ -12620,7 +13234,7 @@ func teardown() -> void:
 
 
 ## Fires a player projectile from the object pool.
-func fire_shot() -> void:
+func fire_shot(is_max_charge: bool = false) -> void:
 	p_data.combat.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
@@ -12637,9 +13251,19 @@ func fire_shot() -> void:
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)
 	
+	var final_damage = 1
+	var final_scale = Vector2.ONE
+	
+	if is_max_charge:
+		final_damage = p_data.config.level_2_damage
+		final_scale = Vector2(2.0, 2.0) # Visual size increase for level 2
+	
 	var dependencies = {
 		"object_pool": _object_pool,
-		"combat_utils": _combat_utils
+		"combat_utils": _combat_utils,
+		"fx_manager": _fx_manager,
+		"damage": final_damage,
+		"scale": final_scale
 	}
 	shot.activate(dependencies)
 
@@ -12966,6 +13590,18 @@ color = Color(1, 1, 1, 0.392157)
 
 
 =====================================
+FILE: ./src/entities/components/visual_component.tscn
+=====================================
+[gd_scene load_steps=2 format=3 uid="uid://visual_component_scene"]
+
+[ext_resource type="Script" path="res://src/entities/components/visual_component.gd" id="1_script"]
+
+[node name="VisualComponent" type="Node"]
+script = ExtResource("1_script")
+metadata/REQUIRED_DEPS = PackedStringArray("visual_node", "config")
+
+
+=====================================
 FILE: ./src/entities/components/input_component.tscn
 =====================================
 [gd_scene load_steps=2 format=3 uid="uid://c7d8e9f0g1h2"]
@@ -13132,9 +13768,14 @@ func release_invincibility(token: int) -> void:
 		_active_invincibility_map.erase(token)
 
 func _check_for_threshold_crossing(health_before: int, health_after: int) -> void:
-	if not owner_node.has_method("get_health_thresholds"):
+	# LSP Fix: Use BaseEntity contract instead of duck typing
+	var thresholds: Array[float] = []
+	if owner_node is BaseEntity:
+		thresholds = (owner_node as BaseEntity).get_health_thresholds()
+		
+	if thresholds.is_empty():
 		return
-	var thresholds: Array[float] = owner_node.get_health_thresholds()
+
 	var old_percent: float = float(health_before) / _max_health
 	var new_percent: float = float(health_after) / _max_health
 	for threshold in thresholds:
@@ -13237,12 +13878,14 @@ FILE: ./src/entities/components/input_component.gd
 # src/entities/components/input_component.gd
 @tool
 ## A component that centralizes all raw input polling.
+## Uses Dependency Inversion to allow for input mocking in tests.
 class_name InputComponent
 extends IComponent
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
 var p_data: PlayerStateData
+var _input_provider: IInputProvider
 
 ## A buffer dictionary populated each frame with the current input state.
 var buffer: Dictionary = {}
@@ -13256,20 +13899,25 @@ func _physics_process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 
-	if not is_instance_valid(owner_node):
+	if not is_instance_valid(owner_node) or not _input_provider:
 		return
 
 	buffer.clear()
-	buffer["move_axis"] = Input.get_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT)
-	buffer["up"] = Input.is_action_pressed(Identifiers.Actions.MOVE_UP)
-	buffer["down"] = Input.is_action_pressed(Identifiers.Actions.MOVE_DOWN)
-	buffer["jump_just_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.JUMP)
-	buffer["jump_held"] = Input.is_action_pressed(Identifiers.Actions.JUMP)
-	buffer["jump_released"] = Input.is_action_just_released(Identifiers.Actions.JUMP)
-	buffer["attack_pressed"] = Input.is_action_pressed(Identifiers.Actions.ATTACK)
-	buffer["attack_just_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.ATTACK)
-	buffer["attack_released"] = Input.is_action_just_released(Identifiers.Actions.ATTACK)
-	buffer["dash_pressed"] = Input.is_action_just_pressed(Identifiers.Actions.DASH)
+	
+	# Use the provider instead of global Input
+	buffer["move_axis"] = _input_provider.get_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT)
+	buffer["up"] = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_UP)
+	buffer["down"] = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_DOWN)
+	
+	buffer["jump_just_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.JUMP)
+	buffer["jump_held"] = _input_provider.is_action_pressed(Identifiers.Actions.JUMP)
+	buffer["jump_released"] = _input_provider.is_action_just_released(Identifiers.Actions.JUMP)
+	
+	buffer["attack_pressed"] = _input_provider.is_action_pressed(Identifiers.Actions.ATTACK)
+	buffer["attack_just_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.ATTACK)
+	buffer["attack_released"] = _input_provider.is_action_just_released(Identifiers.Actions.ATTACK)
+	
+	buffer["dash_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.DASH)
 
 
 # --- Public Methods ---
@@ -13277,6 +13925,12 @@ func _physics_process(_delta: float) -> void:
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self.owner_node = p_owner as CharacterBody2D
 	self.p_data = p_dependencies.get("data_resource")
+	
+	if p_dependencies.has("input_provider"):
+		self._input_provider = p_dependencies["input_provider"]
+	else:
+		# Fallback for tests or standalone use
+		self._input_provider = StandardInputProvider.new()
 
 	if not p_data:
 		push_error("InputComponent.setup: Missing 'data_resource' dependency.")
@@ -13286,6 +13940,7 @@ func teardown() -> void:
 	set_physics_process(false)
 	owner_node = null
 	p_data = null
+	_input_provider = null
 	buffer.clear()
 
 
@@ -14978,17 +15633,17 @@ const ACTION_ALLOWED_STATES = [
 @export var hit_flash_effect: ShaderEffect = null
 @export var damage_shake_effect: ScreenShakeEffect = null
 @export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+# Dissolve effect moved to PlayerConfig via VisualComponent
 
 @export_group("Configuration")
 @export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
-@onready var visual_sprite: ColorRect = $ColorRect
-@onready var healing_timer: Timer = $HealingTimer
-@onready var melee_hitbox: HitboxComponent = $MeleeHitbox
-@onready var pogo_hitbox: HitboxComponent = $PogoHitbox
-@onready var hurtbox: HurtboxComponent = $Hurtbox
+@onready var visual_sprite: ColorRect = get_node("ColorRect")
+@onready var healing_timer: Timer = get_node("HealingTimer")
+@onready var melee_hitbox: HitboxComponent = get_node("MeleeHitbox")
+@onready var pogo_hitbox: HitboxComponent = get_node("PogoHitbox")
+@onready var hurtbox: HurtboxComponent = get_node("Hurtbox")
 
 # --- Data ---
 var entity_data: PlayerStateData
@@ -15010,7 +15665,6 @@ func _ready() -> void:
 	build_entity()
 
 	# Post-Build Init
-	visual_sprite.color = Palette.COLOR_PLAYER
 	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
@@ -15020,6 +15674,9 @@ func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+	
+	# Centralized Physics Movement
+	move_and_slide()
 
 
 func _exit_tree() -> void:
@@ -15046,6 +15703,7 @@ func _on_build() -> void:
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
 	var pc: PogoComponent = get_component(PogoComponent)
+	var vc: VisualComponent = get_component(VisualComponent)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -15090,6 +15748,9 @@ func _on_build() -> void:
 		pc: {
 			"pogo_hitbox": pogo_hitbox,
 			"services": _services
+		},
+		vc: {
+			"visual_node": visual_sprite
 		}
 	}
 
@@ -15172,11 +15833,11 @@ func _die() -> void:
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	if is_instance_valid(sm):
 		sm.teardown()
-
-	var fc: FXComponent = get_component(FXComponent)
-	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		# CRITICAL FIX: Set preserve_final_state to TRUE so player stays dissolved (invisible)
-		var tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+	
+	# SRP Fix: Delegate death visuals to VisualComponent
+	var vc: VisualComponent = get_component(VisualComponent)
+	if is_instance_valid(vc):
+		var tween: Tween = vc.play_death_sequence()
 		if is_instance_valid(tween):
 			await tween.finished
 
@@ -15202,6 +15863,15 @@ func _on_healing_timer_timeout() -> void:
 		entity_data.health += 1
 		get_component(PlayerResourceComponent).consume_healing_charge()
 		_on_health_changed(entity_data.health, entity_data.max_health)
+		
+		# DIP Fix: Load splash from config
+		var splash_scene = entity_data.config.vfx_heal_splash
+		if is_instance_valid(splash_scene):
+			var splash = splash_scene.instantiate()
+			splash.global_position = global_position
+			splash.emitting = true
+			get_tree().current_scene.add_child(splash)
+			
 		sm.change_state(Identifiers.PlayerStates.MOVE)
 
 
@@ -15632,12 +16302,16 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(owner_node):
 		return
 
-	_update_timers(delta)
+	# --- Jump Buffering Logic ---
+	# We poll input here so buffering works in ALL states (Attack, Fall, etc.)
+	var input_comp: InputComponent = owner_node.get_component(InputComponent)
+	if is_instance_valid(input_comp) and input_comp.buffer.get("jump_just_pressed"):
+		p_data.physics.jump_buffer_timer = p_data.config.jump_buffer
 
-	owner_node.move_and_slide()
+	_update_timers(delta)
 	
-	if not is_instance_valid(owner_node):
-		return
+	# Note: move_and_slide() is now called by the owner entity (Player.gd).
+	# This component simply processes state based on the results of that movement.
 
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
 		p_data.physics.wall_coyote_timer = p_data.config.wall_coyote_time
@@ -15652,6 +16326,7 @@ func _update_timers(delta: float) -> void:
 		return
 	p_data.physics.coyote_timer = max(0.0, p_data.physics.coyote_timer - delta)
 	p_data.physics.wall_coyote_timer = max(0.0, p_data.physics.wall_coyote_timer - delta)
+	p_data.physics.jump_buffer_timer = max(0.0, p_data.physics.jump_buffer_timer - delta)
 
 
 # --- Public Methods ---
@@ -15755,11 +16430,19 @@ FILE: ./src/entities/player/components/charge_attack_component.gd
 class_name ChargeAttackComponent
 extends IComponent
 
+# --- Constants ---
+# Delay visuals to prevent aura flashing during normal melee taps.
+const AURA_START_DELAY: float = 0.25
+
+# --- Dependencies ---
 var _owner_node # Typed as Player
 var _p_data: PlayerStateData
 var _state_machine: BaseStateMachine
 var _input_component: InputComponent
 var _combat_component: CombatComponent
+
+# --- Visual State ---
+var _aura_instance: Node2D
 
 func _ready() -> void:
 	process_priority = 0
@@ -15770,6 +16453,13 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_state_machine = _owner_node.get_component(BaseStateMachine)
 	_input_component = _owner_node.get_component(InputComponent)
 	_combat_component = _owner_node.get_component(CombatComponent)
+	
+	# DIP Fix: Instantiate from Config, not hardcoded preload
+	var aura_scene = _p_data.config.vfx_charge_aura
+	if is_instance_valid(_owner_node) and is_instance_valid(aura_scene):
+		_aura_instance = aura_scene.instantiate()
+		_aura_instance.emitting = false
+		_owner_node.add_child(_aura_instance)
 
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -15781,8 +16471,24 @@ func _physics_process(delta: float) -> void:
 	if _p_data.combat.is_charging and _input_component.buffer.get("attack_pressed"):
 		_p_data.combat.charge_timer += delta
 
-	# 2. Handle Inputs
-	if _input_component.buffer.get("attack_just_pressed") and _p_data.combat.attack_cooldown_timer <= 0:
+	# 2. Update Visuals
+	# Only emit if we are charging AND have held the button longer than the delay.
+	var should_emit = _p_data.combat.is_charging and _p_data.combat.charge_timer >= AURA_START_DELAY
+	
+	if is_instance_valid(_aura_instance):
+		if _aura_instance.emitting != should_emit:
+			_aura_instance.emitting = should_emit
+		
+		# Scale Aura if we hit level 2
+		if _p_data.combat.charge_timer >= _p_data.config.level_2_charge_time:
+			_aura_instance.scale = Vector2(1.5, 1.5)
+		else:
+			_aura_instance.scale = Vector2(1.0, 1.0)
+
+	# 3. Handle Inputs
+	# POLISH FIX: Removed 'attack_cooldown_timer' check. 
+	# You can now begin charging immediately after firing, even if the melee cooldown is active.
+	if _input_component.buffer.get("attack_just_pressed"):
 		_p_data.combat.is_charging = true
 		_p_data.combat.charge_timer = 0.0
 
@@ -15801,14 +16507,44 @@ func _try_execute_attack() -> void:
 		return
 
 	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
-		_combat_component.fire_shot()
+		# Check Level 2
+		var is_lvl_2 = _p_data.combat.charge_timer >= _p_data.config.level_2_charge_time
+		_combat_component.fire_shot(is_lvl_2)
+		_spawn_release_splash(is_lvl_2)
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
 	else:
+		# Note: Normal melee attacks will still respect the cooldown inside StateAttack,
+		# preventing spam, but charging is now free.
 		_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
+
+func _spawn_release_splash(is_large: bool = false) -> void:
+	if not is_instance_valid(_owner_node):
+		return
+	
+	# DIP Fix: Use config
+	var splash_scene = _p_data.config.vfx_charge_splash
+	if not is_instance_valid(splash_scene):
+		return
+
+	var splash = splash_scene.instantiate()
+	# Calculate same offset as CombatComponent (facing * 60)
+	var offset = Vector2(_p_data.physics.facing_direction * 60, 0)
+	splash.global_position = _owner_node.global_position + offset
+	
+	if is_large:
+		splash.scale = Vector2(1.5, 1.5)
+	
+	splash.emitting = true
+	
+	# Add to tree root so it doesn't move with player
+	_owner_node.get_tree().current_scene.add_child(splash)
 
 func teardown() -> void:
 	set_physics_process(false)
+	if is_instance_valid(_aura_instance):
+		_aura_instance.queue_free()
+	_aura_instance = null
 	_owner_node = null
 	_p_data = null
 	_state_machine = null
@@ -15968,6 +16704,7 @@ func exit():
 	# Stop momentum on exit
 	if is_instance_valid(_physics):
 		var current_vel = owner.velocity
+		# Stop velocity on axes we dashed on
 		if _dash_direction.y != 0:
 			current_vel.y = 0.0
 		if _dash_direction.x != 0:
@@ -15980,13 +16717,26 @@ func process_physics(_delta: float):
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
-func _get_dash_direction():
+func _get_dash_direction() -> Vector2:
 	var ic: InputComponent = owner.get_component(InputComponent)
+	var dir = Vector2.ZERO
+
+	# 1. Horizontal Input
+	# move_axis is usually -1.0, 0.0, or 1.0
+	dir.x = ic.buffer.get("move_axis", 0.0)
+
+	# 2. Vertical Input
 	if ic.buffer.get("up"):
-		return Vector2.UP
-	if ic.buffer.get("down"):
-		return Vector2.DOWN
-	return Vector2(state_data.physics.facing_direction, 0)
+		dir.y = -1.0
+	elif ic.buffer.get("down"):
+		dir.y = 1.0
+
+	# 3. Fallback: If no input, dash forward
+	if dir == Vector2.ZERO:
+		dir.x = state_data.physics.facing_direction
+
+	# Normalize to ensure diagonal dashes aren't faster
+	return dir.normalized()
 
 
 =====================================
@@ -15996,15 +16746,34 @@ FILE: ./src/entities/player/states/state_heal.gd
 # Handles the player's healing state.
 extends BaseState
 
+var _aura_instance: Node2D
+var _tween: Tween
 
 func enter(_msg := {}):
 	owner.velocity = Vector2.ZERO
-	# UPDATE: config.heal_duration
-	owner.healing_timer.start(state_data.config.heal_duration)
+	var duration = state_data.config.heal_duration
+	owner.healing_timer.start(duration)
+
+	# DIP Fix: Load aura from config
+	var aura_scene = state_data.config.vfx_heal_aura
+	if is_instance_valid(aura_scene):
+		_aura_instance = aura_scene.instantiate()
+		owner.add_child(_aura_instance)
+		# Position near feet/center
+		_aura_instance.position = Vector2(0, 0) 
+		_aura_instance.scale = Vector2(0.2, 0.2)
+		
+		_tween = owner.create_tween()
+		# Tween scale to represent growing power
+		_tween.tween_property(_aura_instance, "scale", Vector2(1.0, 1.0), duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 
 
 func exit():
 	owner._cancel_heal()
+	if is_instance_valid(_tween):
+		_tween.kill()
+	if is_instance_valid(_aura_instance):
+		_aura_instance.queue_free()
 
 
 func process_physics(_delta: float):
@@ -16015,6 +16784,7 @@ func process_physics(_delta: float):
 		or not owner.is_on_floor()
 	):
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
+
 
 =====================================
 FILE: ./src/entities/player/states/state_wall_slide.gd
@@ -16310,6 +17080,11 @@ func enter(_msg := {}) -> void:
 	# UPDATE: config.max_air_jumps
 	state_data.physics.air_jumps_left = state_data.config.max_air_jumps
 	state_data.physics.can_dash = true
+	
+	# Jump Buffer Check: If the player pressed jump right before landing, execute it now.
+	if state_data.physics.jump_buffer_timer > 0:
+		state_data.physics.jump_buffer_timer = 0.0
+		state_machine.change_state(Identifiers.PlayerStates.JUMP)
 
 
 func process_physics(delta: float) -> void:
@@ -16480,6 +17255,7 @@ var wall_coyote_timer: float = 0.0
 var dash_duration_timer: float = 0.0
 var dash_cooldown_timer: float = 0.0
 var knockback_timer: float = 0.0
+var jump_buffer_timer: float = 0.0 # Tracks recent jump inputs
 
 
 =====================================

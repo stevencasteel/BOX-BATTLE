@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://status_effect_component_scene"]
-
-[ext_resource type="Script" path="res://src/entities/components/status_effect_component.gd" id="1_script"]
-
-[node name="StatusEffectComponent" type="Node"]
-script = ExtResource("1_script")

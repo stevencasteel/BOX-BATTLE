@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="EntityArchetype" load_steps=7 format=3 uid="uid://turret_archetype_resource"]
 
 [ext_resource type="Script" path="res://src/entities/archetypes/entity_archetype.gd" id="1_archetype"]
-[ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/components/health_component.tscn" id="2_health"]
-[ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/components/base_state_machine.tscn" id="3_fsm"]
-[ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/components/fx_component.tscn" id="4_fx"]
-[ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/components/projectile_shooter_component.tscn" id="5_shooter"]
-[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/components/status_effect_component.tscn" id="6_status"]
+[ext_resource type="PackedScene" uid="uid://dpl3w8xqyq1a2" path="res://src/entities/_base/components/health_component.tscn" id="2_health"]
+[ext_resource type="PackedScene" uid="uid://i3j4k5l6m7n8" path="res://src/entities/_base/components/base_state_machine.tscn" id="3_fsm"]
+[ext_resource type="PackedScene" uid="uid://g7h8i9j0k1l2" path="res://src/entities/_base/components/fx_component.tscn" id="4_fx"]
+[ext_resource type="PackedScene" uid="uid://projectile_shooter_component_scene" path="res://src/entities/_base/components/projectile_shooter_component.tscn" id="5_shooter"]
+[ext_resource type="PackedScene" uid="uid://status_effect_component_scene" path="res://src/entities/_base/components/status_effect_component.tscn" id="6_status"]
 
 [resource]
 script = ExtResource("1_archetype")

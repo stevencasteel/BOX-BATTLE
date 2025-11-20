@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://green_splash_vfx_res"]
 
 [ext_resource type="Script" path="res://src/core/data/effects/vfx_effect.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://splash_charge_green" path="res://src/vfx/splash_charge_green.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://splash_charge_green" path="res://src/content/vfx/splash_charge_green.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_script")

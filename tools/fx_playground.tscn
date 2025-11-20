@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://qfvxrbic3utx"]
 
 [ext_resource type="Script" uid="uid://chl2ii0j6x47a" path="res://tools/fx_playground.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://g7h8jaj0k1l2" path="res://src/entities/components/fx_component.tscn" id="3_fx_component"]
+[ext_resource type="PackedScene" uid="uid://g7h8jaj0k1l2" path="res://src/entities/_base/components/fx_component.tscn" id="3_fx_component"]
 [ext_resource type="PackedScene" uid="uid://cmdkxwvysirh1" path="res://src/projectiles/player_shot.tscn" id="4_projectile_scene"]
 [ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="5_hit_flash"]
 [ext_resource type="Resource" path="res://src/data/effects/boss_shockwave_effect.tres" id="6_shockwave"]

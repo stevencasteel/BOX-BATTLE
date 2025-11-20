@@ -6,8 +6,8 @@
 [ext_resource type="Resource" path="res://src/core/data/effects/player_damage_shake.tres" id="4_shake_effect"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="5_hit_spark_effect"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="15_dissolve_effect"]
-[ext_resource type="Script" path="res://src/entities/components/hurtbox_component.gd" id="16_hurtbox_script"]
-[ext_resource type="Script" path="res://src/entities/components/hitbox_component.gd" id="17_hitbox_script"]
+[ext_resource type="Script" path="res://src/entities/_base/components/hurtbox_component.gd" id="16_hurtbox_script"]
+[ext_resource type="Script" path="res://src/entities/_base/components/hitbox_component.gd" id="17_hitbox_script"]
 [ext_resource type="Resource" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playerbody"]
