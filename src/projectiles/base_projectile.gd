@@ -20,6 +20,7 @@ var _combat_utils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
 var _lifetime_timer: Timer
+var _base_scale: Vector2 = Vector2.ONE
 
 # --- Godot Lifecycle ---
 func _ready() -> void:
@@ -28,6 +29,8 @@ func _ready() -> void:
 		visual = $ColorRect
 	elif has_node("VisualSprite"):
 		visual = $VisualSprite
+	
+	_base_scale = scale
 
 	# Programmatically create a timer for every projectile instance.
 	_lifetime_timer = Timer.new()
@@ -58,6 +61,12 @@ func activate(p_dependencies: Dictionary) -> void:
 	
 	assert(is_instance_valid(_object_pool), "BaseProjectile requires an IObjectPool dependency.")
 	assert(is_instance_valid(_combat_utils), "BaseProjectile requires a CombatUtils dependency.")
+	
+	# Override Damage & Scale if provided
+	if p_dependencies.has("damage"):
+		damage = p_dependencies.damage
+	if p_dependencies.has("scale"):
+		scale = p_dependencies.scale
 
 	_has_been_on_screen = false
 	visible = true
@@ -73,6 +82,9 @@ func deactivate() -> void:
 	_is_active = false
 	process_mode = PROCESS_MODE_DISABLED
 	_lifetime_timer.stop()
+	
+	# Reset Transform
+	scale = _base_scale
 	
 	if is_instance_valid(collision_shape):
 		collision_shape.disabled = true
@@ -97,9 +109,6 @@ func _handle_collision(target: Node) -> void:
 			impact_normal
 		)
 		damageable.apply_damage(damage_info)
-	
-	# VFX Hook: If we hit a wall (non-damageable body), we might want a splash.
-	# Child classes can implement specific VFX logic here or before calling return_instance.
 	
 	_object_pool.return_instance.call_deferred(self)
 

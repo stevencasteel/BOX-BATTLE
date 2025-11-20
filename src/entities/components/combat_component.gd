@@ -62,7 +62,7 @@ func teardown() -> void:
 
 
 ## Fires a player projectile from the object pool.
-func fire_shot() -> void:
+func fire_shot(is_max_charge: bool = false) -> void:
 	p_data.combat.attack_cooldown_timer = p_data.config.attack_cooldown
 
 	var shot = _object_pool.get_instance(Identifiers.Pools.PLAYER_SHOTS)
@@ -79,10 +79,19 @@ func fire_shot() -> void:
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)
 	
+	var final_damage = 1
+	var final_scale = Vector2.ONE
+	
+	if is_max_charge:
+		final_damage = p_data.config.level_2_damage
+		final_scale = Vector2(2.0, 2.0) # Visual size increase for level 2
+	
 	var dependencies = {
 		"object_pool": _object_pool,
 		"combat_utils": _combat_utils,
-		"fx_manager": _fx_manager
+		"fx_manager": _fx_manager,
+		"damage": final_damage,
+		"scale": final_scale
 	}
 	shot.activate(dependencies)
 

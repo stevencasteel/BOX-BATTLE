@@ -8,7 +8,7 @@ extends Resource
 @export_range(1, 20, 1) var max_health: int = 5
 @export_range(1, 10, 1) var max_healing_charges: int = 1
 @export_range(0.1, 5.0, 0.1) var heal_duration: float = 2.0
-@export_range(1, 100, 1) var determination_per_charge: int = 10
+@export_range(1, 100, 1) var determination_per_charge: int = 5
 
 ## Configuration for how the player reacts to taking damage (Invincibility, Knockback force).
 @export var damage_response: DamageResponseConfig
@@ -43,6 +43,8 @@ extends Resource
 @export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
 @export_range(100, 5000, 100) var attack_friction: float = 2000.0
 @export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
+@export_range(1.0, 5.0, 0.1) var level_2_charge_time: float = 2.0
+@export var level_2_damage: int = 3
 @export_range(200, 1000, 10) var pogo_force: float = 450.0
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
 

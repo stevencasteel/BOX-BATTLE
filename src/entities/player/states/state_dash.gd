@@ -27,6 +27,7 @@ func exit():
 	# Stop momentum on exit
 	if is_instance_valid(_physics):
 		var current_vel = owner.velocity
+		# Stop velocity on axes we dashed on
 		if _dash_direction.y != 0:
 			current_vel.y = 0.0
 		if _dash_direction.x != 0:
@@ -39,10 +40,23 @@ func process_physics(_delta: float):
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
 
 
-func _get_dash_direction():
+func _get_dash_direction() -> Vector2:
 	var ic: InputComponent = owner.get_component(InputComponent)
+	var dir = Vector2.ZERO
+
+	# 1. Horizontal Input
+	# move_axis is usually -1.0, 0.0, or 1.0
+	dir.x = ic.buffer.get("move_axis", 0.0)
+
+	# 2. Vertical Input
 	if ic.buffer.get("up"):
-		return Vector2.UP
-	if ic.buffer.get("down"):
-		return Vector2.DOWN
-	return Vector2(state_data.physics.facing_direction, 0)
+		dir.y = -1.0
+	elif ic.buffer.get("down"):
+		dir.y = 1.0
+
+	# 3. Fallback: If no input, dash forward
+	if dir == Vector2.ZERO:
+		dir.x = state_data.physics.facing_direction
+
+	# Normalize to ensure diagonal dashes aren't faster
+	return dir.normalized()

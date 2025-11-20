@@ -12,25 +12,11 @@
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.27.0] - CURRENT - 11/19/2025                               ██   ║
+║   ██           [0.28.0] - CURRENT - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
 
-
-cat <<EOF > docs/CHANGELOG.txt
-╔════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                ║
-║   ██████╗██╗  ██╗ █████╗ ███╗   ██╗ ██████╗ ███████╗██╗      ██████╗  ██████╗  ║
-║  ██╔════╝██║  ██║██╔══██╗████╗  ██║██╔════╝ ██╔════╝██║     ██╔═══██╗██╔════╝  ║
-║  ██║     ███████║███████║██╔██╗ ██║██║  ███╗█████╗  ██║     ██║   ██║██║  ███╗ ║
-║  ██║     ██╔══██║██╔══██║██║╚██╗██║██║   ██║██╔══╝  ██║     ██║   ██║██║   ██║ ║
-║  ╚██████╗██║  ██║██║  ██║██║ ╚████║╚██████╔╝███████╗███████╗╚██████╔╝╚██████╔╝ ║
-║   ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚═════╝  ║
-║                                                                                ║
-║                  A log of all notable changes to the project.                  ║
-║                                                                                ║
-╠════════════════════════════════════════════════════════════════════════════════╣
 
 
 
@@ -79,6 +65,14 @@ cat <<EOF > docs/CHANGELOG.txt
       ░ ■ Responsiveness: Removed cooldown check for starting a Charge Attack,
       ░   allowing immediate charging after firing.
       ░ ■ Code Cleanliness: Removed unused variables in ChargeComponent.
+
+         █  Combat Depth
+      ░ ■ Implemented Durability System for Charged Shots:
+      ░   - Level 2 Fireballs now have Health equal to their Damage (3).
+      ░   - Hitting enemy projectiles consumes Health but allows the fireball
+      ░     to persist if it has remaining damage potential.
+      ░   - Enables "beam struggle" style mechanics where powerful shots
+      ░     cleave through weaker enemy fire.
 
 
 

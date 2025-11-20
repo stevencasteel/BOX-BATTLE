@@ -4,8 +4,6 @@ class_name ChargeAttackComponent
 extends IComponent
 
 # --- Constants ---
-const AURA_SCENE = preload("res://src/vfx/aura_charge_green.tscn")
-const SPLASH_SCENE = preload("res://src/vfx/splash_charge_green.tscn")
 # Delay visuals to prevent aura flashing during normal melee taps.
 const AURA_START_DELAY: float = 0.25
 
@@ -53,6 +51,12 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_aura_instance):
 		if _aura_instance.emitting != should_emit:
 			_aura_instance.emitting = should_emit
+		
+		# Scale Aura if we hit level 2
+		if _p_data.combat.charge_timer >= _p_data.config.level_2_charge_time:
+			_aura_instance.scale = Vector2(1.5, 1.5)
+		else:
+			_aura_instance.scale = Vector2(1.0, 1.0)
 
 	# 3. Handle Inputs
 	# POLISH FIX: Removed 'attack_cooldown_timer' check. 
@@ -76,8 +80,10 @@ func _try_execute_attack() -> void:
 		return
 
 	if _p_data.combat.charge_timer >= _p_data.config.charge_time:
-		_combat_component.fire_shot()
-		_spawn_release_splash()
+		# Check Level 2
+		var is_lvl_2 = _p_data.combat.charge_timer >= _p_data.config.level_2_charge_time
+		_combat_component.fire_shot(is_lvl_2)
+		_spawn_release_splash(is_lvl_2)
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
 	else:
@@ -85,7 +91,7 @@ func _try_execute_attack() -> void:
 		# preventing spam, but charging is now free.
 		_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
 
-func _spawn_release_splash() -> void:
+func _spawn_release_splash(is_large: bool = false) -> void:
 	if not is_instance_valid(_owner_node):
 		return
 	
@@ -98,6 +104,10 @@ func _spawn_release_splash() -> void:
 	# Calculate same offset as CombatComponent (facing * 60)
 	var offset = Vector2(_p_data.physics.facing_direction * 60, 0)
 	splash.global_position = _owner_node.global_position + offset
+	
+	if is_large:
+		splash.scale = Vector2(1.5, 1.5)
+	
 	splash.emitting = true
 	
 	# Add to tree root so it doesn't move with player
