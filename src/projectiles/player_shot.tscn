@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://cmdkxwvysirh1"]
+[gd_scene load_steps=11 format=3 uid="uid://cmdkxwvysirh1"]
 
 [ext_resource type="Script" path="res://src/projectiles/player_shot.gd" id="1_4wg7x"]
+[ext_resource type="Resource" uid="uid://green_splash_vfx_res" path="res://src/data/effects/green_splash_vfx.tres" id="2_vfx_res"]
 
 [sub_resource type="Gradient" id="Gradient_trail"]
 offsets = PackedFloat32Array(0, 0.2, 1)
@@ -52,6 +53,8 @@ size = Vector2(20, 20)
 collision_layer = 1024
 collision_mask = 148
 script = ExtResource("1_4wg7x")
+default_speed = 1000.0
+impact_vfx = ExtResource("2_vfx_res")
 metadata/pool_name = &"player_shots"
 
 [node name="FlameTrail" type="GPUParticles2D" parent="."]

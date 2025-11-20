@@ -15,6 +15,7 @@ var visual: CanvasItem
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
+var _fx_manager: IFXManager
 var _combat_utils
 var _is_active: bool = false
 var _has_been_on_screen: bool = false
@@ -53,6 +54,8 @@ func _screen_entered_hook() -> void:
 func activate(p_dependencies: Dictionary) -> void:
 	_object_pool = p_dependencies.get("object_pool")
 	_combat_utils = p_dependencies.get("combat_utils")
+	_fx_manager = p_dependencies.get("fx_manager") # Optional dependency
+	
 	assert(is_instance_valid(_object_pool), "BaseProjectile requires an IObjectPool dependency.")
 	assert(is_instance_valid(_combat_utils), "BaseProjectile requires a CombatUtils dependency.")
 
@@ -75,6 +78,7 @@ func deactivate() -> void:
 		collision_shape.disabled = true
 	_object_pool = null
 	_combat_utils = null
+	_fx_manager = null
 
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
@@ -93,7 +97,10 @@ func _handle_collision(target: Node) -> void:
 			impact_normal
 		)
 		damageable.apply_damage(damage_info)
-
+	
+	# VFX Hook: If we hit a wall (non-damageable body), we might want a splash.
+	# Child classes can implement specific VFX logic here or before calling return_instance.
+	
 	_object_pool.return_instance.call_deferred(self)
 
 # --- Timer / On-screen handlers (signal targets) ---

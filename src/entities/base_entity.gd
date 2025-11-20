@@ -115,6 +115,13 @@ func setup_components(
 	base_shared_deps["grid_utils"] = s.grid_utils
 	base_shared_deps["audio_manager"] = AudioManager
 	
+	# DIP: Inject Input Provider
+	if s.get("input_provider"):
+		base_shared_deps["input_provider"] = s.input_provider
+	else:
+		# Fallback to creating one if ServiceLocator isn't fully ready (rare)
+		base_shared_deps["input_provider"] = StandardInputProvider.new()
+	
 	if s.get("targeting_system"):
 		base_shared_deps["targeting_system"] = s.targeting_system
 

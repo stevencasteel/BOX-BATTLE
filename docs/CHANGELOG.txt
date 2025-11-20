@@ -73,7 +73,12 @@ cat <<EOF > docs/CHANGELOG.txt
 ║      ░   - Extracted 'VisualComponent' to handle sprite color and death FX.    ║
 ║      ░   - Player.gd is now purely an orchestrator, delegating visuals.        ║
 ║                                                                                ║
-
+   █  Polish & Tuning
+      ░ ■ Tuned Charge Attack: Increased aura visual delay to 0.25s to prevent
+      ░   flickering on melee taps.
+      ░ ■ Responsiveness: Removed cooldown check for starting a Charge Attack,
+      ░   allowing immediate charging after firing.
+      ░ ■ Code Cleanliness: Removed unused variables in ChargeComponent.
 
 
 

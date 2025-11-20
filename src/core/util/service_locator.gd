@@ -18,7 +18,14 @@ const WORLD_CONFIG = preload("res://src/data/world_config.tres")
 @onready var combat_utils = get_node("/root/CombatUtils")
 @onready var grid_utils = get_node("/root/GridUtils")
 
+# --- Non-Node Services (RefCounted) ---
+var input_provider: IInputProvider
+
 # --- Public Properties ---
 var player_config: PlayerConfig = PLAYER_CONFIG
 var enemy_config: EnemyConfig = ENEMY_CONFIG
 var world_config: WorldConfig = WORLD_CONFIG
+
+func _ready() -> void:
+	# Default to the standard input wrapper for runtime
+	input_provider = StandardInputProvider.new()

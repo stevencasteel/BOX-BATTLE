@@ -13,9 +13,13 @@ func _ready() -> void:
 	preload("res://src/api/interfaces/ISceneController.gd")
 	preload("res://src/api/interfaces/IFXManager.gd")
 	preload("res://src/api/interfaces/IObjectPool.gd")
+	
+	# Input System (DIP)
+	preload("res://src/api/interfaces/IInputProvider.gd")
+	preload("res://src/core/systems/input/standard_input_provider.gd")
+
 	preload("res://src/entities/base_entity.gd")
 	preload("res://src/entities/components/hurtbox_component.gd")
 	preload("res://src/entities/components/hitbox_component.gd")
 	preload("res://src/entities/components/sensor_component.gd")
-	# Newly added:
 	preload("res://src/core/data/audio/audio_cue.gd")

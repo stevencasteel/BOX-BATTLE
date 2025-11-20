@@ -4,6 +4,7 @@ extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
+@export var impact_vfx: VFXEffect
 
 @onready var flame_trail: GPUParticles2D = %FlameTrail
 
@@ -34,8 +35,20 @@ func _on_area_entered(area: Area2D) -> void:
 		return
 	# Player shots can destroy enemy projectiles on contact.
 	if area.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		_spawn_impact_vfx()
 		if is_instance_valid(_object_pool):
 			_object_pool.return_instance.call_deferred(area)
 
 	# Then proceed with the base collision handling.
 	super._on_area_entered(area)
+
+# Override base collision to add VFX for walls
+func _handle_collision(target: Node) -> void:
+	_spawn_impact_vfx()
+	super._handle_collision(target)
+
+func _spawn_impact_vfx() -> void:
+	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
+		# Spawn splash at current location
+		var normal = -direction.normalized()
+		_fx_manager.play_vfx(impact_vfx, global_position, normal)

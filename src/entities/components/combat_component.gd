@@ -81,7 +81,8 @@ func fire_shot() -> void:
 	
 	var dependencies = {
 		"object_pool": _object_pool,
-		"combat_utils": _combat_utils
+		"combat_utils": _combat_utils,
+		"fx_manager": _fx_manager
 	}
 	shot.activate(dependencies)
 

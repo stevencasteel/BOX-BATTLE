@@ -4,8 +4,10 @@ class_name ChargeAttackComponent
 extends IComponent
 
 # --- Constants ---
+const AURA_SCENE = preload("res://src/vfx/aura_charge_green.tscn")
+const SPLASH_SCENE = preload("res://src/vfx/splash_charge_green.tscn")
 # Delay visuals to prevent aura flashing during normal melee taps.
-const AURA_START_DELAY: float = 0.15
+const AURA_START_DELAY: float = 0.25
 
 # --- Dependencies ---
 var _owner_node # Typed as Player
@@ -53,7 +55,9 @@ func _physics_process(delta: float) -> void:
 			_aura_instance.emitting = should_emit
 
 	# 3. Handle Inputs
-	if _input_component.buffer.get("attack_just_pressed") and _p_data.combat.attack_cooldown_timer <= 0:
+	# POLISH FIX: Removed 'attack_cooldown_timer' check. 
+	# You can now begin charging immediately after firing, even if the melee cooldown is active.
+	if _input_component.buffer.get("attack_just_pressed"):
 		_p_data.combat.is_charging = true
 		_p_data.combat.charge_timer = 0.0
 
@@ -77,6 +81,8 @@ func _try_execute_attack() -> void:
 	elif _input_component.buffer.get("down"):
 		_state_machine.change_state(Identifiers.PlayerStates.POGO, {})
 	else:
+		# Note: Normal melee attacks will still respect the cooldown inside StateAttack,
+		# preventing spam, but charging is now free.
 		_state_machine.change_state(Identifiers.PlayerStates.ATTACK, {})
 
 func _spawn_release_splash() -> void:

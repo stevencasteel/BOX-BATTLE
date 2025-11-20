@@ -32,6 +32,6 @@ turbulence_noise_speed_max = 4.0
 [node name="ChargeAuraGreen" type="GPUParticles2D"]
 amount = 60
 process_material = SubResource("ParticleProcessMaterial_aura")
-lifetime = 0.5
+lifetime = 0.2
 fixed_fps = 60
 local_coords = true
