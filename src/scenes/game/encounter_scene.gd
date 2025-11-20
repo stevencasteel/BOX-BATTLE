@@ -6,18 +6,21 @@ extends ISceneController
 # --- Editor Properties ---
 @export var _boss_death_shockwave: ShaderEffect
 
+# --- Constants ---
+const ViewportCabinetScene = preload("res://src/scenes/game/viewport_cabinet.tscn")
+const TestConversation = preload("res://src/data/dialogue/test_conversation.tres")
+
 # --- Node References ---
-@onready var camera: Camera2D = $Camera2D
 @onready var post_process_manager = $PostProcessLayer
 
 # --- Private Member Variables ---
+var _cabinet: ViewportCabinet = null
 var _level_container: Node = null
 var _debug_overlay: CanvasLayer = null
 var _boss_died_token: int = 0
 var _spawn_boss_token: int = 0
 var _sequence_handle: SequenceHandle
 var _camera_shaker: CameraShaker = null
-const TestConversation = preload("res://src/data/dialogue/test_conversation.tres")
 
 # --- Debug Inspector ---
 var _inspectable_entities: Array[Node] = []
@@ -28,6 +31,12 @@ func _ready() -> void:
 	_boss_died_token = EventBus.on(EventCatalog.BOSS_DIED, _on_boss_died)
 	_spawn_boss_token = EventBus.on(EventCatalog.SPAWN_BOSS_REQUESTED, _on_spawn_boss_requested)
 
+	# 1. Setup Cabinet
+	_cabinet = ViewportCabinetScene.instantiate()
+	add_child(_cabinet)
+	move_child(_cabinet, 0)
+
+	# 2. Load Level
 	if is_instance_valid(GameManager.state.prebuilt_level):
 		_level_container = GameManager.state.prebuilt_level
 		GameManager.state.prebuilt_level = null
@@ -38,14 +47,16 @@ func _ready() -> void:
 		push_error("EncounterScene: Failed to get a valid level container.")
 		return
 		
-	add_child(_level_container)
+	# 3. Place Level in Cabinet Viewport
+	_cabinet.add_level(_level_container)
+	ObjectPool.register_world_container(_level_container)
+	
 	await get_tree().process_frame
 
 	var build_data: LevelBuildData = _level_container.get_meta("build_data")
 	if build_data:
-		CameraManager.center_camera_on_arena(camera, build_data.dimensions_tiles)
-		
-		# Note: TerrainBuilder logic removed. Level is now pre-built in the scene.
+		var cam = _cabinet.get_camera()
+		CameraManager.center_camera_on_arena(cam, build_data.dimensions_tiles)
 		
 		if not build_data.encounter_data_resource.intro_sequence.is_empty():
 			_sequence_handle = Sequencer.run_sequence(build_data.encounter_data_resource.intro_sequence)
@@ -82,12 +93,16 @@ func _exit_tree() -> void:
 	FXManager.unregister_camera_shaker()
 	if is_instance_valid(_sequence_handle):
 		_sequence_handle.cancel()
-	if is_instance_valid(camera):
-		camera.offset = Vector2.ZERO
+	
+	var cam = _cabinet.get_camera() if is_instance_valid(_cabinet) else null
+	if is_instance_valid(cam):
+		cam.offset = Vector2.ZERO
+		
 	get_tree().paused = false
+	ObjectPool.register_world_container(null)
 
 
-# --- Public Methods (ISceneController Contract) ---
+# --- Public Methods ---
 func scene_exiting() -> void:
 	_cleanup_entities()
 
@@ -109,7 +124,7 @@ func _initialize_camera_shaker() -> void:
 	if shaker_scene:
 		_camera_shaker = shaker_scene.instantiate() as CameraShaker
 		add_child(_camera_shaker)
-		_camera_shaker.target_camera = camera
+		_camera_shaker.target_camera = _cabinet.get_camera()
 		FXManager.register_camera_shaker(_camera_shaker)
 
 
@@ -156,7 +171,6 @@ func _on_spawn_boss_requested(_payload) -> void:
 
 func _on_player_died() -> void:
 	SaveManager.record_loss()
-	# Slow Motion Death
 	Engine.time_scale = 0.2
 	await get_tree().create_timer(0.5, true, false, true).timeout
 	SceneManager.go_to_game_over()
@@ -171,9 +185,9 @@ func _on_boss_died(payload: BossDiedEvent) -> void:
 	var rect = post_process_manager.get_shockwave_rect()
 
 	if is_instance_valid(_boss_death_shockwave) and is_instance_valid(boss_node) and is_instance_valid(rect):
-		var viewport_size = get_viewport().get_visible_rect().size
-		var canvas_transform = get_viewport().get_canvas_transform()
-		var screen_pos = canvas_transform * boss_node.global_position
+		# Correctly calculate position using Cabinet helper
+		var screen_pos = _cabinet.world_to_screen_pos(boss_node.global_position)
+		var viewport_size = get_viewport().get_visible_rect().size # Main Window Size (2560x1440)
 		var uv_center = screen_pos / viewport_size
 		
 		FXManager.apply_shader_effect(
@@ -183,23 +197,15 @@ func _on_boss_died(payload: BossDiedEvent) -> void:
 			{}
 		)
 
-	# Slow Motion Victory Moment
 	Engine.time_scale = 0.15
 	
 	_deactivate_all_minions()
 
-	# Note: Timers are affected by time_scale, so 2.0 seconds becomes much longer.
-	# We use a SceneTreeTimer ignoring time scale for logic flow, or adjust duration.
-	# Here we want the visual slow mo to last a bit, then speed up or exit.
-	# Let's keep slow mo for the explosion duration.
-	
-	# 1.0s real time wait for explosion juice
 	await get_tree().create_timer(1.0, true, false, true).timeout 
 	
 	if is_instance_valid(boss_node):
 		boss_node.queue_free()
 
-	# Restore time scale before victory screen
 	Engine.time_scale = 1.0
 	SaveManager.record_win()
 	SceneManager.go_to_victory()

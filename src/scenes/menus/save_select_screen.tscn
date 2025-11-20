@@ -24,7 +24,19 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="MainVBox" type="VBoxContainer" parent="."]
+[node name="MenuRoot" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContentFrame" type="Control" parent="MenuRoot"]
+custom_minimum_size = Vector2(1000, 1000)
+layout_mode = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="MenuRoot/ContentFrame"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,7 +46,7 @@ grow_vertical = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="MainVBox"]
+[node name="TitleLabel" type="Label" parent="MenuRoot/ContentFrame/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_font")
@@ -42,7 +54,7 @@ theme_override_font_sizes/font_size = 64
 text = "SELECT DATA"
 horizontal_alignment = 1
 
-[node name="ModeLabel" type="Label" parent="MainVBox"]
+[node name="ModeLabel" type="Label" parent="MenuRoot/ContentFrame/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
@@ -51,57 +63,57 @@ theme_override_font_sizes/font_size = 24
 text = " "
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="MainVBox"]
+[node name="Spacer" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="SlotsVBox" type="VBoxContainer" parent="MainVBox"]
+[node name="SlotsVBox" type="VBoxContainer" parent="MenuRoot/ContentFrame/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 20
 
-[node name="Slot0" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+[node name="Slot0" parent="MenuRoot/ContentFrame/MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
 layout_mode = 2
 slot_index = 0
 
-[node name="Slot1" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+[node name="Slot1" parent="MenuRoot/ContentFrame/MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
 layout_mode = 2
 slot_index = 1
 
-[node name="Slot2" parent="MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
+[node name="Slot2" parent="MenuRoot/ContentFrame/MainVBox/SlotsVBox" instance=ExtResource("3_slot")]
 layout_mode = 2
 slot_index = 2
 
-[node name="Spacer2" type="Control" parent="MainVBox"]
+[node name="Spacer2" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
-[node name="UtilityHBox" type="HBoxContainer" parent="MainVBox"]
+[node name="UtilityHBox" type="HBoxContainer" parent="MenuRoot/ContentFrame/MainVBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="BtnCopy" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+[node name="BtnCopy" parent="MenuRoot/ContentFrame/MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 60)
 layout_mode = 2
 text = "COPY"
 font_size = 32
 
-[node name="BtnErase" parent="MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
+[node name="BtnErase" parent="MenuRoot/ContentFrame/MainVBox/UtilityHBox" instance=ExtResource("2_btn")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 60)
 layout_mode = 2
 text = "ERASE"
 font_size = 32
 
-[node name="Spacer3" type="Control" parent="MainVBox"]
+[node name="Spacer3" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 20)
 
-[node name="BackButton" parent="MainVBox" instance=ExtResource("2_btn")]
+[node name="BackButton" parent="MenuRoot/ContentFrame/MainVBox" instance=ExtResource("2_btn")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(600, 80)
 layout_mode = 2

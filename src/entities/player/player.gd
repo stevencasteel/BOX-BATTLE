@@ -20,7 +20,6 @@ const ACTION_ALLOWED_STATES = [
 @export var hit_flash_effect: ShaderEffect = null
 @export var damage_shake_effect: ScreenShakeEffect = null
 @export var hit_spark_effect: VFXEffect = null
-# Dissolve effect moved to PlayerConfig via VisualComponent
 
 @export_group("Configuration")
 @export var state_machine_config: StateMachineConfig = null
@@ -41,17 +40,13 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 
-	# Registration
 	add_to_group(Identifiers.Groups.PLAYER)
 	ServiceLocator.targeting_system.register(self, Identifiers.Groups.PLAYER)
 	
-	# Setup Data
 	entity_data = PlayerStateData.new()
 	
-	# Trigger internal build
 	build_entity()
 
-	# Post-Build Init
 	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
@@ -62,7 +57,6 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_timers(delta)
 	
-	# Centralized Physics Movement
 	move_and_slide()
 
 
@@ -80,7 +74,6 @@ func _on_build() -> void:
 	entity_data.config = _services.player_config
 	entity_data.world_config = _services.world_config
 	
-	# CRITICAL FIX: Initialize health from config before components read it
 	entity_data.max_health = entity_data.config.max_health
 	entity_data.health = entity_data.max_health
 
@@ -98,7 +91,6 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	# OCP: Build state map dynamically from config resource
 	var states: Dictionary = {}
 	var initial_state_key = &""
 	
@@ -146,7 +138,6 @@ func _on_build() -> void:
 	if is_instance_valid(hurtbox):
 		hurtbox.setup(self, {"services": _services})
 
-	# --- Wire signals between components ---
 	if rc:
 		if cc and not cc.damage_dealt.is_connected(rc.on_damage_dealt):
 			cc.damage_dealt.connect(rc.on_damage_dealt)
@@ -221,7 +212,6 @@ func _die() -> void:
 	if is_instance_valid(sm):
 		sm.teardown()
 	
-	# SRP Fix: Delegate death visuals to VisualComponent
 	var vc: VisualComponent = get_component(VisualComponent)
 	if is_instance_valid(vc):
 		var tween: Tween = vc.play_death_sequence()
@@ -236,9 +226,6 @@ func _update_timers(delta: float) -> void:
 		return
 	
 	entity_data.physics.knockback_timer = max(0.0, entity_data.physics.knockback_timer - delta)
-	
-	# NOTE: Charge timer logic was removed from here. 
-	# It is now handled exclusively by ChargeAttackComponent.
 
 
 # --- Signal Handlers ---
@@ -250,13 +237,13 @@ func _on_healing_timer_timeout() -> void:
 		get_component(PlayerResourceComponent).consume_healing_charge()
 		_on_health_changed(entity_data.health, entity_data.max_health)
 		
-		# DIP Fix: Load splash from config
 		var splash_scene = entity_data.config.vfx_heal_splash
 		if is_instance_valid(splash_scene):
 			var splash = splash_scene.instantiate()
 			splash.global_position = global_position
 			splash.emitting = true
-			get_tree().current_scene.add_child(splash)
+			# FIX: Add to sibling (Level) instead of current_scene (Root)
+			add_sibling(splash)
 			
 		sm.change_state(Identifiers.PlayerStates.MOVE)
 

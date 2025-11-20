@@ -1,5 +1,6 @@
 # src/core/systems/object_pool.gd
 ## An autoloaded singleton that manages pools of reusable nodes.
+## Supports parenting active objects to a specific world node for Viewport compatibility.
 extends Node
 
 # --- Constants ---
@@ -8,40 +9,22 @@ const MANIFEST_PATH = "res://src/data/default_pool_manifest.tres"
 # --- Private Member Variables ---
 var _pools: Dictionary = {}
 var _is_initialized: bool = false
+var _active_world_container: Node = null 
 
 # --- Godot Lifecycle Methods ---
 
-
 func _ready() -> void:
-	# Per SRP, _ready() should be lightweight. Heavy lifting is moved to initialize().
 	pass
 
-
 func _exit_tree() -> void:
-	# Hard cleanup to prevent leaks on exit
-	for pool_name in _pools:
-		var pool = _pools[pool_name]
-		# Free inactive items
-		for item in pool.inactive:
-			if is_instance_valid(item):
-				item.free()
-		# Free active items (children of container)
-		if is_instance_valid(pool.container):
-			for child in pool.container.get_children():
-				child.free()
-			pool.container.free()
-	
-	_pools.clear()
-
+	_cleanup_pools()
 
 # --- Public Methods ---
-
 
 func initialize() -> void:
 	if _is_initialized:
 		return
 	
-	# UPDATE: Data-Driven Initialization
 	if not FileAccess.file_exists(MANIFEST_PATH):
 		push_error("ObjectPool: Manifest not found at %s" % MANIFEST_PATH)
 		return
@@ -59,28 +42,21 @@ func initialize() -> void:
 		
 	_is_initialized = true
 
+func register_world_container(container: Node) -> void:
+	_active_world_container = container
 
 func get_pool_stats() -> Dictionary:
 	var stats: Dictionary = {}
 	for pool_name in _pools:
 		var pool: Dictionary = _pools[pool_name]
-		var total_count: int = pool.container.get_child_count()
 		var inactive_count: int = pool.inactive.size()
-		stats[pool_name] = {"active": total_count - inactive_count, "total": total_count}
+		var total: int = pool.total_created
+		# "Active" is simply the total created minus those currently sitting in the pool
+		stats[pool_name] = {"active": total - inactive_count, "total": total}
 	return stats
 
-
 func reset() -> void:
-	for pool_name in _pools:
-		var pool: Dictionary = _pools[pool_name]
-		var active_nodes_to_return: Array[Node] = []
-		for child in pool.container.get_children():
-			if not pool.inactive.has(child):
-				active_nodes_to_return.append(child)
-
-		for node in active_nodes_to_return:
-			return_instance.call_deferred(node)
-
+	_active_world_container = null
 
 func get_instance(p_pool_name: StringName) -> Node:
 	if not _pools.has(p_pool_name):
@@ -96,9 +72,13 @@ func get_instance(p_pool_name: StringName) -> Node:
 		instance = pool.scene.instantiate()
 		instance.set_meta("pool_name", p_pool_name)
 		pool.container.add_child(instance)
+		pool.total_created += 1 # Track creation
 
+	if is_instance_valid(_active_world_container):
+		if instance.get_parent() != _active_world_container:
+			instance.reparent(_active_world_container, false) 
+	
 	return instance
-
 
 func return_instance(p_instance: Node) -> void:
 	if not is_instance_valid(p_instance):
@@ -110,15 +90,23 @@ func return_instance(p_instance: Node) -> void:
 		return
 
 	var pool: Dictionary = _pools[pool_name]
-	if not pool.inactive.has(p_instance):
-		pool.inactive.push_front(p_instance)
+	
+	if pool.inactive.has(p_instance):
+		return
 
 	if p_instance.has_method("deactivate"):
 		p_instance.deactivate()
 
+	if p_instance.get_parent() != pool.container:
+		if is_instance_valid(pool.container):
+			p_instance.reparent(pool.container, false)
+		else:
+			p_instance.queue_free()
+			return
+
+	pool.inactive.push_front(p_instance)
 
 # --- Private Methods ---
-
 
 func _create_pool_for_scene(
 	p_pool_name: StringName, p_scene: PackedScene, p_initial_size: int
@@ -130,7 +118,13 @@ func _create_pool_for_scene(
 	pool_container.name = str(p_pool_name)
 	add_child(pool_container)
 
-	_pools[p_pool_name] = {"scene": p_scene, "inactive": [], "container": pool_container}
+	# Added 'total_created' to track stats accurately
+	_pools[p_pool_name] = {
+		"scene": p_scene, 
+		"inactive": [], 
+		"container": pool_container,
+		"total_created": 0
+	}
 
 	for i in range(p_initial_size):
 		var instance: Node = p_scene.instantiate()
@@ -139,3 +133,14 @@ func _create_pool_for_scene(
 		if instance.has_method("deactivate"):
 			instance.deactivate()
 		_pools[p_pool_name].inactive.append(instance)
+		_pools[p_pool_name].total_created += 1
+
+func _cleanup_pools() -> void:
+	for pool_name in _pools:
+		var pool = _pools[pool_name]
+		for item in pool.inactive:
+			if is_instance_valid(item):
+				item.free()
+		if is_instance_valid(pool.container):
+			pool.container.free()
+	_pools.clear()

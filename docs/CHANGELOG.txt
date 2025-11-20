@@ -14,7 +14,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION - 11/20/2025          ██   ║
+║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Level Architecture                                                        ║
@@ -24,8 +24,22 @@
 ║      ░ ■ Refactored 'ArenaBuilder' to instantiate scenes and inject            ║
 ║      ░   dependencies dynamically, rather than constructing geometry.          ║
 ║      ░ ■ Fixed physics bug regarding one-way platform drop-through logic.      ║
-
-
+║                                                                                ║
+║   █  Presentation Overhaul (1440p)                                             ║
+║      ░ ■ Updated Window Resolution to 2560x1440 (QHD).                         ║
+║      ░ ■ Implemented 'ViewportCabinet' scene to center the gameplay area       ║
+║      ░   within the larger window, preserving the 1:1 aspect ratio.            ║
+║      ░ ■ Retrofitted all Menus (Title, Options, etc.) to center correctly      ║
+║      ░   within the new widescreen layout.                                     ║
+║                                                                                ║
+║   █  Engine & Systems                                                          ║
+║      ░ ■ Refactored 'ObjectPool' to support reparenting active objects into    ║
+║      ░   specific World Containers (fixing invisible projectiles in Viewports).║
+║      ░ ■ Updated 'EncounterScene' to run inside the SubViewport.               ║
+║      ░ ■ Fixed Shockwave shader positioning to map World Coordinates to        ║
+║      ░   Screen UVs correctly across nested viewports.                         ║
+║      ░ ■ Fixed VFX (Heal/Charge Splashes) parenting logic.                     ║
+║                                                                                ║
 
 
 

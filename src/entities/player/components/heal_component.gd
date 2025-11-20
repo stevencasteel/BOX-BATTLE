@@ -38,12 +38,19 @@ func _physics_process(_delta: float) -> void:
 			and _owner_node.is_on_floor()
 			and is_zero_approx(_owner_node.velocity.x)
 		):
-			# PRIORITY FIX: If standing on a drop-through platform, 
-			# Down+Jump means "Drop", not "Heal".
 			if JumpHelper.is_standing_on_platform(_owner_node):
 				return
 
 			_state_machine.change_state(Identifiers.PlayerStates.HEAL, {})
+
+# We access this from Player.gd usually, but the logic was here in my previous internal refactor.
+# However, the healing timer timeout actually lives in Player.gd in the current codebase.
+# Let's update the signal handler logic there if needed, OR ensure this component handles it.
+# Currently, Player.gd handles the timeout and instantiation.
+# Wait, checking Player.gd...
+# Player.gd has: get_tree().current_scene.add_child(splash) in _on_healing_timer_timeout.
+# So we actually need to edit Player.gd, not HealComponent.
+# But for completeness, I will leave HealComponent clean.
 
 func teardown() -> void:
 	set_physics_process(false)

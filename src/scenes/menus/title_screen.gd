@@ -21,7 +21,6 @@ func _ready() -> void:
 	exit_button.text = "EXIT"
 
 	if not Engine.is_editor_hint():
-		# --- Connect Unique Action Signals ---
 		start_button.pressed.connect(_on_start_button_pressed)
 		options_button.pressed.connect(_on_options_button_pressed)
 		exit_button.pressed.connect(_on_exit_button_pressed)
@@ -29,7 +28,6 @@ func _ready() -> void:
 		godot_logo.pressed.connect(_on_logo_pressed)
 		itch_logo.pressed.connect(_on_logo_pressed)
 
-		# --- Initialize Common Navigation & Feedback ---
 		var focusable_items: Array[Control] = [start_button, options_button, exit_button]
 		var all_items: Array[Control] = [
 			start_button, options_button, exit_button, 
@@ -43,14 +41,11 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint(): return
 	
-	# DEV SHORTCUT: TAB starts fresh game in Slot 0
-	# We use _input to catch it before Control nodes consume "ui_focus_next"
 	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
-		get_viewport().set_input_as_handled() # Prevent focus change
+		get_viewport().set_input_as_handled() 
 		SaveManager.create_new_slot(0)
 		SceneManager.start_game(AssetPaths.ENCOUNTER_00)
 
-# --- Unique Signal Handlers ---
 func _on_start_button_pressed() -> void:
 	SceneManager.go_to_scene(AssetPaths.SCENE_SAVE_SELECT_SCREEN)
 

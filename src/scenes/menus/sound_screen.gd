@@ -8,14 +8,14 @@ extends "res://src/scenes/menus/base_menu_screen.gd"
 @onready var music_row: SoundSettingRow = %MusicRow
 @onready var sfx_row: SoundSettingRow = %SfxRow
 @onready var back_button: StyledMenuItem = %BackButton
-@onready var mute_button: MuteButton = $MuteButtonContainer/MuteButton
+# Update: Use Unique Name for stability
+@onready var mute_button: MuteButton = %MuteButton
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
 	back_button.text = "BACK"
 
 	if not Engine.is_editor_hint():
-		# Connect component signals to the Settings singleton
 		master_row.value_changed.connect(func(val): Settings.master_volume = val)
 		master_row.mute_toggled.connect(func(val): Settings.master_muted = val)
 		music_row.value_changed.connect(func(val): Settings.music_volume = val)
@@ -23,15 +23,13 @@ func _ready() -> void:
 		sfx_row.value_changed.connect(func(val): Settings.sfx_volume = val)
 		sfx_row.mute_toggled.connect(func(val): Settings.sfx_muted = val)
 
-		# Connect this screen to the Settings singleton to update visuals
 		Settings.audio_settings_changed.connect(_update_ui_from_settings)
-		_update_ui_from_settings()  # Set initial state
+		_update_ui_from_settings() 
 
 		back_button.pressed.connect(_on_back_button_pressed)
 
-		# --- Initialize Common Navigation & Feedback ---
 		var focusable_items: Array[Control] = [back_button]
-		var all_items: Array[Control] = [back_button, mute_button] # Sliders handled internally
+		var all_items: Array[Control] = [back_button, mute_button] 
 		setup_menu_navigation(focusable_items, all_items)
 
 		await get_tree().process_frame

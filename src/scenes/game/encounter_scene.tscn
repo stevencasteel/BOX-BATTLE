@@ -18,8 +18,6 @@ resource_local_to_scene = true
 script = ExtResource("1_game_script")
 _boss_death_shockwave = ExtResource("2_shockwave")
 
-[node name="Camera2D" type="Camera2D" parent="."]
-
 [node name="PostProcessLayer" type="CanvasLayer" parent="."]
 layer = 100
 script = ExtResource("3_post_process")

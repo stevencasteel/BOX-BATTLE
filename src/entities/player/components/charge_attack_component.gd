@@ -94,7 +94,10 @@ func _spawn_release_splash(is_large: bool = false) -> void:
 		splash.scale = Vector2(1.5, 1.5)
 	
 	splash.emitting = true
-	_owner_node.get_tree().current_scene.add_child(splash)
+	
+	# FIX: Add as sibling of player (puts it in the Level inside the Viewport)
+	# instead of adding to current_scene (The Root Window).
+	_owner_node.add_sibling(splash)
 
 func teardown() -> void:
 	set_physics_process(false)

@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3 uid="uid://viewport_cabinet"]
+
+[ext_resource type="Script" path="res://src/scenes/game/viewport_cabinet.gd" id="1_script"]
+
+[node name="ViewportCabinet" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="BackgroundLayer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Border" type="ColorRect" parent="CenterContainer"]
+custom_minimum_size = Vector2(1004, 1004)
+layout_mode = 2
+color = Color(0.3, 0.3, 0.3, 1)
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="CenterContainer/Border"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -500.0
+offset_right = 500.0
+offset_bottom = 500.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SubViewport" type="SubViewport" parent="CenterContainer/Border/SubViewportContainer"]
+unique_name_in_owner = true
+handle_input_locally = false
+size = Vector2i(1000, 1000)
+render_target_update_mode = 4
+
+[node name="GameCamera" type="Camera2D" parent="CenterContainer/Border/SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
+position = Vector2(500, 500)

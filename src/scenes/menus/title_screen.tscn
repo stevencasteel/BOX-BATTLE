@@ -27,7 +27,19 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="MainVBox" type="VBoxContainer" parent="."]
+[node name="MenuRoot" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContentFrame" type="Control" parent="MenuRoot"]
+custom_minimum_size = Vector2(1000, 1000)
+layout_mode = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="MenuRoot/ContentFrame"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -37,11 +49,11 @@ grow_vertical = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="TopSpacer" type="Control" parent="MainVBox"]
+[node name="TopSpacer" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="MainVBox"]
+[node name="TitleLabel" type="Label" parent="MenuRoot/ContentFrame/MainVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.972549, 0.972549, 0.972549, 1)
 theme_override_fonts/font = ExtResource("7_font_black")
@@ -49,75 +61,72 @@ theme_override_font_sizes/font_size = 128
 text = "BOX BATTLE"
 horizontal_alignment = 1
 
-[node name="TitleMenuSpacer" type="Control" parent="MainVBox"]
+[node name="TitleMenuSpacer" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
-; --- Menu Items ---
-[node name="MenuItemsVBox" type="VBoxContainer" parent="MainVBox"]
+[node name="MenuItemsVBox" type="VBoxContainer" parent="MenuRoot/ContentFrame/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="StartButton" parent="MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
+[node name="StartButton" parent="MenuRoot/ContentFrame/MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(700, 100)
 layout_mode = 2
 focus_mode = 2
 font_size = 64
 
-[node name="OptionsButton" parent="MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
+[node name="OptionsButton" parent="MenuRoot/ContentFrame/MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(700, 100)
 layout_mode = 2
 focus_mode = 2
 font_size = 64
 
-[node name="ExitButton" parent="MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
+[node name="ExitButton" parent="MenuRoot/ContentFrame/MainVBox/MenuItemsVBox" instance=ExtResource("2_styled_menu_item")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(700, 100)
 layout_mode = 2
 focus_mode = 2
 font_size = 64
 
-[node name="ExpandSpacer" type="Control" parent="MainVBox"]
+[node name="ExpandSpacer" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-; --- Footer Logos ---
-[node name="FooterHBox" type="HBoxContainer" parent="MainVBox"]
+[node name="FooterHBox" type="HBoxContainer" parent="MenuRoot/ContentFrame/MainVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 50
 alignment = 1
 
-[node name="NewgroundsLogo" parent="MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
+[node name="NewgroundsLogo" parent="MenuRoot/ContentFrame/MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
 unique_name_in_owner = true
 layout_mode = 2
 texture = ExtResource("4_logo_ng")
 logo_name = "Newgrounds"
 
-[node name="GodotLogo" parent="MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
+[node name="GodotLogo" parent="MenuRoot/ContentFrame/MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
 unique_name_in_owner = true
 layout_mode = 2
 texture = ExtResource("5_logo_godot")
 logo_name = "Godot"
 
-[node name="ItchLogo" parent="MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
+[node name="ItchLogo" parent="MenuRoot/ContentFrame/MainVBox/FooterHBox" instance=ExtResource("3_logo_display")]
 unique_name_in_owner = true
 layout_mode = 2
 texture = ExtResource("6_logo_itch")
 logo_name = "Itch"
 
-[node name="BottomSpacer" type="Control" parent="MainVBox"]
+[node name="BottomSpacer" type="Control" parent="MenuRoot/ContentFrame/MainVBox"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 
-; --- Global UI ---
-[node name="MuteButtonContainer" type="MarginContainer" parent="."]
+[node name="MuteButtonContainer" type="MarginContainer" parent="MenuRoot/ContentFrame"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -128,7 +137,7 @@ mouse_filter = 2
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 
-[node name="MuteButton" parent="MuteButtonContainer" instance=ExtResource("8_mute_button")]
+[node name="MuteButton" parent="MenuRoot/ContentFrame/MuteButtonContainer" instance=ExtResource("8_mute_button")]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
