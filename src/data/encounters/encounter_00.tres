@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="EncounterData" load_steps=9 format=3 uid="uid://4lptu40or7m1"]
 
-[ext_resource type="Script" uid="uid://co2urq51qk44e" path="res://src/data/encounters/encounter_data.gd" id="1_encounter"]
+[ext_resource type="Script" path="res://src/data/encounters/encounter_data.gd" id="1_encounter"]
 [ext_resource type="PackedScene" uid="uid://dmej4a7ykn2q0" path="res://src/entities/enemies/bosses/base_boss.tscn" id="2_boss_scene"]
 [ext_resource type="Resource" uid="uid://bst2lw60wetic" path="res://src/data/layouts/layout_00.tres" id="3_layout"]
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://src/entities/enemies/minions/turret.tscn" id="4_turret_scene"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://src/core/sequencing/sequence_step.gd" id="7_sequence_step"]
 [ext_resource type="Script" path="res://src/core/sequencing/steps/wait_step.gd" id="8_wait_step"]
 [ext_resource type="Script" path="res://src/core/sequencing/steps/emit_step.gd" id="9_emit_step"]
+[ext_resource type="PackedScene" path="res://src/content/levels/level_00.tscn" id="10_level_scene"]
 
 [sub_resource type="Resource" id="Resource_8vxlc"]
 script = ExtResource("8_wait_step")
@@ -21,6 +22,7 @@ payload = null
 
 [resource]
 script = ExtResource("1_encounter")
+level_scene = ExtResource("10_level_scene")
 level_layout = ExtResource("3_layout")
 player_spawn_marker = "@"
 boss_scene = ExtResource("2_boss_scene")

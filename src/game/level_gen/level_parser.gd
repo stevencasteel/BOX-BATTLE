@@ -11,7 +11,7 @@ extends RefCounted
 
 
 ## Parses the provided [EncounterData] and returns a populated [LevelBuildData].
-func parse_level_data(encounter_data: EncounterData, services: ServiceLocator) -> LevelBuildData:
+func parse_level_data(encounter_data: EncounterData, services) -> LevelBuildData:
 	var data = LevelBuildData.new()
 	if not is_instance_valid(encounter_data):
 		push_error("LevelParser: Invalid EncounterData provided.")

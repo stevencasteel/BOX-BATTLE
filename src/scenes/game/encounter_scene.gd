@@ -44,9 +44,8 @@ func _ready() -> void:
 	var build_data: LevelBuildData = _level_container.get_meta("build_data")
 	if build_data:
 		CameraManager.center_camera_on_arena(camera, build_data.dimensions_tiles)
-		await get_tree().process_frame
-		var terrain_builder := TerrainBuilder.new()
-		terrain_builder.fill_viewport(_level_container, build_data, camera, ServiceLocator)
+		
+		# Note: TerrainBuilder logic removed. Level is now pre-built in the scene.
 		
 		if not build_data.encounter_data_resource.intro_sequence.is_empty():
 			_sequence_handle = Sequencer.run_sequence(build_data.encounter_data_resource.intro_sequence)

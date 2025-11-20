@@ -40,20 +40,39 @@ static func try_platform_drop(owner: Node) -> bool:
 	if not is_instance_valid(owner) or not owner is CharacterBody2D:
 		return false
 
-	var floor_col = owner.get_last_slide_collision()
-	if not floor_col:
-		return false
+	# Iterate through ALL collisions to find the floor.
+	# get_last_slide_collision() is insufficient if touching walls + floor.
+	for i in range(owner.get_slide_collision_count()):
+		var collision = owner.get_slide_collision(i)
+		var collider = collision.get_collider()
+		
+		if not is_instance_valid(collider):
+			continue
 
-	var floor_collider = floor_col.get_collider()
-	if (
-		is_instance_valid(floor_collider)
-		and floor_collider.is_in_group(Identifiers.Groups.ONEWAY_PLATFORMS)
-	):
-		owner.position.y += 2 # Nudge the player down to clear the platform
-		# We access the state machine via component lookup to avoid type dependency
-		var sm = owner.get_component(BaseStateMachine)
-		if sm:
-			sm.change_state(Identifiers.PlayerStates.FALL)
-		return true
+		# Check if the collision normal points roughly UP (meaning we are standing ON it)
+		# Tolerance of 0.5 covers slopes, though platforms are usually flat.
+		if collision.get_normal().dot(Vector2.UP) < 0.5:
+			continue 
+		
+		var is_platform = false
+		
+		# Check 1: Physics Layer (Robust)
+		# We check if the collider matches the PLATFORMS layer bit.
+		if collider is CollisionObject2D:
+			if (collider.collision_layer & PhysicsLayers.PLATFORMS) != 0:
+				is_platform = true
+		
+		# Check 2: Group (Legacy Fallback)
+		if not is_platform and collider.is_in_group(Identifiers.Groups.ONEWAY_PLATFORMS):
+			is_platform = true
+			
+		if is_platform:
+			# Nudge down to bypass the one-way threshold
+			owner.position.y += 2 
+			
+			var sm = owner.get_component(BaseStateMachine)
+			if sm:
+				sm.change_state(Identifiers.PlayerStates.FALL)
+			return true
 
 	return false

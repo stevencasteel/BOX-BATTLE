@@ -13,7 +13,17 @@
 
 
 
-
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION - 11/20/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Level Architecture                                                        ║
+║      ░ ■ Deprecated ASCII-based Level Generation.                              ║
+║      ░ ■ Implemented 'LevelExporter' tool to bake legacy layouts into Scenes.  ║
+║      ░ ■ Created 'level_00.tscn' as the new source of truth for the arena.     ║
+║      ░ ■ Refactored 'ArenaBuilder' to instantiate scenes and inject            ║
+║      ░   dependencies dynamically, rather than constructing geometry.          ║
+║      ░ ■ Fixed physics bug regarding one-way platform drop-through logic.      ║
 
 
 
