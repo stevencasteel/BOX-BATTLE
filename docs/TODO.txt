@@ -9,12 +9,42 @@
 ║                        Strategic Development Plan & Backlog                     ║
 ╚═════════════════════════════════════════════════════════════════════════════════╝
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██            PHASE 2: EDITOR WORKFLOW & PRESENTATION                      ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
+   □  1. Level Migration (The Bridge)
+      - Create 'LevelExporter' tool to convert current ASCII layouts into
+        saved '.tscn' Scene files.
+      - Create 'SpawnPoint' scenes (Markers) to replace '@' and '&' text logic.
+      - Refactor 'ArenaBuilder' to load these Scenes instead of parsing text.
+      - Verify game plays identical to before (1:1 aspect, 1000x1000).
+      - Delete legacy 'LevelParser' and ASCII 'LevelLayout' resources.
+
+   □  2. Viewport Architecture (The Cabinet)
+      - Create 'MainContainer' scene to handle Aspect Ratio and Backgrounds.
+      - Implement 'SubViewport' to contain the Game World.
+      - Update 'InputComponent' to handle mouse coordinates relative to Viewport.
+      - Switch resolution to 1440p (2560x1440) and expand Arena to 1300x1300.
+
+   □  3. High-Fidelity Character Art
+      - Replace 'ColorRect' with 'AnimatedSprite2D'.
+      - Implement 'State Animation Mapping' in 'VisualComponent'.
+      - Configure Texture Import settings for crisp High-Res assets (Linear Filter).
+      - Adjust Physics/Hurtboxes to match new sprite pivots (Bottom-Center).
+
+   □  4. Reactive UI & Portraits
+      - Create 'PortraitController' system.
+      - Implement large animated character frames on left/right of Arena.
+      - Wire 'EventBus' signals (Health/Phase) to Portrait emotions.
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██                           BACKLOG                                       ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
    □  Audio Polish:
       - Add specific SFX for different surface materials (footsteps).
       - Implement dynamic music mixing (low pass filter on pause/low health).
 
    □  Visual Polish:
-      - Add subtle dust particles when entity lands or jumps from surface (floor or wall).
-      - Add "Ghost Trail" effect for the Dash mechanic (currently standard particles).
+      - Add "Ghost Trail" effect for the Dash mechanic.
