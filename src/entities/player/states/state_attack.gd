@@ -19,7 +19,7 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	state_data.combat.attack_cooldown_timer = state_data.config.attack_cooldown
 	
-	var is_up_attack = _input.buffer.get("up", false)
+	var is_up_attack = _input.input.up
 	
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		var shape = state_data.config.forward_attack_shape
@@ -38,7 +38,10 @@ func exit() -> void:
 
 func process_physics(delta: float) -> void:
 	if is_instance_valid(_physics):
-		_physics.apply_friction(state_data.config.attack_friction, delta)
+		# Apply gravity so the player falls during the attack
+		_physics.apply_gravity(delta)
+		# Apply friction only to horizontal movement to stop forward momentum
+		_physics.apply_horizontal_friction(state_data.config.attack_friction, delta)
 
 	if state_data.combat.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)

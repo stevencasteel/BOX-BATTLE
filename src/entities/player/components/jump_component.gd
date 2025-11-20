@@ -25,15 +25,13 @@ func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(_owner_node) or not is_instance_valid(_state_machine):
 		return
 	
-	# Check constant on the script resource to avoid cyclic reference to Player class
 	if not _state_machine.get_current_state_key() in Identifiers.PlayerStates.MOVE: # Fallback check
-		# We rely on the string keys matching identifiers
 		var key = _state_machine.get_current_state_key()
 		if key != Identifiers.PlayerStates.MOVE and key != Identifiers.PlayerStates.FALL and key != Identifiers.PlayerStates.JUMP and key != Identifiers.PlayerStates.WALL_SLIDE:
 			return
 
-	if _input_component.buffer.get("jump_just_pressed"):
-		var is_holding_down = _input_component.buffer.get("down", false)
+	if _input_component.input.jump_just_pressed:
+		var is_holding_down = _input_component.input.down
 		
 		if is_holding_down:
 			if JumpHelper.try_platform_drop(_owner_node):

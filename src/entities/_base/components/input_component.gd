@@ -1,4 +1,4 @@
-# src/entities/components/input_component.gd
+# src/entities/_base/components/input_component.gd
 @tool
 ## A component that centralizes all raw input polling.
 ## Uses Dependency Inversion to allow for input mocking in tests.
@@ -7,11 +7,11 @@ extends IComponent
 
 # --- Member Variables ---
 var owner_node: CharacterBody2D
-var p_data: PlayerStateData
+var p_data: Resource # PlayerStateData
 var _input_provider: IInputProvider
 
-## A buffer dictionary populated each frame with the current input state.
-var buffer: Dictionary = {}
+## The strictly typed input state for the current frame.
+var input: InputFrame = InputFrame.new()
 
 # --- Godot Lifecycle Methods ---
 
@@ -25,22 +25,23 @@ func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(owner_node) or not _input_provider:
 		return
 
-	buffer.clear()
+	# Reset frame state
+	# (Optimization: We reuse the same instance to avoid GC churn, just overwriting values)
 	
 	# Use the provider instead of global Input
-	buffer["move_axis"] = _input_provider.get_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT)
-	buffer["up"] = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_UP)
-	buffer["down"] = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_DOWN)
+	input.move_axis = _input_provider.get_axis(Identifiers.Actions.MOVE_LEFT, Identifiers.Actions.MOVE_RIGHT)
+	input.up = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_UP)
+	input.down = _input_provider.is_action_pressed(Identifiers.Actions.MOVE_DOWN)
 	
-	buffer["jump_just_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.JUMP)
-	buffer["jump_held"] = _input_provider.is_action_pressed(Identifiers.Actions.JUMP)
-	buffer["jump_released"] = _input_provider.is_action_just_released(Identifiers.Actions.JUMP)
+	input.jump_just_pressed = _input_provider.is_action_just_pressed(Identifiers.Actions.JUMP)
+	input.jump_pressed = _input_provider.is_action_pressed(Identifiers.Actions.JUMP)
+	input.jump_released = _input_provider.is_action_just_released(Identifiers.Actions.JUMP)
 	
-	buffer["attack_pressed"] = _input_provider.is_action_pressed(Identifiers.Actions.ATTACK)
-	buffer["attack_just_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.ATTACK)
-	buffer["attack_released"] = _input_provider.is_action_just_released(Identifiers.Actions.ATTACK)
+	input.attack_pressed = _input_provider.is_action_pressed(Identifiers.Actions.ATTACK)
+	input.attack_just_pressed = _input_provider.is_action_just_pressed(Identifiers.Actions.ATTACK)
+	input.attack_released = _input_provider.is_action_just_released(Identifiers.Actions.ATTACK)
 	
-	buffer["dash_pressed"] = _input_provider.is_action_just_pressed(Identifiers.Actions.DASH)
+	input.dash_pressed = _input_provider.is_action_just_pressed(Identifiers.Actions.DASH)
 
 
 # --- Public Methods ---
@@ -64,4 +65,4 @@ func teardown() -> void:
 	owner_node = null
 	p_data = null
 	_input_provider = null
-	buffer.clear()
+	# input = null # Keep the instance to avoid null checks, just leave it stale

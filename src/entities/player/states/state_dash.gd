@@ -45,13 +45,12 @@ func _get_dash_direction() -> Vector2:
 	var dir = Vector2.ZERO
 
 	# 1. Horizontal Input
-	# move_axis is usually -1.0, 0.0, or 1.0
-	dir.x = ic.buffer.get("move_axis", 0.0)
+	dir.x = ic.input.move_axis
 
 	# 2. Vertical Input
-	if ic.buffer.get("up"):
+	if ic.input.up:
 		dir.y = -1.0
-	elif ic.buffer.get("down"):
+	elif ic.input.down:
 		dir.y = 1.0
 
 	# 3. Fallback: If no input, dash forward

@@ -25,14 +25,11 @@ func _physics_process(delta: float) -> void:
 	# --- Jump Buffering Logic ---
 	# We poll input here so buffering works in ALL states (Attack, Fall, etc.)
 	var input_comp: InputComponent = owner_node.get_component(InputComponent)
-	if is_instance_valid(input_comp) and input_comp.buffer.get("jump_just_pressed"):
+	if is_instance_valid(input_comp) and input_comp.input.jump_just_pressed:
 		p_data.physics.jump_buffer_timer = p_data.config.jump_buffer
 
 	_update_timers(delta)
 	
-	# Note: move_and_slide() is now called by the owner entity (Player.gd).
-	# This component simply processes state based on the results of that movement.
-
 	if owner_node.is_on_wall() and not owner_node.is_on_floor():
 		p_data.physics.wall_coyote_timer = p_data.config.wall_coyote_time
 		p_data.physics.last_wall_normal = owner_node.get_wall_normal()
@@ -70,7 +67,7 @@ func apply_horizontal_movement() -> void:
 	var input_component: InputComponent = owner_node.get_component(InputComponent)
 	if not is_instance_valid(input_component):
 		return
-	var move_axis = input_component.buffer.get("move_axis", 0.0)
+	var move_axis = input_component.input.move_axis
 	owner_node.velocity.x = move_axis * p_data.config.move_speed
 	if not is_zero_approx(move_axis):
 		p_data.physics.facing_direction = sign(move_axis)
@@ -97,9 +94,14 @@ func damp_jump() -> void:
 		owner_node.velocity.y *= p_data.config.jump_release_dampener
 
 
-## Applies friction/drag to bring velocity to zero.
+## Applies friction/drag to bring velocity to zero (Affects X and Y).
 func apply_friction(amount: float, delta: float) -> void:
 	owner_node.velocity = owner_node.velocity.move_toward(Vector2.ZERO, amount * delta)
+
+
+## Applies friction only to the horizontal axis (Preserves Gravity).
+func apply_horizontal_friction(amount: float, delta: float) -> void:
+	owner_node.velocity.x = move_toward(owner_node.velocity.x, 0.0, amount * delta)
 
 
 ## Executes the physical reaction to a pogo hit.
@@ -114,7 +116,7 @@ func can_wall_slide() -> bool:
 	var ic: InputComponent = owner_node.get_component(InputComponent)
 	if not is_instance_valid(ic):
 		return false
-	var move_axis = ic.buffer.get("move_axis", 0.0)
+	var move_axis = ic.input.move_axis
 	return (
 		p_data.physics.wall_coyote_timer > 0
 		and not owner_node.is_on_floor()

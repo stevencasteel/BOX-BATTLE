@@ -237,9 +237,8 @@ func _update_timers(delta: float) -> void:
 	
 	entity_data.physics.knockback_timer = max(0.0, entity_data.physics.knockback_timer - delta)
 	
-	var ic: InputComponent = get_component(InputComponent)
-	if entity_data.combat.is_charging and is_instance_valid(ic) and ic.buffer.get("attack_pressed"):
-		entity_data.combat.charge_timer += delta
+	# NOTE: Charge timer logic was removed from here. 
+	# It is now handled exclusively by ChargeAttackComponent.
 
 
 # --- Signal Handlers ---

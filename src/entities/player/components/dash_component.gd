@@ -25,13 +25,12 @@ func _physics_process(delta: float) -> void:
 
 	_update_timers(delta)
 
-	# Basic state check without Player class ref
 	var state = _state_machine.get_current_state_key()
 	if state == Identifiers.PlayerStates.ATTACK or state == Identifiers.PlayerStates.HURT or state == Identifiers.PlayerStates.HEAL or state == Identifiers.PlayerStates.DASH:
 		return
 
 	if (
-		_input_component.buffer.get("dash_pressed")
+		_input_component.input.dash_pressed
 		and _p_data.physics.can_dash
 		and _p_data.physics.dash_cooldown_timer <= 0
 	):

@@ -24,12 +24,11 @@ func _physics_process(_delta: float) -> void:
 		return
 
 	var state = _state_machine.get_current_state_key()
-	# Allow heal only in actionable states (reusing MOVE for grounded/idle state logic)
 	if state != Identifiers.PlayerStates.MOVE and state != Identifiers.PlayerStates.FALL and state != Identifiers.PlayerStates.JUMP:
 		return
 
-	if _input_component.buffer.get("jump_just_pressed"):
-		var is_holding_down = _input_component.buffer.get("down", false)
+	if _input_component.input.jump_just_pressed:
+		var is_holding_down = _input_component.input.down
 
 		if (
 			is_holding_down

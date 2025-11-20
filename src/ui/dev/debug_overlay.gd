@@ -148,19 +148,21 @@ func _update_entity_info() -> void:
 
 func _update_player_specific_info() -> void:
 	var p_data = _target_entity.entity_data
-	# UPDATE: Access timers via sub-resources (physics/combat)
 	var timers_text = "Timers: DashCD[%.2f] AtkCD[%.2f]" % [p_data.physics.dash_cooldown_timer, p_data.combat.attack_cooldown_timer]
 	timers_label.text = timers_text
 	
 	var input_comp: InputComponent = _target_entity.get_component(InputComponent)
 	if is_instance_valid(input_comp):
-		var input_buffer: Dictionary = input_comp.buffer
-		var input_text_parts: Array[String] = []
-		for key in input_buffer:
-			var value = input_buffer[key]
-			if (value is bool and value) or (value is float and not is_zero_approx(value)):
-				input_text_parts.append("%s:%s" % [key, str(value).pad_decimals(2)])
-		input_buffer_label.text = "Input: %s" % ", ".join(input_text_parts)
+		# REFACTOR: Read properties from InputFrame instead of iterating dictionary keys
+		var frame: InputFrame = input_comp.input
+		var parts: Array[String] = []
+		if frame.move_axis != 0.0: parts.append("Move:%.1f" % frame.move_axis)
+		if frame.jump_just_pressed: parts.append("Jump(JP)")
+		if frame.jump_pressed: parts.append("Jump(H)")
+		if frame.attack_just_pressed: parts.append("Atk(JP)")
+		if frame.dash_pressed: parts.append("Dash(JP)")
+		
+		input_buffer_label.text = "Input: %s" % ", ".join(parts)
 
 
 # --- Signal Handlers ---

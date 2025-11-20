@@ -25,13 +25,12 @@ func process_physics(delta: float) -> void:
 		state_machine.change_state(Identifiers.PlayerStates.WALL_SLIDE)
 		return
 
-	if _input.buffer.get("jump_just_pressed"):
+	if _input.input.jump_just_pressed:
 		JumpHelper.try_jump(owner, state_data)
 
 
 func _apply_gravity(delta: float) -> void:
 	var gravity_multiplier = 1.0
-	if _input.buffer.get("down"):
-		# UPDATE: config.fast_fall_gravity_multiplier
+	if _input.input.down:
 		gravity_multiplier = state_data.config.fast_fall_gravity_multiplier
 	_physics.apply_gravity(delta, gravity_multiplier)

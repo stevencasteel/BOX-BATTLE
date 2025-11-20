@@ -32,6 +32,14 @@
 ║      ░   - Moved Components/Scripts to 'src/entities/_base'.                   ║
 ║      ░   - Grouped Bosses and Minions under 'src/entities/enemies'.            ║
 ║      ░ ■ Cleaned up Root Directory: Moved Materials and Shaders to content.    ║
+║   █  Player Physics                                                            ║
+║      ░ ■ Fixed gravity suspension bug during aerial attacks.                   ║
+║      ░   - Previously, attacking in mid-air halted all velocity (X and Y).     ║
+║      ░   - Now, attacking only applies friction to Horizontal (X) movement.    ║
+║      ░   - Gravity continues to apply normally during the attack animation.    ║
+
+
+
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.27.0] - PHYSICS & GAME FEEL POLISH - 11/19/2025         ██   ║

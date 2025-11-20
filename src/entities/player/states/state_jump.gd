@@ -20,11 +20,11 @@ func enter(msg := {}) -> void:
 func process_physics(delta: float) -> void:
 	_physics.apply_horizontal_movement()
 
-	if _input.buffer.get("jump_just_pressed"):
+	if _input.input.jump_just_pressed:
 		if state_data.physics.air_jumps_left > 0:
 			_perform_air_jump()
 
-	if _input.buffer.get("jump_released"):
+	if _input.input.jump_released:
 		_physics.damp_jump()
 
 	_apply_gravity(delta)
