@@ -43,7 +43,7 @@ extends Resource
 @export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
 @export_range(100, 5000, 100) var attack_friction: float = 2000.0
 @export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
-@export_range(1.0, 5.0, 0.1) var level_2_charge_time: float = 2.0
+@export_range(1.0, 5.0, 0.01) var level_2_charge_time: float = 1.12
 @export var level_2_damage: int = 3
 @export_range(200, 1000, 10) var pogo_force: float = 450.0
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
@@ -55,3 +55,4 @@ extends Resource
 @export var vfx_heal_aura: PackedScene
 @export var vfx_heal_splash: PackedScene
 @export var vfx_dissolve: ShaderEffect
+@export var vfx_melee_slash: PackedScene

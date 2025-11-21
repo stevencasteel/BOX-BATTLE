@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=13 format=3 uid="uid://v472r2pi58n8"]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=14 format=3 uid="uid://v472r2pi58n8"]
 
 [ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://src/content/vfx/splash_heal_purple.tscn" id="9_splash_heal"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="10_dissolve"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="11_hit_spark"]
+[ext_resource type="PackedScene" path="res://src/content/vfx/melee_slash.tscn" id="12_melee_slash"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
@@ -47,7 +48,7 @@ attack_cooldown = 0.12
 attack_duration = 0.1
 attack_friction = 2000.0
 charge_time = 0.35
-level_2_charge_time = 2.0
+level_2_charge_time = 1.12
 level_2_damage = 3
 pogo_force = 450.0
 close_range_threshold = 75.0
@@ -57,3 +58,4 @@ vfx_charge_splash = ExtResource("7_splash_charge")
 vfx_heal_aura = ExtResource("8_aura_heal")
 vfx_heal_splash = ExtResource("9_splash_heal")
 vfx_dissolve = ExtResource("10_dissolve")
+vfx_melee_slash = ExtResource("12_melee_slash")

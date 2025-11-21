@@ -16,30 +16,53 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.30.0] - ARCHITECTURAL POLISH & BUG FIXES - 11/21/2025   ██   ║
+║   ██           [0.31.0] - PRESENT - 11/21/2025   ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.30.0] - ARCHITECTURAL POLISH & GAMEPLAY FEEL - 11/21/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architectural Refactor                                                    ║
 ║      ░ ■ Visual Consolidation: 'VisualComponent' is now the sole authority on  ║
-║      ░   Entity appearance (Color, Facing Direction). Decoupled 'Player.gd',   ║
-║      ░   'BaseBoss.gd', and 'Minion.gd' from specific visual nodes.            ║
-║      ░ ■ Component Autonomy: 'HealComponent' now self-manages its input,       ║
-║      ░   timers, resources, and VFX. Removed legacy logic from 'Player.gd'.    ║
-║      ░ ■ Boss Standardization: Moved 'Cooldown' and 'Patrol' timing logic      ║
-║      ░   from SceneTree Timers into State classes, reducing node clutter.      ║
+║      ░   Entity appearance. Decoupled Entity scripts from visual nodes.        ║
+║      ░ ■ Component Autonomy: 'HealComponent' fully manages its own input,      ║
+║      ░   timers, and state. Removed legacy bloat from 'Player.gd'.             ║
+║      ░ ■ Boss Standardization: Migrated Cooldown/Patrol timers from SceneNodes ║
+║      ░   to pure State logic.                                                  ║
 ║                                                                                ║
-║   █  Stability & Hardening                                                     ║
-║      ░ ■ ObjectPool: Hardened 'get_instance' to prevent crashes from           ║
-║      ░   accessing previously freed instances.                                 ║
-║      ░ ■ Dependency Injection: Fixed validation crashes in 'HealthComponent'.  ║
+║   █  Gameplay & Combat                                                         ║
+║      ░ ■ Projectile Clash: Implemented generic 'destroy_with_impact' API.      ║
+║      ░   - Player shots (Green) now correctly clash with Enemy shots (Red).    ║
+║      ░   - Pogo attacks now correctly destroy projectiles + trigger bounce.    ║
+║      ░ ■ Healing Risk: Taking damage while healing now consumes the charge     ║
+║      ░   without granting health (Punishment mechanic).                        ║
+║      ░ ■ Tuning: Reduced Level 2 Charge time to 1.12s (-30% + -20%).           ║
 ║                                                                                ║
-║   █  Gameplay & VFX                                                            ║
-║      ░ ■ Projectile Clash: Implemented distinct Red (Enemy) and Green (Player) ║
-║      ░   splash VFX. Level 2 Charge Shots now correctly pierce Boss shots.     ║
-║      ░ ■ Healing: Added punishment mechanic—getting hit while healing now      ║
-║      ░   consumes the charge without healing the player.                       ║
-║      ░ ■ Hitbox Polish: Fixed debug shapes lagging behind player movement.     ║
+║   █  Visuals & Feedback                                                        ║
+║      ░ ■ Melee Visuals: Added procedural Green Gradient swipes for Side, Up,   ║
+║      ░   and Pogo attacks matching hitbox size.                                ║
+║      ░ ■ Enemy Visuals: Standardized Enemy projectiles/splashes to Red.        ║
+║      ░   - Added Large Red Splash for Boss Heavy Projectiles.                  ║
+║      ░ ■ Hitbox Polish: Debug shapes now sync facing direction instantly.      ║
 ║                                                                                ║
+║   █  Stability                                                                 ║
+║      ░ ■ ObjectPool: Hardened against "invalid previously freed instance".     ║
+║      ░ ■ Crash Fixes: Resolved race conditions in Hurtbox/Health/Player logic  ║
+║      ░   during scene transitions and death sequences.                         ║
+║                                                                                ║
+
+
 
 
 

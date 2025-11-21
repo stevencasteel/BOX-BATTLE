@@ -20,14 +20,24 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_cooldown_timer = state_data.config.attack_cooldown
 	
 	var is_up_attack = _input.input.up
+	var facing = state_data.physics.facing_direction
 	
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		var shape = state_data.config.forward_attack_shape
-		var offset = Vector2(state_data.physics.facing_direction * 60, 0)
+		var offset = Vector2(facing * 60, 0)
+		var rotation_angle = 0.0
+		
 		if is_up_attack:
 			shape = state_data.config.upward_attack_shape
 			offset = Vector2(0, -40)
+			rotation_angle = deg_to_rad(-90)
+		elif facing < 0:
+			rotation_angle = deg_to_rad(180)
+			
 		_player.melee_hitbox.activate(shape, offset)
+		
+		# Spawn Visual
+		_spawn_visual(shape.get_rect().size, offset, rotation_angle)
 
 
 func exit() -> void:
@@ -45,3 +55,17 @@ func process_physics(delta: float) -> void:
 
 	if state_data.combat.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
+
+
+func _spawn_visual(size: Vector2, offset: Vector2, rot: float) -> void:
+	var scene = state_data.config.vfx_melee_slash
+	if not is_instance_valid(scene) or not is_instance_valid(_player):
+		return
+		
+	var visual = scene.instantiate()
+	visual.position = offset
+	visual.rotation = rot
+	_player.add_child(visual) # Add as child so it follows player during the swing
+	
+	if visual.has_method("setup"):
+		visual.setup(size, state_data.config.attack_duration)

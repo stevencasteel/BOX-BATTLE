@@ -16,10 +16,18 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	
 	# Direct Actuation
+	var shape_size = Vector2(40, 40) # Default playerbody size
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
 		# Passing null shape reuses the one defined in the scene.
 		# Offset (0, 40) places it below the player.
 		_player.pogo_hitbox.activate(null, Vector2(0, 40))
+		
+		# Fetch shape size if possible for accurate visual
+		var col = _player.pogo_hitbox.get_node_or_null("CollisionShape2D")
+		if col and col.shape:
+			shape_size = col.shape.get_rect().size
+	
+	_spawn_visual(shape_size)
 	
 	# IMMEDIATE CHECK:
 	# If we entered this state while already on the ground (e.g. standing pogo),
@@ -104,3 +112,17 @@ func _is_valid_bounce_surface(body: Node) -> bool:
 func _trigger_bounce() -> void:
 	if _player.has_method("_on_pogo_bounce_requested"):
 		_player._on_pogo_bounce_requested()
+
+
+func _spawn_visual(size: Vector2) -> void:
+	var scene = state_data.config.vfx_melee_slash
+	if not is_instance_valid(scene) or not is_instance_valid(_player):
+		return
+		
+	var visual = scene.instantiate()
+	visual.position = Vector2(0, 40)
+	visual.rotation = deg_to_rad(90) # Point Down (Dark Top -> Light Bottom)
+	_player.add_child(visual)
+	
+	if visual.has_method("setup"):
+		visual.setup(size, state_data.config.attack_duration)
