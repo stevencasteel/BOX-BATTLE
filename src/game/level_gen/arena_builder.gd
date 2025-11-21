@@ -37,8 +37,8 @@ func build_level_async() -> Node:
 	# 2. Construct compatibility BuildData for EncounterScene
 	_current_build_data = LevelBuildDataScript.new()
 	_current_build_data.encounter_data_resource = encounter_data
-	# Legacy support: assume 20x20 grid based on 1000x1000 level for camera centering
-	_current_build_data.dimensions_tiles = Vector2i(20, 20) 
+	# UPDATE: 2560x1440 arena = ~52x29 tiles (at 50px tile size)
+	_current_build_data.dimensions_tiles = Vector2i(52, 29) 
 	
 	# 3. Find Spawn Points
 	var player_spawn = _current_level_container.find_child("PlayerSpawn")

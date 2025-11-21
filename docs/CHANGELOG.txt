@@ -16,7 +16,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.31.0] - PRESENT - 11/21/2025   ██   ║
+║   ██           [0.32.0] - PRESENT - 11/21/2025                            ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
@@ -30,7 +30,33 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.30.0] - ARCHITECTURAL POLISH & GAMEPLAY FEEL - 11/21/2025   ██   ║
+║   ██           [0.31.0] - 1440P EXPANSION & TALLER PLAYER - 11/21/2025    ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Level Design & Presentation                                               ║
+║      ░ ■ Arena Expansion: Expanded gameplay area to full 2560x1440 (QHD).      ║
+║      ░ ■ Level Layout: Redesigned 'level_00' into "The Divided Ground".        ║
+║      ░   - Features a central spike pit, high perches, and floating bridges.   ║
+║      ░   - Forces verticality and parkour during boss encounters.              ║
+║      ░ ■ Viewport: Updated Cabinet logic to handle the 26x52 tile grid.        ║
+║                                                                                ║
+║   █  Player Update                                                             ║
+║      ░ ■ Form Factor: Player size doubled vertically (40x80).                  ║
+║      ░ ■ Combat Range: Attack hitboxes extended to match new reach.            ║
+║      ░ ■ Visuals: Added procedural Green Gradient Swipe FX for all melee       ║
+║      ░   attacks (Side, Up, Pogo) to clearly visualize hitbox area.            ║
+║      ░ ■ VFX: Resized Charge and Heal auras to fit the taller body.            ║
+║                                                                                ║
+║   █  Combat Polish                                                             ║
+║      ░ ■ Tuning: Reduced Level 2 Charge time to 1.12s for snappier combat.     ║
+║      ░ ■ Projectile Interaction: Player Melee and Pogo now destroy enemy       ║
+║      ░   projectiles on contact, triggering a Red Splash (Enemy death) AND     ║
+║      ░   a Green Spark (Player hit).                                           ║
+║      ░ ■ Visual Clarity: Standardized Enemy projectiles/impacts to Red,        ║
+║      ░   Player effects to Green.                                              ║
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██       [0.30.0] - ARCHITECTURAL POLISH & GAMEPLAY FEEL - 11/21/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Architectural Refactor                                                    ║
@@ -67,7 +93,7 @@
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
+║   ██    [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Level Architecture                                                        ║
@@ -105,8 +131,6 @@
       ░ ■ Documentation: Updated ARCHITECTURE.txt to reflect current patterns.
 
 
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.28.0] - ARCHITECTURAL REFACTOR - 11/19/2025             ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -125,8 +149,6 @@
 ║      ░   - Previously, attacking in mid-air halted all velocity (X and Y).     ║
 ║      ░   - Now, attacking only applies friction to Horizontal (X) movement.    ║
 ║      ░   - Gravity continues to apply normally during the attack animation.    ║
-
-
 
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -179,9 +201,6 @@
       ░   - Enables "beam struggle" style mechanics where powerful shots
       ░     cleave through weaker enemy fire.
 
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.26.0] - VISUAL JUICE & FX & MULTI-SLOT SAVE SYSTEM - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -214,8 +233,6 @@
 ║   █  Developer Tools                                                           ║
 ║      ░ ■ Added TAB shortcut in Main Menu to instantly start a fresh run in     ║
 ║      ░   Slot 0 for rapid iteration.                                           ║
-
-
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

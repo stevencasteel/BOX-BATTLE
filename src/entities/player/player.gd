@@ -25,8 +25,7 @@ const ACTION_ALLOWED_STATES = [
 @export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
-# NOTE: visual_sprite removed. Managed by VisualComponent.
-# NOTE: healing_timer removed. Managed by HealComponent.
+@onready var healing_timer: Timer = $HealingTimer
 @onready var melee_hitbox: HitboxComponent = $MeleeHitbox
 @onready var pogo_hitbox: HitboxComponent = $PogoHitbox
 @onready var hurtbox: HurtboxComponent = $Hurtbox
@@ -54,9 +53,9 @@ func _ready() -> void:
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
 	
-	# FIX: Initialize Hitbox Position so syncing works immediately
+	# FIX: Initialize Hitbox Position (70 offset)
 	if is_instance_valid(melee_hitbox):
-		melee_hitbox.set_shape_offset(Vector2(60.0, 0.0))
+		melee_hitbox.set_shape_offset(Vector2(70.0, 0.0))
 
 
 func _physics_process(delta: float) -> void:
@@ -69,11 +68,9 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_visual_component):
 		_visual_component.set_facing(facing)
 	
-	# POLISH: Sync Hitbox Debug Position
-	# We move the inner shape, not the hitbox container, to ensure accurate offset.
+	# POLISH: Sync Hitbox Debug Position (70 offset)
 	if is_instance_valid(melee_hitbox):
-		# 60 is the default melee offset from forward_attack_shape.tres/PlayerConfig
-		var debug_offset = Vector2(60.0 * facing, 0.0)
+		var debug_offset = Vector2(70.0 * facing, 0.0)
 		melee_hitbox.set_shape_offset(debug_offset)
 	
 	# Delegate actual movement to base class
@@ -124,8 +121,6 @@ func _on_build() -> void:
 	else:
 		push_error("Player: Missing StateMachineConfig!")
 
-	# Note: We still pass the raw node to the components during setup,
-	# because VisualComponent needs to grab it.
 	var raw_visual_node = get_node("ColorRect")
 
 	var per_component_deps := {
@@ -197,6 +192,10 @@ func teardown() -> void:
 
 	if is_instance_valid(pc) and pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 		pc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
+
+	if is_instance_valid(healing_timer):
+		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
+			healing_timer.timeout.disconnect(_on_healing_timer_timeout)
 	
 	if is_instance_valid(hc) and hc.took_damage.is_connected(_on_took_damage):
 		hc.took_damage.disconnect(_on_took_damage)
@@ -290,6 +289,11 @@ func _update_timers(delta: float) -> void:
 
 
 # --- Signal Handlers ---
+
+func _on_healing_timer_timeout() -> void:
+	# Handled by HealComponent now, but signal connection remains in build for safety
+	pass 
+
 
 func _on_pogo_bounce_requested() -> void:
 	var physics = get_component(PlayerPhysicsComponent)

@@ -24,12 +24,14 @@ func enter(_msg := {}) -> void:
 	
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		var shape = state_data.config.forward_attack_shape
-		var offset = Vector2(facing * 60, 0)
+		# Offset calculation: Body Half-Width (20) + Hitbox Half-Width (50) = 70
+		var offset = Vector2(facing * 70, 0)
 		var rotation_angle = 0.0
 		
 		if is_up_attack:
 			shape = state_data.config.upward_attack_shape
-			offset = Vector2(0, -40)
+			# Offset: Top of Body (-40) - Margin (20) = -60
+			offset = Vector2(0, -60)
 			rotation_angle = deg_to_rad(-90)
 		elif facing < 0:
 			rotation_angle = deg_to_rad(180)

@@ -16,11 +16,11 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	
 	# Direct Actuation
-	var shape_size = Vector2(40, 40) # Default playerbody size
+	var shape_size = Vector2(40, 40) # Default playerbody size (width only relevant here)
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
-		# Passing null shape reuses the one defined in the scene.
-		# Offset (0, 40) places it below the player.
-		_player.pogo_hitbox.activate(null, Vector2(0, 40))
+		# Reuse existing shape logic, but update offset
+		# Bottom of Body (40) + Margin (20) = 60
+		_player.pogo_hitbox.activate(null, Vector2(0, 60))
 		
 		# Fetch shape size if possible for accurate visual
 		var col = _player.pogo_hitbox.get_node_or_null("CollisionShape2D")
@@ -30,8 +30,6 @@ func enter(_msg := {}) -> void:
 	_spawn_visual(shape_size)
 	
 	# IMMEDIATE CHECK:
-	# If we entered this state while already on the ground (e.g. standing pogo),
-	# we must perform an immediate synchronous check.
 	if _player.is_on_floor():
 		if _check_pogo_ground_bounce():
 			return
@@ -47,11 +45,8 @@ func process_physics(delta: float) -> void:
 	_physics.apply_gravity(delta)
 
 	if owner.is_on_floor():
-		# If we landed this frame, check if it's valid pogo terrain.
 		if _check_pogo_ground_bounce():
 			return
-
-		# If not a pogo surface, land normally.
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
 		return
 
@@ -63,9 +58,6 @@ func _check_pogo_ground_bounce() -> bool:
 	if not is_instance_valid(_player) or not is_instance_valid(_player.pogo_hitbox):
 		return false
 
-	# 1. Check Area2D overlaps (Fastest, handles continuous overlaps)
-	# GUARD: We must check if monitoring is actually active. HitboxComponent uses
-	# set_deferred to enable it, so it will be false on the first frame (enter).
 	if _player.pogo_hitbox.monitoring:
 		var bodies = _player.pogo_hitbox.get_overlapping_bodies()
 		for body in bodies:
@@ -74,8 +66,6 @@ func _check_pogo_ground_bounce() -> bool:
 				_trigger_bounce()
 				return true
 
-	# 2. Synchronous Physics Query (Fallback)
-	# Required for frame-perfect inputs where Area2D monitoring hasn't started yet.
 	var space_state = _player.get_world_2d().direct_space_state
 	var query = PhysicsShapeQueryParameters2D.new()
 	
@@ -84,10 +74,8 @@ func _check_pogo_ground_bounce() -> bool:
 		return false
 		
 	query.shape = shape_node.shape
-	# Must match the offset used in activate()
-	var offset = Vector2(0, 40) 
+	var offset = Vector2(0, 60) # Update sync offset
 	query.transform = Transform2D(0.0, _player.global_position + offset)
-	# Check Solid World (128) and Platforms (2)
 	query.collision_mask = PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
 	query.exclude = [_player.get_rid()]
 	
@@ -120,8 +108,8 @@ func _spawn_visual(size: Vector2) -> void:
 		return
 		
 	var visual = scene.instantiate()
-	visual.position = Vector2(0, 40)
-	visual.rotation = deg_to_rad(90) # Point Down (Dark Top -> Light Bottom)
+	visual.position = Vector2(0, 60) # Offset 60
+	visual.rotation = deg_to_rad(90)
 	_player.add_child(visual)
 	
 	if visual.has_method("setup"):

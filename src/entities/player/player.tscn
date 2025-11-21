@@ -11,10 +11,10 @@
 [ext_resource type="Resource" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playerbody"]
-size = Vector2(40, 40)
+size = Vector2(40, 80)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
-size = Vector2(42, 42)
+size = Vector2(42, 82)
 
 [node name="Player" type="CharacterBody2D"]
 collision_mask = 138
@@ -28,10 +28,10 @@ archetype = ExtResource("2_archetype")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 offset_left = -20.0
-offset_top = -20.0
+offset_top = -40.0
 offset_right = 20.0
-offset_bottom = 20.0
-pivot_offset = Vector2(20, 20)
+offset_bottom = 40.0
+pivot_offset = Vector2(20, 40)
 color = Color(0.941176, 0.941176, 0.941176, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -43,7 +43,7 @@ collision_mask = 148
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeHitbox"]
-position = Vector2(60, 0)
+position = Vector2(70, 0)
 shape = SubResource("RectangleShape2D_playerbody")
 disabled = true
 
