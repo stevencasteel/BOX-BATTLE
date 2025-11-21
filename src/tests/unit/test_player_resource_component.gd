@@ -4,7 +4,7 @@ extends GutTest
 # --- Constants ---
 const PlayerResourceComponent = preload("res://src/entities/player/components/player_resource_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const PlayerConfig = preload("res://src/data/player_config.tres")
 const EventCatalog = preload("res://src/core/events/event_catalog.gd")
 
 # --- Test Internals ---
@@ -29,16 +29,18 @@ func before_each():
 	var mock_owner = Node.new()
 	add_child_autofree(mock_owner)
 	_player_data = PlayerStateData.new()
-	_player_data.config = PlayerConfig # UPDATE
-	# Explicitly set max charges for clarity in tests
-	# UPDATE: Data is now nested in 'combat'
+	_player_data.config = PlayerConfig
 	_player_data.combat.max_healing_charges = 3
 
 	_resource_component = PlayerResourceComponent.new()
 	mock_owner.add_child(_resource_component)
 
 	# 3. Inject dependencies
-	var dependencies = {"data_resource": _player_data, "services": fake_services}
+	var dependencies = {
+		"data_resource": _player_data,
+		"services": fake_services,
+		"event_bus": _fake_event_bus # FIX: Explicit injection required
+	}
 	_resource_component.setup(mock_owner, dependencies)
 
 # --- The Tests ---
@@ -50,7 +52,6 @@ func test_on_damage_dealt_increments_determination():
 
 func test_healing_charge_gained_at_threshold():
 	_player_data.combat.healing_charges = 0
-	# UPDATE: determination_per_charge (removed player_ prefix)
 	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
@@ -63,7 +64,6 @@ func test_healing_charge_gained_at_threshold():
 
 func test_healing_charges_are_capped():
 	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges
-	# UPDATE: determination_per_charge
 	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
@@ -76,7 +76,6 @@ func test_healing_charges_are_capped():
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 
 func test_consume_charge_decrements_and_emits_event():
-	# Start with a valid number of charges (at max) and consume one.
 	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges # Starts at 3
 	_resource_component.consume_healing_charge()
 	assert_eq(_player_data.combat.healing_charges, 2, "Healing charges should decrement by 1.")

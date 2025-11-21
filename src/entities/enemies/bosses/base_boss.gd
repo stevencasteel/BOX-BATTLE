@@ -5,23 +5,23 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: BossBehavior = null
-@export var state_machine_config: StateMachineConfig = null
+@export var behavior: BossBehavior
+@export var state_machine_config: StateMachineConfig
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect = null
-@export var phase_change_shake_effect: ScreenShakeEffect = null
-@export var death_shake_effect: ScreenShakeEffect = null
-@export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+@export var hit_flash_effect: ShaderEffect
+@export var phase_change_shake_effect: ScreenShakeEffect
+@export var death_shake_effect: ScreenShakeEffect
+@export var hit_spark_effect: VFXEffect
+@export var dissolve_effect: ShaderEffect
 
 @export_group("State Scripts")
-@export var state_idle_script: Script = null
-@export var state_attack_script: Script = null
-@export var state_cooldown_script: Script = null
-@export var state_patrol_script: Script = null
-@export var state_lunge_script: Script = null
-@export var state_melee_script: Script = null
+@export var state_idle_script: Script
+@export var state_attack_script: Script
+@export var state_cooldown_script: Script
+@export var state_patrol_script: Script
+@export var state_lunge_script: Script
+@export var state_melee_script: Script
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -68,9 +68,13 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
+	
+	# Calculate Gravity locally
 	if not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
-	move_and_slide()
+	
+	# Delegate execution to BaseEntity
+	super._physics_process(delta)
 
 
 func _exit_tree() -> void:

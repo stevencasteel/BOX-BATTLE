@@ -6,7 +6,8 @@ const InputComponent = preload("res://src/entities/_base/components/input_compon
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres")
 const FakeInputProvider = preload("res://src/tests/fakes/fake_input_provider.gd")
-const Identifiers = preload("res://src/shared/identifiers.gd") # Note: identifiers moved to shared next? No, keeping updated path
+# FIX: Correct path to Identifiers
+const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _input_component: InputComponent

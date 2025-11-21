@@ -31,6 +31,14 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
 
+func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint() or _is_dead:
+		return
+	
+	# Centralized physics execution.
+	# Subclasses should update velocity before calling super._physics_process().
+	move_and_slide()
+
 func _exit_tree() -> void:
 	# Defined to allow subclasses to call super._exit_tree() safely
 	pass

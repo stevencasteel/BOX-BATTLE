@@ -6,13 +6,13 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: MinionBehavior = null
-@export var state_machine_config: StateMachineConfig = null
+@export var behavior: MinionBehavior
+@export var state_machine_config: StateMachineConfig
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect = null
-@export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+@export var hit_flash_effect: ShaderEffect
+@export var hit_spark_effect: VFXEffect
+@export var dissolve_effect: ShaderEffect
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -58,7 +58,8 @@ func _physics_process(delta: float) -> void:
 	elif not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 		
-	move_and_slide()
+	# Delegate to BaseEntity
+	super._physics_process(delta)
 
 
 func _notification(what: int) -> void:

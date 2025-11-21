@@ -3,9 +3,10 @@ extends GutTest
 
 # --- Constants ---
 const HealthComponent = preload("res://src/entities/_base/components/health_component.gd")
+const StatusEffectComponent = preload("res://src/entities/_base/components/status_effect_component.gd") # FIX: Added
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/shared/types/damage_info.gd")
-const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const PlayerConfig = preload("res://src/data/player_config.tres")
 const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
@@ -14,6 +15,7 @@ const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _health_component: HealthComponent
+var _status_component: StatusEffectComponent # FIX: Added
 var _player_data: PlayerStateData
 var _mock_owner: CharacterBody2D
 var _died_signal_was_emitted: bool
@@ -33,38 +35,44 @@ func before_each() -> void:
 	# 2. Create our robust FakeServiceLocator and inject the double
 	_fake_services = FakeServiceLocator.new()
 	_fake_services.mock_fx_manager = _fx_manager_double
+	# We also need a real (or fake) EventBus for HealthComponent
+	_fake_services.mock_event_bus = preload("res://src/tests/fakes/fake_event_bus.gd").new()
+	add_child_autofree(_fake_services.mock_event_bus)
 	add_child_autofree(_fake_services)
 
 	# 3. Setup test subject
 	_mock_owner = CharacterBody2D.new()
-	# UPDATE: Add to player group so HealthComponent logic works correctly with PlayerConfig
 	_mock_owner.add_to_group(Identifiers.Groups.PLAYER)
 	add_child_autofree(_mock_owner)
 
 	_player_data = PlayerStateData.new()
-	_player_data.config = PlayerConfig # UPDATE
+	_player_data.config = PlayerConfig
 	_player_data.max_health = 10
 	_player_data.health = 10
 
 	_health_component = HealthComponent.new()
 	_mock_owner.add_child(_health_component)
+	
+	# FIX: Add StatusEffectComponent to owner
+	_status_component = StatusEffectComponent.new()
+	_mock_owner.add_child(_status_component)
 
 	var vfx = VFXEffect.new()
 	vfx.pool_key = "test_hit_spark"
 	
-	# Create specific damage config for test
 	var damage_config = DamageResponseConfig.new()
 	damage_config.invincibility_duration = 1.0
 	damage_config.knockback_speed = 100.0
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": PlayerConfig, # Legacy
-		"damage_config": damage_config, # DIP Injection
+		"config": PlayerConfig,
+		"damage_config": damage_config,
 		"services": _fake_services,
 		"hit_spark_effect": vfx,
-		"event_bus": _fake_services.event_bus, # Direct injection
-		"fx_manager": _fake_services.fx_manager # Direct injection
+		"event_bus": _fake_services.event_bus,
+		"fx_manager": _fake_services.fx_manager,
+		"status_effect_component": _status_component # FIX: Inject
 	}
 	_health_component.setup(_mock_owner, dependencies)
 

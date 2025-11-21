@@ -41,6 +41,17 @@
 ║      ░ ■ Fixed VFX (Heal/Charge Splashes) parenting logic.                     ║
 ║                                                                                ║
 
+   █  Optimization & Refactoring                                      
+      ░ ■ Level Architecture: Consolidated thousands of tile blocks in 'level_00'
+      ░   into optimized collision rectangles, significantly reducing scene size.
+      ░ ■ Physics Authority: Centralized 'move_and_slide()' execution in         
+      ░   'BaseEntity'. Subclasses (Player, Boss, Minion) now delegate movement  
+      ░   logic to the base class via 'super._physics_process()'.                
+      ░ ■ Testing: Refactored GUT test suite to support new Dependency Injection 
+      ░   requirements (EventBus, StatusEffectComponent). All 18 tests passing.  
+      ░ ■ Documentation: Updated ARCHITECTURE.txt to reflect current patterns.
+
+
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

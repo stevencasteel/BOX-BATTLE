@@ -3,7 +3,7 @@
 ║  █████╗ ██████╗  ██████╗██╗  ██╗██╗████████╗███████╗ ██████╗████████╗██╗   ██╗██████╗ ███████╗   ║
 ║ ██╔══██╗██╔══██╗██╔════╝██║  ██║██║╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝   ║
 ║ ███████║██████╔╝██║     ███████║██║   ██║   █████╗  ██║        ██║   ██║   ██║██████╔╝█████╗     ║
-║ ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
+║ ██╔══██╗██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
 ║ ██║  ██║██║  ██║╚██████╗██║  ██║██║   ██║   ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║███████╗   ║
 ║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝   ║
 ║                                                                                                  ║
@@ -11,27 +11,69 @@
 ║                                                                                                  ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
 
-# PROJECT ARCHITECTURE
+# 1. CORE PATTERNS
 
-## 1. Core Pattern: Service Locator + Autoloads
-*   **Global Access:** Managed via `ServiceLocator` singleton (Autoload).
-*   **Services:** `FXManager`, `ObjectPool`, `EventBus`, `AudioManager`.
-*   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
+## Service Locator & Dependency Injection
+*   **Pattern:** Global access is managed via a `ServiceLocator` autoload.
+*   **Injection:** Entities/Components DO NOT access Autoloads directly.
+    *   **Entities:** Receive the locator via `build_entity()` or Spawners.
+    *   **Components:** Receive dependencies via `setup(owner, dependencies)`.
+*   **Benefit:** Allows easy swapping of systems (e.g., `FakeEventBus`) during Unit Testing.
 
-## 2. Entity Pattern: Composition + Archetypes
-*   **BaseEntity:** Generic shell (`CharacterBody2D`). Responsible for `move_and_slide()` physics execution.
-*   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
-*   **Components:** Single-responsibility nodes (Health, Input, Physics).
-    *   *Physics Authority:* Components (e.g., `PlayerPhysicsComponent`) calculate and modify `velocity`. The Owner Entity applies that velocity via `move_and_slide()`.
+## Entity-Component (ECS-Lite)
+*   **BaseEntity:** The physical shell (`CharacterBody2D`). Handles strictly physics execution (`move_and_slide`).
+*   **Archetype:** A Resource defining which component scenes to instantiate.
+*   **Components:** Logic containers (Health, Input, Combat). They manipulate data/state, but the Entity applies the result.
 
-## 3. Logic Pattern: State Machines & Strategy
-*   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
-*   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
+## Strategy & Command
+*   **Logic as Data:** Complex behaviors are Resources, not hardcoded scripts.
+    *   `AttackLogic`: Defines *how* an attack executes.
+    *   `MovementLogic`: Defines *how* an enemy moves.
+*   **Benefit:** "Programming in the Inspector." New enemies can be created by mixing and matching existing logic resources.
 
-## 4. Data Pattern: Resource-Driven
-*   **Config:** All tuning numbers live in Config Resources (`PlayerConfig`, `EnemyConfig`).
-*   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
+---
 
-## 5. Communication Rules
-*   **Local (Parent<->Child):** Use Godot Signals.
-*   **Global (System<->System):** Use `EventBus` (e.g., UI updates, achievements).
+# 2. KEY SYSTEMS
+
+## Viewport Cabinet (Resolution Management)
+*   **Problem:** Pixel art games need integer scaling, but modern UI needs high-res (1440p).
+*   **Solution:**
+    *   **Root Window:** 2560x1440 (QHD). Handles UI and Post-Process Shaders.
+    *   **SubViewport:** 1000x1000 (Logical Arena). Handles Gameplay.
+    *   **Coordinate Mapping:** `ViewportCabinet.world_to_screen_pos()` maps game coordinates to screen UVs for shaders (Shockwave, etc).
+
+## Safety Hooks (Memory Management)
+*   **Problem:** Godot objects can leave dangling references in global singletons (EventBus) when scenes change.
+*   **Solution:** `ISceneController` interface.
+    *   **Contract:** Scenes must implement `scene_exiting()`.
+    *   **Flow:** `SceneManager` calls `scene_exiting()` -> Entities call `teardown()` -> Components disconnect signals -> Scene changes.
+
+## Input Abstraction
+*   **Interface:** `IInputProvider`.
+*   **Implementation:** `StandardInputProvider` wraps Godot's `Input` singleton.
+*   **Benefit:** Unit tests use `FakeInputProvider` to simulate key presses frame-by-frame without needing OS-level input simulation.
+
+---
+
+# 3. DATA & CONFIGURATION
+
+## Resource-Driven Tuning
+*   **Config Resources:** All magic numbers (speed, damage, cooldowns) live in `PlayerConfig.tres` or `EnemyConfig.tres`.
+*   **State Resources:** Runtime data lives in `PlayerStateData` or `BossStateData`, passed between components. Components are stateless logic processors; Resources hold the state.
+
+## VFX & Shader Management
+*   **Object Pooling:** `HitSpark` and Projectiles are pooled to prevent GC stutter.
+*   **Shader Pre-warming:** A Loading Screen renders hidden instances of heavy shaders to force compilation before gameplay starts, preventing the "first-hit stutter."
+
+---
+
+# 4. COMMUNICATION RULES
+
+## Local (Signal)
+*   **Scope:** Inside a single scene file (Parent <-> Child).
+*   **Usage:** Component emits `health_changed`, Entity owner reacts.
+
+## Global (EventBus)
+*   **Scope:** System to System (Entity <-> HUD, Encounter <-> Music).
+*   **Usage:** Player emits `player_died` -> EventBus -> HUD shows Game Over.
+*   **Rule:** If the sender doesn't know the receiver exists, use EventBus.

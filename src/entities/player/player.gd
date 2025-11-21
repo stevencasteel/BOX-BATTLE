@@ -57,7 +57,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_timers(delta)
 	
-	move_and_slide()
+	# Delegate actual movement to base class
+	super._physics_process(delta)
 
 
 func _exit_tree() -> void:
