@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://c6vknl71ea1bo"]
+[gd_scene load_steps=14 format=3 uid="uid://c6vknl71ea1bo"]
 
 [ext_resource type="Script" uid="uid://bymbb3pjo71tf" path="res://src/entities/player/player.gd" id="1_4d1td"]
 [ext_resource type="Resource" path="res://src/entities/archetypes/player_archetype.tres" id="2_archetype"]
@@ -15,8 +15,11 @@ size = Vector2(40, 80)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_melee"]
 size = Vector2(86, 32.5)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_up_attack"]
+size = Vector2(60, 60)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pogo"]
-size = Vector2(104, 49.5)
+size = Vector2(104, 26.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 size = Vector2(42, 82)
@@ -53,6 +56,18 @@ position = Vector2(77, 0)
 shape = SubResource("RectangleShape2D_melee")
 disabled = true
 
+[node name="UpHitbox" type="Area2D" parent="."]
+collision_layer = 256
+collision_mask = 28
+monitoring = false
+monitorable = false
+script = ExtResource("17_hitbox_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UpHitbox"]
+position = Vector2(0, -70)
+shape = SubResource("RectangleShape2D_up_attack")
+disabled = true
+
 [node name="PogoHitbox" type="Area2D" parent="."]
 collision_layer = 256
 collision_mask = 28
@@ -61,7 +76,7 @@ monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PogoHitbox"]
-position = Vector2(0, 66.25)
+position = Vector2(0, 54.75)
 shape = SubResource("RectangleShape2D_pogo")
 disabled = true
 
@@ -73,3 +88,12 @@ hurt_response_state = &"hurt"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="MuzzleForward" type="Marker2D" parent="."]
+position = Vector2(34, 0)
+
+[node name="MuzzleUp" type="Marker2D" parent="."]
+position = Vector2(0, -60)
+
+[node name="MuzzleDown" type="Marker2D" parent="."]
+position = Vector2(0, 60)

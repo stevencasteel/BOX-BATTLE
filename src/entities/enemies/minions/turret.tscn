@@ -6,14 +6,14 @@
 [ext_resource type="Resource" path="res://src/entities/archetypes/minion_archetype.tres" id="4_archetype"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="5_dissolve_effect"]
 [ext_resource type="Resource" uid="uid://dp642amrtq5i3" path="res://src/entities/enemies/minions/data/turret_behavior.tres" id="6_turret_behavior"]
-[ext_resource type="Script" path="res://src/entities/_base/components/sensor_component.gd" id="7_sensor_script"]
-[ext_resource type="Resource" path="res://src/entities/enemies/minions/data/minion_state_machine_config.tres" id="8_sm_config"]
+[ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/_base/components/sensor_component.gd" id="7_sensor_script"]
+[ext_resource type="Resource" uid="uid://dfvpyyu7iy8by" path="res://src/entities/enemies/minions/data/minion_state_machine_config.tres" id="8_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_minionbody"]
 size = Vector2(50, 50)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rangedetector"]
-radius = 400.0
+radius = 277.272
 
 [node name="Turret" type="CharacterBody2D" groups=["enemy"]]
 collision_layer = 4
@@ -39,7 +39,7 @@ one_shot = true
 
 [node name="RangeDetector" type="Area2D" parent="." groups=["sensors"]]
 collision_layer = 512
-collision_mask = 1
+monitorable = false
 script = ExtResource("7_sensor_script")
 state_property_name = &"is_player_in_range"
 

@@ -26,14 +26,25 @@ const ACTION_ALLOWED_STATES = [
 
 # --- Node References ---
 @onready var melee_hitbox: HitboxComponent = $MeleeHitbox
+@onready var up_hitbox: HitboxComponent = $UpHitbox
 @onready var pogo_hitbox: HitboxComponent = $PogoHitbox
 @onready var hurtbox: HurtboxComponent = $Hurtbox
+
+# NEW: Muzzles
+@onready var muzzle_forward: Marker2D = $MuzzleForward
+@onready var muzzle_up: Marker2D = $MuzzleUp
+@onready var muzzle_down: Marker2D = $MuzzleDown
 
 # --- Data ---
 var entity_data: PlayerStateData
 
 # --- Components ---
 var _visual_component: VisualComponent
+
+# --- Internal Variables ---
+var _default_melee_shape_x: float = 0.0
+# NEW: Capture forward muzzle default X
+var _default_muzzle_x: float = 60.0
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
@@ -46,33 +57,41 @@ func _ready() -> void:
 	
 	entity_data = PlayerStateData.new()
 	
+	# CAPTURE EDITOR DEFAULTS
+	if is_instance_valid(melee_hitbox):
+		_default_melee_shape_x = melee_hitbox.get_shape_offset().x
+	if is_instance_valid(muzzle_forward):
+		_default_muzzle_x = muzzle_forward.position.x
+	
 	build_entity()
 
 	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
-	
-	# FIX: Initialize Hitbox Position (70 offset)
-	if is_instance_valid(melee_hitbox):
-		melee_hitbox.set_shape_offset(Vector2(70.0, 0.0))
 
 
 func _physics_process(delta: float) -> void:
-	# CRITICAL FIX: Guard against null entity_data during initialization or teardown
+	# Guard against null entity_data during initialization or teardown
 	if _is_dead or not is_instance_valid(entity_data):
 		return
 
 	_update_timers(delta)
 	
-	# Update Visuals via Component
 	var facing = entity_data.physics.facing_direction
+	
+	# Update Visuals via Component
 	if is_instance_valid(_visual_component):
 		_visual_component.set_facing(facing)
 	
-	# POLISH: Sync Hitbox Debug Position (70 offset)
+	# 1. Mirror Melee Hitbox
 	if is_instance_valid(melee_hitbox):
-		var debug_offset = Vector2(70.0 * facing, 0.0)
-		melee_hitbox.set_shape_offset(debug_offset)
+		var current_y = melee_hitbox.get_shape_offset().y
+		var new_x = _default_melee_shape_x * facing
+		melee_hitbox.set_shape_offset(Vector2(new_x, current_y))
+		
+	# 2. Mirror Forward Muzzle
+	if is_instance_valid(muzzle_forward):
+		muzzle_forward.position.x = _default_muzzle_x * facing
 	
 	# Delegate actual movement to base class
 	super._physics_process(delta)
@@ -140,7 +159,14 @@ func _on_build() -> void:
 			"fx_manager": _services.fx_manager,
 			"combat_utils": _services.combat_utils,
 			"services": _services,
-			"melee_hitbox": melee_hitbox
+			"melee_hitbox": melee_hitbox,
+			"up_hitbox": up_hitbox,
+			# Inject Muzzles
+			"muzzles": {
+				"forward": muzzle_forward,
+				"up": muzzle_up,
+				"down": muzzle_down
+			}
 			},
 		rc: {
 			"event_bus": _services.event_bus
@@ -173,7 +199,6 @@ func _on_build() -> void:
 	if pc and not pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 		pc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
 	
-	# NEW: Wire up Centralized Damage Response
 	if hc and not hc.took_damage.is_connected(_on_took_damage):
 		hc.took_damage.connect(_on_took_damage)
 
@@ -222,7 +247,6 @@ func _on_health_changed(current: int, max_val: int) -> void:
 
 # --- Centralized Damage Response ---
 func _on_took_damage(_info: DamageInfo, result: DamageResult) -> void:
-	# FIX: Guard against mid-teardown execution
 	if not is_instance_valid(entity_data) or not is_instance_valid(result):
 		return
 

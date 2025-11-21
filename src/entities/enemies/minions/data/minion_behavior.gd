@@ -18,6 +18,9 @@ extends Resource
 @export var movement_logic: MovementLogic
 
 @export_group("Combat")
+# DEPRECATED: Range is now defined by the CollisionShape2D in the scene editor.
+# This value is kept for backward compatibility but ignored by updated Minion.gd.
 @export_range(50, 1000, 10) var detection_radius: float = 400.0
+
 @export var projectile_pool_key: StringName = &"turret_shots"
 @export var attack_patterns: Array[AttackPattern] = []

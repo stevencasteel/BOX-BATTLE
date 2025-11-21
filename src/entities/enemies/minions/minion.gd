@@ -105,10 +105,9 @@ func deactivate() -> void:
 
 # --- Internal Build Logic ---
 func _on_build() -> void:
-	# Apply Behavior Config
-	var circle_shape := CircleShape2D.new()
-	circle_shape.radius = entity_data.behavior.detection_radius
-	range_detector_shape.shape = circle_shape
+	# WYSIWYG UPDATE: 
+	# We no longer overwrite range_detector_shape.shape with 'behavior.detection_radius'.
+	# The shape defined in the Scene Editor is now the source of truth.
 
 	# Setup Sensors
 	if is_instance_valid(range_detector):
@@ -170,8 +169,7 @@ func _on_build() -> void:
 
 	setup_components(shared_deps, per_component_deps)
 	
-	# Minions rely on Polygon2D color property, handled by VisualComponent now.
-	# We set a default color here if needed, or let VisualComponent handle generic init.
+	# Set a default color if needed
 	_visual_component.set_color(Palette.COLOR_TERRAIN_SECONDARY)
 
 

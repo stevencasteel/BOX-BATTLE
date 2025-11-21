@@ -1,9 +1,7 @@
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=14 format=3 uid="uid://v472r2pi58n8"]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=12 format=3 uid="uid://v472r2pi58n8"]
 
 [ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
-[ext_resource type="Shape2D" uid="uid://c1b2d3e4f5g6h" path="res://src/entities/player/data/forward_attack_shape.tres" id="3_shape"]
-[ext_resource type="Shape2D" uid="uid://c0dt7jqwtnbr" path="res://src/entities/player/data/upward_attack_shape.tres" id="4_shape"]
 [ext_resource type="Resource" path="res://src/data/audio/sfx_player_impact.tres" id="5_audio"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/aura_charge_green.tscn" id="6_aura_charge"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/splash_charge_green.tscn" id="7_splash_charge"]
@@ -42,8 +40,6 @@ wall_jump_force_y = 680.0
 dash_speed = 1400.0
 dash_duration = 0.15
 dash_cooldown = 0.5
-forward_attack_shape = ExtResource("3_shape")
-upward_attack_shape = ExtResource("4_shape")
 attack_cooldown = 0.12
 attack_duration = 0.1
 attack_friction = 2000.0

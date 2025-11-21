@@ -36,6 +36,23 @@
 ║      ░   to the 'AudioCue' system.                                             ║
 ║      ░ ■ Removed random pitch variation from "Back" and "Select" actions       ║
 ║      ░   for a more consistent, professional UI feel.                          ║
+║                                                                                ║
+║   █  GUI-Based Combat Tuning                                                   ║
+║      ░ ■ Added 'UpHitbox' to Player Scene. Up attacks now use a dedicated,     ║
+║      ░   visually editable collider instead of shape-swapping code.            ║
+║      ░ ■ Added Muzzle Markers. Projectiles now spawn from 'MuzzleForward',     ║
+║      ░   'MuzzleUp', or 'MuzzleDown' markers in the scene, allowing precise    ║
+║      ░   alignment with sprite art.                                            ║
+║      ░ ■ Implemented Dynamic Mirroring. Forward attack hitboxes now mirror     ║
+║      ░   automatically based on sprite facing, respecting Editor offsets.      ║
+║                                                                                ║
+║   █  GUI-Based AI Tuning                                                       ║
+║      ░ ■ Deprecated 'detection_radius' in MinionBehavior.                      ║
+║      ░ ■ Minion aggro ranges are now controlled by the 'RangeDetector'         ║
+║      ░   CollisionShape in the scene editor, enabling visual tuning.           ║
+
+
+
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
