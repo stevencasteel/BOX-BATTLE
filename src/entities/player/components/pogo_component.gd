@@ -40,8 +40,8 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	if is_instance_valid(_hitbox):
 		# Configure hitbox specifically for Pogo
-		# Layer 8 (128) = Solid World, Layer 2 (2) = Platforms
-		_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
+		# FIX: Added HAZARD to mask
+		_hitbox.collision_mask |= PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS | PhysicsLayers.HAZARD
 		
 		if not _hitbox.hit_detected.is_connected(_on_hit_detected):
 			_hitbox.hit_detected.connect(_on_hit_detected)
@@ -98,10 +98,14 @@ func _on_hit_detected(target: Node) -> void:
 		if result.was_damaged:
 			damage_dealt.emit()
 
-	# Case 3: Hit World Geometry
-	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
-		should_bounce = true
-	elif target.is_in_group(Identifiers.Groups.WORLD):
+	# Case 3: Hit World Geometry or Hazard
+	if target is PhysicsBody2D:
+		var layer = target.collision_layer
+		# FIX: Added HAZARD check
+		if (layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS | PhysicsLayers.HAZARD)) != 0:
+			should_bounce = true
+	
+	if target.is_in_group(Identifiers.Groups.WORLD) or target.is_in_group(Identifiers.Groups.HAZARD):
 		should_bounce = true
 
 	if should_bounce:

@@ -212,3 +212,9 @@ position = Vector2(100, 400)
 
 [node name="TurretRight" parent="Enemies" instance=ExtResource("13_5kto0")]
 position = Vector2(2460, 400)
+
+[node name="CameraBounds" type="ReferenceRect" parent="."]
+offset_right = 2560.0
+offset_bottom = 1440.0
+border_color = Color(0, 1, 0, 1)
+border_width = 4.0

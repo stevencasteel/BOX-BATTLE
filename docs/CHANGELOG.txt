@@ -12,9 +12,39 @@
 ╠════════════════════════════════════════════════════════════════════════════════╣
 
 
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.35.0] - CURRENT - 11/21/2025                            ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
 
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.34.0] - COMPLETE WYSIWYG & POLISH - 11/21/2025          ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Editor Tooling (WYSIWYG)                                                  ║
+║      ░ ■ Added 'UpHitbox' to Player scene for visual tuning of up-attacks.     ║
+║      ░ ■ Added Muzzle Markers to Player scene for precise projectile spawn     ║
+║      ░   positioning.                                                          ║
+║      ░ ■ Added 'Telegraphs/LungeArea' to Boss scene for visual attack tuning.  ║
+║      ░ ■ Added 'CameraBounds' to Level scene for visual camera framing.        ║
+║      ░ ■ Refactored 'GameViewport' (formerly ViewportCabinet) to use standard  ║
+║      ░   terminology and support the new camera bounds system.                 ║
+║                                                                                ║
+║   █  Gameplay & Mechanics                                                      ║
+║      ░ ■ Fixed Pogo logic to correctly detect and bounce off Hazards (Spikes).   ║
+║      ░ ■ Implemented Diagonal Shooting via 'InputComponent'.                   ║
+║      ░ ■ Implemented Dynamic Hitbox Mirroring based on Editor offsets.         ║
+║                                                                                ║
+║   █  Audio Polish                                                              ║
+║      ░ ■ Migrated remaining UI screens (Save, Controls, Credits) to AudioCues. ║
+║      ░ ■ Enforced consistent, non-randomized pitch for UI navigation/select.   ║
 
 
 

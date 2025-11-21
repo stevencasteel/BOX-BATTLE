@@ -7,14 +7,14 @@ extends ISceneController
 @export var _boss_death_shockwave: ShaderEffect
 
 # --- Constants ---
-const ViewportCabinetScene = preload("res://src/scenes/game/viewport_cabinet.tscn")
+const GameViewportScene = preload("res://src/scenes/game/game_viewport.tscn")
 const TestConversation = preload("res://src/data/dialogue/test_conversation.tres")
 
 # --- Node References ---
 @onready var post_process_manager = $PostProcessLayer
 
 # --- Private Member Variables ---
-var _cabinet: ViewportCabinet = null
+var _game_viewport: GameViewport = null
 var _level_container: Node = null
 var _debug_overlay: CanvasLayer = null
 var _boss_died_token: int = 0
@@ -31,10 +31,10 @@ func _ready() -> void:
 	_boss_died_token = EventBus.on(EventCatalog.BOSS_DIED, _on_boss_died)
 	_spawn_boss_token = EventBus.on(EventCatalog.SPAWN_BOSS_REQUESTED, _on_spawn_boss_requested)
 
-	# 1. Setup Cabinet
-	_cabinet = ViewportCabinetScene.instantiate()
-	add_child(_cabinet)
-	move_child(_cabinet, 0)
+	# 1. Setup GameViewport
+	_game_viewport = GameViewportScene.instantiate()
+	add_child(_game_viewport)
+	move_child(_game_viewport, 0)
 
 	# 2. Load Level
 	if is_instance_valid(GameManager.state.prebuilt_level):
@@ -47,20 +47,30 @@ func _ready() -> void:
 		push_error("EncounterScene: Failed to get a valid level container.")
 		return
 		
-	# 3. Place Level in Cabinet Viewport
-	_cabinet.add_level(_level_container)
+	# 3. Place Level in Viewport
+	_game_viewport.add_level(_level_container)
 	ObjectPool.register_world_container(_level_container)
 	
 	await get_tree().process_frame
 
-	var build_data: LevelBuildData = _level_container.get_meta("build_data")
-	if build_data:
-		var cam = _cabinet.get_camera()
-		CameraManager.center_camera_on_arena(cam, build_data.dimensions_tiles)
-		
-		if not build_data.encounter_data_resource.intro_sequence.is_empty():
-			_sequence_handle = Sequencer.run_sequence(build_data.encounter_data_resource.intro_sequence)
-			await _sequence_handle.finished
+	# 4. Setup Camera
+	var cam = _game_viewport.get_camera()
+	var bounds_node = _level_container.get_node_or_null("CameraBounds")
+	
+	if bounds_node and bounds_node is Control:
+		# WYSIWYG Path
+		CameraManager.setup_camera_from_bounds(cam, bounds_node)
+	else:
+		# Legacy Path (Fall back to build data tiles)
+		var build_data: LevelBuildData = _level_container.get_meta("build_data")
+		if build_data:
+			CameraManager.center_camera_on_arena(cam, build_data.dimensions_tiles)
+	
+	# 5. Intro Sequence
+	var b_data: LevelBuildData = _level_container.get_meta("build_data")
+	if b_data and not b_data.encounter_data_resource.intro_sequence.is_empty():
+		_sequence_handle = Sequencer.run_sequence(b_data.encounter_data_resource.intro_sequence)
+		await _sequence_handle.finished
 
 	_initialize_camera_shaker()
 	_initialize_debug_inspector()
@@ -94,7 +104,7 @@ func _exit_tree() -> void:
 	if is_instance_valid(_sequence_handle):
 		_sequence_handle.cancel()
 	
-	var cam = _cabinet.get_camera() if is_instance_valid(_cabinet) else null
+	var cam = _game_viewport.get_camera() if is_instance_valid(_game_viewport) else null
 	if is_instance_valid(cam):
 		cam.offset = Vector2.ZERO
 		
@@ -124,7 +134,7 @@ func _initialize_camera_shaker() -> void:
 	if shaker_scene:
 		_camera_shaker = shaker_scene.instantiate() as CameraShaker
 		add_child(_camera_shaker)
-		_camera_shaker.target_camera = _cabinet.get_camera()
+		_camera_shaker.target_camera = _game_viewport.get_camera()
 		FXManager.register_camera_shaker(_camera_shaker)
 
 
@@ -185,8 +195,8 @@ func _on_boss_died(payload: BossDiedEvent) -> void:
 	var rect = post_process_manager.get_shockwave_rect()
 
 	if is_instance_valid(_boss_death_shockwave) and is_instance_valid(boss_node) and is_instance_valid(rect):
-		# Correctly calculate position using Cabinet helper
-		var screen_pos = _cabinet.world_to_screen_pos(boss_node.global_position)
+		# Correctly calculate position using helper
+		var screen_pos = _game_viewport.world_to_screen_pos(boss_node.global_position)
 		var viewport_size = get_viewport().get_visible_rect().size # Main Window Size (2560x1440)
 		var uv_center = screen_pos / viewport_size
 		

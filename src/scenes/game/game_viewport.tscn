@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://viewport_cabinet"]
+[gd_scene load_steps=2 format=3 uid="uid://game_viewport"]
 
-[ext_resource type="Script" path="res://src/scenes/game/viewport_cabinet.gd" id="1_script"]
+[ext_resource type="Script" path="res://src/scenes/game/game_viewport.gd" id="1_script"]
 
-[node name="ViewportCabinet" type="Control"]
+[node name="GameViewport" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

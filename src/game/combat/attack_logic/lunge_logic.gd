@@ -1,16 +1,27 @@
-# src/combat/attack_logic/lunge_logic.gd
+# src/game/combat/attack_logic/lunge_logic.gd
 @tool
 ## Concrete AttackLogic for executing a high-speed, invulnerable dash.
 class_name LungeLogic
 extends AttackLogic
 
 
-func get_telegraph_info(_owner: BaseEntity, _pattern: AttackPattern) -> Dictionary:
-	var lunge_width = 800.0
-	var owner_width = 60.0
-	var x_offset = (lunge_width / 2.0) + (owner_width / 2.0)
+func get_telegraph_info(owner: BaseEntity, _pattern: AttackPattern) -> Dictionary:
+	# WYSIWYG: Look for the visual definition in the scene
+	var lunge_rect_node = owner.get_node_or_null("Telegraphs/LungeArea")
 	
-	return {"size": Vector2(lunge_width, 50), "offset": Vector2(x_offset, 0)}
+	var size = Vector2(800, 50) # Fallback default
+	var offset = Vector2(430, 0) # Fallback default
+	
+	if lunge_rect_node and lunge_rect_node is Control:
+		size = lunge_rect_node.size
+		# Center the offset based on the Rect's position relative to the Boss (0,0)
+		# Rect position is top-left corner.
+		# Center X = position.x + size.x / 2
+		var center_x = lunge_rect_node.position.x + (size.x / 2.0)
+		var center_y = lunge_rect_node.position.y + (size.y / 2.0)
+		offset = Vector2(center_x, center_y)
+	
+	return {"size": size, "offset": offset}
 
 
 func execute(owner: BaseEntity, pattern: AttackPattern) -> Callable:

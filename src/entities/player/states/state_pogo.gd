@@ -28,7 +28,7 @@ func enter(_msg := {}) -> void:
 		offset = _player.pogo_hitbox.get_shape_offset()
 		size = _player.pogo_hitbox.get_shape_size()
 	
-	# Swap X/Y for the visual because we rotate it 90 degrees (horizontal slash texture -> vertical)
+	# Swap X/Y for the visual because we rotate it 90 degrees
 	_spawn_visual(Vector2(size.y, size.x), offset)
 	
 	# IMMEDIATE CHECK:
@@ -80,7 +80,8 @@ func _check_pogo_ground_bounce() -> bool:
 	# STRICTLY use the Editor's shape and transform.
 	query.shape = shape_node.shape
 	query.transform = shape_node.global_transform 
-	query.collision_mask = PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
+	# FIX: Added HAZARD to mask
+	query.collision_mask = PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS | PhysicsLayers.HAZARD
 	query.exclude = [_player.get_rid()]
 	
 	var result = space_state.intersect_shape(query, 1)
@@ -94,9 +95,10 @@ func _check_pogo_ground_bounce() -> bool:
 func _is_valid_bounce_surface(body: Node) -> bool:
 	if body is PhysicsBody2D:
 		var layer = body.collision_layer
-		if (layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
+		# FIX: Added HAZARD check
+		if (layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS | PhysicsLayers.HAZARD)) != 0:
 			return true
-	if body.is_in_group(Identifiers.Groups.WORLD):
+	if body.is_in_group(Identifiers.Groups.WORLD) or body.is_in_group(Identifiers.Groups.HAZARD):
 		return true
 	return false
 

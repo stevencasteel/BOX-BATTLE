@@ -1,5 +1,5 @@
-# src/scenes/game/viewport_cabinet.gd
-class_name ViewportCabinet
+# src/scenes/game/game_viewport.gd
+class_name GameViewport
 extends Control
 
 @onready var sub_viewport: SubViewport = %SubViewport
