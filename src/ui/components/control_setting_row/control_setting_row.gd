@@ -5,6 +5,10 @@
 class_name ControlSettingRow
 extends HBoxContainer
 
+# --- Constants ---
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
+
 # --- Node References ---
 @onready var action_label: Label = %ActionLabel
 @onready var rebind_button: Button = %RebindButton
@@ -71,19 +75,21 @@ func _apply_rebind(event: InputEvent) -> void:
 	Settings.remap_action(_action_name, event)
 	_is_listening = false
 	_update_display()
+	# Play confirm sound
+	AudioManager.play_cue(CUE_SELECT)
 
 
 # --- Signal Handlers ---
 
 func _on_rebind_button_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)
 	_is_listening = true
 	_update_display()
 
 
 func _on_hover_started() -> void:
 	CursorManager.set_pointer_state(true)
-	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+	AudioManager.play_cue(CUE_MOVE)
 
 
 func _on_hover_ended() -> void:

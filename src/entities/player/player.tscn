@@ -1,17 +1,22 @@
-[gd_scene load_steps=22 format=3 uid="uid://c6vknl71ea1bo"]
+[gd_scene load_steps=13 format=3 uid="uid://c6vknl71ea1bo"]
 
 [ext_resource type="Script" uid="uid://bymbb3pjo71tf" path="res://src/entities/player/player.gd" id="1_4d1td"]
 [ext_resource type="Resource" path="res://src/entities/archetypes/player_archetype.tres" id="2_archetype"]
-[ext_resource type="Resource" uid="uid://entity_hit_flash_effect" path="res://src/data/effects/entity_hit_flash_effect.tres" id="3_hit_flash"]
+[ext_resource type="Resource" path="res://src/data/effects/entity_hit_flash_effect.tres" id="3_hit_flash"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_damage_shake.tres" id="4_shake_effect"]
 [ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="5_hit_spark_effect"]
-[ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="15_dissolve_effect"]
-[ext_resource type="Script" path="res://src/entities/_base/components/hurtbox_component.gd" id="16_hurtbox_script"]
-[ext_resource type="Script" path="res://src/entities/_base/components/hitbox_component.gd" id="17_hitbox_script"]
-[ext_resource type="Resource" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
+[ext_resource type="Script" uid="uid://c5e2v4kc5csob" path="res://src/entities/_base/components/hurtbox_component.gd" id="16_hurtbox_script"]
+[ext_resource type="Script" uid="uid://cxuhf313iunl6" path="res://src/entities/_base/components/hitbox_component.gd" id="17_hitbox_script"]
+[ext_resource type="Resource" uid="uid://p45pwsldcdgl" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playerbody"]
 size = Vector2(40, 80)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_melee"]
+size = Vector2(86, 32.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pogo"]
+size = Vector2(104, 49.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 size = Vector2(42, 82)
@@ -22,7 +27,6 @@ script = ExtResource("1_4d1td")
 hit_flash_effect = ExtResource("3_hit_flash")
 damage_shake_effect = ExtResource("4_shake_effect")
 hit_spark_effect = ExtResource("5_hit_spark_effect")
-dissolve_effect = ExtResource("15_dissolve_effect")
 state_machine_config = ExtResource("18_sm_config")
 archetype = ExtResource("2_archetype")
 
@@ -38,22 +42,27 @@ color = Color(0.941176, 0.941176, 0.941176, 1)
 shape = SubResource("RectangleShape2D_playerbody")
 
 [node name="MeleeHitbox" type="Area2D" parent="."]
-collision_layer = 32
-collision_mask = 148
+collision_layer = 256
+collision_mask = 28
+monitoring = false
+monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeHitbox"]
-position = Vector2(70, 0)
-shape = SubResource("RectangleShape2D_playerbody")
+position = Vector2(77, 0)
+shape = SubResource("RectangleShape2D_melee")
 disabled = true
 
 [node name="PogoHitbox" type="Area2D" parent="."]
-collision_layer = 32
-collision_mask = 150
+collision_layer = 256
+collision_mask = 28
+monitoring = false
+monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PogoHitbox"]
-shape = SubResource("RectangleShape2D_playerbody")
+position = Vector2(0, 66.25)
+shape = SubResource("RectangleShape2D_pogo")
 disabled = true
 
 [node name="Hurtbox" type="Area2D" parent="."]

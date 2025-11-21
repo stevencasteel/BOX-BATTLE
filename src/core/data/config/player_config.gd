@@ -39,6 +39,7 @@ extends Resource
 @export_group("Combat")
 @export var forward_attack_shape: Shape2D
 @export var upward_attack_shape: Shape2D
+# REMOVED: pogo_attack_shape - Now handled directly in the scene editor.
 @export_range(0.05, 1.0, 0.01) var attack_cooldown: float = 0.12
 @export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
 @export_range(100, 5000, 100) var attack_friction: float = 2000.0

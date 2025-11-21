@@ -6,6 +6,8 @@ extends "res://src/scenes/menus/base_menu_screen.gd"
 
 # --- Constants ---
 const ROW_SCENE = preload("res://src/ui/components/control_setting_row/control_setting_row.tscn")
+const CUE_BACK = preload(AssetPaths.CUE_UI_BACK)
+# CUE_SELECT is inherited from BaseMenuScreen
 
 # --- Node References ---
 @onready var back_button: StyledMenuItem = %BackButton
@@ -86,7 +88,7 @@ func _on_settings_changed() -> void:
 
 
 func _on_back_button_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
+	AudioManager.play_cue(CUE_BACK)
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)
 
 
@@ -105,4 +107,4 @@ func _on_preset_button_pressed() -> void:
 		next_preset = presets[next_idx]
 		
 	Settings.apply_preset(next_preset)
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)

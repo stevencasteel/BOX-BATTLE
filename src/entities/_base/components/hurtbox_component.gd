@@ -1,9 +1,8 @@
-# src/entities/components/hurtbox_component.gd
+# src/entities/_base/components/hurtbox_component.gd
 @tool
 ## A component that manages an Area2D to detect incoming damage sources.
 ##
-## It polls for overlapping bodies and areas (Enemies, Hazards, Projectiles)
-## and routes damage to the owner's [HealthComponent].
+## Optimized to use signal callbacks (entered) rather than per-frame polling.
 class_name HurtboxComponent
 extends Area2D
 
@@ -24,19 +23,11 @@ var _owner_entity: Node
 func _ready() -> void:
 	# Ensure we are monitoring to detect overlaps
 	monitoring = true
-	monitorable = true 
-
-func _physics_process(_delta: float) -> void:
-	if not is_instance_valid(_health_component) or _health_component.is_invincible():
-		return
-
-	# 1. Check Bodies (Enemies, Hazards)
-	for body in get_overlapping_bodies():
-		_process_contact(body)
-
-	# 2. Check Areas (Projectiles, Hazards)
-	for area in get_overlapping_areas():
-		_process_contact(area)
+	monitorable = true
+	
+	# Connect signals for optimized collision handling
+	body_entered.connect(_on_body_entered)
+	area_entered.connect(_on_area_entered)
 
 
 # --- Public Methods (IComponent-like Setup) ---
@@ -57,8 +48,12 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 
 
 func teardown() -> void:
-	set_physics_process(false)
-	set_deferred("monitoring", false)
+	# Disconnect signals to prevent lingering references
+	if body_entered.is_connected(_on_body_entered):
+		body_entered.disconnect(_on_body_entered)
+	if area_entered.is_connected(_on_area_entered):
+		area_entered.disconnect(_on_area_entered)
+		
 	_owner_entity = null
 	_health_component = null
 	_combat_utils = null
@@ -67,9 +62,21 @@ func teardown() -> void:
 
 # --- Private Logic ---
 
+func _on_body_entered(body: Node) -> void:
+	_process_contact(body)
+
+
+func _on_area_entered(area: Area2D) -> void:
+	_process_contact(area)
+
+
 func _process_contact(target: Node) -> void:
 	# CRITICAL FIX: Guard against mid-frame teardown.
 	if not _combat_utils or not is_instance_valid(_health_component):
+		return
+	
+	# Don't process if already invincible (optimization)
+	if _health_component.is_invincible():
 		return
 
 	var is_hazard = target.is_in_group(Identifiers.Groups.HAZARD)

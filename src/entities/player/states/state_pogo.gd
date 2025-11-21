@@ -15,19 +15,21 @@ func enter(_msg := {}) -> void:
 	state_data.combat.is_pogo_attack = true
 	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	
-	# Direct Actuation
-	var shape_size = Vector2(40, 40) # Default playerbody size (width only relevant here)
+	# --- Hitbox Activation ---
+	# Pass null to force it to use the shape and position ALREADY set in the Editor.
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
-		# Reuse existing shape logic, but update offset
-		# Bottom of Body (40) + Margin (20) = 60
-		_player.pogo_hitbox.activate(null, Vector2(0, 60))
-		
-		# Fetch shape size if possible for accurate visual
-		var col = _player.pogo_hitbox.get_node_or_null("CollisionShape2D")
-		if col and col.shape:
-			shape_size = col.shape.get_rect().size
+		_player.pogo_hitbox.activate(null, null) 
 	
-	_spawn_visual(shape_size)
+	# --- Visuals ---
+	var offset = Vector2.ZERO
+	var size = Vector2.ONE * 50
+	
+	if is_instance_valid(_player.pogo_hitbox):
+		offset = _player.pogo_hitbox.get_shape_offset()
+		size = _player.pogo_hitbox.get_shape_size()
+	
+	# Swap X/Y for the visual because we rotate it 90 degrees (horizontal slash texture -> vertical)
+	_spawn_visual(Vector2(size.y, size.x), offset)
 	
 	# IMMEDIATE CHECK:
 	if _player.is_on_floor():
@@ -58,6 +60,7 @@ func _check_pogo_ground_bounce() -> bool:
 	if not is_instance_valid(_player) or not is_instance_valid(_player.pogo_hitbox):
 		return false
 
+	# 1. Check active overlaps (if monitoring is working)
 	if _player.pogo_hitbox.monitoring:
 		var bodies = _player.pogo_hitbox.get_overlapping_bodies()
 		for body in bodies:
@@ -66,16 +69,17 @@ func _check_pogo_ground_bounce() -> bool:
 				_trigger_bounce()
 				return true
 
-	var space_state = _player.get_world_2d().direct_space_state
-	var query = PhysicsShapeQueryParameters2D.new()
-	
+	# 2. Manual Physics Query (Fallback/Frame-Perfect check)
 	var shape_node = _player.pogo_hitbox.get_node_or_null("CollisionShape2D")
 	if not is_instance_valid(shape_node):
 		return false
-		
+
+	var space_state = _player.get_world_2d().direct_space_state
+	var query = PhysicsShapeQueryParameters2D.new()
+	
+	# STRICTLY use the Editor's shape and transform.
 	query.shape = shape_node.shape
-	var offset = Vector2(0, 60) # Update sync offset
-	query.transform = Transform2D(0.0, _player.global_position + offset)
+	query.transform = shape_node.global_transform 
 	query.collision_mask = PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
 	query.exclude = [_player.get_rid()]
 	
@@ -102,13 +106,13 @@ func _trigger_bounce() -> void:
 		_player._on_pogo_bounce_requested()
 
 
-func _spawn_visual(size: Vector2) -> void:
+func _spawn_visual(size: Vector2, offset: Vector2) -> void:
 	var scene = state_data.config.vfx_melee_slash
 	if not is_instance_valid(scene) or not is_instance_valid(_player):
 		return
 		
 	var visual = scene.instantiate()
-	visual.position = Vector2(0, 60) # Offset 60
+	visual.position = offset
 	visual.rotation = deg_to_rad(90)
 	_player.add_child(visual)
 	

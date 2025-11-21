@@ -10,6 +10,10 @@ extends Control
 ## Emitted when the logo is clicked, passing its [member logo_name].
 signal pressed(logo_name: String)
 
+# --- Constants ---
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+
 # --- Node References ---
 @onready var texture_rect: TextureRect = $TextureRect
 
@@ -52,6 +56,10 @@ func _gui_input(event: InputEvent) -> void:
 			is_pressed = true
 			queue_redraw()
 		elif is_pressed:  # On release
+			# Play Select Sound
+			if not Engine.is_editor_hint():
+				AudioManager.play_cue(CUE_SELECT)
+			
 			emit_signal("pressed", logo_name)
 			is_pressed = false
 			queue_redraw()
@@ -114,7 +122,7 @@ func _on_mouse_entered() -> void:
 	_animate_hover(true)
 	if not Engine.is_editor_hint():
 		CursorManager.set_pointer_state(true)
-		AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+		AudioManager.play_cue(CUE_MOVE)
 
 
 func _on_mouse_exited() -> void:

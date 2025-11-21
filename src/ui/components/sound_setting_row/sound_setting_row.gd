@@ -9,6 +9,11 @@ extends HBoxContainer
 signal value_changed(value: float)
 signal mute_toggled(is_muted: bool)
 
+# --- Constants ---
+const CUE_TICK = preload(AssetPaths.CUE_UI_SLIDER_TICK)
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+
 # --- Node References ---
 @onready var name_label: Label = %NameLabel
 @onready var value_slider: TextureRect = %ValueSlider
@@ -35,7 +40,7 @@ func _ready() -> void:
 
 		mute_checkbox.mouse_entered.connect(CursorManager.set_pointer_state.bind(true))
 		mute_checkbox.mouse_exited.connect(CursorManager.set_pointer_state.bind(false))
-		mute_checkbox.mouse_entered.connect(func(): AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE))
+		mute_checkbox.mouse_entered.connect(func(): AudioManager.play_cue(CUE_MOVE))
 
 
 # --- Public Methods ---
@@ -76,7 +81,7 @@ func _on_slider_value_changed(value: float) -> void:
 		if _last_percent_value != -1 and current_percent != _last_percent_value:
 			# Only play sound on intervals of 5 (0, 5, 10, 15...)
 			if current_percent % 5 == 0:
-				AudioManager.play_sfx(AssetPaths.SFX_UI_SLIDER_TICK)
+				AudioManager.play_cue(CUE_TICK)
 		
 		# Update local tracker immediately
 		_last_percent_value = current_percent
@@ -89,3 +94,4 @@ func _on_mute_button_pressed() -> void:
 	is_muted = not is_muted
 	set_mute_state(is_muted)
 	mute_toggled.emit(is_muted)
+	AudioManager.play_cue(CUE_SELECT)

@@ -8,6 +8,9 @@ signal pressed
 # Emitted for logic - 1 argument
 signal slot_chosen(slot_index)
 
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+
 @export var slot_index: int = 0
 
 @onready var slot_label: Label = %SlotLabel
@@ -56,6 +59,9 @@ func _gui_input(event: InputEvent) -> void:
 		_trigger_press()
 
 func _trigger_press() -> void:
+	if not Engine.is_editor_hint():
+		AudioManager.play_cue(CUE_SELECT)
+	
 	pressed.emit()
 	slot_chosen.emit(slot_index)
 
@@ -86,7 +92,8 @@ func _on_mouse_entered() -> void:
 	is_hovered = true
 	grab_focus()
 	CursorManager.set_pointer_state(true)
-	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+	if not Engine.is_editor_hint():
+		AudioManager.play_cue(CUE_MOVE)
 	queue_redraw()
 
 func _on_mouse_exited() -> void:

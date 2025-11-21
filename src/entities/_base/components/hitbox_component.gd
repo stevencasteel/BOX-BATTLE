@@ -41,12 +41,18 @@ func _ready() -> void:
 
 # --- Public API ---
 
-## Enables the hitbox with specific shape parameters.
-func activate(shape: Shape2D, position_offset: Vector2) -> void:
+## Enables the hitbox. 
+## If [param shape] is null, it keeps the current shape.
+## If [param position_offset] is null, it keeps the current position (Editor Position).
+func activate(shape: Shape2D = null, position_offset = null) -> void:
 	if is_instance_valid(_shape_node):
 		if shape:
 			_shape_node.shape = shape
-		_shape_node.position = position_offset
+		
+		# Only overwrite position if an explicit offset is provided
+		if position_offset != null and position_offset is Vector2:
+			_shape_node.position = position_offset
+			
 		_shape_node.set_deferred("disabled", false)
 	
 	set_deferred("monitoring", true)
@@ -63,6 +69,22 @@ func deactivate() -> void:
 func set_shape_offset(offset: Vector2) -> void:
 	if is_instance_valid(_shape_node):
 		_shape_node.position = offset
+
+## Returns the current local position of the collision shape.
+func get_shape_offset() -> Vector2:
+	if is_instance_valid(_shape_node):
+		return _shape_node.position
+	return Vector2.ZERO
+
+## Returns the current size of the shape (if it's a Rectangle or Circle).
+func get_shape_size() -> Vector2:
+	if is_instance_valid(_shape_node) and _shape_node.shape:
+		var s = _shape_node.shape
+		if s is RectangleShape2D:
+			return s.size
+		elif s is CircleShape2D:
+			return Vector2(s.radius * 2, s.radius * 2)
+	return Vector2.ZERO
 
 
 # --- Private Logic ---

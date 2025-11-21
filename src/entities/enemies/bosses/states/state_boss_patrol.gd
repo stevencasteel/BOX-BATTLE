@@ -14,13 +14,17 @@ func enter(msg := {}) -> void:
 	_timer = PATROL_DURATION
 
 func process_physics(delta: float) -> void:
-	# 1. Update Timer
+	# 1. Apply Gravity (explicitly, since BaseBoss no longer does it globally)
+	if owner.has_method("apply_gravity"):
+		owner.apply_gravity(delta)
+
+	# 2. Update Timer
 	_timer -= delta
 	if _timer <= 0:
 		state_machine.change_state(Identifiers.BossStates.IDLE)
 		return
 
-	# 2. Run Generic Patrol Logic (Movement)
+	# 3. Run Generic Patrol Logic (Movement)
 	super.process_physics(delta)
 
 # Override the virtual method from StateEntityPatrol

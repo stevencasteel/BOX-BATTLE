@@ -92,7 +92,8 @@ func _execute_attack_sequence() -> void:
 				telegraph_position,
 				Palette.COLOR_UI_PANEL_BG
 			)
-			await telegraph.telegraph_finished
+			# Robust wait: Prevents soft-lock if telegraph is destroyed mid-wait
+			await _wait_for_telegraph_safe(telegraph)
 		else:
 			push_warning("Telegraph scene '%s' does not implement 'start_telegraph'. Skipping wait." % telegraph.name)
 			telegraph.queue_free()
@@ -130,6 +131,32 @@ func _execute_attack_sequence() -> void:
 	
 	_is_attacking = false
 	attack_finished.emit()
+
+
+## A robust waiter that returns if the telegraph finishes OR if it is destroyed.
+func _wait_for_telegraph_safe(telegraph: Node) -> void:
+	if not is_instance_valid(telegraph):
+		return
+		
+	# Use a Dictionary (reference type) so the lambda updates the shared state
+	var signal_state = { "received": false }
+	var on_finish = func(): signal_state["received"] = true
+	
+	if telegraph.has_signal("telegraph_finished"):
+		telegraph.connect("telegraph_finished", on_finish, CONNECT_ONE_SHOT)
+	if telegraph.has_signal("tree_exiting"):
+		telegraph.connect("tree_exiting", on_finish, CONNECT_ONE_SHOT)
+	
+	# Wait loop: continues until signal emits OR node becomes invalid
+	while is_instance_valid(telegraph) and not signal_state["received"]:
+		await get_tree().process_frame
+		
+	# Cleanup connections if node still exists
+	if is_instance_valid(telegraph):
+		if telegraph.is_connected("telegraph_finished", on_finish):
+			telegraph.disconnect("telegraph_finished", on_finish)
+		if telegraph.is_connected("tree_exiting", on_finish):
+			telegraph.disconnect("tree_exiting", on_finish)
 
 
 func _process_hit(collider: Node) -> void:

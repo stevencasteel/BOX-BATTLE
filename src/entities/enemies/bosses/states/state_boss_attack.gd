@@ -29,6 +29,11 @@ func enter(msg := {}) -> void:
 	_start_telegraph_and_attack()
 
 
+func process_physics(delta: float) -> void:
+	if is_instance_valid(_boss) and _boss.has_method("apply_gravity"):
+		_boss.apply_gravity(delta)
+
+
 # --- Private Methods ---
 
 

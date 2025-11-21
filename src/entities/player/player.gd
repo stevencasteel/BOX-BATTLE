@@ -25,7 +25,6 @@ const ACTION_ALLOWED_STATES = [
 @export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
-@onready var healing_timer: Timer = $HealingTimer
 @onready var melee_hitbox: HitboxComponent = $MeleeHitbox
 @onready var pogo_hitbox: HitboxComponent = $PogoHitbox
 @onready var hurtbox: HurtboxComponent = $Hurtbox
@@ -59,8 +58,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _is_dead:
+	# CRITICAL FIX: Guard against null entity_data during initialization or teardown
+	if _is_dead or not is_instance_valid(entity_data):
 		return
+
 	_update_timers(delta)
 	
 	# Update Visuals via Component
@@ -192,10 +193,6 @@ func teardown() -> void:
 
 	if is_instance_valid(pc) and pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 		pc.pogo_bounce_requested.disconnect(_on_pogo_bounce_requested)
-
-	if is_instance_valid(healing_timer):
-		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
-			healing_timer.timeout.disconnect(_on_healing_timer_timeout)
 	
 	if is_instance_valid(hc) and hc.took_damage.is_connected(_on_took_damage):
 		hc.took_damage.disconnect(_on_took_damage)
@@ -289,11 +286,6 @@ func _update_timers(delta: float) -> void:
 
 
 # --- Signal Handlers ---
-
-func _on_healing_timer_timeout() -> void:
-	# Handled by HealComponent now, but signal connection remains in build for safety
-	pass 
-
 
 func _on_pogo_bounce_requested() -> void:
 	var physics = get_component(PlayerPhysicsComponent)

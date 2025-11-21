@@ -69,9 +69,7 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
 	
-	# Calculate Gravity locally
-	if not is_on_floor():
-		velocity.y += entity_data.world_config.gravity * delta
+	# REFACTOR: Gravity is now handled by individual States, not globally.
 	
 	# Delegate execution to BaseEntity
 	super._physics_process(delta)
@@ -166,6 +164,14 @@ func get_health_thresholds() -> Array[float]:
 	if is_instance_valid(behavior):
 		return [behavior.phase_2_threshold, behavior.phase_3_threshold]
 	return []
+
+
+## Applies gravity to the boss's vertical velocity.
+## Called by States that allow falling.
+func apply_gravity(delta: float) -> void:
+	if not is_instance_valid(entity_data): return
+	if not is_on_floor():
+		velocity.y += entity_data.world_config.gravity * delta
 
 
 # --- Override Virtual Handlers ---

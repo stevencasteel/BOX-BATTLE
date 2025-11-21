@@ -30,8 +30,10 @@ func enter(_msg := {}) -> void:
 		
 		if is_up_attack:
 			shape = state_data.config.upward_attack_shape
-			# Offset: Top of Body (-40) - Margin (20) = -60
-			offset = Vector2(0, -60)
+			# Offset Update: 
+			# Body Top is -40. Shape Half-Height is 30. 
+			# Perfect touch center = -70.
+			offset = Vector2(0, -70)
 			rotation_angle = deg_to_rad(-90)
 		elif facing < 0:
 			rotation_angle = deg_to_rad(180)

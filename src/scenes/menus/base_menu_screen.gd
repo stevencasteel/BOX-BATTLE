@@ -8,6 +8,8 @@ extends Control
 
 # --- Constants ---
 const MenuManagerScript = preload(AssetPaths.SCRIPT_MENU_MANAGER)
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
 
 # --- Protected Methods (for child classes to use) ---
 
@@ -39,7 +41,7 @@ func setup_menu_navigation(focusable_items: Array[Control], all_interactive_item
 # --- Private Signal Handlers ---
 
 func _on_any_item_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)
 
 func _on_any_item_focused() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_MOVE)
+	AudioManager.play_cue(CUE_MOVE)

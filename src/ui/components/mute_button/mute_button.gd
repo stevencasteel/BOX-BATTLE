@@ -9,6 +9,8 @@ extends TextureButton
 # --- Constants ---
 const ICON_SOUND_ON = preload(AssetPaths.ICON_UI_SOUND_ON)
 const ICON_SOUND_OFF = preload(AssetPaths.ICON_UI_SOUND_OFF)
+const CUE_SELECT = preload(AssetPaths.CUE_UI_SELECT)
+const CUE_MOVE = preload(AssetPaths.CUE_UI_MOVE)
 
 # --- Godot Lifecycle Methods ---
 
@@ -18,8 +20,13 @@ func _ready() -> void:
 		# This component is now fully self-managing.
 		self.pressed.connect(_on_pressed)
 		Settings.audio_settings_changed.connect(_on_audio_settings_changed)
+		
 		self.mouse_entered.connect(CursorManager.set_pointer_state.bind(true))
 		self.mouse_exited.connect(CursorManager.set_pointer_state.bind(false))
+		
+		# Audio Feedback
+		self.mouse_entered.connect(func(): AudioManager.play_cue(CUE_MOVE))
+		
 		_on_audio_settings_changed()  # Sync icon on ready
 
 
@@ -53,7 +60,7 @@ func _on_pressed() -> void:
 	# When pressed, this button directly modifies the global setting.
 	Settings.music_muted = not Settings.music_muted
 	# Play sound feedback
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)
 
 
 func _on_audio_settings_changed() -> void:

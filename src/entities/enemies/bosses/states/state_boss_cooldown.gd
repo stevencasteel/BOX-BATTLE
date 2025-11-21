@@ -10,6 +10,10 @@ func enter(msg := {}) -> void:
 	_timer = msg.get("duration", 1.0) # Default to 1.0s if not provided
 
 func process_physics(delta: float) -> void:
+	# Apply gravity
+	if owner.has_method("apply_gravity"):
+		owner.apply_gravity(delta)
+
 	_timer -= delta
 	if _timer <= 0:
 		state_machine.change_state(Identifiers.BossStates.PATROL)

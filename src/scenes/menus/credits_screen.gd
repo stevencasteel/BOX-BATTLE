@@ -3,6 +3,8 @@
 @tool
 extends "res://src/scenes/menus/base_menu_screen.gd"
 
+const CUE_BACK = preload(AssetPaths.CUE_UI_BACK)
+
 # --- Constants ---
 const CREDITS_BBCODE = """
 [center]A Game By Steven Casteel[/center]
@@ -52,5 +54,5 @@ func _on_meta_clicked(meta) -> void:
 	OS.shell_open(str(meta))
 
 func _on_back_button_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
+	AudioManager.play_cue(CUE_BACK)
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)

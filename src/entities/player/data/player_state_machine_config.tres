@@ -1,16 +1,16 @@
-[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="StateMachineConfig" load_steps=21 format=3 uid="uid://p45pwsldcdgl"]
 
-[ext_resource type="Script" path="res://src/core/data/config/state_definition.gd" id="1_def"]
-[ext_resource type="Script" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_move.gd" id="3_move"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_jump.gd" id="4_jump"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_fall.gd" id="5_fall"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_dash.gd" id="6_dash"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_wall_slide.gd" id="7_slide"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_attack.gd" id="8_attack"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_hurt.gd" id="9_hurt"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_heal.gd" id="10_heal"]
-[ext_resource type="Script" path="res://src/entities/player/states/state_pogo.gd" id="11_pogo"]
+[ext_resource type="Script" uid="uid://n65f7l7vgpyh" path="res://src/core/data/config/state_definition.gd" id="1_def"]
+[ext_resource type="Script" uid="uid://bhpvwtjqtlr08" path="res://src/core/data/config/state_machine_config.gd" id="2_cfg"]
+[ext_resource type="Script" uid="uid://pyb4pd4uixxk" path="res://src/entities/player/states/state_move.gd" id="3_move"]
+[ext_resource type="Script" uid="uid://52jrtscsjy6s" path="res://src/entities/player/states/state_jump.gd" id="4_jump"]
+[ext_resource type="Script" uid="uid://dd6xefkcdr77e" path="res://src/entities/player/states/state_fall.gd" id="5_fall"]
+[ext_resource type="Script" uid="uid://11fbrak080kl" path="res://src/entities/player/states/state_dash.gd" id="6_dash"]
+[ext_resource type="Script" uid="uid://m3xnbhn5umv6" path="res://src/entities/player/states/state_wall_slide.gd" id="7_slide"]
+[ext_resource type="Script" uid="uid://cem1wgbis0qlx" path="res://src/entities/player/states/state_attack.gd" id="8_attack"]
+[ext_resource type="Script" uid="uid://bxwc5vsj7qsw1" path="res://src/entities/player/states/state_hurt.gd" id="9_hurt"]
+[ext_resource type="Script" uid="uid://dv503l6b2cfqr" path="res://src/entities/player/states/state_heal.gd" id="10_heal"]
+[ext_resource type="Script" uid="uid://d1l7j3jqn4awq" path="res://src/entities/player/states/state_pogo.gd" id="11_pogo"]
 
 [sub_resource type="Resource" id="Resource_move"]
 script = ExtResource("1_def")
@@ -60,14 +60,4 @@ state_script = ExtResource("11_pogo")
 [resource]
 script = ExtResource("2_cfg")
 initial_state = &"fall"
-states = Array[ExtResource("1_def")]([
-    SubResource("Resource_move"),
-    SubResource("Resource_jump"),
-    SubResource("Resource_fall"),
-    SubResource("Resource_dash"),
-    SubResource("Resource_slide"),
-    SubResource("Resource_attack"),
-    SubResource("Resource_hurt"),
-    SubResource("Resource_heal"),
-    SubResource("Resource_pogo")
-])
+states = Array[ExtResource("1_def")]([SubResource("Resource_move"), SubResource("Resource_jump"), SubResource("Resource_fall"), SubResource("Resource_dash"), SubResource("Resource_slide"), SubResource("Resource_attack"), SubResource("Resource_hurt"), SubResource("Resource_heal"), SubResource("Resource_pogo")])

@@ -69,12 +69,21 @@ const FONT_MAIN_REGULAR = "res://assets/fonts/font_main_regular.ttf"
 
 # --- AUDIO ---
 const MUSIC_MENU_LOOP = "res://assets/audio/music/music_menu_loop.mp3"
+const SFX_GAME_START = "res://assets/audio/sfx/sfx_game_start.mp3"
+
+# Legacy RAW paths (Deprecated, keeping for safety during migration)
 const SFX_UI_BACK = "res://assets/audio/sfx/sfx_ui_back.mp3"
 const SFX_UI_ERROR = "res://assets/audio/sfx/sfx_ui_error.mp3"
 const SFX_UI_MOVE = "res://assets/audio/sfx/sfx_ui_move.mp3"
 const SFX_UI_SELECT = "res://assets/audio/sfx/sfx_ui_select.mp3"
-const SFX_GAME_START = "res://assets/audio/sfx/sfx_game_start.mp3"
 const SFX_UI_SLIDER_TICK = "res://assets/audio/sfx/sfx_ui_slider_tick.mp3"
+
+# Audio Cues (Preferred)
+const CUE_UI_BACK = "res://src/data/audio/ui/sfx_ui_back.tres"
+const CUE_UI_ERROR = "res://src/data/audio/ui/sfx_ui_error.tres"
+const CUE_UI_MOVE = "res://src/data/audio/ui/sfx_ui_move.tres"
+const CUE_UI_SELECT = "res://src/data/audio/ui/sfx_ui_select.tres"
+const CUE_UI_SLIDER_TICK = "res://src/data/audio/ui/sfx_ui_slider_tick.tres"
 
 
 # --- Validation System ---

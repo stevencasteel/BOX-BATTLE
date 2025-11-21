@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AudioCue" load_steps=3 format=3 uid="uid://cue_ui_slider"]
+
+[ext_resource type="Script" path="res://src/core/data/audio/audio_cue.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/sfx_ui_slider_tick.mp3" id="2_sfx"]
+
+[resource]
+script = ExtResource("1_script")
+stream = ExtResource("2_sfx")
+volume_db = -12.0
+pitch_scale = 1.2
+pitch_randomness = 0.1
+bus = &"SFX"

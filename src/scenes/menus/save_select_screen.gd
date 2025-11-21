@@ -1,6 +1,10 @@
 # src/scenes/menus/save_select_screen.gd
 extends "res://src/scenes/menus/base_menu_screen.gd"
 
+const CUE_BACK = preload(AssetPaths.CUE_UI_BACK)
+# CUE_SELECT is inherited from BaseMenuScreen
+const CUE_ERROR = preload(AssetPaths.CUE_UI_ERROR)
+
 @onready var slots_vbox: VBoxContainer = %SlotsVBox
 @onready var back_button: StyledMenuItem = %BackButton
 @onready var btn_copy: StyledMenuItem = %BtnCopy
@@ -47,9 +51,6 @@ func _refresh_slots() -> void:
 
 func _set_mode(mode: Mode) -> void:
 	_current_mode = mode
-	
-	# FIX: Moved reset logic inside the match block.
-	# We do NOT want to reset _copy_source_index when entering COPY_SELECT_DEST.
 	
 	match _current_mode:
 		Mode.NORMAL:
@@ -100,48 +101,48 @@ func _on_slot_chosen(index: int) -> void:
 			var summary = SaveManager.get_slot_summary(index)
 			if summary.get("empty", true):
 				# Cannot copy empty slot
-				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+				AudioManager.play_cue(CUE_ERROR)
 				return
 			
 			_copy_source_index = index
 			_set_mode(Mode.COPY_SELECT_DEST) # Update UI text
-			AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+			AudioManager.play_cue(CUE_SELECT)
 
 		Mode.COPY_SELECT_DEST:
 			if index == _copy_source_index:
-				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+				AudioManager.play_cue(CUE_ERROR)
 				return
 				
 			var success = SaveManager.copy_slot(_copy_source_index, index)
 			if success:
-				AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+				AudioManager.play_cue(CUE_SELECT)
 				_refresh_slots()
 				_set_mode(Mode.NORMAL)
 			else:
-				AudioManager.play_sfx(AssetPaths.SFX_UI_ERROR)
+				AudioManager.play_cue(CUE_ERROR)
 
 		Mode.ERASE:
 			SaveManager.erase_slot(index)
-			AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+			AudioManager.play_cue(CUE_SELECT)
 			_refresh_slots()
 			_set_mode(Mode.NORMAL)
 
 func _on_copy_mode_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)
 	if _current_mode == Mode.COPY_SELECT_SOURCE or _current_mode == Mode.COPY_SELECT_DEST:
 		_set_mode(Mode.NORMAL) # Toggle Off
 	else:
 		_set_mode(Mode.COPY_SELECT_SOURCE)
 
 func _on_erase_mode_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_SELECT)
+	AudioManager.play_cue(CUE_SELECT)
 	if _current_mode == Mode.ERASE:
 		_set_mode(Mode.NORMAL) # Toggle Off
 	else:
 		_set_mode(Mode.ERASE)
 
 func _on_back_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
+	AudioManager.play_cue(CUE_BACK)
 	if _current_mode != Mode.NORMAL:
 		_set_mode(Mode.NORMAL)
 	else:

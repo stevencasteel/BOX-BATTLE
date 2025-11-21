@@ -3,6 +3,8 @@
 @tool
 extends "res://src/scenes/menus/base_menu_screen.gd"
 
+const CUE_BACK = preload(AssetPaths.CUE_UI_BACK)
+
 # --- Node References ---
 @onready var background_color: ColorRect = $BackgroundColor
 @onready var start_button: StyledMenuItem = %StartButton
@@ -53,7 +55,7 @@ func _on_options_button_pressed() -> void:
 	SceneManager.go_to_scene(AssetPaths.SCENE_OPTIONS_SCREEN)
 
 func _on_exit_button_pressed() -> void:
-	AudioManager.play_sfx(AssetPaths.SFX_UI_BACK)
+	AudioManager.play_cue(CUE_BACK)
 	await get_tree().create_timer(0.2).timeout
 	get_tree().quit()
 

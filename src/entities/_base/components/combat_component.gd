@@ -69,12 +69,24 @@ func fire_shot(is_max_charge: bool = false) -> void:
 	if not shot:
 		return
 
-	var shot_dir = Vector2(p_data.physics.facing_direction, 0)
-	# We assume InputComponent is updating the buffer elsewhere
-	if Input.is_action_pressed("ui_up"):
-		shot_dir = Vector2.UP
-	elif Input.is_action_pressed("ui_down"):
-		shot_dir = Vector2.DOWN
+	# --- Diagonal Input Logic ---
+	var dir = Vector2.ZERO
+	
+	if Input.is_action_pressed("ui_up"): 
+		dir.y = -1.0
+	elif Input.is_action_pressed("ui_down"): 
+		dir.y = 1.0
+		
+	if Input.is_action_pressed("ui_left"): 
+		dir.x = -1.0
+	elif Input.is_action_pressed("ui_right"): 
+		dir.x = 1.0
+	
+	# Fallback: Use facing direction if no input
+	if dir == Vector2.ZERO:
+		dir.x = p_data.physics.facing_direction
+	
+	var shot_dir = dir.normalized()
 
 	shot.direction = shot_dir
 	shot.global_position = owner_node.global_position + (shot_dir * 60)

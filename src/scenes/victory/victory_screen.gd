@@ -3,6 +3,8 @@
 @tool
 extends "res://src/scenes/menus/base_menu_screen.gd"
 
+const CUE_BACK = preload(AssetPaths.CUE_UI_BACK)
+
 # --- Node References ---
 @onready var back_button: StyledMenuItem = %BackButton
 
@@ -22,4 +24,5 @@ func _ready() -> void:
 
 # --- Unique Signal Handlers ---
 func _on_back_button_pressed() -> void:
+	AudioManager.play_cue(CUE_BACK)
 	SceneManager.go_to_scene(AssetPaths.SCENE_TITLE_SCREEN)

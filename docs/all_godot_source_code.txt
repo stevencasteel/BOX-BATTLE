@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Thu Nov 20 19:07:13 CST 2025
+Generated on: Fri Nov 21 13:34:25 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -88,6 +88,9 @@ PROJECT DIRECTORY STRUCTURE:
 │       └── STYLE-001_GDScript.md
 ├── export_presets.cfg
 ├── icon.svg
+├── misc
+│   └── Mega Man X - Sprites
+│       └── PlayStation - Mega Man X4 - Playable Characters - X.png
 ├── pico.save
 ├── progess
 │   └── progress_001-1.jpg
@@ -125,8 +128,12 @@ PROJECT DIRECTORY STRUCTURE:
     │       ├── aura_heal_purple.tscn
     │       ├── hit_spark.gd
     │       ├── hit_spark.tscn
+    │       ├── melee_slash.gd
+    │       ├── melee_slash.tscn
     │       ├── splash_charge_green.tscn
-    │       └── splash_heal_purple.tscn
+    │       ├── splash_heal_purple.tscn
+    │       ├── splash_impact_red.tscn
+    │       └── splash_impact_red_large.tscn
     ├── core
     │   ├── DEPRECATION.md
     │   ├── README.md
@@ -219,7 +226,9 @@ PROJECT DIRECTORY STRUCTURE:
     │   │   ├── boss_shockwave_effect.tres
     │   │   ├── entity_hit_flash_effect.tres
     │   │   ├── green_splash_vfx.tres
-    │   │   └── heavy_impact_chromatic.tres
+    │   │   ├── heavy_impact_chromatic.tres
+    │   │   ├── red_splash_large_vfx.tres
+    │   │   └── red_splash_vfx.tres
     │   ├── encounters
     │   │   ├── encounter_00.tres
     │   │   └── encounter_data.gd
@@ -488,7 +497,7 @@ PROJECT DIRECTORY STRUCTURE:
         └── themes
             └── main_theme.tres
 
-114 directories, 366 files
+116 directories, 373 files
 
 
 =====================================
@@ -816,8 +825,87 @@ FILE: ./docs/CHANGELOG.txt
 
 
 
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
+║   ██           [0.32.0] - PRESENT - 11/21/2025                            ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+
+
+
+
+
+
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.31.0] - 1440P EXPANSION & TALLER PLAYER - 11/21/2025    ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Level Design & Presentation                                               ║
+║      ░ ■ Arena Expansion: Expanded gameplay area to full 2560x1440 (QHD).      ║
+║      ░ ■ Level Layout: Redesigned 'level_00' into "The Divided Ground".        ║
+║      ░   - Features a central spike pit, high perches, and floating bridges.   ║
+║      ░   - Forces verticality and parkour during boss encounters.              ║
+║      ░ ■ Viewport: Updated Cabinet logic to handle the 26x52 tile grid.        ║
+║                                                                                ║
+║   █  Player Update                                                             ║
+║      ░ ■ Form Factor: Player size doubled vertically (40x80).                  ║
+║      ░ ■ Combat Range: Attack hitboxes extended to match new reach.            ║
+║      ░ ■ Visuals: Added procedural Green Gradient Swipe FX for all melee       ║
+║      ░   attacks (Side, Up, Pogo) to clearly visualize hitbox area.            ║
+║      ░ ■ VFX: Resized Charge and Heal auras to fit the taller body.            ║
+║                                                                                ║
+║   █  Combat Polish                                                             ║
+║      ░ ■ Tuning: Reduced Level 2 Charge time to 1.12s for snappier combat.     ║
+║      ░ ■ Projectile Interaction: Player Melee and Pogo now destroy enemy       ║
+║      ░   projectiles on contact, triggering a Red Splash (Enemy death) AND     ║
+║      ░   a Green Spark (Player hit).                                           ║
+║      ░ ■ Visual Clarity: Standardized Enemy projectiles/impacts to Red,        ║
+║      ░   Player effects to Green.                                              ║
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██       [0.30.0] - ARCHITECTURAL POLISH & GAMEPLAY FEEL - 11/21/2025   ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architectural Refactor                                                    ║
+║      ░ ■ Visual Consolidation: 'VisualComponent' is now the sole authority on  ║
+║      ░   Entity appearance. Decoupled Entity scripts from visual nodes.        ║
+║      ░ ■ Component Autonomy: 'HealComponent' fully manages its own input,      ║
+║      ░   timers, and state. Removed legacy bloat from 'Player.gd'.             ║
+║      ░ ■ Boss Standardization: Migrated Cooldown/Patrol timers from SceneNodes ║
+║      ░   to pure State logic.                                                  ║
+║                                                                                ║
+║   █  Gameplay & Combat                                                         ║
+║      ░ ■ Projectile Clash: Implemented generic 'destroy_with_impact' API.      ║
+║      ░   - Player shots (Green) now correctly clash with Enemy shots (Red).    ║
+║      ░   - Pogo attacks now correctly destroy projectiles + trigger bounce.    ║
+║      ░ ■ Healing Risk: Taking damage while healing now consumes the charge     ║
+║      ░   without granting health (Punishment mechanic).                        ║
+║      ░ ■ Tuning: Reduced Level 2 Charge time to 1.12s (-30% + -20%).           ║
+║                                                                                ║
+║   █  Visuals & Feedback                                                        ║
+║      ░ ■ Melee Visuals: Added procedural Green Gradient swipes for Side, Up,   ║
+║      ░   and Pogo attacks matching hitbox size.                                ║
+║      ░ ■ Enemy Visuals: Standardized Enemy projectiles/splashes to Red.        ║
+║      ░   - Added Large Red Splash for Boss Heavy Projectiles.                  ║
+║      ░ ■ Hitbox Polish: Debug shapes now sync facing direction instantly.      ║
+║                                                                                ║
+║   █  Stability                                                                 ║
+║      ░ ■ ObjectPool: Hardened against "invalid previously freed instance".     ║
+║      ░ ■ Crash Fixes: Resolved race conditions in Hurtbox/Health/Player logic  ║
+║      ░   during scene transitions and death sequences.                         ║
+║                                                                                ║
+
+
+
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██    [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║                                                                                ║
 ║   █  Level Architecture                                                        ║
@@ -855,8 +943,6 @@ FILE: ./docs/CHANGELOG.txt
       ░ ■ Documentation: Updated ARCHITECTURE.txt to reflect current patterns.
 
 
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.28.0] - ARCHITECTURAL REFACTOR - 11/19/2025             ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -875,8 +961,6 @@ FILE: ./docs/CHANGELOG.txt
 ║      ░   - Previously, attacking in mid-air halted all velocity (X and Y).     ║
 ║      ░   - Now, attacking only applies friction to Horizontal (X) movement.    ║
 ║      ░   - Gravity continues to apply normally during the attack animation.    ║
-
-
 
 ║                                                                                ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -929,9 +1013,6 @@ FILE: ./docs/CHANGELOG.txt
       ░   - Enables "beam struggle" style mechanics where powerful shots
       ░     cleave through weaker enemy fire.
 
-
-
-
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.26.0] - VISUAL JUICE & FX & MULTI-SLOT SAVE SYSTEM - 11/19/2025                               ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -964,8 +1045,6 @@ FILE: ./docs/CHANGELOG.txt
 ║   █  Developer Tools                                                           ║
 ║      ░ ■ Added TAB shortcut in Main Menu to instantly start a fresh run in     ║
 ║      ░   Slot 0 for rapid iteration.                                           ║
-
-
 
 
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
@@ -3886,7 +3965,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Border" type="ColorRect" parent="CenterContainer"]
-custom_minimum_size = Vector2(1004, 1004)
+custom_minimum_size = Vector2(2564, 1444)
 layout_mode = 2
 color = Color(0.3, 0.3, 0.3, 1)
 
@@ -3897,22 +3976,22 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -500.0
-offset_top = -500.0
-offset_right = 500.0
-offset_bottom = 500.0
+offset_left = -1280.0
+offset_top = -720.0
+offset_right = 1280.0
+offset_bottom = 720.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="SubViewport" type="SubViewport" parent="CenterContainer/Border/SubViewportContainer"]
 unique_name_in_owner = true
 handle_input_locally = false
-size = Vector2i(1000, 1000)
+size = Vector2i(2560, 1440)
 render_target_update_mode = 4
 
 [node name="GameCamera" type="Camera2D" parent="CenterContainer/Border/SubViewportContainer/SubViewport"]
 unique_name_in_owner = true
-position = Vector2(500, 500)
+position = Vector2(1280, 720)
 
 
 =====================================
@@ -7259,18 +7338,31 @@ func get_instance(p_pool_name: StringName) -> Node:
 		return null
 
 	var pool: Dictionary = _pools[p_pool_name]
-	var instance: Node
+	var instance: Node = null
 
-	if not pool.inactive.is_empty():
-		instance = pool.inactive.pop_front()
-	else:
+	# Robust Retrieval Loop
+	# Keep popping until we find a valid instance or run out.
+	while not pool.inactive.is_empty():
+		var candidate = pool.inactive.pop_front()
+		if is_instance_valid(candidate) and not candidate.is_queued_for_deletion():
+			instance = candidate
+			break
+		else:
+			# If we found a ghost reference, we decrement total count effectively (it's gone)
+			# We don't decrement total_created here to keep stats simple, or we could.
+			pass
+
+	# If no valid instance found in pool, create new
+	if not is_instance_valid(instance):
 		instance = pool.scene.instantiate()
 		instance.set_meta("pool_name", p_pool_name)
 		pool.container.add_child(instance)
-		pool.total_created += 1 # Track creation
+		pool.total_created += 1
 
-	if is_instance_valid(_active_world_container):
+	# Reparenting Logic
+	if is_instance_valid(_active_world_container) and not _active_world_container.is_queued_for_deletion():
 		if instance.get_parent() != _active_world_container:
+			# Standard reparent
 			instance.reparent(_active_world_container, false) 
 	
 	return instance
@@ -7286,12 +7378,14 @@ func return_instance(p_instance: Node) -> void:
 
 	var pool: Dictionary = _pools[pool_name]
 	
+	# Prevent double-return
 	if pool.inactive.has(p_instance):
 		return
 
 	if p_instance.has_method("deactivate"):
 		p_instance.deactivate()
 
+	# Return to pool container for storage
 	if p_instance.get_parent() != pool.container:
 		if is_instance_valid(pool.container):
 			p_instance.reparent(pool.container, false)
@@ -7941,6 +8035,7 @@ extends Resource
 @export_range(1, 20, 1) var homing_shot_damage: int = 1
 @export_range(100, 1000, 10) var homing_shot_speed: float = 250.0
 @export_range(1.0, 20.0, 0.5) var homing_shot_lifespan: float = 10.0
+@export var projectile_muzzle_vfx: VFXEffect
 
 
 =====================================
@@ -7991,17 +8086,19 @@ extends Resource
 @export_range(0.05, 0.5, 0.01) var attack_duration: float = 0.1
 @export_range(100, 5000, 100) var attack_friction: float = 2000.0
 @export_range(0.1, 1.0, 0.01) var charge_time: float = 0.35
-@export_range(1.0, 5.0, 0.1) var level_2_charge_time: float = 2.0
+@export_range(1.0, 5.0, 0.01) var level_2_charge_time: float = 1.12
 @export var level_2_damage: int = 3
 @export_range(200, 1000, 10) var pogo_force: float = 450.0
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
 
 @export_group("Visual Effects")
+@export var hit_spark_effect: VFXEffect
 @export var vfx_charge_aura: PackedScene
 @export var vfx_charge_splash: PackedScene
 @export var vfx_heal_aura: PackedScene
 @export var vfx_heal_splash: PackedScene
 @export var vfx_dissolve: ShaderEffect
+@export var vfx_melee_slash: PackedScene
 
 
 =====================================
@@ -8964,6 +9061,74 @@ shader_parameter/thickness = 0.1
 
 
 =====================================
+FILE: ./src/content/vfx/splash_impact_red.tscn
+=====================================
+[gd_scene load_steps=6 format=3 uid="uid://splash_impact_red"]
+
+[ext_resource type="Script" path="res://src/content/vfx/hit_spark.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_red"]
+colors = PackedColorArray(1, 0.2, 0.2, 1, 0.8, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_red"]
+gradient = SubResource("Gradient_red")
+
+[sub_resource type="Curve" id="Curve_explode"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.5, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_explode"]
+curve = SubResource("Curve_explode")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_red_splash"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 80.0
+initial_velocity_max = 180.0
+gravity = Vector3(0, 0, 0)
+damping_min = 400.0
+damping_max = 400.0
+scale_min = 1.0
+scale_max = 2.5
+scale_curve = SubResource("CurveTexture_explode")
+color_ramp = SubResource("GradientTexture1D_red")
+
+[node name="SplashImpactRed" type="GPUParticles2D"]
+emitting = false
+amount = 12
+process_material = SubResource("ParticleProcessMaterial_red_splash")
+lifetime = 0.3
+one_shot = true
+explosiveness = 1.0
+script = ExtResource("1_script")
+metadata/pool_name = &"red_splashes"
+
+
+=====================================
+FILE: ./src/content/vfx/melee_slash.tscn
+=====================================
+[gd_scene load_steps=4 format=3 uid="uid://melee_slash_vfx"]
+
+[ext_resource type="Script" path="res://src/content/vfx/melee_slash.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_green_swipe"]
+colors = PackedColorArray(0, 0.4, 0, 1, 0.4, 1, 0.4, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_swipe"]
+gradient = SubResource("Gradient_green_swipe")
+width = 1
+height = 1
+fill_from = Vector2(0, 0)
+fill_to = Vector2(1, 0)
+
+[node name="MeleeSlash" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = SubResource("GradientTexture2D_swipe")
+
+
+=====================================
 FILE: ./src/content/vfx/splash_charge_green.tscn
 =====================================
 [gd_scene load_steps=6 format=3 uid="uid://splash_charge_green"]
@@ -9174,8 +9339,8 @@ gradient = SubResource("Gradient_green")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_aura"]
 particle_flag_disable_z = true
-emission_shape = 1
-emission_sphere_radius = 35.0
+emission_shape = 3
+emission_box_extents = Vector3(25, 45, 1)
 direction = Vector3(0, -1, 0)
 spread = 180.0
 initial_velocity_min = 20.0
@@ -9195,7 +9360,7 @@ turbulence_noise_speed_min = 2.0
 turbulence_noise_speed_max = 4.0
 
 [node name="ChargeAuraGreen" type="GPUParticles2D"]
-amount = 60
+amount = 80
 process_material = SubResource("ParticleProcessMaterial_aura")
 lifetime = 0.2
 fixed_fps = 60
@@ -9217,7 +9382,7 @@ gradient = SubResource("Gradient_purple")
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_heal"]
 particle_flag_disable_z = true
 emission_shape = 3
-emission_box_extents = Vector3(25, 10, 1)
+emission_box_extents = Vector3(30, 50, 1)
 direction = Vector3(0, -1, 0)
 spread = 0.0
 initial_velocity_min = 150.0
@@ -9234,11 +9399,73 @@ turbulence_noise_scale = 3.0
 turbulence_noise_speed = Vector3(0, 5, 0)
 
 [node name="HealAuraPurple" type="GPUParticles2D"]
-amount = 80
+amount = 100
 process_material = SubResource("ParticleProcessMaterial_heal")
 lifetime = 0.4
 fixed_fps = 60
 local_coords = true
+
+
+=====================================
+FILE: ./src/content/vfx/splash_impact_red_large.tscn
+=====================================
+[gd_scene load_steps=6 format=3 uid="uid://splash_impact_red_large"]
+
+[ext_resource type="Script" path="res://src/content/vfx/hit_spark.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_red"]
+colors = PackedColorArray(1, 0.2, 0.2, 1, 0.8, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_red"]
+gradient = SubResource("Gradient_red")
+
+[sub_resource type="Curve" id="Curve_explode"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.5, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_explode"]
+curve = SubResource("Curve_explode")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_red_splash_lg"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 150.0
+initial_velocity_max = 350.0
+gravity = Vector3(0, 0, 0)
+damping_min = 300.0
+damping_max = 300.0
+scale_min = 3.0
+scale_max = 6.0
+scale_curve = SubResource("CurveTexture_explode")
+color_ramp = SubResource("GradientTexture1D_red")
+
+[node name="SplashImpactRedLarge" type="GPUParticles2D"]
+emitting = false
+amount = 24
+process_material = SubResource("ParticleProcessMaterial_red_splash_lg")
+lifetime = 0.45
+one_shot = true
+explosiveness = 1.0
+script = ExtResource("1_script")
+metadata/pool_name = &"red_splashes_large"
+
+
+=====================================
+FILE: ./src/content/vfx/melee_slash.gd
+=====================================
+# src/content/vfx/melee_slash.gd
+extends Node2D
+
+@onready var sprite = $Sprite2D
+
+func setup(size: Vector2, duration: float) -> void:
+	# Texture is 1x1, so scale matches desired pixel size
+	sprite.scale = size
+	
+	var tween = create_tween()
+	# Fade alpha to 0
+	tween.tween_property(sprite, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_callback(queue_free)
 
 
 =====================================
@@ -9392,240 +9619,220 @@ void fragment() {
 =====================================
 FILE: ./src/content/levels/level_00.tscn
 =====================================
-[gd_scene load_steps=13 format=3 uid="uid://c6gxsalyacbd1"]
+[gd_scene load_steps=12 format=3 uid="uid://c6gxsalyacbd1"]
 
 [ext_resource type="PackedScene" uid="uid://e0dt5jwwxndr" path="res://src/entities/enemies/spawners/patrolling_lancer_spawner.tscn" id="1_8girt"]
 [ext_resource type="PackedScene" uid="uid://c1d2e3f4g5h6i" path="res://src/entities/enemies/minions/flying_patroller.tscn" id="4_ei412"]
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://src/entities/enemies/minions/turret.tscn" id="13_5kto0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_border"]
-size = Vector2(46.75, 1000)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5nn78"]
-size = Vector2(208, 128)
+size = Vector2(50, 1440)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling"]
-size = Vector2(1000, 48)
+size = Vector2(2560, 50)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
-size = Vector2(752, 48)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor_side"]
+size = Vector2(800, 200)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor_right"]
-size = Vector2(104, 48)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pit_wall"]
+size = Vector2(50, 400)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bn14x"]
-size = Vector2(64, 128)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_central_block"]
+size = Vector2(200, 50)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_block"]
-size = Vector2(64, 128)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_high_perch"]
+size = Vector2(300, 50)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_oneway"]
-size = Vector2(64, 16)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oneway_bridge"]
+size = Vector2(300, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_spikes"]
-size = Vector2(144, 48)
+size = Vector2(960, 50)
 
 [node name="Level_00" type="Node2D"]
 
 [node name="Background" type="ColorRect" parent="."]
 z_index = -10
-offset_right = 1000.0
-offset_bottom = 1000.0
+offset_right = 2560.0
+offset_bottom = 1440.0
 color = Color(0.0627451, 0.0627451, 0.0627451, 1)
 
 [node name="Terrain" type="Node2D" parent="."]
 
 [node name="LeftWall" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 500)
+position = Vector2(25, 720)
 collision_layer = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftWall"]
-position = Vector2(-0.75, 0)
 shape = SubResource("RectangleShape2D_border")
 
 [node name="Visual" type="Polygon2D" parent="Terrain/LeftWall"]
-position = Vector2(-0.999999, -1.52588e-05)
-scale = Vector2(0.96, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -0.486832, 500, -25, 500)
-
-[node name="LeftPlatform" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 500)
-collision_layer = 128
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftPlatform"]
-position = Vector2(127, 204)
-shape = SubResource("RectangleShape2D_5nn78")
-
-[node name="Visual" type="Polygon2D" parent="Terrain/LeftPlatform"]
-position = Vector2(127, 204)
-scale = Vector2(4.16, 0.128)
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -0.486832, 500, -25, 500)
+polygon = PackedVector2Array(-25, -720, 25, -720, 25, 720, -25, 720)
 
 [node name="RightWall" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 500)
+position = Vector2(2535, 720)
 collision_layer = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/RightWall"]
-position = Vector2(0.375, 0)
 shape = SubResource("RectangleShape2D_border")
 
 [node name="Visual" type="Polygon2D" parent="Terrain/RightWall"]
-position = Vector2(1, 0)
-scale = Vector2(0.96, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -25, 500)
+polygon = PackedVector2Array(-25, -720, 25, -720, 25, 720, -25, 720)
 
 [node name="Ceiling" type="StaticBody2D" parent="Terrain"]
-position = Vector2(500, 25)
+position = Vector2(1280, 25)
 collision_layer = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/Ceiling"]
-position = Vector2(0, -1)
 shape = SubResource("RectangleShape2D_ceiling")
 
 [node name="Visual" type="Polygon2D" parent="Terrain/Ceiling"]
-position = Vector2(9.53674e-07, -1)
-scale = Vector2(1, 0.96)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-500, -25, 500, -25, 500, 25, -500, 25)
+polygon = PackedVector2Array(-1280, -25, 1280, -25, 1280, 25, -1280, 25)
 
 [node name="FloorLeft" type="StaticBody2D" parent="Terrain"]
-position = Vector2(375, 975)
+position = Vector2(400, 1340)
 collision_layer = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloorLeft"]
-position = Vector2(1, 1)
-shape = SubResource("RectangleShape2D_floor")
+shape = SubResource("RectangleShape2D_floor_side")
 
 [node name="Visual" type="Polygon2D" parent="Terrain/FloorLeft"]
-position = Vector2(1, 1)
-scale = Vector2(1.00267, 0.96)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-375, -25, 375, -25, 375, 25, -375, 25)
+polygon = PackedVector2Array(-400, -100, 400, -100, 400, 100, -400, 100)
 
 [node name="FloorRight" type="StaticBody2D" parent="Terrain"]
-position = Vector2(950, 975)
+position = Vector2(2160, 1340)
 collision_layer = 128
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloorRight"]
-position = Vector2(-2, 1)
-shape = SubResource("RectangleShape2D_floor_right")
+shape = SubResource("RectangleShape2D_floor_side")
 
 [node name="Visual" type="Polygon2D" parent="Terrain/FloorRight"]
-position = Vector2(2, 0.999996)
-scale = Vector2(0.98, 0.855)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-57.1429, -28.0702, 48.9796, -28.0702, 48.9796, 28.0702, -57.1429, 28.0702)
+polygon = PackedVector2Array(-400, -100, 400, -100, 400, 100, -400, 100)
 
-[node name="CenterPillar" type="StaticBody2D" parent="Terrain"]
-position = Vector2(600, 700)
+[node name="LeftPitWall" type="StaticBody2D" parent="Terrain"]
+position = Vector2(775, 1440)
 collision_layer = 128
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain/CenterPillar"]
-position = Vector2(-159.825, -66.2445)
-scale = Vector2(2.58468, 0.814314)
-polygon = PackedVector2Array(2.91133, -306.339, 2.91133, 245.046, 76.8083, 87.5076, 76.8083, -306.339)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftPitWall"]
+position = Vector2(0, -200)
+shape = SubResource("RectangleShape2D_pit_wall")
 
-[node name="Visual" type="Polygon2D" parent="Terrain/CenterPillar"]
-position = Vector2(-96, -172)
-scale = Vector2(0.923077, 1)
+[node name="Visual" type="Polygon2D" parent="Terrain/LeftPitWall"]
+position = Vector2(0, -200)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-60.6667, -144, 147.333, -144, 147.333, 176, -60.6667, 304)
+polygon = PackedVector2Array(-25, -200, 25, -200, 25, 200, -25, 200)
 
-[node name="FloatingBlock" type="StaticBody2D" parent="Terrain"]
-position = Vector2(300, 600)
+[node name="RightPitWall" type="StaticBody2D" parent="Terrain"]
+position = Vector2(1785, 1440)
 collision_layer = 128
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloatingBlock"]
-position = Vector2(180, -344)
-shape = SubResource("RectangleShape2D_bn14x")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/RightPitWall"]
+position = Vector2(0, -200)
+shape = SubResource("RectangleShape2D_pit_wall")
 
-[node name="Visual" type="Polygon2D" parent="Terrain/FloatingBlock"]
-position = Vector2(124, -304)
-scale = Vector2(2.14, 1)
+[node name="Visual" type="Polygon2D" parent="Terrain/RightPitWall"]
+position = Vector2(0, -200)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(11.215, -104, 41.1215, -104, 41.1215, 24, 11.215, 24)
+polygon = PackedVector2Array(-25, -200, 25, -200, 25, 200, -25, 200)
 
-[node name="FloatingBlock2" type="StaticBody2D" parent="Terrain"]
-position = Vector2(300, 600)
+[node name="CentralBlock" type="StaticBody2D" parent="Terrain"]
+position = Vector2(1280, 950)
 collision_layer = 128
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloatingBlock2"]
-position = Vector2(308, -344)
-shape = SubResource("RectangleShape2D_block")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/CentralBlock"]
+shape = SubResource("RectangleShape2D_central_block")
 
-[node name="Visual" type="Polygon2D" parent="Terrain/FloatingBlock2"]
-position = Vector2(252, -304)
-scale = Vector2(2.14, 1)
+[node name="Visual" type="Polygon2D" parent="Terrain/CentralBlock"]
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(11.215, -104, 41.1215, -104, 41.1215, 24, 11.215, 24)
+polygon = PackedVector2Array(-100, -25, 100, -25, 100, 25, -100, 25)
+
+[node name="LeftPerch" type="StaticBody2D" parent="Terrain"]
+position = Vector2(175, 500)
+collision_layer = 128
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftPerch"]
+shape = SubResource("RectangleShape2D_high_perch")
+
+[node name="Visual" type="Polygon2D" parent="Terrain/LeftPerch"]
+color = Color(0.129412, 0.129412, 0.129412, 1)
+polygon = PackedVector2Array(-150, -25, 150, -25, 150, 25, -150, 25)
+
+[node name="RightPerch" type="StaticBody2D" parent="Terrain"]
+position = Vector2(2385, 500)
+collision_layer = 128
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/RightPerch"]
+shape = SubResource("RectangleShape2D_high_perch")
+
+[node name="Visual" type="Polygon2D" parent="Terrain/RightPerch"]
+color = Color(0.129412, 0.129412, 0.129412, 1)
+polygon = PackedVector2Array(-150, -25, 150, -25, 150, 25, -150, 25)
 
 [node name="Platforms" type="Node2D" parent="."]
 
-[node name="OneWayUpper" type="StaticBody2D" parent="Platforms"]
-position = Vector2(600, 225)
+[node name="LeftBridge" type="StaticBody2D" parent="Platforms"]
+position = Vector2(1000, 1100)
 collision_layer = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/OneWayUpper"]
-position = Vector2(-56, -25)
-shape = SubResource("RectangleShape2D_oneway")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LeftBridge"]
+shape = SubResource("RectangleShape2D_oneway_bridge")
 one_way_collision = true
 
-[node name="Visual" type="Polygon2D" parent="Platforms/OneWayUpper"]
-position = Vector2(-32, -25)
+[node name="Visual" type="Polygon2D" parent="Platforms/LeftBridge"]
 color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-56, -8, 8, -8, 8, 8, -56, 8)
+polygon = PackedVector2Array(-150, -10, 150, -10, 150, 10, -150, 10)
 
-[node name="OneWayLower" type="StaticBody2D" parent="Platforms"]
-position = Vector2(600, 325)
+[node name="RightBridge" type="StaticBody2D" parent="Platforms"]
+position = Vector2(1560, 1100)
 collision_layer = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/OneWayLower"]
-position = Vector2(-56, -61)
-shape = SubResource("RectangleShape2D_oneway")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/RightBridge"]
+shape = SubResource("RectangleShape2D_oneway_bridge")
 one_way_collision = true
 
-[node name="Visual" type="Polygon2D" parent="Platforms/OneWayLower"]
-position = Vector2(-40, -61)
+[node name="Visual" type="Polygon2D" parent="Platforms/RightBridge"]
 color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-48, -8, 16, -8, 16, 8, -48, 8)
+polygon = PackedVector2Array(-150, -10, 150, -10, 150, 10, -150, 10)
 
 [node name="Hazards" type="Node2D" parent="."]
 
-[node name="Spikes" type="StaticBody2D" parent="Hazards"]
-position = Vector2(825, 975)
+[node name="Spikes" type="StaticBody2D" parent="Hazards" groups=["hazard"]]
+position = Vector2(1280, 1415)
 collision_layer = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hazards/Spikes"]
-position = Vector2(-1, 1)
 shape = SubResource("RectangleShape2D_spikes")
 
 [node name="Visual" type="Polygon2D" parent="Hazards/Spikes"]
-position = Vector2(-1.00001, 1)
-scale = Vector2(0.96, 0.96)
 color = Color(0.901961, 0.901961, 0.901961, 1)
-polygon = PackedVector2Array(-75, -25, 75, -25, 75, 25, -75, 25)
+polygon = PackedVector2Array(-480, -25, 480, -25, 480, 25, -480, 25)
 
 [node name="Spawns" type="Node2D" parent="."]
 
 [node name="PlayerSpawn" type="Marker2D" parent="Spawns"]
-position = Vector2(160, 480)
+position = Vector2(300, 1100)
 
 [node name="BossSpawn" type="Marker2D" parent="Spawns"]
-position = Vector2(600, 112)
+position = Vector2(2200, 1100)
 
 [node name="Enemies" type="Node2D" parent="."]
 
 [node name="PatrollingLancerSpawner" parent="Enemies" instance=ExtResource("1_8girt")]
-position = Vector2(160, 856)
+position = Vector2(200, 400)
 
 [node name="FlyingPatroller" parent="Enemies" instance=ExtResource("4_ei412")]
-position = Vector2(144, 128)
+position = Vector2(1280, 600)
 
-[node name="Turret" parent="Enemies" instance=ExtResource("13_5kto0")]
-position = Vector2(864, 352)
+[node name="TurretLeft" parent="Enemies" instance=ExtResource("13_5kto0")]
+position = Vector2(100, 400)
+
+[node name="TurretRight" parent="Enemies" instance=ExtResource("13_5kto0")]
+position = Vector2(2460, 400)
 
 
 =====================================
@@ -10228,8 +10435,8 @@ func build_level_async() -> Node:
 	# 2. Construct compatibility BuildData for EncounterScene
 	_current_build_data = LevelBuildDataScript.new()
 	_current_build_data.encounter_data_resource = encounter_data
-	# Legacy support: assume 20x20 grid based on 1000x1000 level for camera centering
-	_current_build_data.dimensions_tiles = Vector2i(20, 20) 
+	# UPDATE: 2560x1440 arena = ~52x29 tiles (at 50px tile size)
+	_current_build_data.dimensions_tiles = Vector2i(52, 29) 
 	
 	# 3. Find Spawn Points
 	var player_spawn = _current_level_container.find_child("PlayerSpawn")
@@ -10770,9 +10977,10 @@ rect = Rect2(-20, -20, 40, 40)
 =====================================
 FILE: ./src/projectiles/turret_shot.tscn
 =====================================
-[gd_scene load_steps=3 format=3 uid="uid://d1e2f3g4h5i6j"]
+[gd_scene load_steps=4 format=3 uid="uid://d1e2f3g4h5i6j"]
 
 [ext_resource type="Script" path="res://src/projectiles/turret_shot.gd" id="1_turret_shot_script"]
+[ext_resource type="Resource" uid="uid://red_splash_vfx_res" path="res://src/data/effects/red_splash_vfx.tres" id="2_splash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_turretshot"]
 size = Vector2(20, 20)
@@ -10781,6 +10989,7 @@ size = Vector2(20, 20)
 collision_layer = 16
 collision_mask = 193
 script = ExtResource("1_turret_shot_script")
+impact_vfx = ExtResource("2_splash")
 metadata/pool_name = &"turret_shots"
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -10788,7 +10997,8 @@ offset_left = -10.0
 offset_top = -10.0
 offset_right = 10.0
 offset_bottom = 10.0
-color = Color(0.898039, 0.898039, 0.898039, 1)
+pivot_offset = Vector2(10, 10)
+color = Color(1, 0.2, 0.2, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_turretshot")
@@ -10800,12 +11010,14 @@ rect = Rect2(-10, -10, 20, 20)
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
 
+
 =====================================
 FILE: ./src/projectiles/boss_shot.tscn
 =====================================
-[gd_scene load_steps=3 format=3 uid="uid://cxnmr7yrvchve"]
+[gd_scene load_steps=4 format=3 uid="uid://cxnmr7yrvchve"]
 
 [ext_resource type="Script" path="res://src/projectiles/boss_shot.gd" id="1_4qgog"]
+[ext_resource type="Resource" uid="uid://red_splash_large_vfx_res" path="res://src/data/effects/red_splash_large_vfx.tres" id="2_splash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bossshot"]
 size = Vector2(60, 60)
@@ -10814,6 +11026,8 @@ size = Vector2(60, 60)
 collision_layer = 16
 collision_mask = 65
 script = ExtResource("1_4qgog")
+damage = 2
+impact_vfx = ExtResource("2_splash")
 metadata/pool_name = &"boss_shots"
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -10821,7 +11035,8 @@ offset_left = -30.0
 offset_top = -30.0
 offset_right = 30.0
 offset_bottom = 30.0
-color = Color(1, 0.8, 0.4, 1)
+pivot_offset = Vector2(30, 30)
+color = Color(1, 0.2, 0.2, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_bossshot")
@@ -10834,6 +11049,7 @@ rect = Rect2(-30, -30, 60, 60)
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
 
+
 =====================================
 FILE: ./src/projectiles/turret_shot.gd
 =====================================
@@ -10845,20 +11061,21 @@ extends BaseProjectile
 func _ready() -> void:
 	super._ready()
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
-	visual.color = Palette.COLOR_UI_ACCENT_PRIMARY
+
 
 =====================================
 FILE: ./src/projectiles/player_shot.gd
 =====================================
-# res://src/projectiles/player_shot.gd
+# res/src/projectiles/player_shot.gd
 class_name PlayerShot
 extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
-@export var impact_vfx: VFXEffect
 
 @onready var flame_trail: GPUParticles2D = %FlameTrail
+
+var _hit_instances: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
@@ -10871,6 +11088,8 @@ func activate(p_dependencies: Dictionary) -> void:
 	# Then apply player-shot-specific runtime defaults so they apply on reuse.
 	speed = default_speed
 	
+	_hit_instances.clear()
+	
 	if is_instance_valid(flame_trail):
 		flame_trail.restart()
 		flame_trail.emitting = true
@@ -10879,12 +11098,19 @@ func activate(p_dependencies: Dictionary) -> void:
 func deactivate() -> void:
 	if is_instance_valid(flame_trail):
 		flame_trail.emitting = false
+	_hit_instances.clear()
 	super.deactivate()
 
 
 func _on_area_entered(area: Area2D) -> void:
 	if not _is_active:
 		return
+	
+	# Prevent double-processing the same target (e.g. if physics flushes strangely)
+	var id = area.get_instance_id()
+	if _hit_instances.has(id):
+		return
+	_hit_instances[id] = true
 	
 	# CLASH LOGIC: Player shots can destroy enemy projectiles.
 	# If we have enough damage (health), we survive the hit.
@@ -10906,8 +11132,9 @@ func _handle_projectile_clash(enemy_shot: Area2D) -> void:
 	_spawn_impact_vfx()
 	
 	# 3. Destroy Enemy Shot (It is consumed by the blast)
-	# We use call_deferred to interact safely with the pool/tree during physics callbacks.
-	if enemy_shot.has_method("deactivate") and is_instance_valid(_object_pool):
+	if enemy_shot.has_method("destroy_with_impact"):
+		enemy_shot.destroy_with_impact()
+	elif enemy_shot.has_method("deactivate") and is_instance_valid(_object_pool):
 		_object_pool.return_instance.call_deferred(enemy_shot)
 	else:
 		enemy_shot.queue_free()
@@ -10922,22 +11149,14 @@ func _handle_projectile_clash(enemy_shot: Area2D) -> void:
 		else:
 			queue_free()
 	else:
-		# Visual Feedback for degradation could go here (e.g. shrink scale)
-		# For now, we just keep moving with reduced damage.
+		# Survived with reduced damage
 		pass
 
 
-# Override base collision to add VFX for walls
+# Override base collision to ensure VFX spawn before destruction
 func _handle_collision(target: Node) -> void:
-	_spawn_impact_vfx()
+	# BaseProjectile._handle_collision now handles _spawn_impact_vfx() automatically!
 	super._handle_collision(target)
-
-
-func _spawn_impact_vfx() -> void:
-	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
-		# Spawn splash at current location
-		var normal = -direction.normalized()
-		_fx_manager.play_vfx(impact_vfx, global_position, normal)
 
 
 =====================================
@@ -10950,23 +11169,16 @@ extends BaseProjectile
 
 func _ready() -> void:
 	super._ready()
-	visual.color = Palette.COLOR_HAZARD_PRIMARY
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
-
-
-# --- Overridden Signal Handlers ---
-
-# By removing the _on_body_entered and _on_area_entered functions from this script,
-# we allow the parent BaseProjectile class to handle them. The parent class now contains
-# the correct logic that uses the new dependency injection system.
 
 
 =====================================
 FILE: ./src/projectiles/homing_boss_shot.tscn
 =====================================
-[gd_scene load_steps=3 format=3 uid="uid://homing_boss_shot_scene"]
+[gd_scene load_steps=4 format=3 uid="uid://homing_boss_shot_scene"]
 
 [ext_resource type="Script" path="res://src/projectiles/homing_boss_shot.gd" id="1_homing_shot_script"]
+[ext_resource type="Resource" uid="uid://red_splash_vfx_res" path="res://src/data/effects/red_splash_vfx.tres" id="2_splash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_homing_shot_body"]
 size = Vector2(20, 20)
@@ -10975,6 +11187,7 @@ size = Vector2(20, 20)
 collision_layer = 16
 collision_mask = 65
 script = ExtResource("1_homing_shot_script")
+impact_vfx = ExtResource("2_splash")
 metadata/pool_name = &"homing_boss_shots"
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -10983,6 +11196,8 @@ offset_left = -10.0
 offset_top = -10.0
 offset_right = 10.0
 offset_bottom = 10.0
+pivot_offset = Vector2(10, 10)
+color = Color(1, 0.2, 0.2, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 unique_name_in_owner = true
@@ -10995,6 +11210,7 @@ rect = Rect2(-10, -10, 20, 20)
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="screen_entered" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_entered"]
 [connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_screen_exited"]
+
 
 =====================================
 FILE: ./src/projectiles/homing_boss_shot.gd
@@ -11014,7 +11230,6 @@ const FALLBACK_WAIT_SECONDS := 0.05
 func _ready() -> void:
 	super._ready() # Important to call the parent's _ready to create the timer.
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
-	visual.color = Palette.COLOR_HAZARD_PRIMARY
 
 
 func _move(delta: float) -> void:
@@ -11116,6 +11331,7 @@ var visual: CanvasItem
 @export var damage: int = 1
 @export var lifespan: float = 5.0 # Default max lifetime for all projectiles
 @export var direction: Vector2 = Vector2.RIGHT
+@export var impact_vfx: VFXEffect ## Optional visual effect to spawn on collision
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
@@ -11196,16 +11412,33 @@ func deactivate() -> void:
 	_combat_utils = null
 	_fx_manager = null
 
+# --- Public Destruction API ---
+
+## Forces the projectile to destroy itself, playing its impact VFX first.
+## Useful for when the projectile is destroyed by something other than a collision (e.g. Player Attack).
+func destroy_with_impact() -> void:
+	_spawn_impact_vfx()
+	
+	# Important: Disable collision immediately to prevent duplicate hits this frame
+	if is_instance_valid(collision_shape):
+		collision_shape.set_deferred("disabled", true)
+	
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
+	else:
+		queue_free()
+
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
 	if target.is_in_group(Identifiers.Groups.SENSORS):
 		return
 
+	# Delegate destruction to the shared method
+	# We also apply damage before destroying.
 	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		
-		# DRY: Use factory method
 		var damage_info = _combat_utils.create_damage_info(
 			damage,
 			self,
@@ -11214,7 +11447,12 @@ func _handle_collision(target: Node) -> void:
 		)
 		damageable.apply_damage(damage_info)
 	
-	_object_pool.return_instance.call_deferred(self)
+	destroy_with_impact()
+
+func _spawn_impact_vfx() -> void:
+	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
+		var normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.UP
+		_fx_manager.play_vfx(impact_vfx, global_position, normal)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:
@@ -11308,7 +11546,7 @@ hit_stop_duration = 0.02
 =====================================
 FILE: ./src/data/player_config.tres
 =====================================
-[gd_resource type="Resource" script_class="PlayerConfig" load_steps=12 format=3 uid="uid://v472r2pi58n8"]
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=14 format=3 uid="uid://v472r2pi58n8"]
 
 [ext_resource type="Script" uid="uid://bal1gtkcg7s8v" path="res://src/core/data/config/player_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
@@ -11320,6 +11558,8 @@ FILE: ./src/data/player_config.tres
 [ext_resource type="PackedScene" path="res://src/content/vfx/aura_heal_purple.tscn" id="8_aura_heal"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/splash_heal_purple.tscn" id="9_splash_heal"]
 [ext_resource type="Resource" uid="uid://bps1fb52qcel8" path="res://src/core/data/effects/dissolve_effect.tres" id="10_dissolve"]
+[ext_resource type="Resource" path="res://src/core/data/effects/player_hit_spark_effect.tres" id="11_hit_spark"]
+[ext_resource type="PackedScene" path="res://src/content/vfx/melee_slash.tscn" id="12_melee_slash"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
@@ -11356,15 +11596,17 @@ attack_cooldown = 0.12
 attack_duration = 0.1
 attack_friction = 2000.0
 charge_time = 0.35
-level_2_charge_time = 2.0
+level_2_charge_time = 1.12
 level_2_damage = 3
 pogo_force = 450.0
 close_range_threshold = 75.0
+hit_spark_effect = ExtResource("11_hit_spark")
 vfx_charge_aura = ExtResource("6_aura_charge")
 vfx_charge_splash = ExtResource("7_splash_charge")
 vfx_heal_aura = ExtResource("8_aura_heal")
 vfx_heal_splash = ExtResource("9_splash_heal")
 vfx_dissolve = ExtResource("10_dissolve")
+vfx_melee_slash = ExtResource("12_melee_slash")
 
 
 =====================================
@@ -11443,7 +11685,7 @@ bus = &"SFX"
 =====================================
 FILE: ./src/data/default_pool_manifest.tres
 =====================================
-[gd_resource type="Resource" script_class="PoolManifest" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="PoolManifest" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_definition.gd" id="1_def"]
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_manifest.gd" id="2_man"]
@@ -11453,6 +11695,8 @@ FILE: ./src/data/default_pool_manifest.tres
 [ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/hit_spark.tscn" id="7_spark"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/splash_charge_green.tscn" id="8_green_splash"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red" path="res://src/content/vfx/splash_impact_red.tscn" id="9_red_splash"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red_large" path="res://src/content/vfx/splash_impact_red_large.tscn" id="10_red_splash_lg"]
 
 [sub_resource type="Resource" id="Resource_player"]
 script = ExtResource("1_def")
@@ -11490,6 +11734,18 @@ pool_key = &"green_splashes"
 scene = ExtResource("8_green_splash")
 initial_size = 10
 
+[sub_resource type="Resource" id="Resource_rsplash"]
+script = ExtResource("1_def")
+pool_key = &"red_splashes"
+scene = ExtResource("9_red_splash")
+initial_size = 20
+
+[sub_resource type="Resource" id="Resource_rsplash_lg"]
+script = ExtResource("1_def")
+pool_key = &"red_splashes_large"
+scene = ExtResource("10_red_splash_lg")
+initial_size = 10
+
 [resource]
 script = ExtResource("2_man")
 pools = Array[ExtResource("1_def")]([
@@ -11498,7 +11754,9 @@ pools = Array[ExtResource("1_def")]([
     SubResource("Resource_minion"),
     SubResource("Resource_homing"),
     SubResource("Resource_spark"),
-    SubResource("Resource_gsplash")
+    SubResource("Resource_gsplash"),
+    SubResource("Resource_rsplash"),
+    SubResource("Resource_rsplash_lg")
 ])
 
 
@@ -11580,6 +11838,20 @@ hit_stop_boss_death = 0.1
 
 
 =====================================
+FILE: ./src/data/effects/red_splash_vfx.tres
+=====================================
+[gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://red_splash_vfx_res"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/vfx_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red" path="res://src/content/vfx/splash_impact_red.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+scene = ExtResource("2_scene")
+pool_key = &"red_splashes"
+
+
+=====================================
 FILE: ./src/data/effects/green_splash_vfx.tres
 =====================================
 [gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://green_splash_vfx_res"]
@@ -11612,6 +11884,20 @@ params = {
 }
 priority = 10
 coalesce_window = 0.0
+
+
+=====================================
+FILE: ./src/data/effects/red_splash_large_vfx.tres
+=====================================
+[gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://red_splash_large_vfx_res"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/vfx_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red_large" path="res://src/content/vfx/splash_impact_red_large.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+scene = ExtResource("2_scene")
+pool_key = &"red_splashes_large"
 
 
 =====================================
@@ -11651,10 +11937,11 @@ coalesce_window = 0.1
 =====================================
 FILE: ./src/data/enemy_config.tres
 =====================================
-[gd_resource type="Resource" script_class="EnemyConfig" load_steps=4 format=3 uid="uid://cm4r58pku22ug"]
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=5 format=3 uid="uid://cm4r58pku22ug"]
 
 [ext_resource type="Script" uid="uid://c1ran020tmpwh" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
+[ext_resource type="Resource" path="res://src/data/effects/red_splash_vfx.tres" id="3_red_splash"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
@@ -11671,6 +11958,7 @@ boss_lunge_speed = 1200.0
 homing_shot_damage = 1
 homing_shot_speed = 250.0
 homing_shot_lifespan = 10.0
+projectile_muzzle_vfx = ExtResource("3_red_splash")
 
 
 =====================================
@@ -11959,7 +12247,7 @@ FILE: ./src/entities/_base/components/health_component.tscn
 
 [node name="HealthComponent" type="Node"]
 script = ExtResource("1_health")
-metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "damage_config", "status_effect_component", "hit_spark_effect", "fx_manager", "event_bus")
+metadata/REQUIRED_DEPS = PackedStringArray("data_resource", "damage_config", "status_effect_component", "fx_manager", "event_bus")
 
 
 =====================================
@@ -12014,37 +12302,70 @@ FILE: ./src/entities/_base/components/visual_component.gd
 # src/entities/components/visual_component.gd
 @tool
 ## Manages the entity's main visual sprite/rect state and high-level VFX sequences (Death).
+## Acts as an abstraction layer so logic doesn't need to know if the visual is a Sprite, ColorRect, etc.
 class_name VisualComponent
 extends IComponent
 
 var _visual_node: CanvasItem
 var _fx_component: FXComponent
-var _config: PlayerConfig
+var _config: Resource
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	_visual_node = p_dependencies.get("visual_node")
 	_config = p_dependencies.get("config")
 	
-	# We can find FXComponent via the owner directly or pass it.
-	# Using owner lookup is safe here as it's a sibling component.
+	# Link to sibling FXComponent if available
 	if p_owner.has_method("get_component"):
 		_fx_component = p_owner.get_component(FXComponent)
 	
-	# Set initial color if applicable
-	if is_instance_valid(_visual_node) and _visual_node is ColorRect:
-		_visual_node.color = Palette.COLOR_PLAYER
+	# Initialize default color if it's a primitive shape
+	if _visual_node is ColorRect or _visual_node is Polygon2D:
+		# Use the Palette constant for Player if this is the Player
+		if p_owner.is_in_group(Identifiers.Groups.PLAYER):
+			set_color(Palette.COLOR_PLAYER)
+		elif p_owner.is_in_group(Identifiers.Groups.ENEMY):
+			# Bosses might override this later, but defaults are safe
+			pass
 
 
+## Sets the visual facing direction.
+## [param direction]: Non-zero float. Positive = Right, Negative = Left.
+func set_facing(direction: float) -> void:
+	if not is_instance_valid(_visual_node) or is_zero_approx(direction):
+		return
+	
+	# Only flip if the sign differs (simple optimization)
+	var new_scale_x = abs(_visual_node.scale.x) * sign(direction)
+	if not is_equal_approx(_visual_node.scale.x, new_scale_x):
+		_visual_node.scale.x = new_scale_x
+
+
+## Sets the base color of the visual node.
+## Handles ColorRect, Polygon2D, and generic CanvasItems (via modulate).
+func set_color(color: Color) -> void:
+	if not is_instance_valid(_visual_node):
+		return
+		
+	if "color" in _visual_node:
+		_visual_node.color = color
+	else:
+		_visual_node.modulate = color
+
+
+## Orchestrates the death visual sequence (e.g., dissolve shader).
 func play_death_sequence() -> Tween:
 	if not is_instance_valid(_fx_component):
 		return null
 	
-	if not is_instance_valid(_config) or not is_instance_valid(_config.vfx_dissolve):
-		push_warning("VisualComponent: No dissolve effect configured.")
+	# Fallback to config if available, or allow manual injection later
+	var effect = _config.vfx_dissolve if (_config and "vfx_dissolve" in _config) else null
+	
+	if not is_instance_valid(effect):
+		push_warning("VisualComponent: No dissolve effect configured for death sequence.")
 		return null
 		
 	return _fx_component.play_effect(
-		_config.vfx_dissolve, 
+		effect, 
 		{}, 
 		{"preserve_final_state": true}
 	)
@@ -12169,6 +12490,24 @@ func _on_melee_hit_detected(target: Node) -> void:
 
 	p_data.combat.hit_targets_this_swing[target_id] = true
 	
+	# --- 1. Projectile Destruction Logic ---
+	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		# Trigger the projectile's own impact VFX (Red Splash)
+		if target.has_method("destroy_with_impact"):
+			target.destroy_with_impact()
+		else:
+			if is_instance_valid(_object_pool):
+				_object_pool.return_instance.call_deferred(target)
+			else:
+				target.queue_free()
+			
+		# Spawn Player Hit Spark (Green Splash)
+		_spawn_player_spark(target.global_position)
+		
+		damage_dealt.emit()
+		return
+
+	# --- 2. Entity Damage Logic ---
 	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var damage_info = DamageInfo.new()
@@ -12183,10 +12522,20 @@ func _on_melee_hit_detected(target: Node) -> void:
 		var damage_result = damageable.apply_damage(damage_info)
 		if damage_result.was_damaged:
 			damage_dealt.emit()
+			
+			# NEW: Spawn Player's Spark on successful hit
+			_spawn_player_spark(target.global_position)
+			
 			if is_close_range:
 				_fx_manager.request_hit_stop(
 					p_data.world_config.hit_stop_player_melee_close
 				)
+
+
+func _spawn_player_spark(pos: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not p_data.config.hit_spark_effect:
+		return
+	_fx_manager.play_vfx(p_data.config.hit_spark_effect, pos, Vector2.UP)
 
 
 =====================================
@@ -12210,7 +12559,7 @@ var _owner_entity: Node
 # --- Configuration ---
 # If true, this component will automatically find the HealthComponent on the parent.
 @export var auto_wire_health: bool = true
-# The state key to switch to when damage is taken. If empty, no state change occurs.
+# DEPRECATED: State change is now handled by the Entity listening to HealthComponent.
 @export var hurt_response_state: StringName = &""
 
 # --- Godot Lifecycle ---
@@ -12263,17 +12612,14 @@ func teardown() -> void:
 
 func _process_contact(target: Node) -> void:
 	# CRITICAL FIX: Guard against mid-frame teardown.
-	# If _combat_utils became null (e.g. player died in previous iteration), stop immediately.
 	if not _combat_utils or not is_instance_valid(_health_component):
 		return
 
-	var is_threat = (
-		target.is_in_group(Identifiers.Groups.ENEMY) or 
-		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
-		target.is_in_group(Identifiers.Groups.HAZARD)
-	)
-	
-	if not is_threat:
+	var is_hazard = target.is_in_group(Identifiers.Groups.HAZARD)
+	var is_enemy = target.is_in_group(Identifiers.Groups.ENEMY)
+	var is_proj = target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE)
+
+	if not (is_hazard or is_enemy or is_proj):
 		return
 
 	var impact_normal = (global_position - target.global_position).normalized()
@@ -12285,23 +12631,12 @@ func _process_contact(target: Node) -> void:
 		impact_normal
 	)
 
-	var result = _health_component.apply_damage(damage_info)
-
-	if not is_instance_valid(_health_component) or not _health_component.entity_data:
-		return
-
-	if result.was_damaged:
-		if _owner_entity is CharacterBody2D:
-			_owner_entity.velocity = result.knockback_velocity
-		
-		var is_alive = _health_component.entity_data.health > 0
-
-		if is_alive and hurt_response_state != &"" and _owner_entity.has_method("get_component"):
-			var sm = _owner_entity.get_component(BaseStateMachine)
-			if is_instance_valid(sm):
-				sm.change_state(hurt_response_state)
+	# We apply damage. The HealthComponent will emit 'took_damage',
+	# which the Player entity listens to for Knockback and State Change.
+	_health_component.apply_damage(damage_info)
 
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		# Projectiles should destroy themselves, but as a backup/legacy behavior:
 		if is_instance_valid(_object_pool):
 			_object_pool.return_instance.call_deferred(target)
 
@@ -12527,9 +12862,9 @@ var _next_token_id: int = 1
 
 var _fx_manager: IFXManager
 var _event_bus
-var _hit_spark_effect: VFXEffect
+# REMOVED: _hit_spark_effect - Impact VFX are now handled by the Attacker.
 var _audio_manager: Node 
-var _status_effect_component: StatusEffectComponent # New!
+var _status_effect_component: StatusEffectComponent 
 
 # --- Lifecycle ---
 func _notification(what: int) -> void:
@@ -12543,7 +12878,6 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	self._fx_manager = p_dependencies.get("fx_manager")
 	self._event_bus = p_dependencies.get("event_bus")
-	self._hit_spark_effect = p_dependencies.get("hit_spark_effect")
 	self._status_effect_component = p_dependencies.get("status_effect_component")
 	
 	if p_dependencies.has("audio_manager"):
@@ -12576,7 +12910,6 @@ func teardown() -> void:
 	owner_node = null
 	_fx_manager = null
 	_event_bus = null
-	_hit_spark_effect = null
 	_damage_audio_cue = null
 	_audio_manager = null
 	_status_effect_component = null
@@ -12608,10 +12941,7 @@ func apply_damage(damage_info: DamageInfo) -> DamageResult:
 	result.was_damaged = true
 	took_damage.emit(damage_info, result)
 
-	if result.was_damaged and is_instance_valid(_fx_manager) and is_instance_valid(_hit_spark_effect):
-		_fx_manager.play_vfx(
-			_hit_spark_effect, damage_info.impact_position, damage_info.impact_normal
-		)
+	# NOTE: VFX spawning moved to Attacker (CombatComponent/MeleeComponent).
 	
 	if result.was_damaged and is_instance_valid(_damage_audio_cue) and is_instance_valid(_audio_manager):
 		_audio_manager.play_cue(_damage_audio_cue)
@@ -12747,6 +13077,12 @@ func deactivate() -> void:
 	set_deferred("monitoring", false)
 	if is_instance_valid(_shape_node):
 		_shape_node.set_deferred("disabled", true)
+
+
+## Manually sets the visual/logical offset of the shape (useful for debug/sync).
+func set_shape_offset(offset: Vector2) -> void:
+	if is_instance_valid(_shape_node):
+		_shape_node.position = offset
 
 
 # --- Private Logic ---
@@ -13203,6 +13539,7 @@ var _entity_data: Resource # BossStateData or MinionStateData
 var _object_pool: IObjectPool
 var _combat_utils: Node
 var _targeting_system: Node
+var _fx_manager: IFXManager # Need this for VFX
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -13217,16 +13554,17 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._combat_utils = p_dependencies.get("combat_utils")
 	self._targeting_system = p_dependencies.get("targeting_system")
 	
+	# Try to get FXManager from services (BaseEntity usually passes it)
+	if p_dependencies.has("services"):
+		self._fx_manager = p_dependencies.get("services").fx_manager
+	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
 	assert(is_instance_valid(_object_pool), "ProjectileShooterComponent requires 'object_pool'.")
-	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
-		# Use the TargetingSystem if available, otherwise fallback to global ServiceLocator for robustness
 		if not _targeting_system:
 			_targeting_system = ServiceLocator.targeting_system
-		
 		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 
@@ -13239,6 +13577,7 @@ func teardown() -> void:
 	_combat_utils = null
 	_player_node = null
 	_targeting_system = null
+	_fx_manager = null
 
 
 # --- Public API ---
@@ -13261,34 +13600,28 @@ func fire_shot_at_player() -> void:
 	if not is_instance_valid(_owner):
 		return
 		
-	# Refresh player reference if needed
 	if not is_instance_valid(_player_node) and is_instance_valid(_targeting_system):
 		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 	if not is_instance_valid(_player_node):
 		return
 
-	# If the owner is marked as dead via internal flags, don't fire.
 	if _owner.get("_is_dead"):
 		return
 
 	var pool_key: StringName = _entity_data.projectile_pool_key
 	if pool_key == &"":
-		push_warning("Entity '%s' tried to fire but has no 'projectile_pool_key'." % _owner.name)
 		return
 
 	var shot: Node = _object_pool.get_instance(pool_key)
 	if not shot:
 		return
 
-	# Calculate direction to player
 	var direction = (_player_node.global_position - _owner.global_position).normalized()
 	
-	# Update facing direction data if the entity tracks the player
 	if "facing_direction" in _entity_data and not is_zero_approx(direction.x):
 		_entity_data.facing_direction = sign(direction.x)
 
-	# Configure the shot
 	if "direction" in shot:
 		shot.direction = direction
 	if "global_position" in shot:
@@ -13296,11 +13629,26 @@ func fire_shot_at_player() -> void:
 	
 	var dependencies = {
 		"object_pool": _object_pool,
-		"combat_utils": _combat_utils
+		"combat_utils": _combat_utils,
+		"fx_manager": _fx_manager # Pass FXManager to projectile
 	}
 	
 	if shot.has_method("activate"):
 		shot.activate(dependencies)
+		
+	# --- Muzzle Flash VFX ---
+	_spawn_muzzle_vfx(direction)
+
+
+func _spawn_muzzle_vfx(dir: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not _entity_data or not _entity_data.config:
+		return
+		
+	# Check if config has the property (EnemyConfig)
+	if "projectile_muzzle_vfx" in _entity_data.config:
+		var vfx = _entity_data.config.projectile_muzzle_vfx
+		if is_instance_valid(vfx):
+			_fx_manager.play_vfx(vfx, _owner.global_position, dir)
 
 
 =====================================
@@ -13997,18 +14345,11 @@ offset_left = -30.0
 offset_top = -30.0
 offset_right = 30.0
 offset_bottom = 30.0
+pivot_offset = Vector2(30, 30)
 color = Color(1, 0.6, 0.6, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_bossbody")
-
-[node name="CooldownTimer" type="Timer" parent="."]
-wait_time = 1.5
-one_shot = true
-
-[node name="PatrolTimer" type="Timer" parent="."]
-wait_time = 3.0
-one_shot = true
 
 [node name="MeleeComponent" parent="." instance=ExtResource("3_melee_component")]
 
@@ -14020,9 +14361,6 @@ state_property_name = &"is_player_in_close_range"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CloseRangeDetector"]
 shape = SubResource("CircleShape2D_closetrigger")
-
-[connection signal="timeout" from="CooldownTimer" to="." method="_on_cooldown_timer_timeout"]
-[connection signal="timeout" from="PatrolTimer" to="." method="_on_patrol_timer_timeout"]
 
 
 =====================================
@@ -14066,10 +14404,11 @@ func _on_attack_finished() -> void:
 	if state_machine.current_state == self:
 		# Use the cooldown from the attack we just performed.
 		var attack_data = _melee_component._current_attack_data
+		var cooldown_time = 1.0
 		if is_instance_valid(attack_data):
-			owner.cooldown_timer.wait_time = attack_data.telegraph_duration + attack_data.duration + 0.5
+			cooldown_time = attack_data.telegraph_duration + attack_data.duration + 0.5
 		
-		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
+		state_machine.change_state(Identifiers.BossStates.COOLDOWN, {"duration": cooldown_time})
 
 
 =====================================
@@ -14151,10 +14490,16 @@ FILE: ./src/entities/enemies/bosses/states/state_boss_cooldown.gd
 extends BaseState
 class_name BossStateCooldown
 
+var _timer: float = 0.0
 
-func enter(_msg := {}) -> void:
+func enter(msg := {}) -> void:
 	owner.velocity.x = 0
-	owner.cooldown_timer.start()
+	_timer = msg.get("duration", 1.0) # Default to 1.0s if not provided
+
+func process_physics(delta: float) -> void:
+	_timer -= delta
+	if _timer <= 0:
+		state_machine.change_state(Identifiers.BossStates.PATROL)
 
 
 =====================================
@@ -14239,8 +14584,8 @@ func _start_telegraph_and_attack() -> void:
 		attack_command.call()
 
 	if state_machine.current_state == self:
-		_boss.cooldown_timer.wait_time = _current_pattern.cooldown
-		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
+		# Pass the cooldown duration to the next state
+		state_machine.change_state(Identifiers.BossStates.COOLDOWN, {"duration": _current_pattern.cooldown})
 
 
 =====================================
@@ -14253,12 +14598,28 @@ class_name BossStatePatrol
 extends StateEntityPatrol
 
 const QuickSwipeData = preload("res://src/data/combat/attacks/boss_quick_swipe.tres")
+const PATROL_DURATION: float = 3.0
+
+var _timer: float = 0.0
+
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	_timer = PATROL_DURATION
+
+func process_physics(delta: float) -> void:
+	# 1. Update Timer
+	_timer -= delta
+	if _timer <= 0:
+		state_machine.change_state(Identifiers.BossStates.IDLE)
+		return
+
+	# 2. Run Generic Patrol Logic (Movement)
+	super.process_physics(delta)
 
 # Override the virtual method from StateEntityPatrol
 func _check_interrupts() -> bool:
 	# High-priority check: if player gets too close, interrupt patrol to attack.
-	if state_data.is_player_in_close_range and owner.cooldown_timer.is_stopped():
-		# UPDATE: Use constant
+	if state_data.is_player_in_close_range:
 		state_machine.change_state(Identifiers.CommonStates.MELEE, {"attack_data": QuickSwipeData})
 		return true
 	
@@ -14294,9 +14655,7 @@ extends BaseEntity
 @export var state_melee_script: Script
 
 # --- Node References ---
-@onready var visual_sprite: ColorRect = $ColorRect
-@onready var cooldown_timer: Timer = $CooldownTimer
-@onready var patrol_timer: Timer = $PatrolTimer
+# Note: visual_sprite managed by VisualComponent
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var close_range_detector: SensorComponent = $CloseRangeDetector
 
@@ -14304,6 +14663,8 @@ extends BaseEntity
 var current_attack_patterns: Array[AttackPattern] = []
 var phases_remaining: int = 3
 var entity_data: BossStateData
+
+var _visual_component: VisualComponent
 
 # --- Godot Lifecycle Methods ---
 func _get_configuration_warnings() -> PackedStringArray:
@@ -14361,6 +14722,14 @@ func _on_build() -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
+	
+	# Create/Fetch VisualComponent if missing (Boss archetype usually doesn't include it in old version)
+	_visual_component = get_component(VisualComponent)
+	
+	if not _visual_component:
+		# Fallback: manually add if archetype wasn't updated yet (Safety)
+		_visual_component = VisualComponent.new()
+		add_child(_visual_component)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -14368,7 +14737,6 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	# OCP: Build state map dynamically from config resource
 	var states: Dictionary = {}
 	var initial_state_key = &""
 	
@@ -14380,21 +14748,29 @@ func _on_build() -> void:
 	else:
 		push_error("BaseBoss: Missing StateMachineConfig!")
 
+	var raw_visual = get_node("ColorRect")
+
 	var per_component_deps := {
 		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
-			"visual_node": visual_sprite, 
+			"visual_node": raw_visual, 
 			"hit_effect": hit_flash_effect,
 			"fx_manager": _services.fx_manager
 			},
 		hc: {
-			"hit_spark_effect": hit_spark_effect,
 			"fx_manager": _services.fx_manager,
 			"event_bus": _services.event_bus
-			}
+			},
+		_visual_component: {
+			"visual_node": raw_visual,
+			"config": entity_data.config # Allows VC to find effects
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
+	
+	# Set Boss Color Explicitly via Component
+	_visual_component.set_color(Palette.COLOR_BOSS_PRIMARY)
 
 	if hc:
 		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
@@ -14414,6 +14790,7 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+	_visual_component = null
 
 
 func get_health_thresholds() -> Array[float]:
@@ -14443,8 +14820,6 @@ func _die() -> void:
 	if is_instance_valid(sm):
 		sm.teardown()
 
-	cooldown_timer.stop()
-	patrol_timer.stop()
 	if is_instance_valid(close_range_detector):
 		close_range_detector.monitoring = false
 
@@ -14459,9 +14834,10 @@ func _die() -> void:
 	
 	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
-	var fc: FXComponent = get_component(FXComponent)
-	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+	if is_instance_valid(_visual_component) and is_instance_valid(dissolve_effect):
+		var fc: FXComponent = get_component(FXComponent)
+		if fc:
+			fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 
 	var ev = BossDiedEvent.new()
 	ev.boss_node = self
@@ -14470,7 +14846,8 @@ func _die() -> void:
 
 func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
-	visual_sprite.color = Palette.COLOR_BOSS_PRIMARY
+	# Visual set color moved to build()
+	
 	if is_instance_valid(behavior):
 		current_attack_patterns = behavior.phase_1_patterns
 	entity_data = BossStateData.new()
@@ -14486,7 +14863,6 @@ func _initialize_data() -> void:
 	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
-	# CRITICAL FIX: Set max_health from config, overriding the default of 1
 	entity_data.max_health = entity_data.config.boss_health
 	entity_data.health = entity_data.max_health
 
@@ -14496,7 +14872,9 @@ func _update_player_tracking() -> void:
 		var dir_to_player: float = _player.global_position.x - global_position.x
 		if not is_zero_approx(dir_to_player):
 			entity_data.facing_direction = sign(dir_to_player)
-	self.scale.x = entity_data.facing_direction
+	
+	if is_instance_valid(_visual_component):
+		_visual_component.set_facing(entity_data.facing_direction)
 
 
 # --- Signal Handlers ---
@@ -14528,18 +14906,6 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 		var ev = BossPhaseChangedEvent.new()
 		ev.phases_remaining = phases_remaining
 		_services.event_bus.emit(EventCatalog.BOSS_PHASE_CHANGED, ev)
-
-
-func _on_cooldown_timer_timeout() -> void:
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.COOLDOWN]:
-		sm.change_state(Identifiers.BossStates.PATROL)
-
-
-func _on_patrol_timer_timeout() -> void:
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.PATROL]:
-		sm.change_state(Identifiers.BossStates.IDLE)
 
 
 func _on_health_component_health_changed(current: int, max_val: int) -> void:
@@ -14683,13 +15049,14 @@ extends BaseEntity
 @export var dissolve_effect: ShaderEffect
 
 # --- Node References ---
-@onready var visual: Polygon2D = $Visual
+# visual ref handled by component
 @onready var attack_timer: Timer = $AttackTimer
 @onready var range_detector: SensorComponent = $RangeDetector
 @onready var range_detector_shape: CollisionShape2D = $RangeDetector/CollisionShape2D
 
 # --- Public Member Variables ---
 var entity_data: MinionStateData
+var _visual_component: VisualComponent
 
 # --- Godot Lifecycle Methods ---
 func _get_configuration_warnings() -> PackedStringArray:
@@ -14747,6 +15114,7 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+	_visual_component = null
 
 
 func update_player_tracking() -> void:
@@ -14788,6 +15156,12 @@ func _on_build() -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
+	
+	# Dynamically add VisualComponent if missing (Minions likely rely on archetype update)
+	_visual_component = get_component(VisualComponent)
+	if not _visual_component:
+		_visual_component = VisualComponent.new()
+		add_child(_visual_component)
 
 	var shared_deps := {
 		"data_resource": entity_data,
@@ -14795,7 +15169,6 @@ func _on_build() -> void:
 		"services": _services
 	}
 
-	# OCP: Build state map dynamically from config resource
 	var states: Dictionary = {}
 	var initial_state_key = &""
 	
@@ -14811,22 +15184,29 @@ func _on_build() -> void:
 	else:
 		push_error("Minion: Missing StateMachineConfig!")
 
+	var raw_visual = get_node("Visual")
 
 	var per_component_deps := {
 		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
-			"visual_node": visual, 
+			"visual_node": raw_visual, 
 			"hit_effect": hit_flash_effect,
 			"fx_manager": _services.fx_manager
 			},
 		hc: {
-			"hit_spark_effect": hit_spark_effect,
 			"fx_manager": _services.fx_manager,
 			"event_bus": _services.event_bus
-			}
+			},
+		_visual_component: {
+			"visual_node": raw_visual
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
+	
+	# Minions rely on Polygon2D color property, handled by VisualComponent now.
+	# We set a default color here if needed, or let VisualComponent handle generic init.
+	_visual_component.set_color(Palette.COLOR_TERRAIN_SECONDARY)
 
 
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
@@ -14850,10 +15230,12 @@ func _die() -> void:
 	collision_mask = 0
 	deactivate()
 
+	# Manual dissolve trigger because Minion death logic handles queue_free timing
 	var fc: FXComponent = get_component(FXComponent)
-	var death_tween: Tween = fc.play_effect(dissolve_effect)
-	if is_instance_valid(death_tween):
-		await death_tween.finished
+	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
+		var death_tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+		if is_instance_valid(death_tween):
+			await death_tween.finished
 
 	if is_instance_valid(self):
 		queue_free()
@@ -14861,7 +15243,6 @@ func _die() -> void:
 
 func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
-	visual.color = Palette.COLOR_TERRAIN_SECONDARY
 	entity_data = MinionStateData.new()
 	
 	if not _services:
@@ -14883,6 +15264,9 @@ func _update_player_tracking() -> void:
 	var dir_to_player: float = _player.global_position.x - global_position.x
 	if not is_zero_approx(dir_to_player):
 		entity_data.facing_direction = sign(dir_to_player)
+	
+	if is_instance_valid(_visual_component):
+		_visual_component.set_facing(entity_data.facing_direction)
 
 
 # --- Signal Handlers ---
@@ -15578,7 +15962,7 @@ states = Array[ExtResource("1_def")]([SubResource("Resource_idle"), SubResource(
 =====================================
 FILE: ./src/entities/player/player.tscn
 =====================================
-[gd_scene load_steps=21 format=3 uid="uid://c6vknl71ea1bo"]
+[gd_scene load_steps=22 format=3 uid="uid://c6vknl71ea1bo"]
 
 [ext_resource type="Script" uid="uid://bymbb3pjo71tf" path="res://src/entities/player/player.gd" id="1_4d1td"]
 [ext_resource type="Resource" path="res://src/entities/archetypes/player_archetype.tres" id="2_archetype"]
@@ -15591,7 +15975,10 @@ FILE: ./src/entities/player/player.tscn
 [ext_resource type="Resource" path="res://src/entities/player/data/player_state_machine_config.tres" id="18_sm_config"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_playerbody"]
-size = Vector2(40, 40)
+size = Vector2(40, 80)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(42, 82)
 
 [node name="Player" type="CharacterBody2D"]
 collision_mask = 138
@@ -15605,9 +15992,10 @@ archetype = ExtResource("2_archetype")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 offset_left = -20.0
-offset_top = -20.0
+offset_top = -40.0
 offset_right = 20.0
-offset_bottom = 20.0
+offset_bottom = 40.0
+pivot_offset = Vector2(20, 40)
 color = Color(0.941176, 0.941176, 0.941176, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -15619,7 +16007,7 @@ collision_mask = 148
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeHitbox"]
-position = Vector2(60, 0)
+position = Vector2(70, 0)
 shape = SubResource("RectangleShape2D_playerbody")
 disabled = true
 
@@ -15639,10 +16027,7 @@ script = ExtResource("16_hurtbox_script")
 hurt_response_state = &"hurt"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
-shape = SubResource("RectangleShape2D_playerbody")
-
-[node name="HealingTimer" type="Timer" parent="."]
-one_shot = true
+shape = SubResource("RectangleShape2D_hurtbox")
 
 
 =====================================
@@ -15675,14 +16060,16 @@ const ACTION_ALLOWED_STATES = [
 @export var state_machine_config: StateMachineConfig = null
 
 # --- Node References ---
-@onready var visual_sprite: ColorRect = get_node("ColorRect")
-@onready var healing_timer: Timer = get_node("HealingTimer")
-@onready var melee_hitbox: HitboxComponent = get_node("MeleeHitbox")
-@onready var pogo_hitbox: HitboxComponent = get_node("PogoHitbox")
-@onready var hurtbox: HurtboxComponent = get_node("Hurtbox")
+@onready var healing_timer: Timer = $HealingTimer
+@onready var melee_hitbox: HitboxComponent = $MeleeHitbox
+@onready var pogo_hitbox: HitboxComponent = $PogoHitbox
+@onready var hurtbox: HurtboxComponent = $Hurtbox
 
 # --- Data ---
 var entity_data: PlayerStateData
+
+# --- Components ---
+var _visual_component: VisualComponent
 
 # --- Godot Lifecycle Methods ---
 func _ready() -> void:
@@ -15700,12 +16087,26 @@ func _ready() -> void:
 	entity_data.combat.healing_charges = 0
 	get_component(PlayerResourceComponent).on_damage_dealt()
 	entity_data.combat.determination_counter = 0
+	
+	# FIX: Initialize Hitbox Position (70 offset)
+	if is_instance_valid(melee_hitbox):
+		melee_hitbox.set_shape_offset(Vector2(70.0, 0.0))
 
 
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
 	_update_timers(delta)
+	
+	# Update Visuals via Component
+	var facing = entity_data.physics.facing_direction
+	if is_instance_valid(_visual_component):
+		_visual_component.set_facing(facing)
+	
+	# POLISH: Sync Hitbox Debug Position (70 offset)
+	if is_instance_valid(melee_hitbox):
+		var debug_offset = Vector2(70.0 * facing, 0.0)
+		melee_hitbox.set_shape_offset(debug_offset)
 	
 	# Delegate actual movement to base class
 	super._physics_process(delta)
@@ -15728,19 +16129,21 @@ func _on_build() -> void:
 	entity_data.max_health = entity_data.config.max_health
 	entity_data.health = entity_data.max_health
 
+	# Cache Components
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
 	var pc: PogoComponent = get_component(PogoComponent)
-	var vc: VisualComponent = get_component(VisualComponent)
+	var healc: HealComponent = get_component(HealComponent)
+	_visual_component = get_component(VisualComponent)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
 		"config": entity_data.config,
 		"services": _services
-		}
+	}
 
 	var states: Dictionary = {}
 	var initial_state_key = &""
@@ -15753,15 +16156,16 @@ func _on_build() -> void:
 	else:
 		push_error("Player: Missing StateMachineConfig!")
 
+	var raw_visual_node = get_node("ColorRect")
+
 	var per_component_deps := {
 		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
-			"visual_node": visual_sprite, 
+			"visual_node": raw_visual_node, 
 			"hit_effect": hit_flash_effect,
 			"fx_manager": _services.fx_manager
 			},
 		hc: {
-			"hit_spark_effect": hit_spark_effect,
 			"fx_manager": _services.fx_manager,
 			"event_bus": _services.event_bus
 			},
@@ -15777,10 +16181,15 @@ func _on_build() -> void:
 			},
 		pc: {
 			"pogo_hitbox": pogo_hitbox,
-			"services": _services
+			"services": _services,
+			"fx_manager": _services.fx_manager
 		},
-		vc: {
-			"visual_node": visual_sprite
+		healc: {
+			"resource_component": rc,
+			"event_bus": _services.event_bus
+		},
+		_visual_component: {
+			"visual_node": raw_visual_node
 		}
 	}
 
@@ -15797,9 +16206,10 @@ func _on_build() -> void:
 
 	if pc and not pc.pogo_bounce_requested.is_connected(_on_pogo_bounce_requested):
 		pc.pogo_bounce_requested.connect(_on_pogo_bounce_requested)
-
-	if healing_timer and not healing_timer.timeout.is_connected(_on_healing_timer_timeout):
-		healing_timer.timeout.connect(_on_healing_timer_timeout)
+	
+	# NEW: Wire up Centralized Damage Response
+	if hc and not hc.took_damage.is_connected(_on_took_damage):
+		hc.took_damage.connect(_on_took_damage)
 
 
 # --- Public Methods ---
@@ -15807,6 +16217,7 @@ func teardown() -> void:
 	var cc: CombatComponent = get_component(CombatComponent)
 	var rc: PlayerResourceComponent = get_component(PlayerResourceComponent)
 	var pc: PogoComponent = get_component(PogoComponent)
+	var hc: HealthComponent = get_component(HealthComponent)
 
 	if is_instance_valid(rc):
 		if is_instance_valid(cc) and cc.damage_dealt.is_connected(rc.on_damage_dealt):
@@ -15821,6 +16232,9 @@ func teardown() -> void:
 		if healing_timer.timeout.is_connected(_on_healing_timer_timeout):
 			healing_timer.timeout.disconnect(_on_healing_timer_timeout)
 	
+	if is_instance_valid(hc) and hc.took_damage.is_connected(_on_took_damage):
+		hc.took_damage.disconnect(_on_took_damage)
+	
 	if is_instance_valid(hurtbox):
 		hurtbox.teardown()
 	
@@ -15829,6 +16243,7 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+	_visual_component = null
 
 
 # --- Override Virtual Handlers ---
@@ -15841,6 +16256,35 @@ func _on_health_changed(current: int, max_val: int) -> void:
 	ev.max_health = max_val
 	_services.event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
 	health_changed.emit(current, max_val)
+
+
+# --- Centralized Damage Response ---
+func _on_took_damage(_info: DamageInfo, result: DamageResult) -> void:
+	# FIX: Guard against mid-teardown execution
+	if not is_instance_valid(entity_data) or not is_instance_valid(result):
+		return
+
+	if not result.was_damaged:
+		return
+		
+	# Apply Knockback
+	velocity = result.knockback_velocity
+	
+	# Change State
+	var sm = get_component(BaseStateMachine)
+	if is_instance_valid(sm):
+		# PUNISHMENT: Lose healing charge if hit while healing
+		if sm.get_current_state_key() == Identifiers.PlayerStates.HEAL:
+			var rc = get_component(PlayerResourceComponent)
+			if rc:
+				rc.consume_healing_charge()
+		
+		sm.change_state(Identifiers.PlayerStates.HURT)
+		
+	# Trigger Shake
+	if is_instance_valid(damage_shake_effect) and _services.fx_manager.is_camera_shaker_registered():
+		_services.fx_manager.request_screen_shake(damage_shake_effect)
+		_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_player_hurt)
 
 
 # --- Private Methods ---
@@ -15863,9 +16307,9 @@ func _die() -> void:
 	if is_instance_valid(sm):
 		sm.teardown()
 	
-	var vc: VisualComponent = get_component(VisualComponent)
-	if is_instance_valid(vc):
-		var tween: Tween = vc.play_death_sequence()
+	# Delegate death visuals
+	if is_instance_valid(_visual_component):
+		var tween: Tween = _visual_component.play_death_sequence()
 		if is_instance_valid(tween):
 			await tween.finished
 
@@ -15882,21 +16326,8 @@ func _update_timers(delta: float) -> void:
 # --- Signal Handlers ---
 
 func _on_healing_timer_timeout() -> void:
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if sm.current_state == sm.states[Identifiers.PlayerStates.HEAL]:
-		entity_data.health += 1
-		get_component(PlayerResourceComponent).consume_healing_charge()
-		_on_health_changed(entity_data.health, entity_data.max_health)
-		
-		var splash_scene = entity_data.config.vfx_heal_splash
-		if is_instance_valid(splash_scene):
-			var splash = splash_scene.instantiate()
-			splash.global_position = global_position
-			splash.emitting = true
-			# FIX: Add to sibling (Level) instead of current_scene (Root)
-			add_sibling(splash)
-			
-		sm.change_state(Identifiers.PlayerStates.MOVE)
+	# Handled by HealComponent now, but signal connection remains in build for safety
+	pass 
 
 
 func _on_pogo_bounce_requested() -> void:
@@ -15907,12 +16338,6 @@ func _on_pogo_bounce_requested() -> void:
 	entity_data.physics.can_dash = true
 	entity_data.physics.air_jumps_left = entity_data.config.max_air_jumps
 	get_component(BaseStateMachine).change_state(Identifiers.PlayerStates.FALL)
-
-
-func _cancel_heal() -> void:
-	if healing_timer.is_stopped():
-		return
-	healing_timer.stop()
 
 
 =====================================
@@ -15934,6 +16359,7 @@ var _p_data: PlayerStateData
 var _hitbox: HitboxComponent
 var _object_pool: IObjectPool
 var _combat_utils: Node 
+var _fx_manager: IFXManager
 
 # --- Godot Lifecycle ---
 
@@ -15949,11 +16375,13 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	_object_pool = p_dependencies.get("object_pool")
 	_combat_utils = p_dependencies.get("combat_utils")
+	_fx_manager = p_dependencies.get("fx_manager")
 
 	assert(is_instance_valid(_owner_node), "PogoComponent requires a CharacterBody2D owner.")
 	assert(is_instance_valid(_p_data), "PogoComponent requires PlayerStateData.")
 	assert(is_instance_valid(_object_pool), "PogoComponent requires 'object_pool'.")
 	assert(is_instance_valid(_combat_utils), "PogoComponent requires 'combat_utils'.")
+	assert(is_instance_valid(_fx_manager), "PogoComponent requires 'fx_manager'.")
 	
 	if is_instance_valid(_hitbox):
 		# Configure hitbox specifically for Pogo
@@ -15973,6 +16401,7 @@ func teardown() -> void:
 	_hitbox = null
 	_object_pool = null
 	_combat_utils = null
+	_fx_manager = null
 
 # --- Private Logic ---
 
@@ -15984,10 +16413,18 @@ func _on_hit_detected(target: Node) -> void:
 
 	var should_bounce = false
 
-	# Case 1: Hit an Enemy Projectile (destroy it)
+	# Case 1: Hit an Enemy Projectile (destroy it with impact)
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
 		should_bounce = true
-		_object_pool.return_instance.call_deferred(target)
+		
+		# 1. Destroy Enemy Projectile (Red Splash)
+		if target.has_method("destroy_with_impact"):
+			target.destroy_with_impact()
+		else:
+			_object_pool.return_instance.call_deferred(target)
+			
+		# 2. Spawn Player Hit Spark (Green Splash)
+		_spawn_player_spark(target.global_position)
 
 	# Case 2: Hit a Damageable Entity (Enemy)
 	var damageable = _combat_utils.find_damageable(target)
@@ -16007,15 +16444,19 @@ func _on_hit_detected(target: Node) -> void:
 			damage_dealt.emit()
 
 	# Case 3: Hit World Geometry
-	# Check physics bodies (World, Platforms)
 	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
 		should_bounce = true
-	# Check TileMap layers or static bodies in world group
 	elif target.is_in_group(Identifiers.Groups.WORLD):
 		should_bounce = true
 
 	if should_bounce:
 		pogo_bounce_requested.emit()
+
+
+func _spawn_player_spark(pos: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not _p_data.config.hit_spark_effect:
+		return
+	_fx_manager.play_vfx(_p_data.config.hit_spark_effect, pos, Vector2.UP)
 
 
 =====================================
@@ -16283,61 +16724,141 @@ FILE: ./src/entities/player/components/heal_component.gd
 class_name HealComponent
 extends IComponent
 
+# --- Signals ---
+## Emitted when the healing channel completes successfully.
+signal healing_complete
+
+# --- Constants ---
 const JumpHelper = preload("res://src/entities/player/components/player_jump_helper.gd")
 
-var _owner_node # Typed as Player
+# --- Dependencies ---
+var _owner_node: CharacterBody2D
 var _p_data: PlayerStateData
-var _state_machine: BaseStateMachine
+var _resource_component: PlayerResourceComponent
+var _event_bus: EventBus
 var _input_component: InputComponent
+var _state_machine: BaseStateMachine
+
+# --- Internals ---
+var _timer: Timer
 
 func _ready() -> void:
-	process_priority = 0
+	# Run before JumpComponent (0) to intercept Down+Jump
+	process_priority = -1
 
 func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
-	_owner_node = p_owner
+	_owner_node = p_owner as CharacterBody2D
 	_p_data = p_dependencies.get("data_resource")
-	_state_machine = _owner_node.get_component(BaseStateMachine)
-	_input_component = _owner_node.get_component(InputComponent)
-
-func _physics_process(_delta: float) -> void:
-	if Engine.is_editor_hint():
-		return
-	if not is_instance_valid(_owner_node):
-		return
-
-	var state = _state_machine.get_current_state_key()
-	if state != Identifiers.PlayerStates.MOVE and state != Identifiers.PlayerStates.FALL and state != Identifiers.PlayerStates.JUMP:
-		return
-
-	if _input_component.input.jump_just_pressed:
-		var is_holding_down = _input_component.input.down
-
-		if (
-			is_holding_down
-			and _p_data.combat.healing_charges > 0
-			and _owner_node.is_on_floor()
-			and is_zero_approx(_owner_node.velocity.x)
-		):
-			if JumpHelper.is_standing_on_platform(_owner_node):
-				return
-
-			_state_machine.change_state(Identifiers.PlayerStates.HEAL, {})
-
-# We access this from Player.gd usually, but the logic was here in my previous internal refactor.
-# However, the healing timer timeout actually lives in Player.gd in the current codebase.
-# Let's update the signal handler logic there if needed, OR ensure this component handles it.
-# Currently, Player.gd handles the timeout and instantiation.
-# Wait, checking Player.gd...
-# Player.gd has: get_tree().current_scene.add_child(splash) in _on_healing_timer_timeout.
-# So we actually need to edit Player.gd, not HealComponent.
-# But for completeness, I will leave HealComponent clean.
+	_resource_component = p_dependencies.get("resource_component")
+	_event_bus = p_dependencies.get("event_bus")
+	
+	# Resolve sibling components via Owner (standard pattern)
+	if _owner_node.has_method("get_component"):
+		_input_component = _owner_node.get_component(InputComponent)
+		_state_machine = _owner_node.get_component(BaseStateMachine)
+	
+	# Create the timer dynamically
+	_timer = Timer.new()
+	_timer.name = "InternalHealingTimer"
+	_timer.one_shot = true
+	_timer.timeout.connect(_on_timeout)
+	add_child(_timer)
 
 func teardown() -> void:
-	set_physics_process(false)
+	if is_instance_valid(_timer):
+		_timer.stop()
+		_timer.queue_free()
 	_owner_node = null
 	_p_data = null
-	_state_machine = null
+	_resource_component = null
+	_event_bus = null
 	_input_component = null
+	_state_machine = null
+
+# --- Physics Process (Input Polling) ---
+
+func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint() or not is_instance_valid(_owner_node):
+		return
+		
+	# Only allow starting heal from Move/Idle/Fall states (mostly Grounded check covers it)
+	# But we specifically check state to avoid re-triggering while already healing or hurting
+	var current_state = _state_machine.get_current_state_key()
+	if current_state == Identifiers.PlayerStates.HEAL or current_state == Identifiers.PlayerStates.HURT:
+		return
+
+	if _input_component.input.jump_just_pressed and _input_component.input.down:
+		_try_start_heal()
+
+# --- Public API ---
+
+func start_healing() -> void:
+	if not is_instance_valid(_p_data): return
+	_timer.start(_p_data.config.heal_duration)
+
+func cancel_healing() -> void:
+	if is_instance_valid(_timer):
+		_timer.stop()
+
+func is_healing() -> bool:
+	return is_instance_valid(_timer) and not _timer.is_stopped()
+
+# --- Private Methods ---
+
+func _try_start_heal() -> void:
+	# 1. Check Resources
+	if _p_data.combat.healing_charges <= 0:
+		return
+		
+	# 2. Check Physical State (Must be grounded and still)
+	if not _owner_node.is_on_floor():
+		return
+		
+	# 3. Check Platform Conflict
+	# If we are standing on a one-way platform, Down+Jump means DROP, not HEAL.
+	if JumpHelper.is_standing_on_platform(_owner_node):
+		return
+		
+	# 4. Transition
+	# Stop momentum
+	_owner_node.velocity.x = 0
+	_state_machine.change_state(Identifiers.PlayerStates.HEAL)
+
+
+func _on_timeout() -> void:
+	if not is_instance_valid(_p_data):
+		return
+
+	# 1. Increment Health
+	_p_data.health = min(_p_data.health + 1, _p_data.max_health)
+	
+	# 2. Consume Resource
+	if is_instance_valid(_resource_component):
+		_resource_component.consume_healing_charge()
+	
+	# 3. Emit Global Event (Update HUD)
+	if is_instance_valid(_event_bus):
+		var ev = PlayerHealthChangedEvent.new()
+		ev.current_health = _p_data.health
+		ev.max_health = _p_data.max_health
+		_event_bus.emit(EventCatalog.PLAYER_HEALTH_CHANGED, ev)
+	
+	# 4. Spawn VFX
+	_spawn_heal_splash()
+	
+	# 5. Notify State Machine
+	healing_complete.emit()
+
+func _spawn_heal_splash() -> void:
+	if not is_instance_valid(_owner_node) or not _p_data.config.vfx_heal_splash:
+		return
+		
+	var splash = _p_data.config.vfx_heal_splash.instantiate()
+	splash.global_position = _owner_node.global_position
+	splash.emitting = true
+	
+	# Add to the world container (sibling of player)
+	_owner_node.add_sibling(splash)
 
 
 =====================================
@@ -16808,30 +17329,46 @@ FILE: ./src/entities/player/states/state_heal.gd
 # Handles the player's healing state.
 extends BaseState
 
+var _heal_component: HealComponent
 var _aura_instance: Node2D
 var _tween: Tween
 
 func enter(_msg := {}):
 	owner.velocity = Vector2.ZERO
-	var duration = state_data.config.heal_duration
-	owner.healing_timer.start(duration)
+	
+	_heal_component = owner.get_component(HealComponent)
+	if not is_instance_valid(_heal_component):
+		# Safety fallback
+		state_machine.change_state(Identifiers.PlayerStates.MOVE)
+		return
 
-	# DIP Fix: Load aura from config
+	# Listen for completion
+	if not _heal_component.healing_complete.is_connected(_on_healing_complete):
+		_heal_component.healing_complete.connect(_on_healing_complete, CONNECT_ONE_SHOT)
+
+	_heal_component.start_healing()
+
+	# Visuals (Aura)
 	var aura_scene = state_data.config.vfx_heal_aura
 	if is_instance_valid(aura_scene):
 		_aura_instance = aura_scene.instantiate()
 		owner.add_child(_aura_instance)
-		# Position near feet/center
 		_aura_instance.position = Vector2(0, 0) 
 		_aura_instance.scale = Vector2(0.2, 0.2)
 		
 		_tween = owner.create_tween()
-		# Tween scale to represent growing power
-		_tween.tween_property(_aura_instance, "scale", Vector2(1.0, 1.0), duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		_tween.tween_property(_aura_instance, "scale", Vector2(1.0, 1.0), state_data.config.heal_duration)\
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 
 
 func exit():
-	owner._cancel_heal()
+	# Cancel logic in component (stops timer)
+	if is_instance_valid(_heal_component):
+		_heal_component.cancel_healing()
+		# Disconnect signal if we exited early (e.g. damaged)
+		if _heal_component.healing_complete.is_connected(_on_healing_complete):
+			_heal_component.healing_complete.disconnect(_on_healing_complete)
+
 	if is_instance_valid(_tween):
 		_tween.kill()
 	if is_instance_valid(_aura_instance):
@@ -16839,6 +17376,7 @@ func exit():
 
 
 func process_physics(_delta: float):
+	# Interrupt conditions (Movement input)
 	if (
 		not Input.is_action_pressed("ui_down")
 		or not Input.is_action_pressed("ui_jump")
@@ -16846,6 +17384,10 @@ func process_physics(_delta: float):
 		or not owner.is_on_floor()
 	):
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
+
+
+func _on_healing_complete() -> void:
+	state_machine.change_state(Identifiers.PlayerStates.MOVE)
 
 
 =====================================
@@ -16922,14 +17464,26 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_cooldown_timer = state_data.config.attack_cooldown
 	
 	var is_up_attack = _input.input.up
+	var facing = state_data.physics.facing_direction
 	
 	if is_instance_valid(_player) and is_instance_valid(_player.melee_hitbox):
 		var shape = state_data.config.forward_attack_shape
-		var offset = Vector2(state_data.physics.facing_direction * 60, 0)
+		# Offset calculation: Body Half-Width (20) + Hitbox Half-Width (50) = 70
+		var offset = Vector2(facing * 70, 0)
+		var rotation_angle = 0.0
+		
 		if is_up_attack:
 			shape = state_data.config.upward_attack_shape
-			offset = Vector2(0, -40)
+			# Offset: Top of Body (-40) - Margin (20) = -60
+			offset = Vector2(0, -60)
+			rotation_angle = deg_to_rad(-90)
+		elif facing < 0:
+			rotation_angle = deg_to_rad(180)
+			
 		_player.melee_hitbox.activate(shape, offset)
+		
+		# Spawn Visual
+		_spawn_visual(shape.get_rect().size, offset, rotation_angle)
 
 
 func exit() -> void:
@@ -16947,6 +17501,20 @@ func process_physics(delta: float) -> void:
 
 	if state_data.combat.attack_duration_timer <= 0:
 		state_machine.change_state(Identifiers.PlayerStates.FALL)
+
+
+func _spawn_visual(size: Vector2, offset: Vector2, rot: float) -> void:
+	var scene = state_data.config.vfx_melee_slash
+	if not is_instance_valid(scene) or not is_instance_valid(_player):
+		return
+		
+	var visual = scene.instantiate()
+	visual.position = offset
+	visual.rotation = rot
+	_player.add_child(visual) # Add as child so it follows player during the swing
+	
+	if visual.has_method("setup"):
+		visual.setup(size, state_data.config.attack_duration)
 
 
 =====================================
@@ -16970,14 +17538,20 @@ func enter(_msg := {}) -> void:
 	state_data.combat.attack_duration_timer = state_data.config.attack_duration
 	
 	# Direct Actuation
+	var shape_size = Vector2(40, 40) # Default playerbody size (width only relevant here)
 	if is_instance_valid(_player) and is_instance_valid(_player.pogo_hitbox):
-		# Passing null shape reuses the one defined in the scene.
-		# Offset (0, 40) places it below the player.
-		_player.pogo_hitbox.activate(null, Vector2(0, 40))
+		# Reuse existing shape logic, but update offset
+		# Bottom of Body (40) + Margin (20) = 60
+		_player.pogo_hitbox.activate(null, Vector2(0, 60))
+		
+		# Fetch shape size if possible for accurate visual
+		var col = _player.pogo_hitbox.get_node_or_null("CollisionShape2D")
+		if col and col.shape:
+			shape_size = col.shape.get_rect().size
+	
+	_spawn_visual(shape_size)
 	
 	# IMMEDIATE CHECK:
-	# If we entered this state while already on the ground (e.g. standing pogo),
-	# we must perform an immediate synchronous check.
 	if _player.is_on_floor():
 		if _check_pogo_ground_bounce():
 			return
@@ -16993,11 +17567,8 @@ func process_physics(delta: float) -> void:
 	_physics.apply_gravity(delta)
 
 	if owner.is_on_floor():
-		# If we landed this frame, check if it's valid pogo terrain.
 		if _check_pogo_ground_bounce():
 			return
-
-		# If not a pogo surface, land normally.
 		state_machine.change_state(Identifiers.PlayerStates.MOVE)
 		return
 
@@ -17009,9 +17580,6 @@ func _check_pogo_ground_bounce() -> bool:
 	if not is_instance_valid(_player) or not is_instance_valid(_player.pogo_hitbox):
 		return false
 
-	# 1. Check Area2D overlaps (Fastest, handles continuous overlaps)
-	# GUARD: We must check if monitoring is actually active. HitboxComponent uses
-	# set_deferred to enable it, so it will be false on the first frame (enter).
 	if _player.pogo_hitbox.monitoring:
 		var bodies = _player.pogo_hitbox.get_overlapping_bodies()
 		for body in bodies:
@@ -17020,8 +17588,6 @@ func _check_pogo_ground_bounce() -> bool:
 				_trigger_bounce()
 				return true
 
-	# 2. Synchronous Physics Query (Fallback)
-	# Required for frame-perfect inputs where Area2D monitoring hasn't started yet.
 	var space_state = _player.get_world_2d().direct_space_state
 	var query = PhysicsShapeQueryParameters2D.new()
 	
@@ -17030,10 +17596,8 @@ func _check_pogo_ground_bounce() -> bool:
 		return false
 		
 	query.shape = shape_node.shape
-	# Must match the offset used in activate()
-	var offset = Vector2(0, 40) 
+	var offset = Vector2(0, 60) # Update sync offset
 	query.transform = Transform2D(0.0, _player.global_position + offset)
-	# Check Solid World (128) and Platforms (2)
 	query.collision_mask = PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS
 	query.exclude = [_player.get_rid()]
 	
@@ -17060,6 +17624,20 @@ func _trigger_bounce() -> void:
 		_player._on_pogo_bounce_requested()
 
 
+func _spawn_visual(size: Vector2) -> void:
+	var scene = state_data.config.vfx_melee_slash
+	if not is_instance_valid(scene) or not is_instance_valid(_player):
+		return
+		
+	var visual = scene.instantiate()
+	visual.position = Vector2(0, 60) # Offset 60
+	visual.rotation = deg_to_rad(90)
+	_player.add_child(visual)
+	
+	if visual.has_method("setup"):
+		visual.setup(size, state_data.config.attack_duration)
+
+
 =====================================
 FILE: ./src/entities/player/states/state_hurt.gd
 =====================================
@@ -17074,7 +17652,9 @@ func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	state_data.physics.knockback_timer = state_data.config.knockback_duration
 	state_data.combat.is_charging = false
-	owner._cancel_heal()
+	
+	# FIX: Healing cancellation is now handled automatically by StateHeal.exit()
+	# if the player was in the Heal state when hit.
 
 
 func process_physics(delta: float) -> void:
@@ -17264,7 +17844,7 @@ FILE: ./src/entities/player/data/upward_attack_shape.tres
 [gd_resource type="RectangleShape2D" load_steps=0 format=3 uid="uid://c0dt7jqwtnbr"]
 
 [resource]
-size = Vector2(40, 40)
+size = Vector2(60, 60)
 
 
 =====================================
@@ -17326,6 +17906,6 @@ FILE: ./src/entities/player/data/forward_attack_shape.tres
 [gd_resource type="RectangleShape2D" load_steps=0 format=3 uid="uid://c1b2d3e4f5g6h"]
 
 [resource]
-size = Vector2(80, 40)
+size = Vector2(100, 80)
 
 

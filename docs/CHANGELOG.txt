@@ -15,11 +15,54 @@
 
 
 
-║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
-║   ██           [0.32.0] - PRESENT - 11/21/2025                            ██   ║
-║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 
 
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.33.0] - WYSIWYG POGO & DIAGONAL COMBAT - 11/21/2025     ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Gameplay & Combat                                                         ║
+║      ░ ■ Implemented Diagonal Shooting. Holding diagonal keys (e.g. Up+Right)  ║
+║      ░   now fires projectiles in that direction.                              ║
+║      ░ ■ Refactored 'Pogo Attack' to use Editor-Defined Hitboxes.              ║
+║      ░   - Removed 'pogo_attack_shape.tres'.                                   ║
+║      ░   - Logic now respects the Shape and Transform defined in the Scene     ║
+║      ░     dock, allowing for WYSIWYG tuning of the pogo sweet spot.           ║
+║                                                                                ║
+║   █  Audio Polish                                                              ║
+║      ░ ■ Migrated all remaining UI interactions (Save Select, Title, Controls) ║
+║      ░   to the 'AudioCue' system.                                             ║
+║      ░ ■ Removed random pitch variation from "Back" and "Select" actions       ║
+║      ░   for a more consistent, professional UI feel.                          ║
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.32.0] - PERFORMANCE & STABILITY & AUDIO POLISH - 11/21/2025 ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Core Optimization                                                         ║
+║      ░ ■ Refactored 'HurtboxComponent' to use Signal-Driven Collision          ║
+║      ░   ('area_entered'/'body_entered') instead of per-frame physics polling. ║
+║      ░   Significantly reduces CPU overhead when entities are idle.            ║
+║      ░ ■ Standardized Gravity Logic in 'BaseBoss'. Gravity is now handled      ║
+║      ░   explicitly by States (Idle, Patrol, Cooldown) rather than a global    ║
+║      ░   physics override, preventing conflicts with kinematic attacks.        ║
+║                                                                                ║
+║   █  Stability Hardening                                                       ║
+║      ░ ■ Hardened 'MeleeComponent' against soft-locks. Added a robust wait     ║
+║      ░   routine that monitors telegraph visuals frame-by-frame, ensuring      ║
+║      ░   execution resumes even if the visual is unexpectedly destroyed.       ║
+║      ░ ■ Hardened 'Sequencer' against scene transitions. It now double-checks  ║
+║      ░   execution status after every 'await' to prevent logic leaks.          ║
+║                                                                                ║
+║   █  Audio Architecture                                                        ║
+║      ░ ■ Migrated all UI Sound Effects to the 'AudioCue' system.               ║
+║      ░ ■ Created 'AudioCue' resources for Select, Move, Back, Error, and Tick. ║
+║      ░ ■ Configured pitch randomization for cursor movement (tactile feel)     ║
+║      ░   while enforcing consistency for Enter/Back actions.                   ║
+║      ░ ■ Updated all menu scenes (Title, Options, Save, etc.) to use Cues.     ║
 
 
 
