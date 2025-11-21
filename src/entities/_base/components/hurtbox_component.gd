@@ -16,7 +16,7 @@ var _owner_entity: Node
 # --- Configuration ---
 # If true, this component will automatically find the HealthComponent on the parent.
 @export var auto_wire_health: bool = true
-# The state key to switch to when damage is taken. If empty, no state change occurs.
+# DEPRECATED: State change is now handled by the Entity listening to HealthComponent.
 @export var hurt_response_state: StringName = &""
 
 # --- Godot Lifecycle ---
@@ -69,17 +69,14 @@ func teardown() -> void:
 
 func _process_contact(target: Node) -> void:
 	# CRITICAL FIX: Guard against mid-frame teardown.
-	# If _combat_utils became null (e.g. player died in previous iteration), stop immediately.
 	if not _combat_utils or not is_instance_valid(_health_component):
 		return
 
-	var is_threat = (
-		target.is_in_group(Identifiers.Groups.ENEMY) or 
-		target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE) or 
-		target.is_in_group(Identifiers.Groups.HAZARD)
-	)
-	
-	if not is_threat:
+	var is_hazard = target.is_in_group(Identifiers.Groups.HAZARD)
+	var is_enemy = target.is_in_group(Identifiers.Groups.ENEMY)
+	var is_proj = target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE)
+
+	if not (is_hazard or is_enemy or is_proj):
 		return
 
 	var impact_normal = (global_position - target.global_position).normalized()
@@ -91,22 +88,11 @@ func _process_contact(target: Node) -> void:
 		impact_normal
 	)
 
-	var result = _health_component.apply_damage(damage_info)
-
-	if not is_instance_valid(_health_component) or not _health_component.entity_data:
-		return
-
-	if result.was_damaged:
-		if _owner_entity is CharacterBody2D:
-			_owner_entity.velocity = result.knockback_velocity
-		
-		var is_alive = _health_component.entity_data.health > 0
-
-		if is_alive and hurt_response_state != &"" and _owner_entity.has_method("get_component"):
-			var sm = _owner_entity.get_component(BaseStateMachine)
-			if is_instance_valid(sm):
-				sm.change_state(hurt_response_state)
+	# We apply damage. The HealthComponent will emit 'took_damage',
+	# which the Player entity listens to for Knockback and State Change.
+	_health_component.apply_damage(damage_info)
 
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		# Projectiles should destroy themselves, but as a backup/legacy behavior:
 		if is_instance_valid(_object_pool):
 			_object_pool.return_instance.call_deferred(target)

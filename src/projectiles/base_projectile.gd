@@ -12,6 +12,7 @@ var visual: CanvasItem
 @export var damage: int = 1
 @export var lifespan: float = 5.0 # Default max lifetime for all projectiles
 @export var direction: Vector2 = Vector2.RIGHT
+@export var impact_vfx: VFXEffect ## Optional visual effect to spawn on collision
 
 # --- Private Member Variables ---
 var _object_pool: IObjectPool
@@ -92,16 +93,33 @@ func deactivate() -> void:
 	_combat_utils = null
 	_fx_manager = null
 
+# --- Public Destruction API ---
+
+## Forces the projectile to destroy itself, playing its impact VFX first.
+## Useful for when the projectile is destroyed by something other than a collision (e.g. Player Attack).
+func destroy_with_impact() -> void:
+	_spawn_impact_vfx()
+	
+	# Important: Disable collision immediately to prevent duplicate hits this frame
+	if is_instance_valid(collision_shape):
+		collision_shape.set_deferred("disabled", true)
+	
+	if is_instance_valid(_object_pool):
+		_object_pool.return_instance.call_deferred(self)
+	else:
+		queue_free()
+
 # --- Centralized Collision & Cleanup ---
 func _handle_collision(target: Node) -> void:
 	if target.is_in_group(Identifiers.Groups.SENSORS):
 		return
 
+	# Delegate destruction to the shared method
+	# We also apply damage before destroying.
 	var damageable: IDamageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var impact_normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.ZERO
 		
-		# DRY: Use factory method
 		var damage_info = _combat_utils.create_damage_info(
 			damage,
 			self,
@@ -110,7 +128,12 @@ func _handle_collision(target: Node) -> void:
 		)
 		damageable.apply_damage(damage_info)
 	
-	_object_pool.return_instance.call_deferred(self)
+	destroy_with_impact()
+
+func _spawn_impact_vfx() -> void:
+	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
+		var normal = -direction.normalized() if not direction.is_zero_approx() else Vector2.UP
+		_fx_manager.play_vfx(impact_vfx, global_position, normal)
 
 # --- Timer / On-screen handlers (signal targets) ---
 func _on_lifetime_timer_timeout() -> void:

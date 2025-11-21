@@ -18,3 +18,4 @@ extends Resource
 @export_range(1, 20, 1) var homing_shot_damage: int = 1
 @export_range(100, 1000, 10) var homing_shot_speed: float = 250.0
 @export_range(1.0, 20.0, 0.5) var homing_shot_lifespan: float = 10.0
+@export var projectile_muzzle_vfx: VFXEffect

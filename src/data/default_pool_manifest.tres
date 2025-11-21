@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PoolManifest" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="PoolManifest" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_definition.gd" id="1_def"]
 [ext_resource type="Script" path="res://src/core/systems/pooling/pool_manifest.gd" id="2_man"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" path="res://src/projectiles/homing_boss_shot.tscn" id="6_homing"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/hit_spark.tscn" id="7_spark"]
 [ext_resource type="PackedScene" path="res://src/content/vfx/splash_charge_green.tscn" id="8_green_splash"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red" path="res://src/content/vfx/splash_impact_red.tscn" id="9_red_splash"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red_large" path="res://src/content/vfx/splash_impact_red_large.tscn" id="10_red_splash_lg"]
 
 [sub_resource type="Resource" id="Resource_player"]
 script = ExtResource("1_def")
@@ -45,6 +47,18 @@ pool_key = &"green_splashes"
 scene = ExtResource("8_green_splash")
 initial_size = 10
 
+[sub_resource type="Resource" id="Resource_rsplash"]
+script = ExtResource("1_def")
+pool_key = &"red_splashes"
+scene = ExtResource("9_red_splash")
+initial_size = 20
+
+[sub_resource type="Resource" id="Resource_rsplash_lg"]
+script = ExtResource("1_def")
+pool_key = &"red_splashes_large"
+scene = ExtResource("10_red_splash_lg")
+initial_size = 10
+
 [resource]
 script = ExtResource("2_man")
 pools = Array[ExtResource("1_def")]([
@@ -53,5 +67,7 @@ pools = Array[ExtResource("1_def")]([
     SubResource("Resource_minion"),
     SubResource("Resource_homing"),
     SubResource("Resource_spark"),
-    SubResource("Resource_gsplash")
+    SubResource("Resource_gsplash"),
+    SubResource("Resource_rsplash"),
+    SubResource("Resource_rsplash_lg")
 ])

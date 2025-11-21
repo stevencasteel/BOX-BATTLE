@@ -59,6 +59,12 @@ func deactivate() -> void:
 		_shape_node.set_deferred("disabled", true)
 
 
+## Manually sets the visual/logical offset of the shape (useful for debug/sync).
+func set_shape_offset(offset: Vector2) -> void:
+	if is_instance_valid(_shape_node):
+		_shape_node.position = offset
+
+
 # --- Private Logic ---
 
 func _on_contact(target: Node) -> void:

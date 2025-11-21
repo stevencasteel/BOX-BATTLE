@@ -24,9 +24,7 @@ extends BaseEntity
 @export var state_melee_script: Script
 
 # --- Node References ---
-@onready var visual_sprite: ColorRect = $ColorRect
-@onready var cooldown_timer: Timer = $CooldownTimer
-@onready var patrol_timer: Timer = $PatrolTimer
+# Note: visual_sprite managed by VisualComponent
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var close_range_detector: SensorComponent = $CloseRangeDetector
 
@@ -34,6 +32,8 @@ extends BaseEntity
 var current_attack_patterns: Array[AttackPattern] = []
 var phases_remaining: int = 3
 var entity_data: BossStateData
+
+var _visual_component: VisualComponent
 
 # --- Godot Lifecycle Methods ---
 func _get_configuration_warnings() -> PackedStringArray:
@@ -91,6 +91,14 @@ func _on_build() -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
+	
+	# Create/Fetch VisualComponent if missing (Boss archetype usually doesn't include it in old version)
+	_visual_component = get_component(VisualComponent)
+	
+	if not _visual_component:
+		# Fallback: manually add if archetype wasn't updated yet (Safety)
+		_visual_component = VisualComponent.new()
+		add_child(_visual_component)
 
 	var shared_deps := {
 		"data_resource": entity_data, 
@@ -98,7 +106,6 @@ func _on_build() -> void:
 		"services": _services
 		}
 
-	# OCP: Build state map dynamically from config resource
 	var states: Dictionary = {}
 	var initial_state_key = &""
 	
@@ -110,21 +117,29 @@ func _on_build() -> void:
 	else:
 		push_error("BaseBoss: Missing StateMachineConfig!")
 
+	var raw_visual = get_node("ColorRect")
+
 	var per_component_deps := {
 		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
-			"visual_node": visual_sprite, 
+			"visual_node": raw_visual, 
 			"hit_effect": hit_flash_effect,
 			"fx_manager": _services.fx_manager
 			},
 		hc: {
-			"hit_spark_effect": hit_spark_effect,
 			"fx_manager": _services.fx_manager,
 			"event_bus": _services.event_bus
-			}
+			},
+		_visual_component: {
+			"visual_node": raw_visual,
+			"config": entity_data.config # Allows VC to find effects
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
+	
+	# Set Boss Color Explicitly via Component
+	_visual_component.set_color(Palette.COLOR_BOSS_PRIMARY)
 
 	if hc:
 		if not hc.health_threshold_reached.is_connected(_on_health_threshold_reached):
@@ -144,6 +159,7 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+	_visual_component = null
 
 
 func get_health_thresholds() -> Array[float]:
@@ -173,8 +189,6 @@ func _die() -> void:
 	if is_instance_valid(sm):
 		sm.teardown()
 
-	cooldown_timer.stop()
-	patrol_timer.stop()
 	if is_instance_valid(close_range_detector):
 		close_range_detector.monitoring = false
 
@@ -189,9 +203,10 @@ func _die() -> void:
 	
 	_services.fx_manager.request_hit_stop(entity_data.world_config.hit_stop_boss_death)
 
-	var fc: FXComponent = get_component(FXComponent)
-	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
-		fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+	if is_instance_valid(_visual_component) and is_instance_valid(dissolve_effect):
+		var fc: FXComponent = get_component(FXComponent)
+		if fc:
+			fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
 
 	var ev = BossDiedEvent.new()
 	ev.boss_node = self
@@ -200,7 +215,8 @@ func _die() -> void:
 
 func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
-	visual_sprite.color = Palette.COLOR_BOSS_PRIMARY
+	# Visual set color moved to build()
+	
 	if is_instance_valid(behavior):
 		current_attack_patterns = behavior.phase_1_patterns
 	entity_data = BossStateData.new()
@@ -216,7 +232,6 @@ func _initialize_data() -> void:
 	
 	entity_data.projectile_pool_key = behavior.projectile_pool_key
 
-	# CRITICAL FIX: Set max_health from config, overriding the default of 1
 	entity_data.max_health = entity_data.config.boss_health
 	entity_data.health = entity_data.max_health
 
@@ -226,7 +241,9 @@ func _update_player_tracking() -> void:
 		var dir_to_player: float = _player.global_position.x - global_position.x
 		if not is_zero_approx(dir_to_player):
 			entity_data.facing_direction = sign(dir_to_player)
-	self.scale.x = entity_data.facing_direction
+	
+	if is_instance_valid(_visual_component):
+		_visual_component.set_facing(entity_data.facing_direction)
 
 
 # --- Signal Handlers ---
@@ -258,18 +275,6 @@ func _on_health_threshold_reached(health_percentage: float) -> void:
 		var ev = BossPhaseChangedEvent.new()
 		ev.phases_remaining = phases_remaining
 		_services.event_bus.emit(EventCatalog.BOSS_PHASE_CHANGED, ev)
-
-
-func _on_cooldown_timer_timeout() -> void:
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.COOLDOWN]:
-		sm.change_state(Identifiers.BossStates.PATROL)
-
-
-func _on_patrol_timer_timeout() -> void:
-	var sm: BaseStateMachine = get_component(BaseStateMachine)
-	if is_instance_valid(sm) and sm.current_state == sm.states[Identifiers.BossStates.PATROL]:
-		sm.change_state(Identifiers.BossStates.IDLE)
 
 
 func _on_health_component_health_changed(current: int, max_val: int) -> void:

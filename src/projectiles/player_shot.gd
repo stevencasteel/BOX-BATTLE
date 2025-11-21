@@ -1,12 +1,13 @@
-# res://src/projectiles/player_shot.gd
+# res/src/projectiles/player_shot.gd
 class_name PlayerShot
 extends BaseProjectile
 
 # Per-projectile tuneable default (Inspector-friendly).
 @export var default_speed: float = 1000.0
-@export var impact_vfx: VFXEffect
 
 @onready var flame_trail: GPUParticles2D = %FlameTrail
+
+var _hit_instances: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
@@ -19,6 +20,8 @@ func activate(p_dependencies: Dictionary) -> void:
 	# Then apply player-shot-specific runtime defaults so they apply on reuse.
 	speed = default_speed
 	
+	_hit_instances.clear()
+	
 	if is_instance_valid(flame_trail):
 		flame_trail.restart()
 		flame_trail.emitting = true
@@ -27,12 +30,19 @@ func activate(p_dependencies: Dictionary) -> void:
 func deactivate() -> void:
 	if is_instance_valid(flame_trail):
 		flame_trail.emitting = false
+	_hit_instances.clear()
 	super.deactivate()
 
 
 func _on_area_entered(area: Area2D) -> void:
 	if not _is_active:
 		return
+	
+	# Prevent double-processing the same target (e.g. if physics flushes strangely)
+	var id = area.get_instance_id()
+	if _hit_instances.has(id):
+		return
+	_hit_instances[id] = true
 	
 	# CLASH LOGIC: Player shots can destroy enemy projectiles.
 	# If we have enough damage (health), we survive the hit.
@@ -54,8 +64,9 @@ func _handle_projectile_clash(enemy_shot: Area2D) -> void:
 	_spawn_impact_vfx()
 	
 	# 3. Destroy Enemy Shot (It is consumed by the blast)
-	# We use call_deferred to interact safely with the pool/tree during physics callbacks.
-	if enemy_shot.has_method("deactivate") and is_instance_valid(_object_pool):
+	if enemy_shot.has_method("destroy_with_impact"):
+		enemy_shot.destroy_with_impact()
+	elif enemy_shot.has_method("deactivate") and is_instance_valid(_object_pool):
 		_object_pool.return_instance.call_deferred(enemy_shot)
 	else:
 		enemy_shot.queue_free()
@@ -70,19 +81,11 @@ func _handle_projectile_clash(enemy_shot: Area2D) -> void:
 		else:
 			queue_free()
 	else:
-		# Visual Feedback for degradation could go here (e.g. shrink scale)
-		# For now, we just keep moving with reduced damage.
+		# Survived with reduced damage
 		pass
 
 
-# Override base collision to add VFX for walls
+# Override base collision to ensure VFX spawn before destruction
 func _handle_collision(target: Node) -> void:
-	_spawn_impact_vfx()
+	# BaseProjectile._handle_collision now handles _spawn_impact_vfx() automatically!
 	super._handle_collision(target)
-
-
-func _spawn_impact_vfx() -> void:
-	if is_instance_valid(_fx_manager) and is_instance_valid(impact_vfx):
-		# Spawn splash at current location
-		var normal = -direction.normalized()
-		_fx_manager.play_vfx(impact_vfx, global_position, normal)

@@ -64,18 +64,31 @@ func get_instance(p_pool_name: StringName) -> Node:
 		return null
 
 	var pool: Dictionary = _pools[p_pool_name]
-	var instance: Node
+	var instance: Node = null
 
-	if not pool.inactive.is_empty():
-		instance = pool.inactive.pop_front()
-	else:
+	# Robust Retrieval Loop
+	# Keep popping until we find a valid instance or run out.
+	while not pool.inactive.is_empty():
+		var candidate = pool.inactive.pop_front()
+		if is_instance_valid(candidate) and not candidate.is_queued_for_deletion():
+			instance = candidate
+			break
+		else:
+			# If we found a ghost reference, we decrement total count effectively (it's gone)
+			# We don't decrement total_created here to keep stats simple, or we could.
+			pass
+
+	# If no valid instance found in pool, create new
+	if not is_instance_valid(instance):
 		instance = pool.scene.instantiate()
 		instance.set_meta("pool_name", p_pool_name)
 		pool.container.add_child(instance)
-		pool.total_created += 1 # Track creation
+		pool.total_created += 1
 
-	if is_instance_valid(_active_world_container):
+	# Reparenting Logic
+	if is_instance_valid(_active_world_container) and not _active_world_container.is_queued_for_deletion():
 		if instance.get_parent() != _active_world_container:
+			# Standard reparent
 			instance.reparent(_active_world_container, false) 
 	
 	return instance
@@ -91,12 +104,14 @@ func return_instance(p_instance: Node) -> void:
 
 	var pool: Dictionary = _pools[pool_name]
 	
+	# Prevent double-return
 	if pool.inactive.has(p_instance):
 		return
 
 	if p_instance.has_method("deactivate"):
 		p_instance.deactivate()
 
+	# Return to pool container for storage
 	if p_instance.get_parent() != pool.container:
 		if is_instance_valid(pool.container):
 			p_instance.reparent(pool.container, false)

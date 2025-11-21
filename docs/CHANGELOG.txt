@@ -13,6 +13,36 @@
 
 
 
+
+
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║   ██           [0.30.0] - ARCHITECTURAL POLISH & BUG FIXES - 11/21/2025   ██   ║
+║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
+║                                                                                ║
+║   █  Architectural Refactor                                                    ║
+║      ░ ■ Visual Consolidation: 'VisualComponent' is now the sole authority on  ║
+║      ░   Entity appearance (Color, Facing Direction). Decoupled 'Player.gd',   ║
+║      ░   'BaseBoss.gd', and 'Minion.gd' from specific visual nodes.            ║
+║      ░ ■ Component Autonomy: 'HealComponent' now self-manages its input,       ║
+║      ░   timers, resources, and VFX. Removed legacy logic from 'Player.gd'.    ║
+║      ░ ■ Boss Standardization: Moved 'Cooldown' and 'Patrol' timing logic      ║
+║      ░   from SceneTree Timers into State classes, reducing node clutter.      ║
+║                                                                                ║
+║   █  Stability & Hardening                                                     ║
+║      ░ ■ ObjectPool: Hardened 'get_instance' to prevent crashes from           ║
+║      ░   accessing previously freed instances.                                 ║
+║      ░ ■ Dependency Injection: Fixed validation crashes in 'HealthComponent'.  ║
+║                                                                                ║
+║   █  Gameplay & VFX                                                            ║
+║      ░ ■ Projectile Clash: Implemented distinct Red (Enemy) and Green (Player) ║
+║      ░   splash VFX. Level 2 Charge Shots now correctly pierce Boss shots.     ║
+║      ░ ■ Healing: Added punishment mechanic—getting hit while healing now      ║
+║      ░   consumes the charge without healing the player.                       ║
+║      ░ ■ Hitbox Polish: Fixed debug shapes lagging behind player movement.     ║
+║                                                                                ║
+
+
+
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║
 ║   ██           [0.29.0] - EDITOR WORKFLOW MIGRATION & VIEWPORT CABINET ARCHITECTURE - 11/20/2025   ██   ║
 ║   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   ║

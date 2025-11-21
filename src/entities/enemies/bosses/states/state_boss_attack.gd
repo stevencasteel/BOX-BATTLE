@@ -77,5 +77,5 @@ func _start_telegraph_and_attack() -> void:
 		attack_command.call()
 
 	if state_machine.current_state == self:
-		_boss.cooldown_timer.wait_time = _current_pattern.cooldown
-		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
+		# Pass the cooldown duration to the next state
+		state_machine.change_state(Identifiers.BossStates.COOLDOWN, {"duration": _current_pattern.cooldown})

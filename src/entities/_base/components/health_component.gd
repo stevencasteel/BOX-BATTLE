@@ -26,9 +26,9 @@ var _next_token_id: int = 1
 
 var _fx_manager: IFXManager
 var _event_bus
-var _hit_spark_effect: VFXEffect
+# REMOVED: _hit_spark_effect - Impact VFX are now handled by the Attacker.
 var _audio_manager: Node 
-var _status_effect_component: StatusEffectComponent # New!
+var _status_effect_component: StatusEffectComponent 
 
 # --- Lifecycle ---
 func _notification(what: int) -> void:
@@ -42,7 +42,6 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	self._fx_manager = p_dependencies.get("fx_manager")
 	self._event_bus = p_dependencies.get("event_bus")
-	self._hit_spark_effect = p_dependencies.get("hit_spark_effect")
 	self._status_effect_component = p_dependencies.get("status_effect_component")
 	
 	if p_dependencies.has("audio_manager"):
@@ -75,7 +74,6 @@ func teardown() -> void:
 	owner_node = null
 	_fx_manager = null
 	_event_bus = null
-	_hit_spark_effect = null
 	_damage_audio_cue = null
 	_audio_manager = null
 	_status_effect_component = null
@@ -107,10 +105,7 @@ func apply_damage(damage_info: DamageInfo) -> DamageResult:
 	result.was_damaged = true
 	took_damage.emit(damage_info, result)
 
-	if result.was_damaged and is_instance_valid(_fx_manager) and is_instance_valid(_hit_spark_effect):
-		_fx_manager.play_vfx(
-			_hit_spark_effect, damage_info.impact_position, damage_info.impact_normal
-		)
+	# NOTE: VFX spawning moved to Attacker (CombatComponent/MeleeComponent).
 	
 	if result.was_damaged and is_instance_valid(_damage_audio_cue) and is_instance_valid(_audio_manager):
 		_audio_manager.play_cue(_damage_audio_cue)

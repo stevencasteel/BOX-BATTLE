@@ -15,13 +15,14 @@ extends BaseEntity
 @export var dissolve_effect: ShaderEffect
 
 # --- Node References ---
-@onready var visual: Polygon2D = $Visual
+# visual ref handled by component
 @onready var attack_timer: Timer = $AttackTimer
 @onready var range_detector: SensorComponent = $RangeDetector
 @onready var range_detector_shape: CollisionShape2D = $RangeDetector/CollisionShape2D
 
 # --- Public Member Variables ---
 var entity_data: MinionStateData
+var _visual_component: VisualComponent
 
 # --- Godot Lifecycle Methods ---
 func _get_configuration_warnings() -> PackedStringArray:
@@ -79,6 +80,7 @@ func teardown() -> void:
 
 	super.teardown()
 	entity_data = null
+	_visual_component = null
 
 
 func update_player_tracking() -> void:
@@ -120,6 +122,12 @@ func _on_build() -> void:
 	var hc: HealthComponent = get_component(HealthComponent)
 	var sm: BaseStateMachine = get_component(BaseStateMachine)
 	var fc: FXComponent = get_component(FXComponent)
+	
+	# Dynamically add VisualComponent if missing (Minions likely rely on archetype update)
+	_visual_component = get_component(VisualComponent)
+	if not _visual_component:
+		_visual_component = VisualComponent.new()
+		add_child(_visual_component)
 
 	var shared_deps := {
 		"data_resource": entity_data,
@@ -127,7 +135,6 @@ func _on_build() -> void:
 		"services": _services
 	}
 
-	# OCP: Build state map dynamically from config resource
 	var states: Dictionary = {}
 	var initial_state_key = &""
 	
@@ -143,22 +150,29 @@ func _on_build() -> void:
 	else:
 		push_error("Minion: Missing StateMachineConfig!")
 
+	var raw_visual = get_node("Visual")
 
 	var per_component_deps := {
 		sm: {"states": states, "initial_state_key": initial_state_key},
 		fc: {
-			"visual_node": visual, 
+			"visual_node": raw_visual, 
 			"hit_effect": hit_flash_effect,
 			"fx_manager": _services.fx_manager
 			},
 		hc: {
-			"hit_spark_effect": hit_spark_effect,
 			"fx_manager": _services.fx_manager,
 			"event_bus": _services.event_bus
-			}
+			},
+		_visual_component: {
+			"visual_node": raw_visual
+		}
 	}
 
 	setup_components(shared_deps, per_component_deps)
+	
+	# Minions rely on Polygon2D color property, handled by VisualComponent now.
+	# We set a default color here if needed, or let VisualComponent handle generic init.
+	_visual_component.set_color(Palette.COLOR_TERRAIN_SECONDARY)
 
 
 func _safe_script(script_ref: Script, fallback_path: String) -> Script:
@@ -182,10 +196,12 @@ func _die() -> void:
 	collision_mask = 0
 	deactivate()
 
+	# Manual dissolve trigger because Minion death logic handles queue_free timing
 	var fc: FXComponent = get_component(FXComponent)
-	var death_tween: Tween = fc.play_effect(dissolve_effect)
-	if is_instance_valid(death_tween):
-		await death_tween.finished
+	if is_instance_valid(dissolve_effect) and is_instance_valid(fc):
+		var death_tween: Tween = fc.play_effect(dissolve_effect, {}, {"preserve_final_state": true})
+		if is_instance_valid(death_tween):
+			await death_tween.finished
 
 	if is_instance_valid(self):
 		queue_free()
@@ -193,7 +209,6 @@ func _die() -> void:
 
 func _initialize_data() -> void:
 	add_to_group(Identifiers.Groups.ENEMY)
-	visual.color = Palette.COLOR_TERRAIN_SECONDARY
 	entity_data = MinionStateData.new()
 	
 	if not _services:
@@ -215,6 +230,9 @@ func _update_player_tracking() -> void:
 	var dir_to_player: float = _player.global_position.x - global_position.x
 	if not is_zero_approx(dir_to_player):
 		entity_data.facing_direction = sign(dir_to_player)
+	
+	if is_instance_valid(_visual_component):
+		_visual_component.set_facing(entity_data.facing_direction)
 
 
 # --- Signal Handlers ---

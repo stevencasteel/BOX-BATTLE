@@ -2,7 +2,7 @@
 |       B O X  B A T T L E        |
 |  Godot Project Source Context   |
 +---------------------------------+
-Generated on: Thu Nov 20 17:35:01 CST 2025
+Generated on: Thu Nov 20 19:07:13 CST 2025
 
 =====================================
 PROJECT DIRECTORY STRUCTURE:
@@ -92,6 +92,7 @@ PROJECT DIRECTORY STRUCTURE:
 ├── progess
 │   └── progress_001-1.jpg
 ├── project.godot
+├── run_tests.sh
 ├── shaders
 └── src
     ├── arenas
@@ -487,7 +488,7 @@ PROJECT DIRECTORY STRUCTURE:
         └── themes
             └── main_theme.tres
 
-114 directories, 365 files
+114 directories, 366 files
 
 
 =====================================
@@ -662,7 +663,7 @@ FILE: ./docs/ARCHITECTURE.txt
 ║  █████╗ ██████╗  ██████╗██╗  ██╗██╗████████╗███████╗ ██████╗████████╗██╗   ██╗██████╗ ███████╗   ║
 ║ ██╔══██╗██╔══██╗██╔════╝██║  ██║██║╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝   ║
 ║ ███████║██████╔╝██║     ███████║██║   ██║   █████╗  ██║        ██║   ██║   ██║██████╔╝█████╗     ║
-║ ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
+║ ██╔══██╗██╔══██╗██║     ██╔══██║██║   ██║   ██╔══╝  ██║        ██║   ██║   ██║██╔══██╗██╔══╝     ║
 ║ ██║  ██║██║  ██║╚██████╗██║  ██║██║   ██║   ███████╗╚██████╗   ██║   ╚██████╔╝██║  ██║███████╗   ║
 ║ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝   ║
 ║                                                                                                  ║
@@ -670,30 +671,73 @@ FILE: ./docs/ARCHITECTURE.txt
 ║                                                                                                  ║
 ╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
 
-# PROJECT ARCHITECTURE
+# 1. CORE PATTERNS
 
-## 1. Core Pattern: Service Locator + Autoloads
-*   **Global Access:** Managed via `ServiceLocator` singleton (Autoload).
-*   **Services:** `FXManager`, `ObjectPool`, `EventBus`, `AudioManager`.
-*   **Rule:** Entities/Components must not access Autoloads directly. They receive `ServiceLocator` via dependency injection during build.
+## Service Locator & Dependency Injection
+*   **Pattern:** Global access is managed via a `ServiceLocator` autoload.
+*   **Injection:** Entities/Components DO NOT access Autoloads directly.
+    *   **Entities:** Receive the locator via `build_entity()` or Spawners.
+    *   **Components:** Receive dependencies via `setup(owner, dependencies)`.
+*   **Benefit:** Allows easy swapping of systems (e.g., `FakeEventBus`) during Unit Testing.
 
-## 2. Entity Pattern: Composition + Archetypes
-*   **BaseEntity:** Generic shell (`CharacterBody2D`). Responsible for `move_and_slide()` physics execution.
-*   **Archetype (`.tres`):** Defines the list of component scenes to instantiate.
-*   **Components:** Single-responsibility nodes (Health, Input, Physics).
-    *   *Physics Authority:* Components (e.g., `PlayerPhysicsComponent`) calculate and modify `velocity`. The Owner Entity applies that velocity via `move_and_slide()`.
+## Entity-Component (ECS-Lite)
+*   **BaseEntity:** The physical shell (`CharacterBody2D`). Handles strictly physics execution (`move_and_slide`).
+*   **Archetype:** A Resource defining which component scenes to instantiate.
+*   **Components:** Logic containers (Health, Input, Combat). They manipulate data/state, but the Entity applies the result.
 
-## 3. Logic Pattern: State Machines & Strategy
-*   **FSM:** `BaseStateMachine` manages `BaseState` nodes.
-*   **Strategy:** Complex behaviors (Attacks, Movement) are `Resource` files (`AttackLogic`, `MovementLogic`) swapped at runtime.
+## Strategy & Command
+*   **Logic as Data:** Complex behaviors are Resources, not hardcoded scripts.
+    *   `AttackLogic`: Defines *how* an attack executes.
+    *   `MovementLogic`: Defines *how* an enemy moves.
+*   **Benefit:** "Programming in the Inspector." New enemies can be created by mixing and matching existing logic resources.
 
-## 4. Data Pattern: Resource-Driven
-*   **Config:** All tuning numbers live in Config Resources (`PlayerConfig`, `EnemyConfig`).
-*   **State:** Runtime data lives in `GameStateData` and `PlayerStateData` resources, not on nodes.
+---
 
-## 5. Communication Rules
-*   **Local (Parent<->Child):** Use Godot Signals.
-*   **Global (System<->System):** Use `EventBus` (e.g., UI updates, achievements).
+# 2. KEY SYSTEMS
+
+## Viewport Cabinet (Resolution Management)
+*   **Problem:** Pixel art games need integer scaling, but modern UI needs high-res (1440p).
+*   **Solution:**
+    *   **Root Window:** 2560x1440 (QHD). Handles UI and Post-Process Shaders.
+    *   **SubViewport:** 1000x1000 (Logical Arena). Handles Gameplay.
+    *   **Coordinate Mapping:** `ViewportCabinet.world_to_screen_pos()` maps game coordinates to screen UVs for shaders (Shockwave, etc).
+
+## Safety Hooks (Memory Management)
+*   **Problem:** Godot objects can leave dangling references in global singletons (EventBus) when scenes change.
+*   **Solution:** `ISceneController` interface.
+    *   **Contract:** Scenes must implement `scene_exiting()`.
+    *   **Flow:** `SceneManager` calls `scene_exiting()` -> Entities call `teardown()` -> Components disconnect signals -> Scene changes.
+
+## Input Abstraction
+*   **Interface:** `IInputProvider`.
+*   **Implementation:** `StandardInputProvider` wraps Godot's `Input` singleton.
+*   **Benefit:** Unit tests use `FakeInputProvider` to simulate key presses frame-by-frame without needing OS-level input simulation.
+
+---
+
+# 3. DATA & CONFIGURATION
+
+## Resource-Driven Tuning
+*   **Config Resources:** All magic numbers (speed, damage, cooldowns) live in `PlayerConfig.tres` or `EnemyConfig.tres`.
+*   **State Resources:** Runtime data lives in `PlayerStateData` or `BossStateData`, passed between components. Components are stateless logic processors; Resources hold the state.
+
+## VFX & Shader Management
+*   **Object Pooling:** `HitSpark` and Projectiles are pooled to prevent GC stutter.
+*   **Shader Pre-warming:** A Loading Screen renders hidden instances of heavy shaders to force compilation before gameplay starts, preventing the "first-hit stutter."
+
+---
+
+# 4. COMMUNICATION RULES
+
+## Local (Signal)
+*   **Scope:** Inside a single scene file (Parent <-> Child).
+*   **Usage:** Component emits `health_changed`, Entity owner reacts.
+
+## Global (EventBus)
+*   **Scope:** System to System (Entity <-> HUD, Encounter <-> Music).
+*   **Usage:** Player emits `player_died` -> EventBus -> HUD shows Game Over.
+*   **Rule:** If the sender doesn't know the receiver exists, use EventBus.
+
 
 =====================================
 FILE: ./docs/ASSETS.txt
@@ -799,6 +843,17 @@ FILE: ./docs/CHANGELOG.txt
 ║      ░   Screen UVs correctly across nested viewports.                         ║
 ║      ░ ■ Fixed VFX (Heal/Charge Splashes) parenting logic.                     ║
 ║                                                                                ║
+
+   █  Optimization & Refactoring                                      
+      ░ ■ Level Architecture: Consolidated thousands of tile blocks in 'level_00'
+      ░   into optimized collision rectangles, significantly reducing scene size.
+      ░ ■ Physics Authority: Centralized 'move_and_slide()' execution in         
+      ░   'BaseEntity'. Subclasses (Player, Boss, Minion) now delegate movement  
+      ░   logic to the base class via 'super._physics_process()'.                
+      ░ ■ Testing: Refactored GUT test suite to support new Dependency Injection 
+      ░   requirements (EventBus, StatusEffectComponent). All 18 tests passing.  
+      ░ ■ Documentation: Updated ARCHITECTURE.txt to reflect current patterns.
+
 
 
 
@@ -8222,7 +8277,8 @@ const InputComponent = preload("res://src/entities/_base/components/input_compon
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const PlayerConfig = preload("res://src/data/player_config.tres")
 const FakeInputProvider = preload("res://src/tests/fakes/fake_input_provider.gd")
-const Identifiers = preload("res://src/shared/identifiers.gd") # Note: identifiers moved to shared next? No, keeping updated path
+# FIX: Correct path to Identifiers
+const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _input_component: InputComponent
@@ -8311,7 +8367,7 @@ extends GutTest
 # --- Constants ---
 const PlayerResourceComponent = preload("res://src/entities/player/components/player_resource_component.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
-const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const PlayerConfig = preload("res://src/data/player_config.tres")
 const EventCatalog = preload("res://src/core/events/event_catalog.gd")
 
 # --- Test Internals ---
@@ -8336,16 +8392,18 @@ func before_each():
 	var mock_owner = Node.new()
 	add_child_autofree(mock_owner)
 	_player_data = PlayerStateData.new()
-	_player_data.config = PlayerConfig # UPDATE
-	# Explicitly set max charges for clarity in tests
-	# UPDATE: Data is now nested in 'combat'
+	_player_data.config = PlayerConfig
 	_player_data.combat.max_healing_charges = 3
 
 	_resource_component = PlayerResourceComponent.new()
 	mock_owner.add_child(_resource_component)
 
 	# 3. Inject dependencies
-	var dependencies = {"data_resource": _player_data, "services": fake_services}
+	var dependencies = {
+		"data_resource": _player_data,
+		"services": fake_services,
+		"event_bus": _fake_event_bus # FIX: Explicit injection required
+	}
 	_resource_component.setup(mock_owner, dependencies)
 
 # --- The Tests ---
@@ -8357,7 +8415,6 @@ func test_on_damage_dealt_increments_determination():
 
 func test_healing_charge_gained_at_threshold():
 	_player_data.combat.healing_charges = 0
-	# UPDATE: determination_per_charge (removed player_ prefix)
 	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 
 	_resource_component.on_damage_dealt()
@@ -8370,7 +8427,6 @@ func test_healing_charge_gained_at_threshold():
 
 func test_healing_charges_are_capped():
 	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges
-	# UPDATE: determination_per_charge
 	_player_data.combat.determination_counter = PlayerConfig.determination_per_charge - 1
 	_resource_component.on_damage_dealt()
 
@@ -8383,7 +8439,6 @@ func test_healing_charges_are_capped():
 	assert_false(_fake_event_bus.was_event_emitted(EventCatalog.PLAYER_HEALING_CHARGES_CHANGED))
 
 func test_consume_charge_decrements_and_emits_event():
-	# Start with a valid number of charges (at max) and consume one.
 	_player_data.combat.healing_charges = _player_data.combat.max_healing_charges # Starts at 3
 	_resource_component.consume_healing_charge()
 	assert_eq(_player_data.combat.healing_charges, 2, "Healing charges should decrement by 1.")
@@ -8406,9 +8461,10 @@ extends GutTest
 
 # --- Constants ---
 const HealthComponent = preload("res://src/entities/_base/components/health_component.gd")
+const StatusEffectComponent = preload("res://src/entities/_base/components/status_effect_component.gd") # FIX: Added
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/shared/types/damage_info.gd")
-const PlayerConfig = preload("res://src/data/player_config.tres") # UPDATE
+const PlayerConfig = preload("res://src/data/player_config.tres")
 const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 const VFXEffect = preload("res://src/core/data/effects/vfx_effect.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
@@ -8417,6 +8473,7 @@ const Identifiers = preload("res://src/core/util/identifiers.gd")
 
 # --- Test Internals ---
 var _health_component: HealthComponent
+var _status_component: StatusEffectComponent # FIX: Added
 var _player_data: PlayerStateData
 var _mock_owner: CharacterBody2D
 var _died_signal_was_emitted: bool
@@ -8436,38 +8493,44 @@ func before_each() -> void:
 	# 2. Create our robust FakeServiceLocator and inject the double
 	_fake_services = FakeServiceLocator.new()
 	_fake_services.mock_fx_manager = _fx_manager_double
+	# We also need a real (or fake) EventBus for HealthComponent
+	_fake_services.mock_event_bus = preload("res://src/tests/fakes/fake_event_bus.gd").new()
+	add_child_autofree(_fake_services.mock_event_bus)
 	add_child_autofree(_fake_services)
 
 	# 3. Setup test subject
 	_mock_owner = CharacterBody2D.new()
-	# UPDATE: Add to player group so HealthComponent logic works correctly with PlayerConfig
 	_mock_owner.add_to_group(Identifiers.Groups.PLAYER)
 	add_child_autofree(_mock_owner)
 
 	_player_data = PlayerStateData.new()
-	_player_data.config = PlayerConfig # UPDATE
+	_player_data.config = PlayerConfig
 	_player_data.max_health = 10
 	_player_data.health = 10
 
 	_health_component = HealthComponent.new()
 	_mock_owner.add_child(_health_component)
+	
+	# FIX: Add StatusEffectComponent to owner
+	_status_component = StatusEffectComponent.new()
+	_mock_owner.add_child(_status_component)
 
 	var vfx = VFXEffect.new()
 	vfx.pool_key = "test_hit_spark"
 	
-	# Create specific damage config for test
 	var damage_config = DamageResponseConfig.new()
 	damage_config.invincibility_duration = 1.0
 	damage_config.knockback_speed = 100.0
 
 	var dependencies = {
 		"data_resource": _player_data,
-		"config": PlayerConfig, # Legacy
-		"damage_config": damage_config, # DIP Injection
+		"config": PlayerConfig,
+		"damage_config": damage_config,
 		"services": _fake_services,
 		"hit_spark_effect": vfx,
-		"event_bus": _fake_services.event_bus, # Direct injection
-		"fx_manager": _fake_services.fx_manager # Direct injection
+		"event_bus": _fake_services.event_bus,
+		"fx_manager": _fake_services.fx_manager,
+		"status_effect_component": _status_component # FIX: Inject
 	}
 	_health_component.setup(_mock_owner, dependencies)
 
@@ -8519,14 +8582,19 @@ extends GutTest
 
 # --- Constants & Preloads ---
 const HealthComponent = preload("res://src/entities/_base/components/health_component.gd")
+const StatusEffectComponent = preload("res://src/entities/_base/components/status_effect_component.gd") # FIX
 const FakeDamageable = preload("res://src/tests/fakes/fake_damageable.gd")
 const PlayerStateData = preload("res://src/entities/player/data/player_state_data.gd")
 const DamageInfo = preload("res://src/shared/types/damage_info.gd")
 const FakeServiceLocator = preload("res://src/tests/fakes/fake_service_locator.gd")
+const FakeEventBus = preload("res://src/tests/fakes/fake_event_bus.gd")
+const IFXManager = preload("res://src/shared/interfaces/IFXManager.gd")
+const DamageResponseConfig = preload("res://src/core/data/config/damage_response_config.gd")
 
 # --- Test Internals ---
 var _mock_owner: CharacterBody2D
 var _fake_services: FakeServiceLocator
+var _fx_manager_double
 
 # --- Test Lifecycle ---
 func before_each():
@@ -8534,6 +8602,16 @@ func before_each():
 	add_child_autofree(_mock_owner)
 	
 	_fake_services = FakeServiceLocator.new()
+	
+	# FIX: Setup mocks
+	_fake_services.mock_event_bus = FakeEventBus.new()
+	add_child_autofree(_fake_services.mock_event_bus)
+	
+	_fx_manager_double = double(IFXManager).new()
+	stub(_fx_manager_double, "play_vfx").to_do_nothing()
+	add_child_autofree(_fx_manager_double)
+	_fake_services.mock_fx_manager = _fx_manager_double
+	
 	add_child_autofree(_fake_services)
 
 # --- The Contract Test Suite ---
@@ -8554,13 +8632,25 @@ func test_health_component_fulfills_contract():
 	var health_comp = HealthComponent.new()
 	_mock_owner.add_child(health_comp)
 	
+	# FIX: Add required StatusEffectComponent
+	var status_comp = StatusEffectComponent.new()
+	_mock_owner.add_child(status_comp)
+	
 	var data = PlayerStateData.new()
 	data.max_health = 10
+	
+	var dmg_config = DamageResponseConfig.new()
+	
 	var deps = {
 		"data_resource": data,
-		"config": preload("res://src/data/player_config.tres"), # UPDATE
+		"config": preload("res://src/data/player_config.tres"),
 		"services": _fake_services,
-		"hit_spark_effect": preload("res://src/core/data/effects/player_hit_spark_effect.tres")
+		"hit_spark_effect": preload("res://src/core/data/effects/player_hit_spark_effect.tres"),
+		# FIX: Explicitly provide new required dependencies
+		"fx_manager": _fake_services.fx_manager,
+		"event_bus": _fake_services.event_bus,
+		"damage_config": dmg_config,
+		"status_effect_component": status_comp
 	}
 	health_comp.setup(_mock_owner, deps)
 	
@@ -8572,6 +8662,7 @@ func test_fake_damageable_fulfills_contract():
 	_mock_owner.add_child(fake_damageable)
 	
 	_run_contract_tests(fake_damageable, "FakeDamageable")
+
 
 =====================================
 FILE: ./src/tests/unit/test_combat_utils.gd
@@ -9301,4021 +9392,240 @@ void fragment() {
 =====================================
 FILE: ./src/content/levels/level_00.tscn
 =====================================
-[gd_scene load_steps=128 format=3 uid="uid://c6gxsalyacbd1"]
+[gd_scene load_steps=13 format=3 uid="uid://c6gxsalyacbd1"]
 
 [ext_resource type="PackedScene" uid="uid://e0dt5jwwxndr" path="res://src/entities/enemies/spawners/patrolling_lancer_spawner.tscn" id="1_8girt"]
 [ext_resource type="PackedScene" uid="uid://c1d2e3f4g5h6i" path="res://src/entities/enemies/minions/flying_patroller.tscn" id="4_ei412"]
-[ext_resource type="Script" uid="uid://c6b7cy6cfequ7" path="res://src/entities/_base/components/sensor_component.gd" id="12_rib6t"]
 [ext_resource type="PackedScene" uid="uid://c7d8faf0g1h2i" path="res://src/entities/enemies/minions/turret.tscn" id="13_5kto0"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_jh4h4"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_border"]
+size = Vector2(46.75, 1000)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rib6t"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5nn78"]
+size = Vector2(208, 128)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5kto0"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling"]
+size = Vector2(1000, 48)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fajnb"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(752, 48)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3wwlf"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor_right"]
+size = Vector2(104, 48)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_m2rf4"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bn14x"]
+size = Vector2(64, 128)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_exion"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block"]
+size = Vector2(64, 128)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bfqo2"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oneway"]
+size = Vector2(64, 16)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_m5p86"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ff66x"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6dojj"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_7nrnl"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_t8yvo"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gq7d7"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_02jv0"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_1iaeq"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_j0i7o"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bi03v"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_0yleo"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bd336"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_0lwlg"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_386dy"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qfejk"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_x6qvu"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nvkj1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qaqoh"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_afjrx"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lhsi4"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_n8w8l"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_k8q8o"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_b68o1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wvnf5"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mu2st"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_7gc42"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_k4tjp"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_1bs1k"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_l6535"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_m27lb"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_w6dm3"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_tlpbv"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_yy0fn"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_h8lh3"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_8ue8w"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bt3mf"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vmi4e"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ettn1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nokug"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gjg64"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5xfkg"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qd6bo"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_tep5s"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qtf0v"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_necd7"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_tplec"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cc8y2"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_1aio6"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qsvty"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lhs7x"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_21dm6"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5m4kl"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nfr0o"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_me5qq"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qa1r7"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_eg3m4"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_pnt7m"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5fgrn"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sugsr"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_uu4jp"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_i4sfn"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_pgqho"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3xvot"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_w2sg1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2pn15"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_anv5h"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_os5jy"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5vbi1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_dxna1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6hue8"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fye41"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gq3cd"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rhb4q"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_w8vbj"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_jy2u7"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gav8n"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5x02q"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3h41j"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_kooud"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ddy7v"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_xfmvm"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3gtbl"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vswrd"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_pwsdp"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rokd5"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qwj01"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3xhrd"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_8nr5p"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_42a5k"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_d1420"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_tqeju"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_755k8"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_w8tcx"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_np6ok"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_hy0km"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_smc8u"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_kw0qx"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_8ydms"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_3iqqp"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_xy0wl"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6038r"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vyd45"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sbw17"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gcxdu"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_0npd5"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_g36vv"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cwjo8"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_sxp8d"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ee4sk"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_u8a0t"]
-size = Vector2(50, 10)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_too0t"]
-size = Vector2(50, 10)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ob4ew"]
-size = Vector2(50, 10)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_n07oy"]
-size = Vector2(50, 10)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_minionbody"]
-size = Vector2(40, 40)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_an4gx"]
-size = Vector2(50, 50)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_spikes"]
+size = Vector2(144, 48)
 
 [node name="Level_00" type="Node2D"]
 
+[node name="Background" type="ColorRect" parent="."]
+z_index = -10
+offset_right = 1000.0
+offset_bottom = 1000.0
+color = Color(0.0627451, 0.0627451, 0.0627451, 1)
+
 [node name="Terrain" type="Node2D" parent="."]
 
-[node name="@StaticBody2D@6" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 25)
+[node name="LeftWall" type="StaticBody2D" parent="Terrain"]
+position = Vector2(25, 500)
 collision_layer = 128
 
-[node name="@CollisionShape2D@4" type="CollisionShape2D" parent="Terrain/@StaticBody2D@6"]
-shape = SubResource("RectangleShape2D_jh4h4")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftWall"]
+position = Vector2(-0.75, 0)
+shape = SubResource("RectangleShape2D_border")
 
-[node name="@Polygon2D@5" type="Polygon2D" parent="Terrain/@StaticBody2D@6"]
+[node name="Visual" type="Polygon2D" parent="Terrain/LeftWall"]
+position = Vector2(-0.999999, -1.52588e-05)
+scale = Vector2(0.96, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -0.486832, 500, -25, 500)
 
-[node name="@StaticBody2D@9" type="StaticBody2D" parent="Terrain"]
-position = Vector2(75, 25)
+[node name="LeftPlatform" type="StaticBody2D" parent="Terrain"]
+position = Vector2(25, 500)
 collision_layer = 128
 
-[node name="@CollisionShape2D@7" type="CollisionShape2D" parent="Terrain/@StaticBody2D@9"]
-shape = SubResource("RectangleShape2D_rib6t")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/LeftPlatform"]
+position = Vector2(127, 204)
+shape = SubResource("RectangleShape2D_5nn78")
 
-[node name="@Polygon2D@8" type="Polygon2D" parent="Terrain/@StaticBody2D@9"]
+[node name="Visual" type="Polygon2D" parent="Terrain/LeftPlatform"]
+position = Vector2(127, 204)
+scale = Vector2(4.16, 0.128)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -0.486832, 500, -25, 500)
 
-[node name="@StaticBody2D@12" type="StaticBody2D" parent="Terrain"]
-position = Vector2(125, 25)
+[node name="RightWall" type="StaticBody2D" parent="Terrain"]
+position = Vector2(975, 500)
 collision_layer = 128
 
-[node name="@CollisionShape2D@10" type="CollisionShape2D" parent="Terrain/@StaticBody2D@12"]
-shape = SubResource("RectangleShape2D_5kto0")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/RightWall"]
+position = Vector2(0.375, 0)
+shape = SubResource("RectangleShape2D_border")
 
-[node name="@Polygon2D@11" type="Polygon2D" parent="Terrain/@StaticBody2D@12"]
+[node name="Visual" type="Polygon2D" parent="Terrain/RightWall"]
+position = Vector2(1, 0)
+scale = Vector2(0.96, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-25, -500, 25, -500, 25, 500, -25, 500)
 
-[node name="@StaticBody2D@15" type="StaticBody2D" parent="Terrain"]
-position = Vector2(175, 25)
+[node name="Ceiling" type="StaticBody2D" parent="Terrain"]
+position = Vector2(500, 25)
 collision_layer = 128
 
-[node name="@CollisionShape2D@13" type="CollisionShape2D" parent="Terrain/@StaticBody2D@15"]
-shape = SubResource("RectangleShape2D_fajnb")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/Ceiling"]
+position = Vector2(0, -1)
+shape = SubResource("RectangleShape2D_ceiling")
 
-[node name="@Polygon2D@14" type="Polygon2D" parent="Terrain/@StaticBody2D@15"]
+[node name="Visual" type="Polygon2D" parent="Terrain/Ceiling"]
+position = Vector2(9.53674e-07, -1)
+scale = Vector2(1, 0.96)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-500, -25, 500, -25, 500, 25, -500, 25)
 
-[node name="@StaticBody2D@18" type="StaticBody2D" parent="Terrain"]
-position = Vector2(225, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@16" type="CollisionShape2D" parent="Terrain/@StaticBody2D@18"]
-shape = SubResource("RectangleShape2D_3wwlf")
-
-[node name="@Polygon2D@17" type="Polygon2D" parent="Terrain/@StaticBody2D@18"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@21" type="StaticBody2D" parent="Terrain"]
-position = Vector2(275, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@19" type="CollisionShape2D" parent="Terrain/@StaticBody2D@21"]
-shape = SubResource("RectangleShape2D_m2rf4")
-
-[node name="@Polygon2D@20" type="Polygon2D" parent="Terrain/@StaticBody2D@21"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@24" type="StaticBody2D" parent="Terrain"]
-position = Vector2(325, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@22" type="CollisionShape2D" parent="Terrain/@StaticBody2D@24"]
-shape = SubResource("RectangleShape2D_exion")
-
-[node name="@Polygon2D@23" type="Polygon2D" parent="Terrain/@StaticBody2D@24"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@27" type="StaticBody2D" parent="Terrain"]
-position = Vector2(375, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@25" type="CollisionShape2D" parent="Terrain/@StaticBody2D@27"]
-shape = SubResource("RectangleShape2D_bfqo2")
-
-[node name="@Polygon2D@26" type="Polygon2D" parent="Terrain/@StaticBody2D@27"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@30" type="StaticBody2D" parent="Terrain"]
-position = Vector2(425, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@28" type="CollisionShape2D" parent="Terrain/@StaticBody2D@30"]
-shape = SubResource("RectangleShape2D_m5p86")
-
-[node name="@Polygon2D@29" type="Polygon2D" parent="Terrain/@StaticBody2D@30"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@33" type="StaticBody2D" parent="Terrain"]
-position = Vector2(475, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@31" type="CollisionShape2D" parent="Terrain/@StaticBody2D@33"]
-shape = SubResource("RectangleShape2D_ff66x")
-
-[node name="@Polygon2D@32" type="Polygon2D" parent="Terrain/@StaticBody2D@33"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@36" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@34" type="CollisionShape2D" parent="Terrain/@StaticBody2D@36"]
-shape = SubResource("RectangleShape2D_6dojj")
-
-[node name="@Polygon2D@35" type="Polygon2D" parent="Terrain/@StaticBody2D@36"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@39" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@37" type="CollisionShape2D" parent="Terrain/@StaticBody2D@39"]
-shape = SubResource("RectangleShape2D_7nrnl")
-
-[node name="@Polygon2D@38" type="Polygon2D" parent="Terrain/@StaticBody2D@39"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@42" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@40" type="CollisionShape2D" parent="Terrain/@StaticBody2D@42"]
-shape = SubResource("RectangleShape2D_t8yvo")
-
-[node name="@Polygon2D@41" type="Polygon2D" parent="Terrain/@StaticBody2D@42"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@45" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@43" type="CollisionShape2D" parent="Terrain/@StaticBody2D@45"]
-shape = SubResource("RectangleShape2D_gq7d7")
-
-[node name="@Polygon2D@44" type="Polygon2D" parent="Terrain/@StaticBody2D@45"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@48" type="StaticBody2D" parent="Terrain"]
-position = Vector2(725, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@46" type="CollisionShape2D" parent="Terrain/@StaticBody2D@48"]
-shape = SubResource("RectangleShape2D_02jv0")
-
-[node name="@Polygon2D@47" type="Polygon2D" parent="Terrain/@StaticBody2D@48"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@51" type="StaticBody2D" parent="Terrain"]
-position = Vector2(775, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@49" type="CollisionShape2D" parent="Terrain/@StaticBody2D@51"]
-shape = SubResource("RectangleShape2D_1iaeq")
-
-[node name="@Polygon2D@50" type="Polygon2D" parent="Terrain/@StaticBody2D@51"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@54" type="StaticBody2D" parent="Terrain"]
-position = Vector2(825, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@52" type="CollisionShape2D" parent="Terrain/@StaticBody2D@54"]
-shape = SubResource("RectangleShape2D_j0i7o")
-
-[node name="@Polygon2D@53" type="Polygon2D" parent="Terrain/@StaticBody2D@54"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@57" type="StaticBody2D" parent="Terrain"]
-position = Vector2(875, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@55" type="CollisionShape2D" parent="Terrain/@StaticBody2D@57"]
-shape = SubResource("RectangleShape2D_bi03v")
-
-[node name="@Polygon2D@56" type="Polygon2D" parent="Terrain/@StaticBody2D@57"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@60" type="StaticBody2D" parent="Terrain"]
-position = Vector2(925, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@58" type="CollisionShape2D" parent="Terrain/@StaticBody2D@60"]
-shape = SubResource("RectangleShape2D_0yleo")
-
-[node name="@Polygon2D@59" type="Polygon2D" parent="Terrain/@StaticBody2D@60"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@63" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 25)
-collision_layer = 128
-
-[node name="@CollisionShape2D@61" type="CollisionShape2D" parent="Terrain/@StaticBody2D@63"]
-shape = SubResource("RectangleShape2D_bd336")
-
-[node name="@Polygon2D@62" type="Polygon2D" parent="Terrain/@StaticBody2D@63"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@66" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 75)
-collision_layer = 128
-
-[node name="@CollisionShape2D@64" type="CollisionShape2D" parent="Terrain/@StaticBody2D@66"]
-shape = SubResource("RectangleShape2D_0lwlg")
-
-[node name="@Polygon2D@65" type="Polygon2D" parent="Terrain/@StaticBody2D@66"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@69" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 75)
-collision_layer = 128
-
-[node name="@CollisionShape2D@67" type="CollisionShape2D" parent="Terrain/@StaticBody2D@69"]
-shape = SubResource("RectangleShape2D_386dy")
-
-[node name="@Polygon2D@68" type="Polygon2D" parent="Terrain/@StaticBody2D@69"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@72" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 125)
-collision_layer = 128
-
-[node name="@CollisionShape2D@70" type="CollisionShape2D" parent="Terrain/@StaticBody2D@72"]
-shape = SubResource("RectangleShape2D_qfejk")
-
-[node name="@Polygon2D@71" type="Polygon2D" parent="Terrain/@StaticBody2D@72"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@75" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 125)
-collision_layer = 128
-
-[node name="@CollisionShape2D@73" type="CollisionShape2D" parent="Terrain/@StaticBody2D@75"]
-shape = SubResource("RectangleShape2D_x6qvu")
-
-[node name="@Polygon2D@74" type="Polygon2D" parent="Terrain/@StaticBody2D@75"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@78" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 175)
-collision_layer = 128
-
-[node name="@CollisionShape2D@76" type="CollisionShape2D" parent="Terrain/@StaticBody2D@78"]
-shape = SubResource("RectangleShape2D_nvkj1")
-
-[node name="@Polygon2D@77" type="Polygon2D" parent="Terrain/@StaticBody2D@78"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@81" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 175)
-collision_layer = 128
-
-[node name="@CollisionShape2D@79" type="CollisionShape2D" parent="Terrain/@StaticBody2D@81"]
-shape = SubResource("RectangleShape2D_qaqoh")
-
-[node name="@Polygon2D@80" type="Polygon2D" parent="Terrain/@StaticBody2D@81"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@84" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 225)
-collision_layer = 128
-
-[node name="@CollisionShape2D@82" type="CollisionShape2D" parent="Terrain/@StaticBody2D@84"]
-shape = SubResource("RectangleShape2D_afjrx")
-
-[node name="@Polygon2D@83" type="Polygon2D" parent="Terrain/@StaticBody2D@84"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@87" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 225)
-collision_layer = 128
-
-[node name="@CollisionShape2D@85" type="CollisionShape2D" parent="Terrain/@StaticBody2D@87"]
-shape = SubResource("RectangleShape2D_lhsi4")
-
-[node name="@Polygon2D@86" type="Polygon2D" parent="Terrain/@StaticBody2D@87"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@90" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 225)
-collision_layer = 128
-
-[node name="@CollisionShape2D@88" type="CollisionShape2D" parent="Terrain/@StaticBody2D@90"]
-shape = SubResource("RectangleShape2D_n8w8l")
-
-[node name="@Polygon2D@89" type="Polygon2D" parent="Terrain/@StaticBody2D@90"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@93" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 225)
-collision_layer = 128
-
-[node name="@CollisionShape2D@91" type="CollisionShape2D" parent="Terrain/@StaticBody2D@93"]
-shape = SubResource("RectangleShape2D_k8q8o")
-
-[node name="@Polygon2D@92" type="Polygon2D" parent="Terrain/@StaticBody2D@93"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@96" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 275)
-collision_layer = 128
-
-[node name="@CollisionShape2D@94" type="CollisionShape2D" parent="Terrain/@StaticBody2D@96"]
-shape = SubResource("RectangleShape2D_b68o1")
-
-[node name="@Polygon2D@95" type="Polygon2D" parent="Terrain/@StaticBody2D@96"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@99" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 275)
-collision_layer = 128
-
-[node name="@CollisionShape2D@97" type="CollisionShape2D" parent="Terrain/@StaticBody2D@99"]
-shape = SubResource("RectangleShape2D_wvnf5")
-
-[node name="@Polygon2D@98" type="Polygon2D" parent="Terrain/@StaticBody2D@99"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@102" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 275)
-collision_layer = 128
-
-[node name="@CollisionShape2D@100" type="CollisionShape2D" parent="Terrain/@StaticBody2D@102"]
-shape = SubResource("RectangleShape2D_mu2st")
-
-[node name="@Polygon2D@101" type="Polygon2D" parent="Terrain/@StaticBody2D@102"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@105" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 275)
-collision_layer = 128
-
-[node name="@CollisionShape2D@103" type="CollisionShape2D" parent="Terrain/@StaticBody2D@105"]
-shape = SubResource("RectangleShape2D_7gc42")
-
-[node name="@Polygon2D@104" type="Polygon2D" parent="Terrain/@StaticBody2D@105"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@108" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 325)
-collision_layer = 128
-
-[node name="@CollisionShape2D@106" type="CollisionShape2D" parent="Terrain/@StaticBody2D@108"]
-shape = SubResource("RectangleShape2D_k4tjp")
-
-[node name="@Polygon2D@107" type="Polygon2D" parent="Terrain/@StaticBody2D@108"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@111" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 325)
-collision_layer = 128
-
-[node name="@CollisionShape2D@109" type="CollisionShape2D" parent="Terrain/@StaticBody2D@111"]
-shape = SubResource("RectangleShape2D_1bs1k")
-
-[node name="@Polygon2D@110" type="Polygon2D" parent="Terrain/@StaticBody2D@111"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@114" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 325)
-collision_layer = 128
-
-[node name="@CollisionShape2D@112" type="CollisionShape2D" parent="Terrain/@StaticBody2D@114"]
-shape = SubResource("RectangleShape2D_l6535")
-
-[node name="@Polygon2D@113" type="Polygon2D" parent="Terrain/@StaticBody2D@114"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@117" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 325)
-collision_layer = 128
-
-[node name="@CollisionShape2D@115" type="CollisionShape2D" parent="Terrain/@StaticBody2D@117"]
-shape = SubResource("RectangleShape2D_m27lb")
-
-[node name="@Polygon2D@116" type="Polygon2D" parent="Terrain/@StaticBody2D@117"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@120" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 375)
-collision_layer = 128
-
-[node name="@CollisionShape2D@118" type="CollisionShape2D" parent="Terrain/@StaticBody2D@120"]
-shape = SubResource("RectangleShape2D_w6dm3")
-
-[node name="@Polygon2D@119" type="Polygon2D" parent="Terrain/@StaticBody2D@120"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@123" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 375)
-collision_layer = 128
-
-[node name="@CollisionShape2D@121" type="CollisionShape2D" parent="Terrain/@StaticBody2D@123"]
-shape = SubResource("RectangleShape2D_tlpbv")
-
-[node name="@Polygon2D@122" type="Polygon2D" parent="Terrain/@StaticBody2D@123"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@126" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 375)
-collision_layer = 128
-
-[node name="@CollisionShape2D@124" type="CollisionShape2D" parent="Terrain/@StaticBody2D@126"]
-shape = SubResource("RectangleShape2D_yy0fn")
-
-[node name="@Polygon2D@125" type="Polygon2D" parent="Terrain/@StaticBody2D@126"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@129" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 375)
-collision_layer = 128
-
-[node name="@CollisionShape2D@127" type="CollisionShape2D" parent="Terrain/@StaticBody2D@129"]
-shape = SubResource("RectangleShape2D_h8lh3")
-
-[node name="@Polygon2D@128" type="Polygon2D" parent="Terrain/@StaticBody2D@129"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@132" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 425)
-collision_layer = 128
-
-[node name="@CollisionShape2D@130" type="CollisionShape2D" parent="Terrain/@StaticBody2D@132"]
-shape = SubResource("RectangleShape2D_8ue8w")
-
-[node name="@Polygon2D@131" type="Polygon2D" parent="Terrain/@StaticBody2D@132"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@135" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 425)
-collision_layer = 128
-
-[node name="@CollisionShape2D@133" type="CollisionShape2D" parent="Terrain/@StaticBody2D@135"]
-shape = SubResource("RectangleShape2D_bt3mf")
-
-[node name="@Polygon2D@134" type="Polygon2D" parent="Terrain/@StaticBody2D@135"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@138" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 425)
-collision_layer = 128
-
-[node name="@CollisionShape2D@136" type="CollisionShape2D" parent="Terrain/@StaticBody2D@138"]
-shape = SubResource("RectangleShape2D_vmi4e")
-
-[node name="@Polygon2D@137" type="Polygon2D" parent="Terrain/@StaticBody2D@138"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@141" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 425)
-collision_layer = 128
-
-[node name="@CollisionShape2D@139" type="CollisionShape2D" parent="Terrain/@StaticBody2D@141"]
-shape = SubResource("RectangleShape2D_ettn1")
-
-[node name="@Polygon2D@140" type="Polygon2D" parent="Terrain/@StaticBody2D@141"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@144" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 475)
-collision_layer = 128
-
-[node name="@CollisionShape2D@142" type="CollisionShape2D" parent="Terrain/@StaticBody2D@144"]
-shape = SubResource("RectangleShape2D_nokug")
-
-[node name="@Polygon2D@143" type="Polygon2D" parent="Terrain/@StaticBody2D@144"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@147" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 475)
-collision_layer = 128
-
-[node name="@CollisionShape2D@145" type="CollisionShape2D" parent="Terrain/@StaticBody2D@147"]
-shape = SubResource("RectangleShape2D_gjg64")
-
-[node name="@Polygon2D@146" type="Polygon2D" parent="Terrain/@StaticBody2D@147"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@150" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 475)
-collision_layer = 128
-
-[node name="@CollisionShape2D@148" type="CollisionShape2D" parent="Terrain/@StaticBody2D@150"]
-shape = SubResource("RectangleShape2D_5xfkg")
-
-[node name="@Polygon2D@149" type="Polygon2D" parent="Terrain/@StaticBody2D@150"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@153" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 475)
-collision_layer = 128
-
-[node name="@CollisionShape2D@151" type="CollisionShape2D" parent="Terrain/@StaticBody2D@153"]
-shape = SubResource("RectangleShape2D_qd6bo")
-
-[node name="@Polygon2D@152" type="Polygon2D" parent="Terrain/@StaticBody2D@153"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@156" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 525)
-collision_layer = 128
-
-[node name="@CollisionShape2D@154" type="CollisionShape2D" parent="Terrain/@StaticBody2D@156"]
-shape = SubResource("RectangleShape2D_tep5s")
-
-[node name="@Polygon2D@155" type="Polygon2D" parent="Terrain/@StaticBody2D@156"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@159" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 525)
-collision_layer = 128
-
-[node name="@CollisionShape2D@157" type="CollisionShape2D" parent="Terrain/@StaticBody2D@159"]
-shape = SubResource("RectangleShape2D_qtf0v")
-
-[node name="@Polygon2D@158" type="Polygon2D" parent="Terrain/@StaticBody2D@159"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@162" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 575)
-collision_layer = 128
-
-[node name="@CollisionShape2D@160" type="CollisionShape2D" parent="Terrain/@StaticBody2D@162"]
-shape = SubResource("RectangleShape2D_necd7")
-
-[node name="@Polygon2D@161" type="Polygon2D" parent="Terrain/@StaticBody2D@162"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@165" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 575)
-collision_layer = 128
-
-[node name="@CollisionShape2D@163" type="CollisionShape2D" parent="Terrain/@StaticBody2D@165"]
-shape = SubResource("RectangleShape2D_tplec")
-
-[node name="@Polygon2D@164" type="Polygon2D" parent="Terrain/@StaticBody2D@165"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@168" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@166" type="CollisionShape2D" parent="Terrain/@StaticBody2D@168"]
-shape = SubResource("RectangleShape2D_cc8y2")
-
-[node name="@Polygon2D@167" type="Polygon2D" parent="Terrain/@StaticBody2D@168"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@171" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@169" type="CollisionShape2D" parent="Terrain/@StaticBody2D@171"]
-shape = SubResource("RectangleShape2D_1aio6")
-
-[node name="@Polygon2D@170" type="Polygon2D" parent="Terrain/@StaticBody2D@171"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@174" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@172" type="CollisionShape2D" parent="Terrain/@StaticBody2D@174"]
-shape = SubResource("RectangleShape2D_qsvty")
-
-[node name="@Polygon2D@173" type="Polygon2D" parent="Terrain/@StaticBody2D@174"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@177" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@175" type="CollisionShape2D" parent="Terrain/@StaticBody2D@177"]
-shape = SubResource("RectangleShape2D_lhs7x")
-
-[node name="@Polygon2D@176" type="Polygon2D" parent="Terrain/@StaticBody2D@177"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@180" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@178" type="CollisionShape2D" parent="Terrain/@StaticBody2D@180"]
-shape = SubResource("RectangleShape2D_21dm6")
-
-[node name="@Polygon2D@179" type="Polygon2D" parent="Terrain/@StaticBody2D@180"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@183" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 625)
-collision_layer = 128
-
-[node name="@CollisionShape2D@181" type="CollisionShape2D" parent="Terrain/@StaticBody2D@183"]
-shape = SubResource("RectangleShape2D_5m4kl")
-
-[node name="@Polygon2D@182" type="Polygon2D" parent="Terrain/@StaticBody2D@183"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@186" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@184" type="CollisionShape2D" parent="Terrain/@StaticBody2D@186"]
-shape = SubResource("RectangleShape2D_nfr0o")
-
-[node name="@Polygon2D@185" type="Polygon2D" parent="Terrain/@StaticBody2D@186"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@189" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@187" type="CollisionShape2D" parent="Terrain/@StaticBody2D@189"]
-shape = SubResource("RectangleShape2D_me5qq")
-
-[node name="@Polygon2D@188" type="Polygon2D" parent="Terrain/@StaticBody2D@189"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@192" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@190" type="CollisionShape2D" parent="Terrain/@StaticBody2D@192"]
-shape = SubResource("RectangleShape2D_qa1r7")
-
-[node name="@Polygon2D@191" type="Polygon2D" parent="Terrain/@StaticBody2D@192"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@195" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@193" type="CollisionShape2D" parent="Terrain/@StaticBody2D@195"]
-shape = SubResource("RectangleShape2D_eg3m4")
-
-[node name="@Polygon2D@194" type="Polygon2D" parent="Terrain/@StaticBody2D@195"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@198" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@196" type="CollisionShape2D" parent="Terrain/@StaticBody2D@198"]
-shape = SubResource("RectangleShape2D_pnt7m")
-
-[node name="@Polygon2D@197" type="Polygon2D" parent="Terrain/@StaticBody2D@198"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@201" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 675)
-collision_layer = 128
-
-[node name="@CollisionShape2D@199" type="CollisionShape2D" parent="Terrain/@StaticBody2D@201"]
-shape = SubResource("RectangleShape2D_5fgrn")
-
-[node name="@Polygon2D@200" type="Polygon2D" parent="Terrain/@StaticBody2D@201"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@204" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@202" type="CollisionShape2D" parent="Terrain/@StaticBody2D@204"]
-shape = SubResource("RectangleShape2D_sugsr")
-
-[node name="@Polygon2D@203" type="Polygon2D" parent="Terrain/@StaticBody2D@204"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@207" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@205" type="CollisionShape2D" parent="Terrain/@StaticBody2D@207"]
-shape = SubResource("RectangleShape2D_uu4jp")
-
-[node name="@Polygon2D@206" type="Polygon2D" parent="Terrain/@StaticBody2D@207"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@210" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@208" type="CollisionShape2D" parent="Terrain/@StaticBody2D@210"]
-shape = SubResource("RectangleShape2D_i4sfn")
-
-[node name="@Polygon2D@209" type="Polygon2D" parent="Terrain/@StaticBody2D@210"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@213" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@211" type="CollisionShape2D" parent="Terrain/@StaticBody2D@213"]
-shape = SubResource("RectangleShape2D_pgqho")
-
-[node name="@Polygon2D@212" type="Polygon2D" parent="Terrain/@StaticBody2D@213"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@216" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@214" type="CollisionShape2D" parent="Terrain/@StaticBody2D@216"]
-shape = SubResource("RectangleShape2D_3xvot")
-
-[node name="@Polygon2D@215" type="Polygon2D" parent="Terrain/@StaticBody2D@216"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@219" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 725)
-collision_layer = 128
-
-[node name="@CollisionShape2D@217" type="CollisionShape2D" parent="Terrain/@StaticBody2D@219"]
-shape = SubResource("RectangleShape2D_w2sg1")
-
-[node name="@Polygon2D@218" type="Polygon2D" parent="Terrain/@StaticBody2D@219"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@222" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@220" type="CollisionShape2D" parent="Terrain/@StaticBody2D@222"]
-shape = SubResource("RectangleShape2D_2pn15")
-
-[node name="@Polygon2D@221" type="Polygon2D" parent="Terrain/@StaticBody2D@222"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@225" type="StaticBody2D" parent="Terrain"]
-position = Vector2(75, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@223" type="CollisionShape2D" parent="Terrain/@StaticBody2D@225"]
-shape = SubResource("RectangleShape2D_anv5h")
-
-[node name="@Polygon2D@224" type="Polygon2D" parent="Terrain/@StaticBody2D@225"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@228" type="StaticBody2D" parent="Terrain"]
-position = Vector2(125, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@226" type="CollisionShape2D" parent="Terrain/@StaticBody2D@228"]
-shape = SubResource("RectangleShape2D_os5jy")
-
-[node name="@Polygon2D@227" type="Polygon2D" parent="Terrain/@StaticBody2D@228"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@231" type="StaticBody2D" parent="Terrain"]
-position = Vector2(175, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@229" type="CollisionShape2D" parent="Terrain/@StaticBody2D@231"]
-shape = SubResource("RectangleShape2D_5vbi1")
-
-[node name="@Polygon2D@230" type="Polygon2D" parent="Terrain/@StaticBody2D@231"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@234" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@232" type="CollisionShape2D" parent="Terrain/@StaticBody2D@234"]
-shape = SubResource("RectangleShape2D_dxna1")
-
-[node name="@Polygon2D@233" type="Polygon2D" parent="Terrain/@StaticBody2D@234"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@237" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@235" type="CollisionShape2D" parent="Terrain/@StaticBody2D@237"]
-shape = SubResource("RectangleShape2D_6hue8")
-
-[node name="@Polygon2D@236" type="Polygon2D" parent="Terrain/@StaticBody2D@237"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@240" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@238" type="CollisionShape2D" parent="Terrain/@StaticBody2D@240"]
-shape = SubResource("RectangleShape2D_fye41")
-
-[node name="@Polygon2D@239" type="Polygon2D" parent="Terrain/@StaticBody2D@240"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@243" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@241" type="CollisionShape2D" parent="Terrain/@StaticBody2D@243"]
-shape = SubResource("RectangleShape2D_gq3cd")
-
-[node name="@Polygon2D@242" type="Polygon2D" parent="Terrain/@StaticBody2D@243"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@246" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 775)
-collision_layer = 128
-
-[node name="@CollisionShape2D@244" type="CollisionShape2D" parent="Terrain/@StaticBody2D@246"]
-shape = SubResource("RectangleShape2D_rhb4q")
-
-[node name="@Polygon2D@245" type="Polygon2D" parent="Terrain/@StaticBody2D@246"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@249" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@247" type="CollisionShape2D" parent="Terrain/@StaticBody2D@249"]
-shape = SubResource("RectangleShape2D_w8vbj")
-
-[node name="@Polygon2D@248" type="Polygon2D" parent="Terrain/@StaticBody2D@249"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@252" type="StaticBody2D" parent="Terrain"]
-position = Vector2(75, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@250" type="CollisionShape2D" parent="Terrain/@StaticBody2D@252"]
-shape = SubResource("RectangleShape2D_jy2u7")
-
-[node name="@Polygon2D@251" type="Polygon2D" parent="Terrain/@StaticBody2D@252"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@255" type="StaticBody2D" parent="Terrain"]
-position = Vector2(125, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@253" type="CollisionShape2D" parent="Terrain/@StaticBody2D@255"]
-shape = SubResource("RectangleShape2D_gav8n")
-
-[node name="@Polygon2D@254" type="Polygon2D" parent="Terrain/@StaticBody2D@255"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@258" type="StaticBody2D" parent="Terrain"]
-position = Vector2(175, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@256" type="CollisionShape2D" parent="Terrain/@StaticBody2D@258"]
-shape = SubResource("RectangleShape2D_5x02q")
-
-[node name="@Polygon2D@257" type="Polygon2D" parent="Terrain/@StaticBody2D@258"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@261" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@259" type="CollisionShape2D" parent="Terrain/@StaticBody2D@261"]
-shape = SubResource("RectangleShape2D_3h41j")
-
-[node name="@Polygon2D@260" type="Polygon2D" parent="Terrain/@StaticBody2D@261"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@264" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@262" type="CollisionShape2D" parent="Terrain/@StaticBody2D@264"]
-shape = SubResource("RectangleShape2D_kooud")
-
-[node name="@Polygon2D@263" type="Polygon2D" parent="Terrain/@StaticBody2D@264"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@267" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@265" type="CollisionShape2D" parent="Terrain/@StaticBody2D@267"]
-shape = SubResource("RectangleShape2D_ddy7v")
-
-[node name="@Polygon2D@266" type="Polygon2D" parent="Terrain/@StaticBody2D@267"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@270" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@268" type="CollisionShape2D" parent="Terrain/@StaticBody2D@270"]
-shape = SubResource("RectangleShape2D_xfmvm")
-
-[node name="@Polygon2D@269" type="Polygon2D" parent="Terrain/@StaticBody2D@270"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@273" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 825)
-collision_layer = 128
-
-[node name="@CollisionShape2D@271" type="CollisionShape2D" parent="Terrain/@StaticBody2D@273"]
-shape = SubResource("RectangleShape2D_3gtbl")
-
-[node name="@Polygon2D@272" type="Polygon2D" parent="Terrain/@StaticBody2D@273"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@276" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 875)
-collision_layer = 128
-
-[node name="@CollisionShape2D@274" type="CollisionShape2D" parent="Terrain/@StaticBody2D@276"]
-shape = SubResource("RectangleShape2D_vswrd")
-
-[node name="@Polygon2D@275" type="Polygon2D" parent="Terrain/@StaticBody2D@276"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@279" type="StaticBody2D" parent="Terrain"]
-position = Vector2(75, 875)
-collision_layer = 128
-
-[node name="@CollisionShape2D@277" type="CollisionShape2D" parent="Terrain/@StaticBody2D@279"]
-shape = SubResource("RectangleShape2D_pwsdp")
-
-[node name="@Polygon2D@278" type="Polygon2D" parent="Terrain/@StaticBody2D@279"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@282" type="StaticBody2D" parent="Terrain"]
-position = Vector2(125, 875)
-collision_layer = 128
-
-[node name="@CollisionShape2D@280" type="CollisionShape2D" parent="Terrain/@StaticBody2D@282"]
-shape = SubResource("RectangleShape2D_rokd5")
-
-[node name="@Polygon2D@281" type="Polygon2D" parent="Terrain/@StaticBody2D@282"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@285" type="StaticBody2D" parent="Terrain"]
-position = Vector2(175, 875)
-collision_layer = 128
-
-[node name="@CollisionShape2D@283" type="CollisionShape2D" parent="Terrain/@StaticBody2D@285"]
-shape = SubResource("RectangleShape2D_qwj01")
-
-[node name="@Polygon2D@284" type="Polygon2D" parent="Terrain/@StaticBody2D@285"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@288" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 875)
-collision_layer = 128
-
-[node name="@CollisionShape2D@286" type="CollisionShape2D" parent="Terrain/@StaticBody2D@288"]
-shape = SubResource("RectangleShape2D_3xhrd")
-
-[node name="@Polygon2D@287" type="Polygon2D" parent="Terrain/@StaticBody2D@288"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@291" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 925)
-collision_layer = 128
-
-[node name="@CollisionShape2D@289" type="CollisionShape2D" parent="Terrain/@StaticBody2D@291"]
-shape = SubResource("RectangleShape2D_8nr5p")
-
-[node name="@Polygon2D@290" type="Polygon2D" parent="Terrain/@StaticBody2D@291"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@294" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 925)
-collision_layer = 128
-
-[node name="@CollisionShape2D@292" type="CollisionShape2D" parent="Terrain/@StaticBody2D@294"]
-shape = SubResource("RectangleShape2D_42a5k")
-
-[node name="@Polygon2D@293" type="Polygon2D" parent="Terrain/@StaticBody2D@294"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@297" type="StaticBody2D" parent="Terrain"]
-position = Vector2(25, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@295" type="CollisionShape2D" parent="Terrain/@StaticBody2D@297"]
-shape = SubResource("RectangleShape2D_d1420")
-
-[node name="@Polygon2D@296" type="Polygon2D" parent="Terrain/@StaticBody2D@297"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@300" type="StaticBody2D" parent="Terrain"]
-position = Vector2(75, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@298" type="CollisionShape2D" parent="Terrain/@StaticBody2D@300"]
-shape = SubResource("RectangleShape2D_tqeju")
-
-[node name="@Polygon2D@299" type="Polygon2D" parent="Terrain/@StaticBody2D@300"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@303" type="StaticBody2D" parent="Terrain"]
-position = Vector2(125, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@301" type="CollisionShape2D" parent="Terrain/@StaticBody2D@303"]
-shape = SubResource("RectangleShape2D_755k8")
-
-[node name="@Polygon2D@302" type="Polygon2D" parent="Terrain/@StaticBody2D@303"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@306" type="StaticBody2D" parent="Terrain"]
-position = Vector2(175, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@304" type="CollisionShape2D" parent="Terrain/@StaticBody2D@306"]
-shape = SubResource("RectangleShape2D_w8tcx")
-
-[node name="@Polygon2D@305" type="Polygon2D" parent="Terrain/@StaticBody2D@306"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@309" type="StaticBody2D" parent="Terrain"]
-position = Vector2(225, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@307" type="CollisionShape2D" parent="Terrain/@StaticBody2D@309"]
-shape = SubResource("RectangleShape2D_np6ok")
-
-[node name="@Polygon2D@308" type="Polygon2D" parent="Terrain/@StaticBody2D@309"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@312" type="StaticBody2D" parent="Terrain"]
-position = Vector2(275, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@310" type="CollisionShape2D" parent="Terrain/@StaticBody2D@312"]
-shape = SubResource("RectangleShape2D_hy0km")
-
-[node name="@Polygon2D@311" type="Polygon2D" parent="Terrain/@StaticBody2D@312"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@315" type="StaticBody2D" parent="Terrain"]
-position = Vector2(325, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@313" type="CollisionShape2D" parent="Terrain/@StaticBody2D@315"]
-shape = SubResource("RectangleShape2D_smc8u")
-
-[node name="@Polygon2D@314" type="Polygon2D" parent="Terrain/@StaticBody2D@315"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@318" type="StaticBody2D" parent="Terrain"]
+[node name="FloorLeft" type="StaticBody2D" parent="Terrain"]
 position = Vector2(375, 975)
 collision_layer = 128
 
-[node name="@CollisionShape2D@316" type="CollisionShape2D" parent="Terrain/@StaticBody2D@318"]
-shape = SubResource("RectangleShape2D_kw0qx")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloorLeft"]
+position = Vector2(1, 1)
+shape = SubResource("RectangleShape2D_floor")
 
-[node name="@Polygon2D@317" type="Polygon2D" parent="Terrain/@StaticBody2D@318"]
+[node name="Visual" type="Polygon2D" parent="Terrain/FloorLeft"]
+position = Vector2(1, 1)
+scale = Vector2(1.00267, 0.96)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-375, -25, 375, -25, 375, 25, -375, 25)
 
-[node name="@StaticBody2D@321" type="StaticBody2D" parent="Terrain"]
-position = Vector2(425, 975)
+[node name="FloorRight" type="StaticBody2D" parent="Terrain"]
+position = Vector2(950, 975)
 collision_layer = 128
 
-[node name="@CollisionShape2D@319" type="CollisionShape2D" parent="Terrain/@StaticBody2D@321"]
-shape = SubResource("RectangleShape2D_8ydms")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloorRight"]
+position = Vector2(-2, 1)
+shape = SubResource("RectangleShape2D_floor_right")
 
-[node name="@Polygon2D@320" type="Polygon2D" parent="Terrain/@StaticBody2D@321"]
+[node name="Visual" type="Polygon2D" parent="Terrain/FloorRight"]
+position = Vector2(2, 0.999996)
+scale = Vector2(0.98, 0.855)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-57.1429, -28.0702, 48.9796, -28.0702, 48.9796, 28.0702, -57.1429, 28.0702)
 
-[node name="@StaticBody2D@324" type="StaticBody2D" parent="Terrain"]
-position = Vector2(475, 975)
+[node name="CenterPillar" type="StaticBody2D" parent="Terrain"]
+position = Vector2(600, 700)
 collision_layer = 128
 
-[node name="@CollisionShape2D@322" type="CollisionShape2D" parent="Terrain/@StaticBody2D@324"]
-shape = SubResource("RectangleShape2D_3iqqp")
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain/CenterPillar"]
+position = Vector2(-159.825, -66.2445)
+scale = Vector2(2.58468, 0.814314)
+polygon = PackedVector2Array(2.91133, -306.339, 2.91133, 245.046, 76.8083, 87.5076, 76.8083, -306.339)
 
-[node name="@Polygon2D@323" type="Polygon2D" parent="Terrain/@StaticBody2D@324"]
+[node name="Visual" type="Polygon2D" parent="Terrain/CenterPillar"]
+position = Vector2(-96, -172)
+scale = Vector2(0.923077, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(-60.6667, -144, 147.333, -144, 147.333, 176, -60.6667, 304)
 
-[node name="@StaticBody2D@327" type="StaticBody2D" parent="Terrain"]
-position = Vector2(525, 975)
+[node name="FloatingBlock" type="StaticBody2D" parent="Terrain"]
+position = Vector2(300, 600)
 collision_layer = 128
 
-[node name="@CollisionShape2D@325" type="CollisionShape2D" parent="Terrain/@StaticBody2D@327"]
-shape = SubResource("RectangleShape2D_xy0wl")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloatingBlock"]
+position = Vector2(180, -344)
+shape = SubResource("RectangleShape2D_bn14x")
 
-[node name="@Polygon2D@326" type="Polygon2D" parent="Terrain/@StaticBody2D@327"]
+[node name="Visual" type="Polygon2D" parent="Terrain/FloatingBlock"]
+position = Vector2(124, -304)
+scale = Vector2(2.14, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(11.215, -104, 41.1215, -104, 41.1215, 24, 11.215, 24)
 
-[node name="@StaticBody2D@330" type="StaticBody2D" parent="Terrain"]
-position = Vector2(575, 975)
+[node name="FloatingBlock2" type="StaticBody2D" parent="Terrain"]
+position = Vector2(300, 600)
 collision_layer = 128
 
-[node name="@CollisionShape2D@328" type="CollisionShape2D" parent="Terrain/@StaticBody2D@330"]
-shape = SubResource("RectangleShape2D_6038r")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Terrain/FloatingBlock2"]
+position = Vector2(308, -344)
+shape = SubResource("RectangleShape2D_block")
 
-[node name="@Polygon2D@329" type="Polygon2D" parent="Terrain/@StaticBody2D@330"]
+[node name="Visual" type="Polygon2D" parent="Terrain/FloatingBlock2"]
+position = Vector2(252, -304)
+scale = Vector2(2.14, 1)
 color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@333" type="StaticBody2D" parent="Terrain"]
-position = Vector2(625, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@331" type="CollisionShape2D" parent="Terrain/@StaticBody2D@333"]
-shape = SubResource("RectangleShape2D_vyd45")
-
-[node name="@Polygon2D@332" type="Polygon2D" parent="Terrain/@StaticBody2D@333"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@336" type="StaticBody2D" parent="Terrain"]
-position = Vector2(675, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@334" type="CollisionShape2D" parent="Terrain/@StaticBody2D@336"]
-shape = SubResource("RectangleShape2D_sbw17")
-
-[node name="@Polygon2D@335" type="Polygon2D" parent="Terrain/@StaticBody2D@336"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@339" type="StaticBody2D" parent="Terrain"]
-position = Vector2(725, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@337" type="CollisionShape2D" parent="Terrain/@StaticBody2D@339"]
-shape = SubResource("RectangleShape2D_gcxdu")
-
-[node name="@Polygon2D@338" type="Polygon2D" parent="Terrain/@StaticBody2D@339"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@342" type="StaticBody2D" parent="Terrain"]
-position = Vector2(925, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@340" type="CollisionShape2D" parent="Terrain/@StaticBody2D@342"]
-shape = SubResource("RectangleShape2D_0npd5")
-
-[node name="@Polygon2D@341" type="Polygon2D" parent="Terrain/@StaticBody2D@342"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@345" type="StaticBody2D" parent="Terrain"]
-position = Vector2(975, 975)
-collision_layer = 128
-
-[node name="@CollisionShape2D@343" type="CollisionShape2D" parent="Terrain/@StaticBody2D@345"]
-shape = SubResource("RectangleShape2D_g36vv")
-
-[node name="@Polygon2D@344" type="Polygon2D" parent="Terrain/@StaticBody2D@345"]
-color = Color(0.129412, 0.129412, 0.129412, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="Hazards" type="Node2D" parent="."]
-
-[node name="@StaticBody2D@348" type="StaticBody2D" parent="Hazards"]
-position = Vector2(775, 975)
-collision_layer = 8
-
-[node name="@CollisionShape2D@346" type="CollisionShape2D" parent="Hazards/@StaticBody2D@348"]
-shape = SubResource("RectangleShape2D_cwjo8")
-
-[node name="@Polygon2D@347" type="Polygon2D" parent="Hazards/@StaticBody2D@348"]
-color = Color(0.901961, 0.901961, 0.901961, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@351" type="StaticBody2D" parent="Hazards"]
-position = Vector2(825, 975)
-collision_layer = 8
-
-[node name="@CollisionShape2D@349" type="CollisionShape2D" parent="Hazards/@StaticBody2D@351"]
-shape = SubResource("RectangleShape2D_sxp8d")
-
-[node name="@Polygon2D@350" type="Polygon2D" parent="Hazards/@StaticBody2D@351"]
-color = Color(0.901961, 0.901961, 0.901961, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="@StaticBody2D@354" type="StaticBody2D" parent="Hazards"]
-position = Vector2(875, 975)
-collision_layer = 8
-
-[node name="@CollisionShape2D@352" type="CollisionShape2D" parent="Hazards/@StaticBody2D@354"]
-shape = SubResource("RectangleShape2D_ee4sk")
-
-[node name="@Polygon2D@353" type="Polygon2D" parent="Hazards/@StaticBody2D@354"]
-color = Color(0.901961, 0.901961, 0.901961, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
+polygon = PackedVector2Array(11.215, -104, 41.1215, -104, 41.1215, 24, 11.215, 24)
 
 [node name="Platforms" type="Node2D" parent="."]
 
-[node name="@StaticBody2D@357" type="StaticBody2D" parent="Platforms"]
-position = Vector2(575, 225)
+[node name="OneWayUpper" type="StaticBody2D" parent="Platforms"]
+position = Vector2(600, 225)
 collision_layer = 2
 
-[node name="@CollisionShape2D@355" type="CollisionShape2D" parent="Platforms/@StaticBody2D@357"]
-position = Vector2(0, -20)
-shape = SubResource("RectangleShape2D_u8a0t")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/OneWayUpper"]
+position = Vector2(-56, -25)
+shape = SubResource("RectangleShape2D_oneway")
 one_way_collision = true
 
-[node name="@Polygon2D@356" type="Polygon2D" parent="Platforms/@StaticBody2D@357"]
-position = Vector2(0, -20)
+[node name="Visual" type="Polygon2D" parent="Platforms/OneWayUpper"]
+position = Vector2(-32, -25)
 color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-25, -5, 25, -5, 25, 5, -25, 5)
+polygon = PackedVector2Array(-56, -8, 8, -8, 8, 8, -56, 8)
 
-[node name="@StaticBody2D@360" type="StaticBody2D" parent="Platforms"]
-position = Vector2(625, 225)
+[node name="OneWayLower" type="StaticBody2D" parent="Platforms"]
+position = Vector2(600, 325)
 collision_layer = 2
 
-[node name="@CollisionShape2D@358" type="CollisionShape2D" parent="Platforms/@StaticBody2D@360"]
-position = Vector2(0, -20)
-shape = SubResource("RectangleShape2D_too0t")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/OneWayLower"]
+position = Vector2(-56, -61)
+shape = SubResource("RectangleShape2D_oneway")
 one_way_collision = true
 
-[node name="@Polygon2D@359" type="Polygon2D" parent="Platforms/@StaticBody2D@360"]
-position = Vector2(0, -20)
+[node name="Visual" type="Polygon2D" parent="Platforms/OneWayLower"]
+position = Vector2(-40, -61)
 color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-25, -5, 25, -5, 25, 5, -25, 5)
-
-[node name="@StaticBody2D@363" type="StaticBody2D" parent="Platforms"]
-position = Vector2(575, 325)
-collision_layer = 2
-
-[node name="@CollisionShape2D@361" type="CollisionShape2D" parent="Platforms/@StaticBody2D@363"]
-position = Vector2(0, -20)
-shape = SubResource("RectangleShape2D_ob4ew")
-one_way_collision = true
-
-[node name="@Polygon2D@362" type="Polygon2D" parent="Platforms/@StaticBody2D@363"]
-position = Vector2(0, -20)
-color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-25, -5, 25, -5, 25, 5, -25, 5)
-
-[node name="@StaticBody2D@366" type="StaticBody2D" parent="Platforms"]
-position = Vector2(625, 325)
-collision_layer = 2
-
-[node name="@CollisionShape2D@364" type="CollisionShape2D" parent="Platforms/@StaticBody2D@366"]
-position = Vector2(0, -20)
-shape = SubResource("RectangleShape2D_n07oy")
-one_way_collision = true
-
-[node name="@Polygon2D@365" type="Polygon2D" parent="Platforms/@StaticBody2D@366"]
-position = Vector2(0, -20)
-color = Color(0.192157, 0.192157, 0.192157, 1)
-polygon = PackedVector2Array(-25, -5, 25, -5, 25, 5, -25, 5)
-
-[node name="Background" type="Node2D" parent="."]
-
-[node name="@ColorRect@367" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 50.0
-offset_right = 100.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@368" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 50.0
-offset_right = 150.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@369" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 50.0
-offset_right = 200.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@370" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 50.0
-offset_right = 250.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@371" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 50.0
-offset_right = 300.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@372" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 50.0
-offset_right = 350.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@373" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 50.0
-offset_right = 400.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@374" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 50.0
-offset_right = 450.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@375" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 50.0
-offset_right = 500.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@376" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 50.0
-offset_right = 550.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@377" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 50.0
-offset_right = 600.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@378" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 50.0
-offset_right = 650.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@379" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 50.0
-offset_right = 700.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@380" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 50.0
-offset_right = 750.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@381" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 50.0
-offset_right = 800.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@382" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 50.0
-offset_right = 850.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@383" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 50.0
-offset_right = 900.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@384" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 50.0
-offset_right = 950.0
-offset_bottom = 100.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@385" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 100.0
-offset_right = 100.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@386" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 100.0
-offset_right = 150.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@387" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 100.0
-offset_right = 200.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@388" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 100.0
-offset_right = 250.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@389" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 100.0
-offset_right = 300.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@390" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 100.0
-offset_right = 350.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@391" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 100.0
-offset_right = 400.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@392" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 100.0
-offset_right = 450.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@393" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 100.0
-offset_right = 500.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@394" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 100.0
-offset_right = 550.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@395" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 100.0
-offset_right = 600.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@396" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 100.0
-offset_right = 650.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@397" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 100.0
-offset_right = 700.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@398" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 100.0
-offset_right = 750.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@399" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 100.0
-offset_right = 800.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@400" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 100.0
-offset_right = 850.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@401" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 100.0
-offset_right = 900.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@402" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 100.0
-offset_right = 950.0
-offset_bottom = 150.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@403" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 150.0
-offset_right = 100.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@404" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 150.0
-offset_right = 150.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@405" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 150.0
-offset_right = 200.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@406" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 150.0
-offset_right = 250.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@407" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 150.0
-offset_right = 300.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@408" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 150.0
-offset_right = 350.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@409" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 150.0
-offset_right = 400.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@410" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 150.0
-offset_right = 450.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@411" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 150.0
-offset_right = 500.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@412" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 150.0
-offset_right = 550.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@413" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 150.0
-offset_right = 600.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@414" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 150.0
-offset_right = 650.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@415" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 150.0
-offset_right = 700.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@416" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 150.0
-offset_right = 750.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@417" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 150.0
-offset_right = 800.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@418" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 150.0
-offset_right = 850.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@419" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 150.0
-offset_right = 900.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@420" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 150.0
-offset_right = 950.0
-offset_bottom = 200.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@421" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 200.0
-offset_right = 100.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@422" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 200.0
-offset_right = 150.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@423" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 200.0
-offset_right = 200.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@424" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 200.0
-offset_right = 250.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@425" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 200.0
-offset_right = 300.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@426" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 200.0
-offset_right = 350.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@427" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 200.0
-offset_right = 400.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@428" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 200.0
-offset_right = 450.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@429" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 200.0
-offset_right = 500.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@430" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 200.0
-offset_right = 750.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@431" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 200.0
-offset_right = 800.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@432" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 200.0
-offset_right = 850.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@433" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 200.0
-offset_right = 900.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@434" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 200.0
-offset_right = 950.0
-offset_bottom = 250.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@435" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 250.0
-offset_right = 100.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@436" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 250.0
-offset_right = 150.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@437" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 250.0
-offset_right = 200.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@438" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 250.0
-offset_right = 250.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@439" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 250.0
-offset_right = 300.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@440" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 250.0
-offset_right = 350.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@441" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 250.0
-offset_right = 400.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@442" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 250.0
-offset_right = 450.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@443" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 250.0
-offset_right = 500.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@444" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 250.0
-offset_right = 600.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@445" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 250.0
-offset_right = 650.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@446" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 250.0
-offset_right = 750.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@447" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 250.0
-offset_right = 800.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@448" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 250.0
-offset_right = 850.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@449" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 250.0
-offset_right = 900.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@450" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 250.0
-offset_right = 950.0
-offset_bottom = 300.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@451" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 300.0
-offset_right = 100.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@452" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 300.0
-offset_right = 150.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@453" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 300.0
-offset_right = 200.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@454" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 300.0
-offset_right = 250.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@455" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 300.0
-offset_right = 300.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@456" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 300.0
-offset_right = 350.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@457" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 300.0
-offset_right = 400.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@458" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 300.0
-offset_right = 450.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@459" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 300.0
-offset_right = 500.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@460" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 300.0
-offset_right = 750.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@461" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 300.0
-offset_right = 800.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@462" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 300.0
-offset_right = 850.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@463" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 300.0
-offset_right = 900.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@464" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 300.0
-offset_right = 950.0
-offset_bottom = 350.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@465" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 350.0
-offset_right = 100.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@466" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 350.0
-offset_right = 150.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@467" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 350.0
-offset_right = 200.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@468" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 350.0
-offset_right = 250.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@469" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 350.0
-offset_right = 300.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@470" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 350.0
-offset_right = 350.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@471" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 350.0
-offset_right = 400.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@472" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 350.0
-offset_right = 450.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@473" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 350.0
-offset_right = 500.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@474" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 350.0
-offset_right = 600.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@475" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 350.0
-offset_right = 650.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@476" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 350.0
-offset_right = 750.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@477" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 350.0
-offset_right = 800.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@478" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 350.0
-offset_right = 850.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@479" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 350.0
-offset_right = 900.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@480" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 350.0
-offset_right = 950.0
-offset_bottom = 400.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@481" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 400.0
-offset_right = 100.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@482" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 400.0
-offset_right = 150.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@483" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 400.0
-offset_right = 200.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@484" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 400.0
-offset_right = 250.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@485" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 400.0
-offset_right = 300.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@486" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 400.0
-offset_right = 350.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@487" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 400.0
-offset_right = 400.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@488" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 400.0
-offset_right = 450.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@489" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 400.0
-offset_right = 500.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@490" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 400.0
-offset_right = 600.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@491" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 400.0
-offset_right = 650.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@492" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 400.0
-offset_right = 750.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@493" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 400.0
-offset_right = 800.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@494" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 400.0
-offset_right = 850.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@495" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 400.0
-offset_right = 900.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@496" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 400.0
-offset_right = 950.0
-offset_bottom = 450.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@497" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 450.0
-offset_right = 100.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@498" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 450.0
-offset_right = 150.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@499" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 450.0
-offset_right = 200.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@500" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 450.0
-offset_right = 250.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@501" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 450.0
-offset_right = 300.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@502" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 450.0
-offset_right = 350.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@503" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 450.0
-offset_right = 400.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@504" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 450.0
-offset_right = 450.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@505" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 450.0
-offset_right = 500.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@506" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 450.0
-offset_right = 600.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@507" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 450.0
-offset_right = 650.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@508" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 450.0
-offset_right = 750.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@509" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 450.0
-offset_right = 800.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@510" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 450.0
-offset_right = 850.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@511" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 450.0
-offset_right = 900.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@512" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 450.0
-offset_right = 950.0
-offset_bottom = 500.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@513" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 500.0
-offset_right = 100.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@514" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 500.0
-offset_right = 150.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@515" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 500.0
-offset_right = 200.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@516" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 500.0
-offset_right = 250.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@517" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 500.0
-offset_right = 300.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@518" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 500.0
-offset_right = 350.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@519" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 500.0
-offset_right = 400.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@520" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 500.0
-offset_right = 450.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@521" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 500.0
-offset_right = 500.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@522" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 500.0
-offset_right = 550.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@523" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 500.0
-offset_right = 600.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@524" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 500.0
-offset_right = 650.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@525" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 500.0
-offset_right = 700.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@526" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 500.0
-offset_right = 750.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@527" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 500.0
-offset_right = 800.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@528" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 500.0
-offset_right = 850.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@529" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 500.0
-offset_right = 900.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@530" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 500.0
-offset_right = 950.0
-offset_bottom = 550.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@531" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 550.0
-offset_right = 100.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@532" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 550.0
-offset_right = 150.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@533" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 550.0
-offset_right = 200.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@534" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 550.0
-offset_right = 250.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@535" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 550.0
-offset_right = 300.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@536" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 550.0
-offset_right = 350.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@537" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 550.0
-offset_right = 400.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@538" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 550.0
-offset_right = 450.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@539" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 550.0
-offset_right = 500.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@540" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 550.0
-offset_right = 550.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@541" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 550.0
-offset_right = 600.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@542" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 550.0
-offset_right = 650.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@543" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 550.0
-offset_right = 700.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@544" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 550.0
-offset_right = 750.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@545" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 550.0
-offset_right = 800.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@546" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 550.0
-offset_right = 850.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@547" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 550.0
-offset_right = 900.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@548" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 550.0
-offset_right = 950.0
-offset_bottom = 600.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@549" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 600.0
-offset_right = 100.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@550" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 600.0
-offset_right = 150.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@551" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 600.0
-offset_right = 200.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@552" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 600.0
-offset_right = 250.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@553" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 600.0
-offset_right = 300.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@554" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 600.0
-offset_right = 350.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@555" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 600.0
-offset_right = 400.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@556" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 600.0
-offset_right = 450.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@557" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 600.0
-offset_right = 500.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@558" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 600.0
-offset_right = 750.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@559" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 600.0
-offset_right = 800.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@560" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 600.0
-offset_right = 850.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@561" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 600.0
-offset_right = 900.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@562" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 600.0
-offset_right = 950.0
-offset_bottom = 650.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@563" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 650.0
-offset_right = 100.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@564" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 650.0
-offset_right = 150.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@565" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 650.0
-offset_right = 200.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@566" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 650.0
-offset_right = 250.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@567" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 650.0
-offset_right = 300.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@568" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 650.0
-offset_right = 350.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@569" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 650.0
-offset_right = 400.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@570" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 650.0
-offset_right = 450.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@571" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 650.0
-offset_right = 500.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@572" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 650.0
-offset_right = 750.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@573" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 650.0
-offset_right = 800.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@574" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 650.0
-offset_right = 850.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@575" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 650.0
-offset_right = 900.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@576" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 650.0
-offset_right = 950.0
-offset_bottom = 700.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@577" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 700.0
-offset_right = 100.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@578" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 700.0
-offset_right = 150.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@579" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 700.0
-offset_right = 200.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@580" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 700.0
-offset_right = 250.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@581" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 700.0
-offset_right = 300.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@582" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 700.0
-offset_right = 350.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@583" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 700.0
-offset_right = 400.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@584" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 700.0
-offset_right = 450.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@585" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 700.0
-offset_right = 500.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@586" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 700.0
-offset_right = 750.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@587" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 700.0
-offset_right = 800.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@588" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 700.0
-offset_right = 850.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@589" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 700.0
-offset_right = 900.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@590" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 700.0
-offset_right = 950.0
-offset_bottom = 750.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@591" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 750.0
-offset_right = 250.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@592" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 750.0
-offset_right = 300.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@593" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 750.0
-offset_right = 350.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@594" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 750.0
-offset_right = 400.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@595" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 750.0
-offset_right = 450.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@596" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 750.0
-offset_right = 500.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@597" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 750.0
-offset_right = 750.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@598" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 750.0
-offset_right = 800.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@599" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 750.0
-offset_right = 850.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@600" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 750.0
-offset_right = 900.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@601" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 750.0
-offset_right = 950.0
-offset_bottom = 800.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@602" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 800.0
-offset_right = 250.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@603" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 800.0
-offset_right = 300.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@604" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 800.0
-offset_right = 350.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@605" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 800.0
-offset_right = 400.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@606" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 800.0
-offset_right = 450.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@607" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 800.0
-offset_right = 500.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@608" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 800.0
-offset_right = 750.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@609" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 800.0
-offset_right = 800.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@610" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 800.0
-offset_right = 850.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@611" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 800.0
-offset_right = 900.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@612" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 800.0
-offset_right = 950.0
-offset_bottom = 850.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@613" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 850.0
-offset_right = 250.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@614" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 850.0
-offset_right = 300.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@615" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 850.0
-offset_right = 350.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@616" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 850.0
-offset_right = 400.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@617" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 850.0
-offset_right = 450.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@618" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 850.0
-offset_right = 500.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@619" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 850.0
-offset_right = 550.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@620" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 850.0
-offset_right = 600.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@621" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 850.0
-offset_right = 650.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@622" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 850.0
-offset_right = 700.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@623" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 850.0
-offset_right = 750.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@624" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 850.0
-offset_right = 800.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@625" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 850.0
-offset_right = 850.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@626" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 850.0
-offset_right = 900.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@627" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 850.0
-offset_right = 950.0
-offset_bottom = 900.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@628" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 50.0
-offset_top = 900.0
-offset_right = 100.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@629" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 100.0
-offset_top = 900.0
-offset_right = 150.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@630" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 150.0
-offset_top = 900.0
-offset_right = 200.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@631" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 200.0
-offset_top = 900.0
-offset_right = 250.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@632" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 250.0
-offset_top = 900.0
-offset_right = 300.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@633" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 300.0
-offset_top = 900.0
-offset_right = 350.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@634" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 350.0
-offset_top = 900.0
-offset_right = 400.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@635" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 400.0
-offset_top = 900.0
-offset_right = 450.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@636" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 450.0
-offset_top = 900.0
-offset_right = 500.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@637" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 500.0
-offset_top = 900.0
-offset_right = 550.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@638" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 550.0
-offset_top = 900.0
-offset_right = 600.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@639" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 600.0
-offset_top = 900.0
-offset_right = 650.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@640" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 650.0
-offset_top = 900.0
-offset_right = 700.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@641" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 700.0
-offset_top = 900.0
-offset_right = 750.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@642" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 750.0
-offset_top = 900.0
-offset_right = 800.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@643" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 800.0
-offset_top = 900.0
-offset_right = 850.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@644" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 850.0
-offset_top = 900.0
-offset_right = 900.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
-
-[node name="@ColorRect@645" type="ColorRect" parent="Background"]
-z_index = -10
-offset_left = 900.0
-offset_top = 900.0
-offset_right = 950.0
-offset_bottom = 950.0
-color = Color(0.0627451, 0.0627451, 0.0627451, 1)
+polygon = PackedVector2Array(-48, -8, 16, -8, 16, 8, -48, 8)
+
+[node name="Hazards" type="Node2D" parent="."]
+
+[node name="Spikes" type="StaticBody2D" parent="Hazards"]
+position = Vector2(825, 975)
+collision_layer = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hazards/Spikes"]
+position = Vector2(-1, 1)
+shape = SubResource("RectangleShape2D_spikes")
+
+[node name="Visual" type="Polygon2D" parent="Hazards/Spikes"]
+position = Vector2(-1.00001, 1)
+scale = Vector2(0.96, 0.96)
+color = Color(0.901961, 0.901961, 0.901961, 1)
+polygon = PackedVector2Array(-75, -25, 75, -25, 75, 25, -75, 25)
 
 [node name="Spawns" type="Node2D" parent="."]
 
 [node name="PlayerSpawn" type="Marker2D" parent="Spawns"]
-position = Vector2(275, 125)
+position = Vector2(160, 480)
 
 [node name="BossSpawn" type="Marker2D" parent="Spawns"]
-position = Vector2(675, 175)
+position = Vector2(600, 112)
 
 [node name="Enemies" type="Node2D" parent="."]
 
 [node name="PatrollingLancerSpawner" parent="Enemies" instance=ExtResource("1_8girt")]
-position = Vector2(175, 425)
-
-[node name="Timer2" type="Timer" parent="Enemies/PatrollingLancerSpawner"]
+position = Vector2(160, 856)
 
 [node name="FlyingPatroller" parent="Enemies" instance=ExtResource("4_ei412")]
-position = Vector2(825, 775)
-
-[node name="Visual2" type="Polygon2D" parent="Enemies/FlyingPatroller"]
-color = Color(0.4, 0.8, 0.9, 1)
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Enemies/FlyingPatroller"]
-shape = SubResource("RectangleShape2D_minionbody")
-
-[node name="AttackTimer2" type="Timer" parent="Enemies/FlyingPatroller"]
-wait_time = 2.5
-one_shot = true
-
-[node name="RangeDetector2" type="Area2D" parent="Enemies/FlyingPatroller" groups=["sensors"]]
-collision_layer = 512
-monitorable = false
-script = ExtResource("12_rib6t")
-state_property_name = &"is_player_in_range"
+position = Vector2(144, 128)
 
 [node name="Turret" parent="Enemies" instance=ExtResource("13_5kto0")]
-position = Vector2(825, 825)
-
-[node name="Visual2" type="Polygon2D" parent="Enemies/Turret"]
-color = Color(0.490196, 0.490196, 0.490196, 1)
-polygon = PackedVector2Array(-25, -25, 25, -25, 25, 25, -25, 25)
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Enemies/Turret"]
-shape = SubResource("RectangleShape2D_an4gx")
-
-[node name="AttackTimer2" type="Timer" parent="Enemies/Turret"]
-wait_time = 2.0
-one_shot = true
-
-[node name="RangeDetector2" type="Area2D" parent="Enemies/Turret" groups=["sensors"]]
-collision_layer = 512
-monitorable = false
-script = ExtResource("12_rib6t")
-state_property_name = &"is_player_in_range"
+position = Vector2(864, 352)
 
 
 =====================================
@@ -17130,6 +13440,14 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		teardown()
 
+func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint() or _is_dead:
+		return
+	
+	# Centralized physics execution.
+	# Subclasses should update velocity before calling super._physics_process().
+	move_and_slide()
+
 func _exit_tree() -> void:
 	# Defined to allow subclasses to call super._exit_tree() safely
 	pass
@@ -17957,23 +14275,23 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: BossBehavior = null
-@export var state_machine_config: StateMachineConfig = null
+@export var behavior: BossBehavior
+@export var state_machine_config: StateMachineConfig
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect = null
-@export var phase_change_shake_effect: ScreenShakeEffect = null
-@export var death_shake_effect: ScreenShakeEffect = null
-@export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+@export var hit_flash_effect: ShaderEffect
+@export var phase_change_shake_effect: ScreenShakeEffect
+@export var death_shake_effect: ScreenShakeEffect
+@export var hit_spark_effect: VFXEffect
+@export var dissolve_effect: ShaderEffect
 
 @export_group("State Scripts")
-@export var state_idle_script: Script = null
-@export var state_attack_script: Script = null
-@export var state_cooldown_script: Script = null
-@export var state_patrol_script: Script = null
-@export var state_lunge_script: Script = null
-@export var state_melee_script: Script = null
+@export var state_idle_script: Script
+@export var state_attack_script: Script
+@export var state_cooldown_script: Script
+@export var state_patrol_script: Script
+@export var state_lunge_script: Script
+@export var state_melee_script: Script
 
 # --- Node References ---
 @onready var visual_sprite: ColorRect = $ColorRect
@@ -18020,9 +14338,13 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_instance_valid(entity_data):
 		return
+	
+	# Calculate Gravity locally
 	if not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
-	move_and_slide()
+	
+	# Delegate execution to BaseEntity
+	super._physics_process(delta)
 
 
 func _exit_tree() -> void:
@@ -18352,13 +14674,13 @@ extends BaseEntity
 
 # --- Editor Configuration ---
 @export_group("Core Configuration")
-@export var behavior: MinionBehavior = null
-@export var state_machine_config: StateMachineConfig = null
+@export var behavior: MinionBehavior
+@export var state_machine_config: StateMachineConfig
 
 @export_group("Juice & Feedback")
-@export var hit_flash_effect: ShaderEffect = null
-@export var hit_spark_effect: VFXEffect = null
-@export var dissolve_effect: ShaderEffect = null
+@export var hit_flash_effect: ShaderEffect
+@export var hit_spark_effect: VFXEffect
+@export var dissolve_effect: ShaderEffect
 
 # --- Node References ---
 @onready var visual: Polygon2D = $Visual
@@ -18404,7 +14726,8 @@ func _physics_process(delta: float) -> void:
 	elif not is_on_floor():
 		velocity.y += entity_data.world_config.gravity * delta
 		
-	move_and_slide()
+	# Delegate to BaseEntity
+	super._physics_process(delta)
 
 
 func _notification(what: int) -> void:
@@ -19384,7 +15707,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_timers(delta)
 	
-	move_and_slide()
+	# Delegate actual movement to base class
+	super._physics_process(delta)
 
 
 func _exit_tree() -> void:

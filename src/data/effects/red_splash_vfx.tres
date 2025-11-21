@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="VFXEffect" load_steps=3 format=3 uid="uid://red_splash_vfx_res"]
+
+[ext_resource type="Script" path="res://src/core/data/effects/vfx_effect.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://splash_impact_red" path="res://src/content/vfx/splash_impact_red.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+scene = ExtResource("2_scene")
+pool_key = &"red_splashes"

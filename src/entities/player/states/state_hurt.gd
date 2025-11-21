@@ -9,7 +9,9 @@ func enter(_msg := {}) -> void:
 	_physics = owner.get_component(PlayerPhysicsComponent)
 	state_data.physics.knockback_timer = state_data.config.knockback_duration
 	state_data.combat.is_charging = false
-	owner._cancel_heal()
+	
+	# FIX: Healing cancellation is now handled automatically by StateHeal.exit()
+	# if the player was in the Heal state when hit.
 
 
 func process_physics(delta: float) -> void:

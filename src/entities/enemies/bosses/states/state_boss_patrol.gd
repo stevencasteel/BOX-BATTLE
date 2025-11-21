@@ -5,12 +5,28 @@ class_name BossStatePatrol
 extends StateEntityPatrol
 
 const QuickSwipeData = preload("res://src/data/combat/attacks/boss_quick_swipe.tres")
+const PATROL_DURATION: float = 3.0
+
+var _timer: float = 0.0
+
+func enter(msg := {}) -> void:
+	super.enter(msg)
+	_timer = PATROL_DURATION
+
+func process_physics(delta: float) -> void:
+	# 1. Update Timer
+	_timer -= delta
+	if _timer <= 0:
+		state_machine.change_state(Identifiers.BossStates.IDLE)
+		return
+
+	# 2. Run Generic Patrol Logic (Movement)
+	super.process_physics(delta)
 
 # Override the virtual method from StateEntityPatrol
 func _check_interrupts() -> bool:
 	# High-priority check: if player gets too close, interrupt patrol to attack.
-	if state_data.is_player_in_close_range and owner.cooldown_timer.is_stopped():
-		# UPDATE: Use constant
+	if state_data.is_player_in_close_range:
 		state_machine.change_state(Identifiers.CommonStates.MELEE, {"attack_data": QuickSwipeData})
 		return true
 	

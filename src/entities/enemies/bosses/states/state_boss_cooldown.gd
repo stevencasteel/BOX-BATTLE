@@ -3,7 +3,13 @@
 extends BaseState
 class_name BossStateCooldown
 
+var _timer: float = 0.0
 
-func enter(_msg := {}) -> void:
+func enter(msg := {}) -> void:
 	owner.velocity.x = 0
-	owner.cooldown_timer.start()
+	_timer = msg.get("duration", 1.0) # Default to 1.0s if not provided
+
+func process_physics(delta: float) -> void:
+	_timer -= delta
+	if _timer <= 0:
+		state_machine.change_state(Identifiers.BossStates.PATROL)

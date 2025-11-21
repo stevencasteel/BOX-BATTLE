@@ -114,6 +114,24 @@ func _on_melee_hit_detected(target: Node) -> void:
 
 	p_data.combat.hit_targets_this_swing[target_id] = true
 	
+	# --- 1. Projectile Destruction Logic ---
+	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
+		# Trigger the projectile's own impact VFX (Red Splash)
+		if target.has_method("destroy_with_impact"):
+			target.destroy_with_impact()
+		else:
+			if is_instance_valid(_object_pool):
+				_object_pool.return_instance.call_deferred(target)
+			else:
+				target.queue_free()
+			
+		# Spawn Player Hit Spark (Green Splash)
+		_spawn_player_spark(target.global_position)
+		
+		damage_dealt.emit()
+		return
+
+	# --- 2. Entity Damage Logic ---
 	var damageable = _combat_utils.find_damageable(target)
 	if is_instance_valid(damageable):
 		var damage_info = DamageInfo.new()
@@ -128,7 +146,17 @@ func _on_melee_hit_detected(target: Node) -> void:
 		var damage_result = damageable.apply_damage(damage_info)
 		if damage_result.was_damaged:
 			damage_dealt.emit()
+			
+			# NEW: Spawn Player's Spark on successful hit
+			_spawn_player_spark(target.global_position)
+			
 			if is_close_range:
 				_fx_manager.request_hit_stop(
 					p_data.world_config.hit_stop_player_melee_close
 				)
+
+
+func _spawn_player_spark(pos: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not p_data.config.hit_spark_effect:
+		return
+	_fx_manager.play_vfx(p_data.config.hit_spark_effect, pos, Vector2.UP)

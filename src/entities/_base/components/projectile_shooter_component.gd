@@ -11,6 +11,7 @@ var _entity_data: Resource # BossStateData or MinionStateData
 var _object_pool: IObjectPool
 var _combat_utils: Node
 var _targeting_system: Node
+var _fx_manager: IFXManager # Need this for VFX
 
 # --- Private Variables ---
 var _active_volley_tween: Tween
@@ -25,16 +26,17 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	self._combat_utils = p_dependencies.get("combat_utils")
 	self._targeting_system = p_dependencies.get("targeting_system")
 	
+	# Try to get FXManager from services (BaseEntity usually passes it)
+	if p_dependencies.has("services"):
+		self._fx_manager = p_dependencies.get("services").fx_manager
+	
 	assert(is_instance_valid(_owner), "ProjectileShooterComponent requires a Node2D owner.")
 	assert(is_instance_valid(_entity_data), "ProjectileShooterComponent requires an entity data resource.")
 	assert(is_instance_valid(_object_pool), "ProjectileShooterComponent requires 'object_pool'.")
-	assert(is_instance_valid(_combat_utils), "ProjectileShooterComponent requires 'combat_utils'.")
 	
 	if not Engine.is_editor_hint():
-		# Use the TargetingSystem if available, otherwise fallback to global ServiceLocator for robustness
 		if not _targeting_system:
 			_targeting_system = ServiceLocator.targeting_system
-		
 		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 
@@ -47,6 +49,7 @@ func teardown() -> void:
 	_combat_utils = null
 	_player_node = null
 	_targeting_system = null
+	_fx_manager = null
 
 
 # --- Public API ---
@@ -69,34 +72,28 @@ func fire_shot_at_player() -> void:
 	if not is_instance_valid(_owner):
 		return
 		
-	# Refresh player reference if needed
 	if not is_instance_valid(_player_node) and is_instance_valid(_targeting_system):
 		_player_node = _targeting_system.get_first(Identifiers.Groups.PLAYER)
 
 	if not is_instance_valid(_player_node):
 		return
 
-	# If the owner is marked as dead via internal flags, don't fire.
 	if _owner.get("_is_dead"):
 		return
 
 	var pool_key: StringName = _entity_data.projectile_pool_key
 	if pool_key == &"":
-		push_warning("Entity '%s' tried to fire but has no 'projectile_pool_key'." % _owner.name)
 		return
 
 	var shot: Node = _object_pool.get_instance(pool_key)
 	if not shot:
 		return
 
-	# Calculate direction to player
 	var direction = (_player_node.global_position - _owner.global_position).normalized()
 	
-	# Update facing direction data if the entity tracks the player
 	if "facing_direction" in _entity_data and not is_zero_approx(direction.x):
 		_entity_data.facing_direction = sign(direction.x)
 
-	# Configure the shot
 	if "direction" in shot:
 		shot.direction = direction
 	if "global_position" in shot:
@@ -104,8 +101,23 @@ func fire_shot_at_player() -> void:
 	
 	var dependencies = {
 		"object_pool": _object_pool,
-		"combat_utils": _combat_utils
+		"combat_utils": _combat_utils,
+		"fx_manager": _fx_manager # Pass FXManager to projectile
 	}
 	
 	if shot.has_method("activate"):
 		shot.activate(dependencies)
+		
+	# --- Muzzle Flash VFX ---
+	_spawn_muzzle_vfx(direction)
+
+
+func _spawn_muzzle_vfx(dir: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not _entity_data or not _entity_data.config:
+		return
+		
+	# Check if config has the property (EnemyConfig)
+	if "projectile_muzzle_vfx" in _entity_data.config:
+		var vfx = _entity_data.config.projectile_muzzle_vfx
+		if is_instance_valid(vfx):
+			_fx_manager.play_vfx(vfx, _owner.global_position, dir)

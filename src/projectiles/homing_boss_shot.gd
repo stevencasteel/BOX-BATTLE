@@ -13,7 +13,6 @@ const FALLBACK_WAIT_SECONDS := 0.05
 func _ready() -> void:
 	super._ready() # Important to call the parent's _ready to create the timer.
 	add_to_group(Identifiers.Groups.ENEMY_PROJECTILE)
-	visual.color = Palette.COLOR_HAZARD_PRIMARY
 
 
 func _move(delta: float) -> void:

@@ -14,6 +14,7 @@ var _p_data: PlayerStateData
 var _hitbox: HitboxComponent
 var _object_pool: IObjectPool
 var _combat_utils: Node 
+var _fx_manager: IFXManager
 
 # --- Godot Lifecycle ---
 
@@ -29,11 +30,13 @@ func setup(p_owner: Node, p_dependencies: Dictionary = {}) -> void:
 	
 	_object_pool = p_dependencies.get("object_pool")
 	_combat_utils = p_dependencies.get("combat_utils")
+	_fx_manager = p_dependencies.get("fx_manager")
 
 	assert(is_instance_valid(_owner_node), "PogoComponent requires a CharacterBody2D owner.")
 	assert(is_instance_valid(_p_data), "PogoComponent requires PlayerStateData.")
 	assert(is_instance_valid(_object_pool), "PogoComponent requires 'object_pool'.")
 	assert(is_instance_valid(_combat_utils), "PogoComponent requires 'combat_utils'.")
+	assert(is_instance_valid(_fx_manager), "PogoComponent requires 'fx_manager'.")
 	
 	if is_instance_valid(_hitbox):
 		# Configure hitbox specifically for Pogo
@@ -53,6 +56,7 @@ func teardown() -> void:
 	_hitbox = null
 	_object_pool = null
 	_combat_utils = null
+	_fx_manager = null
 
 # --- Private Logic ---
 
@@ -64,10 +68,18 @@ func _on_hit_detected(target: Node) -> void:
 
 	var should_bounce = false
 
-	# Case 1: Hit an Enemy Projectile (destroy it)
+	# Case 1: Hit an Enemy Projectile (destroy it with impact)
 	if target.is_in_group(Identifiers.Groups.ENEMY_PROJECTILE):
 		should_bounce = true
-		_object_pool.return_instance.call_deferred(target)
+		
+		# 1. Destroy Enemy Projectile (Red Splash)
+		if target.has_method("destroy_with_impact"):
+			target.destroy_with_impact()
+		else:
+			_object_pool.return_instance.call_deferred(target)
+			
+		# 2. Spawn Player Hit Spark (Green Splash)
+		_spawn_player_spark(target.global_position)
 
 	# Case 2: Hit a Damageable Entity (Enemy)
 	var damageable = _combat_utils.find_damageable(target)
@@ -87,12 +99,16 @@ func _on_hit_detected(target: Node) -> void:
 			damage_dealt.emit()
 
 	# Case 3: Hit World Geometry
-	# Check physics bodies (World, Platforms)
 	if target is PhysicsBody2D and (target.collision_layer & (PhysicsLayers.SOLID_WORLD | PhysicsLayers.PLATFORMS)) != 0:
 		should_bounce = true
-	# Check TileMap layers or static bodies in world group
 	elif target.is_in_group(Identifiers.Groups.WORLD):
 		should_bounce = true
 
 	if should_bounce:
 		pogo_bounce_requested.emit()
+
+
+func _spawn_player_spark(pos: Vector2) -> void:
+	if not is_instance_valid(_fx_manager) or not _p_data.config.hit_spark_effect:
+		return
+	_fx_manager.play_vfx(_p_data.config.hit_spark_effect, pos, Vector2.UP)

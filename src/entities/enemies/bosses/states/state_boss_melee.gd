@@ -36,7 +36,8 @@ func _on_attack_finished() -> void:
 	if state_machine.current_state == self:
 		# Use the cooldown from the attack we just performed.
 		var attack_data = _melee_component._current_attack_data
+		var cooldown_time = 1.0
 		if is_instance_valid(attack_data):
-			owner.cooldown_timer.wait_time = attack_data.telegraph_duration + attack_data.duration + 0.5
+			cooldown_time = attack_data.telegraph_duration + attack_data.duration + 0.5
 		
-		state_machine.change_state(Identifiers.BossStates.COOLDOWN)
+		state_machine.change_state(Identifiers.BossStates.COOLDOWN, {"duration": cooldown_time})

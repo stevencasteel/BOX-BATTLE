@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3 uid="uid://splash_impact_red"]
+
+[ext_resource type="Script" path="res://src/content/vfx/hit_spark.gd" id="1_script"]
+
+[sub_resource type="Gradient" id="Gradient_red"]
+colors = PackedColorArray(1, 0.2, 0.2, 1, 0.8, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_red"]
+gradient = SubResource("Gradient_red")
+
+[sub_resource type="Curve" id="Curve_explode"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -2.5, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_explode"]
+curve = SubResource("Curve_explode")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_red_splash"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 80.0
+initial_velocity_max = 180.0
+gravity = Vector3(0, 0, 0)
+damping_min = 400.0
+damping_max = 400.0
+scale_min = 1.0
+scale_max = 2.5
+scale_curve = SubResource("CurveTexture_explode")
+color_ramp = SubResource("GradientTexture1D_red")
+
+[node name="SplashImpactRed" type="GPUParticles2D"]
+emitting = false
+amount = 12
+process_material = SubResource("ParticleProcessMaterial_red_splash")
+lifetime = 0.3
+one_shot = true
+explosiveness = 1.0
+script = ExtResource("1_script")
+metadata/pool_name = &"red_splashes"

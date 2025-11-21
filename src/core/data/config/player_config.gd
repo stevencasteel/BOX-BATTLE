@@ -49,6 +49,7 @@ extends Resource
 @export_range(10, 200, 5) var close_range_threshold: float = 75.0
 
 @export_group("Visual Effects")
+@export var hit_spark_effect: VFXEffect
 @export var vfx_charge_aura: PackedScene
 @export var vfx_charge_splash: PackedScene
 @export var vfx_heal_aura: PackedScene

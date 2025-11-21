@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://homing_boss_shot_scene"]
+[gd_scene load_steps=4 format=3 uid="uid://homing_boss_shot_scene"]
 
 [ext_resource type="Script" path="res://src/projectiles/homing_boss_shot.gd" id="1_homing_shot_script"]
+[ext_resource type="Resource" uid="uid://red_splash_vfx_res" path="res://src/data/effects/red_splash_vfx.tres" id="2_splash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_homing_shot_body"]
 size = Vector2(20, 20)
@@ -9,6 +10,7 @@ size = Vector2(20, 20)
 collision_layer = 16
 collision_mask = 65
 script = ExtResource("1_homing_shot_script")
+impact_vfx = ExtResource("2_splash")
 metadata/pool_name = &"homing_boss_shots"
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -17,6 +19,8 @@ offset_left = -10.0
 offset_top = -10.0
 offset_right = 10.0
 offset_bottom = 10.0
+pivot_offset = Vector2(10, 10)
+color = Color(1, 0.2, 0.2, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 unique_name_in_owner = true

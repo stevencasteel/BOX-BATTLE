@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="EnemyConfig" load_steps=4 format=3 uid="uid://cm4r58pku22ug"]
+[gd_resource type="Resource" script_class="EnemyConfig" load_steps=5 format=3 uid="uid://cm4r58pku22ug"]
 
 [ext_resource type="Script" uid="uid://c1ran020tmpwh" path="res://src/core/data/config/enemy_config.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bcahx6le3w04x" path="res://src/core/data/config/damage_response_config.gd" id="2_dmg_resp"]
+[ext_resource type="Resource" path="res://src/data/effects/red_splash_vfx.tres" id="3_red_splash"]
 
 [sub_resource type="Resource" id="Resource_dmg"]
 script = ExtResource("2_dmg_resp")
@@ -18,3 +19,4 @@ boss_lunge_speed = 1200.0
 homing_shot_damage = 1
 homing_shot_speed = 250.0
 homing_shot_lifespan = 10.0
+projectile_muzzle_vfx = ExtResource("3_red_splash")

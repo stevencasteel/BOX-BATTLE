@@ -129,9 +129,9 @@ polygon = PackedVector2Array(-57.1429, -28.0702, 48.9796, -28.0702, 48.9796, 28.
 position = Vector2(600, 700)
 collision_layer = 128
 
-[node name="CollisionShape2D" type="CollisionPolygon2D" parent="Terrain/CenterPillar"]
-position = Vector2(-159.564, -67.1)
-scale = Vector2(2.59821, 0.8125)
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain/CenterPillar"]
+position = Vector2(-159.825, -66.2445)
+scale = Vector2(2.58468, 0.814314)
 polygon = PackedVector2Array(2.91133, -306.339, 2.91133, 245.046, 76.8083, 87.5076, 76.8083, -306.339)
 
 [node name="Visual" type="Polygon2D" parent="Terrain/CenterPillar"]
@@ -200,7 +200,7 @@ polygon = PackedVector2Array(-48, -8, 16, -8, 16, 8, -48, 8)
 
 [node name="Hazards" type="Node2D" parent="."]
 
-[node name="Spikes" type="StaticBody2D" parent="Hazards"]
+[node name="Spikes" type="StaticBody2D" parent="Hazards" groups=["hazard"]]
 position = Vector2(825, 975)
 collision_layer = 8
 
