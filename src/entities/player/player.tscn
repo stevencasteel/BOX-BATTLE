@@ -13,13 +13,13 @@
 size = Vector2(40, 80)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_melee"]
-size = Vector2(86, 32.5)
+size = Vector2(111, 26.25)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_up_attack"]
-size = Vector2(60, 60)
+size = Vector2(30, 73)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pogo"]
-size = Vector2(104, 31.5)
+size = Vector2(90, 44.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 size = Vector2(42, 82)
@@ -52,7 +52,7 @@ monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MeleeHitbox"]
-position = Vector2(77, 0)
+position = Vector2(89.5, 0)
 shape = SubResource("RectangleShape2D_melee")
 disabled = true
 
@@ -64,7 +64,7 @@ monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="UpHitbox"]
-position = Vector2(0, -70)
+position = Vector2(0, -77.5)
 shape = SubResource("RectangleShape2D_up_attack")
 disabled = true
 
@@ -76,7 +76,7 @@ monitorable = false
 script = ExtResource("17_hitbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PogoHitbox"]
-position = Vector2(0, 57.25)
+position = Vector2(0, 63.75)
 shape = SubResource("RectangleShape2D_pogo")
 disabled = true
 
@@ -93,7 +93,7 @@ shape = SubResource("RectangleShape2D_hurtbox")
 position = Vector2(34, 0)
 
 [node name="MuzzleUp" type="Marker2D" parent="."]
-position = Vector2(0, -60)
+position = Vector2(0, -44)
 
 [node name="MuzzleDown" type="Marker2D" parent="."]
-position = Vector2(0, 60)
+position = Vector2(0, 44)

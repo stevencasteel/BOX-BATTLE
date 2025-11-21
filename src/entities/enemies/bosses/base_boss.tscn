@@ -58,7 +58,7 @@ shape = SubResource("CircleShape2D_closetrigger")
 [node name="LungeArea" type="ReferenceRect" parent="Telegraphs"]
 offset_left = 30.0
 offset_top = -25.0
-offset_right = 560.0
+offset_right = 512.0
 offset_bottom = 25.0
 border_color = Color(1, 0.8, 0, 1)
 border_width = 2.0
