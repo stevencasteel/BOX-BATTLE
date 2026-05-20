@@ -8,13 +8,13 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
-import { saveManager } from "@/core/SaveManager";
 import { inputProvider } from "@/core/InputProvider";
-
 import { Spawner } from "@/entities/Spawner";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  playerHP: number;
+  bossHP: number;
   gameResult: "PLAYING" | "GAMEOVER" | "VICTORY";
   menuIndex: number;
   setPlayerHP: (hp: number) => void;
@@ -28,6 +28,7 @@ interface GameArenaProps {
 
 export function GameArena({
   canvasRef,
+  playerHP,
   gameResult,
   menuIndex,
   setPlayerHP,
@@ -58,6 +59,7 @@ export function GameArena({
   const hasTriggeredFirstHit = useRef<boolean>(false);
   const hasTriggeredPhase2 = useRef<boolean>(false);
   const hasTriggeredPhase3 = useRef<boolean>(false);
+  const isCinematicActive = useRef<boolean>(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -69,15 +71,16 @@ export function GameArena({
     hasTriggeredFirstHit.current = false;
     hasTriggeredPhase2.current = false;
     hasTriggeredPhase3.current = false;
+    isCinematicActive.current = false;
 
     PhysicsComponent.setSolids(solids);
     PhysicsComponent.setHazards(hazards);
 
     const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 150, 370),   // High Left platform
-      new Spawner("TURRET", 850, 370),   // High Right platform
-      new Spawner("LANCER", 500, 600),   // Central Floating bridge
-      new Spawner("FLYER", 500, 300)     // Hover Center patroller
+      new Spawner("TURRET", 150, 370),   
+      new Spawner("TURRET", 850, 370),   
+      new Spawner("LANCER", 500, 600),   
+      new Spawner("FLYER", 500, 300)     
     ];
 
     const pool = new ObjectPool(() => new Projectile(), 60);
@@ -102,6 +105,19 @@ export function GameArena({
       }
 
       Camera.update(dt);
+
+      if (isCinematicActive.current) {
+        player.velocity = { x: 0, y: 0 };
+        boss.velocity = { x: 0, y: 0 };
+        
+        const activeProjectiles = [...pool.getActive()];
+        for (const proj of activeProjectiles) {
+          proj.update(dt);
+        }
+        inputProvider.postUpdate();
+        return;
+      }
+
       player.update(dt);
       boss.update(dt);
 
@@ -171,17 +187,23 @@ export function GameArena({
       }
 
       if (player.isDead) {
-        setGameResult("GAMEOVER");
-        saveManager.recordLoss();
+        isCinematicActive.current = true;
         triggerDialogue("player", "Power failing... system shutting down...");
         triggerDialogue("boss", "The cage remains ours. Another simulation completed.");
-        loop.stop();
+        
+        setTimeout(() => {
+          setGameResult("GAMEOVER");
+          loop.stop();
+        }, 3500);
       } else if (boss.isDead) {
-        setGameResult("VICTORY");
-        saveManager.recordWin();
+        isCinematicActive.current = true;
         triggerDialogue("boss", "How... could a simple opponent... pacify me...");
         triggerDialogue("player", "The chamber has been cleared. Returning to terminal.");
-        loop.stop();
+        
+        setTimeout(() => {
+          setGameResult("VICTORY");
+          loop.stop();
+        }, 3500);
       }
 
       inputProvider.postUpdate();
@@ -254,7 +276,8 @@ export function GameArena({
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
+      <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
+        
         <canvas
           ref={canvasRef}
           width={1000}
@@ -262,6 +285,9 @@ export function GameArena({
           className="crt-scanlines crt-flicker"
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
+
+        {/* Red Vignette placed AFTER the canvas, forcing it to render on top */}
+        <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
 
         {gameResult !== "PLAYING" && (
           <div className="gameover-overlay">

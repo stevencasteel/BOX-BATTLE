@@ -494,37 +494,100 @@ export class Player extends BaseEntity {
   }
 
   private drawAttackVisual(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "hsl(142, 71%, 58%)"; // Thick, neon Matrix Green
-    ctx.lineWidth = 8;
+    const facing = this.facingDirection;
     ctx.lineCap = "round";
-
-    ctx.beginPath();
+    
     if (this.attackDirection === "side") {
-      const offset = this.facingDirection * 60;
+      const offset = facing * 50;
+
+      // 1. Draw Outer, Standard Slash (radius 65, line width 5, dimmer green)
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)"; 
+      ctx.lineWidth = 5;
+      ctx.beginPath();
       ctx.arc(
         this.position.x + offset / 2,
         this.position.y,
-        45,
-        this.facingDirection > 0 ? -Math.PI / 3 : Math.PI - Math.PI / 3,
-        this.facingDirection > 0 ? Math.PI / 3 : Math.PI + Math.PI / 3
+        65,
+        facing > 0 ? -Math.PI / 3 : Math.PI - Math.PI / 3,
+        facing > 0 ? Math.PI / 3 : Math.PI + Math.PI / 3
       );
-    } else if (this.attackDirection === "up") {
+      ctx.stroke();
+
+      // 2. Draw Inner, Heavy Proximity Slash (radius 32, line width 10, glowing neon core)
+      ctx.strokeStyle = "#ffffff"; 
+      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x + offset / 3,
+        this.position.y,
+        32,
+        facing > 0 ? -Math.PI / 2.5 : Math.PI - Math.PI / 2.5,
+        facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
+      );
+      ctx.stroke();
+      ctx.shadowBlur = 0; // Reset canvas shadows
+    } 
+    else if (this.attackDirection === "up") {
+      // 1. Outer Slash
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
       ctx.arc(
         this.position.x,
-        this.position.y - 40,
-        45,
+        this.position.y - 35,
+        65,
         -Math.PI * 0.8,
         -Math.PI * 0.2
       );
-    } else if (this.attackDirection === "down") {
+      ctx.stroke();
+
+      // 2. Inner Heavy Slash
+      ctx.strokeStyle = "#ffffff";
+      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
       ctx.arc(
         this.position.x,
-        this.position.y + 40,
-        45,
+        this.position.y - 25,
+        32,
+        -Math.PI * 0.75,
+        -Math.PI * 0.25
+      );
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    } 
+    else if (this.attackDirection === "down") {
+      // 1. Outer Slash
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x,
+        this.position.y + 35,
+        65,
         Math.PI * 0.2,
         Math.PI * 0.8
       );
+      ctx.stroke();
+
+      // 2. Inner Heavy Slash
+      ctx.strokeStyle = "#ffffff";
+      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x,
+        this.position.y + 25,
+        32,
+        Math.PI * 0.25,
+        Math.PI * 0.75
+      );
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     }
-    ctx.stroke();
   }
 }

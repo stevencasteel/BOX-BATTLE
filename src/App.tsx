@@ -47,6 +47,14 @@ export default function App() {
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [isGlitching, setIsGlitching] = useState<boolean>(false);
+
+  const triggerGlitch = () => {
+    setIsGlitching(true);
+    setTimeout(() => {
+      setIsGlitching(false);
+    }, 150);
+  };
 
   const navTo = (screen: ScreenState) => {
     soundSynth.playSelectTick();
@@ -62,6 +70,21 @@ export default function App() {
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };
+
+  // Trigger chromatic glitch on damage
+  useEffect(() => {
+    if (playerHP < 5 && currentScreen === "PLAYING") {
+      triggerGlitch();
+    }
+  }, [playerHP]);
+
+  useEffect(() => {
+    soundSynth.startMusic();
+    reloadSaveSlots();
+    return () => {
+      soundSynth.stopMusic();
+    };
+  }, []);
 
   // Centralized Menu Navigation Listeners
   useEffect(() => {
@@ -242,11 +265,13 @@ export default function App() {
         </div>
 
         {/* Dynamic Viewport Container */}
-        <div className="game-viewport-container">
+        <div className={`game-viewport-container ${isGlitching ? "filter-chromatic" : ""}`}>
           {currentScreen === "PLAYING" ? (
             <GameArena
               key={retryCount}
               canvasRef={canvasRef}
+              playerHP={playerHP}
+              bossHP={bossHP}
               gameResult={gameResult}
               menuIndex={menuIndex}
               setPlayerHP={setPlayerHP}
@@ -385,6 +410,22 @@ export default function App() {
         )}
 
       </div>
+
+      {/* Hardware-accelerated split-channel Chromatic Aberration filter */}
+      <svg style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}>
+        <defs>
+          <filter id="chromatic-aberration">
+            <feOffset dx="6" dy="0" in="SourceGraphic" result="red" />
+            <feOffset dx="-6" dy="0" in="SourceGraphic" result="blue" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="red" result="red-only" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="green-only" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="blue" result="blue-only" />
+            <feBlend mode="screen" in="red-only" in2="green-only" result="rg" />
+            <feBlend mode="screen" in="rg" in2="blue-only" />
+          </filter>
+        </defs>
+      </svg>
+
     </div>
   );
 }

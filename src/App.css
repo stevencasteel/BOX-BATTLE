@@ -511,3 +511,49 @@ body {
   80% { transform: translate(-1px, -1px) rotate(1deg); }
   100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
+
+/* Low Health Vignette Pulse */
+.vignette-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.45) 100%);
+  pointer-events: none;
+  z-index: 80;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.vignette-pulse {
+  opacity: 1;
+  animation: vignette-heartbeat 1.2s infinite alternate;
+}
+
+@keyframes vignette-heartbeat {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.95; }
+}
+
+/* Chromatic split-channel CSS filter */
+.filter-chromatic {
+  filter: url(#chromatic-aberration);
+}
+
+/* Concentric Expanding Shockwave Ring */
+.shockwave-blast {
+  position: absolute;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    inset 0 0 30px rgba(255, 255, 255, 0.3),
+    0 0 40px rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  z-index: 90;
+  transform: translate(-50%, -50%);
+  animation: blast-wave-expand 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes blast-wave-expand {
+  0% { width: 0px; height: 0px; opacity: 1; filter: blur(1px); }
+  50% { filter: blur(6px); }
+  100% { width: 1200px; height: 1200px; opacity: 0; filter: blur(12px); }
+}
