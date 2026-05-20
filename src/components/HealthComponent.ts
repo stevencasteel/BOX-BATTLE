@@ -1,6 +1,7 @@
 import { Component } from "@/entities/Component";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { soundSynth } from "@/core/SoundSynth";
+import { Camera } from "@/core/Camera";
 
 export class HealthComponent implements Component {
   public owner!: BaseEntity;
@@ -40,11 +41,20 @@ export class HealthComponent implements Component {
     this.invincibilityTimer = this.invincibilityDuration;
     this.hitFlashTimer = this.hitFlashDuration;
 
-    // Trigger procedural sounds depending on who took damage
     if (this.owner.id === "player-01") {
       soundSynth.playHurt();
+      Camera.shake(15, 0.3); // Heavy player damage shake
+      Camera.triggerHitStop(0.08); // Tactile player hurt hit-stop
     } else {
       soundSynth.playHitConfirm();
+      
+      if (this.currentHealth <= 0) {
+        Camera.shake(25, 0.6); // Massive boss death shake
+        Camera.triggerHitStop(0.15); // Long boss death freeze
+      } else {
+        Camera.shake(8, 0.15); // Standard boss damage shake
+        Camera.triggerHitStop(0.04); // Quick hit-stop
+      }
     }
 
     if (this.currentHealth <= 0) {

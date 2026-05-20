@@ -8,6 +8,7 @@ import { Registry } from "@/core/Registry";
 import { HealthComponent } from "@/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
+import { Camera } from "@/core/Camera";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,7 +40,6 @@ export default function App() {
 
     PhysicsComponent.setSolids(solids);
 
-    // Initialize high-performance Projectile Object Pool
     const pool = new ObjectPool(() => new Projectile(), 60);
     Registry.projectilePool = pool;
 
@@ -52,18 +52,25 @@ export default function App() {
     Registry.player = player;
     Registry.boss = boss;
 
+    Camera.reset();
+
     const handleUpdate = (dt: number) => {
-      // 1. Update Entities
+      // 1. Process active freeze-frames (Hit-Stop)
+      if (Camera.hitStopTimer > 0) {
+        Camera.update(dt);
+        return; // Intercept updates: freeze all positions
+      }
+
+      // 2. Normal Frame Updates
+      Camera.update(dt);
       player.update(dt);
       boss.update(dt);
 
-      // 2. Update Active Projectiles
       const activeProjectiles = [...pool.getActive()];
       for (const proj of activeProjectiles) {
         proj.update(dt);
       }
 
-      // 3. Sync React state for HUD overlays
       const pHealth = player.getComponent(HealthComponent);
       const bHealth = boss.getComponent(HealthComponent);
 
@@ -80,9 +87,15 @@ export default function App() {
     };
 
     const handleRender = () => {
+      // Clear viewport
       ctx.fillStyle = "#0c0d11"; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // --- 1. Apply Camera Translate Shakes ---
+      ctx.save();
+      ctx.translate(Camera.offsetX, Camera.offsetY);
+
+      // Draw Solids
       ctx.fillStyle = "#1e1e24"; 
       for (const solid of solids) {
         ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
@@ -99,6 +112,9 @@ export default function App() {
       for (const proj of activeProjectiles) {
         proj.draw(ctx);
       }
+
+      // --- 2. Restore Camera Translate ---
+      ctx.restore();
     };
 
     const loop = new GameLoop(handleUpdate, handleRender);
@@ -109,6 +125,7 @@ export default function App() {
       player.teardown();
       boss.teardown();
       pool.clear();
+      Camera.reset();
       Registry.player = null;
       Registry.boss = null;
       Registry.projectilePool = null;
