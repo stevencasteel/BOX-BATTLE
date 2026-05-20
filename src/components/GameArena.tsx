@@ -11,6 +11,7 @@ import { Camera } from "@/core/Camera";
 import { saveManager } from "@/core/SaveManager";
 import { inputProvider } from "@/core/InputProvider";
 
+import { Spawner } from "@/entities/Spawner";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -72,6 +73,13 @@ export function GameArena({
     PhysicsComponent.setSolids(solids);
     PhysicsComponent.setHazards(hazards);
 
+    const activeSpawners: Spawner[] = [
+      new Spawner("TURRET", 150, 370),   // High Left platform
+      new Spawner("TURRET", 850, 370),   // High Right platform
+      new Spawner("LANCER", 500, 600),   // Central Floating bridge
+      new Spawner("FLYER", 500, 300)     // Hover Center patroller
+    ];
+
     const pool = new ObjectPool(() => new Projectile(), 60);
     Registry.projectilePool = pool;
 
@@ -97,6 +105,44 @@ export function GameArena({
       player.update(dt);
       boss.update(dt);
 
+      // Update Spawners
+      for (const spawner of activeSpawners) {
+        spawner.update(dt);
+      }
+
+      // Update Minions
+      const activeMinions = [...Registry.minions];
+      for (const minion of activeMinions) {
+        minion.update(dt);
+
+        // Player-Minion contact damage check
+        if (!player.isDead && !minion.isDead) {
+          const pW = player.size.width / 2;
+          const pH = player.size.height / 2;
+          const mW = minion.size.width / 2;
+          const mH = minion.size.height / 2;
+
+          const isColliding = (
+            player.position.x + pW > minion.position.x - mW &&
+            player.position.x - pW < minion.position.x + mW &&
+            player.position.y + pH > minion.position.y - mH &&
+            player.position.y - pH < minion.position.y + mH
+          );
+
+          if (isColliding) {
+            const playerHealth = player.getComponent(HealthComponent);
+            if (playerHealth) {
+              const damaged = playerHealth.takeDamage(1);
+              if (damaged) {
+                const knockbackDir = Math.sign(player.position.x - minion.position.x);
+                player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+                player.velocity.y = -350;
+              }
+            }
+          }
+        }
+      }
+
       const activeProjectiles = [...pool.getActive()];
       for (const proj of activeProjectiles) {
         proj.update(dt);
@@ -108,6 +154,7 @@ export function GameArena({
       if (pHealth) setPlayerHP(pHealth.currentHealth);
       if (bHealth) setBossHP(bHealth.currentHealth);
 
+      // Dialogue triggers
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
         triggerDialogue("player", "I found you. Your control over this chamber ends now!");
@@ -170,6 +217,12 @@ export function GameArena({
       boss.draw(ctx);
       player.draw(ctx);
 
+      // Draw Minions
+      const activeMinionsToDraw = Registry.minions;
+      for (const minion of activeMinionsToDraw) {
+        minion.draw(ctx);
+      }
+
       const activeProjectiles = pool.getActive();
       for (const proj of activeProjectiles) {
         proj.draw(ctx);
@@ -190,6 +243,12 @@ export function GameArena({
       Registry.player = null;
       Registry.boss = null;
       Registry.projectilePool = null;
+
+      // Clean up active spawners
+      for (const spawner of activeSpawners) {
+        spawner.cleanup();
+      }
+      Registry.minions = [];
     };
   }, []);
 

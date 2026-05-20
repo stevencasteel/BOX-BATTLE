@@ -307,8 +307,11 @@ export class Player extends BaseEntity {
   }
 
   private checkMeleeAttackContact() {
-    const boss = Registry.boss;
-    if (!boss || boss.isDead) return;
+    const targets = [];
+    if (Registry.boss && !Registry.boss.isDead) targets.push(Registry.boss);
+    for (const minion of Registry.minions) {
+      if (minion && !minion.isDead) targets.push(minion);
+    }
 
     let attackHitbox: Rectangle;
     if (this.attackDirection === "up") {
@@ -328,22 +331,24 @@ export class Player extends BaseEntity {
       };
     }
 
-    const bossHalfW = boss.size.width / 2;
-    const bossHalfH = boss.size.height / 2;
+    for (const target of targets) {
+      const halfW = target.size.width / 2;
+      const halfH = target.size.height / 2;
 
-    const isHit = (
-      attackHitbox.x + attackHitbox.width > boss.position.x - bossHalfW &&
-      attackHitbox.x < boss.position.x + bossHalfW &&
-      attackHitbox.y + attackHitbox.height > boss.position.y - bossHalfH &&
-      attackHitbox.y < boss.position.y + bossHalfH
-    );
+      const isHit = (
+        attackHitbox.x + attackHitbox.width > target.position.x - halfW &&
+        attackHitbox.x < target.position.x + halfW &&
+        attackHitbox.y + attackHitbox.height > target.position.y - halfH &&
+        attackHitbox.y < target.position.y + halfH
+      );
 
-    if (isHit) {
-      const bossHealth = boss.getComponent(HealthComponent);
-      if (bossHealth) {
-        const damaged = bossHealth.takeDamage(1);
-        if (damaged) {
-          this.hasHitEnemyThisSwing = true;
+      if (isHit) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          const damaged = health.takeDamage(1);
+          if (damaged) {
+            this.hasHitEnemyThisSwing = true;
+          }
         }
       }
     }
@@ -357,22 +362,27 @@ export class Player extends BaseEntity {
       height: 44.5
     };
 
-    const boss = Registry.boss;
-    if (boss && !boss.isDead) {
-      const bossHalfW = boss.size.width / 2;
-      const bossHalfH = boss.size.height / 2;
+    const targets = [];
+    if (Registry.boss && !Registry.boss.isDead) targets.push(Registry.boss);
+    for (const minion of Registry.minions) {
+      if (minion && !minion.isDead) targets.push(minion);
+    }
+
+    for (const target of targets) {
+      const halfW = target.size.width / 2;
+      const halfH = target.size.height / 2;
 
       const isHit = (
-        pogoHitbox.x + pogoHitbox.width > boss.position.x - bossHalfW &&
-        pogoHitbox.x < boss.position.x + bossHalfW &&
-        pogoHitbox.y + pogoHitbox.height > boss.position.y - bossHalfH &&
-        pogoHitbox.y < boss.position.y + bossHalfH
+        pogoHitbox.x + pogoHitbox.width > target.position.x - halfW &&
+        pogoHitbox.x < target.position.x + halfW &&
+        pogoHitbox.y + pogoHitbox.height > target.position.y - halfH &&
+        pogoHitbox.y < target.position.y + halfH
       );
 
       if (isHit) {
-        const bossHealth = boss.getComponent(HealthComponent);
-        if (bossHealth) {
-          bossHealth.takeDamage(1);
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          health.takeDamage(1);
         }
 
         this.velocity.y = -this.pogoForce;

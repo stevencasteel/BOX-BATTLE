@@ -123,26 +123,43 @@ export class Projectile extends BaseEntity implements Poolable {
   }
 
   private checkEntityCollisions(): boolean {
-    const target = this.ownerId === "player" ? Registry.boss : Registry.player;
-    if (!target || target.isDead) return false;
+    const targets = [];
+    
+    if (this.ownerId === "boss") {
+      if (Registry.player && !Registry.player.isDead) {
+        targets.push(Registry.player);
+      }
+    } else {
+      if (Registry.boss && !Registry.boss.isDead) {
+        targets.push(Registry.boss);
+      }
+      for (const minion of Registry.minions) {
+        if (minion && !minion.isDead) {
+          targets.push(minion);
+        }
+      }
+    }
 
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
-    const tW = target.size.width / 2;
-    const tH = target.size.height / 2;
 
-    const isColliding = (
-      this.position.x + pW > target.position.x - tW &&
-      this.position.x - pW < target.position.x + tW &&
-      this.position.y + pH > target.position.y - tH &&
-      this.position.y - pH < target.position.y + tH
-    );
+    for (const target of targets) {
+      const tW = target.size.width / 2;
+      const tH = target.size.height / 2;
 
-    if (isColliding) {
-      const targetHealth = target.getComponent(HealthComponent);
-      if (targetHealth) {
-        targetHealth.takeDamage(this.damage);
-        return true;
+      const isColliding = (
+        this.position.x + pW > target.position.x - tW &&
+        this.position.x - pW < target.position.x + tW &&
+        this.position.y + pH > target.position.y - tH &&
+        this.position.y - pH < target.position.y + tH
+      );
+
+      if (isColliding) {
+        const targetHealth = target.getComponent(HealthComponent);
+        if (targetHealth) {
+          targetHealth.takeDamage(this.damage);
+          return true;
+        }
       }
     }
     return false;

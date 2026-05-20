@@ -46,9 +46,13 @@ export default function App() {
   const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   const navTo = (screen: ScreenState) => {
     soundSynth.playSelectTick();
+    if (screen === "PLAYING") {
+      setRetryCount((prev) => prev + 1);
+    }
     setCurrentScreen(screen);
     setMenuIndex(0);
     resetActions();
@@ -241,6 +245,7 @@ export default function App() {
         <div className="game-viewport-container">
           {currentScreen === "PLAYING" ? (
             <GameArena
+              key={retryCount}
               canvasRef={canvasRef}
               gameResult={gameResult}
               menuIndex={menuIndex}

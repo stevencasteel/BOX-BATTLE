@@ -48,12 +48,30 @@ export class HealthComponent implements Component {
     } else {
       soundSynth.playHitConfirm();
       
-      if (this.currentHealth <= 0) {
-        Camera.shake(25, 0.6); // Massive boss death shake
-        Camera.triggerHitStop(0.15); // Long boss death freeze
+      if (this.owner.id === "boss-01") {
+        if (this.currentHealth <= 0) {
+          Camera.shake(25, 0.6); // Massive boss death shake
+          Camera.triggerHitStop(0.15); // Long boss death freeze
+        } else {
+          Camera.shake(8, 0.15); // Standard boss damage shake
+          Camera.triggerHitStop(0.04); // Quick hit-stop
+        }
+      } else if (this.owner.id.startsWith("minion-")) {
+        if (this.currentHealth <= 0) {
+          Camera.shake(4, 0.15); // Light, clean minion death thud
+          Camera.triggerHitStop(0.03); // Quick, snappy death freeze
+        } else {
+          Camera.shake(2, 0.08); // Subtle minion hit rumble
+          Camera.triggerHitStop(0.01); // Snap-second fluid hit-stop
+        }
       } else {
-        Camera.shake(8, 0.15); // Standard boss damage shake
-        Camera.triggerHitStop(0.04); // Quick hit-stop
+        if (this.currentHealth <= 0) {
+          Camera.shake(10, 0.3);
+          Camera.triggerHitStop(0.08);
+        } else {
+          Camera.shake(4, 0.1);
+          Camera.triggerHitStop(0.02);
+        }
       }
     }
 
