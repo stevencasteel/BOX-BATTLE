@@ -4,6 +4,7 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { inputProvider } from "@/core/InputProvider";
 import { Registry } from "@/core/Registry";
 import { soundSynth } from "@/core/SoundSynth";
+import { Projectile } from "@/entities/Projectile";
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;
@@ -34,6 +35,9 @@ export class Player extends BaseEntity {
   private attackActive: boolean = false;
   private attackDirection: "side" | "up" | "down" | null = null;
   private hasHitEnemyThisSwing: boolean = false;
+
+  private chargeTimer: number = 0;
+  private isCharging: boolean = false;
 
   constructor(id: string) {
     super(id);
@@ -153,21 +157,38 @@ export class Player extends BaseEntity {
       this.velocity.y *= 0.4;
     }
 
-    if (inputProvider.isJustPressed("ATTACK") && this.attackCooldownTimer <= 0) {
-      this.attackActive = true;
-      this.attackActiveTimer = 0.1; 
-      this.attackCooldownTimer = 0.12; 
-      this.hasHitEnemyThisSwing = false;
+    if (inputProvider.isJustPressed("ATTACK")) {
+      this.isCharging = true;
+      this.chargeTimer = 0;
+    }
 
-      if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
-        this.attackDirection = "down";
-        this.checkPogoAttack();
-      } else if (inputProvider.isPressed("MOVE_UP")) {
-        this.attackDirection = "up";
-        soundSynth.playSlash();
-      } else {
-        this.attackDirection = "side";
-        soundSynth.playSlash();
+    if (this.isCharging && inputProvider.isPressed("ATTACK")) {
+      this.chargeTimer += dt;
+    }
+
+    if (inputProvider.isJustReleased("ATTACK")) {
+      if (this.isCharging) {
+        this.isCharging = false;
+        
+        if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
+          this.fireFireball();
+        } else {
+          this.attackActive = true;
+          this.attackActiveTimer = 0.1;
+          this.attackCooldownTimer = 0.12;
+          this.hasHitEnemyThisSwing = false;
+
+          if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+            this.attackDirection = "down";
+            this.checkPogoAttack();
+          } else if (inputProvider.isPressed("MOVE_UP")) {
+            this.attackDirection = "up";
+            soundSynth.playSlash();
+          } else {
+            this.attackDirection = "side";
+            soundSynth.playSlash();
+          }
+        }
       }
     }
 
@@ -176,6 +197,56 @@ export class Player extends BaseEntity {
     }
 
     super.update(dt);
+  }
+
+  private fireFireball() {
+    if (!Registry.projectilePool) return;
+
+    this.attackCooldownTimer = 0.12;
+
+    let dirX = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+    let dirY = 0;
+    
+    if (inputProvider.isPressed("MOVE_UP")) {
+      dirY = -1;
+    } else if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+      dirY = 1;
+    }
+
+    if (dirX === 0 && dirY === 0) {
+      dirX = this.facingDirection;
+    }
+
+    const mag = Math.sqrt(dirX * dirX + dirY * dirY);
+    const normalizedDir = { x: dirX / mag, y: dirY / mag };
+
+    const isLvl2 = this.chargeTimer >= 1.12;
+    const damage = isLvl2 ? 3 : 1;
+    const speed = isLvl2 ? 900 : 800;
+    const lifespan = isLvl2 ? 3.0 : 2.0;
+
+    const spawnX = this.position.x + normalizedDir.x * 30;
+    const spawnY = this.position.y + normalizedDir.y * 30;
+
+    const proj = Registry.projectilePool.get(
+      spawnX,
+      spawnY,
+      normalizedDir.x,
+      normalizedDir.y,
+      "player",
+      damage,
+      speed,
+      lifespan,
+      (p: Projectile) => Registry.projectilePool?.release(p)
+    );
+
+    if (isLvl2) {
+      proj.size = { width: 28, height: 28 };
+      soundSynth.playDash(); 
+    } else {
+      proj.size = { width: 14, height: 14 };
+      soundSynth.playJump(); 
+    }
   }
 
   private checkMeleeAttackContact() {
@@ -256,6 +327,35 @@ export class Player extends BaseEntity {
       }
     }
 
+    const pool = Registry.projectilePool;
+    if (pool) {
+      const activeProjectiles = [...pool.getActive()];
+      for (const proj of activeProjectiles) {
+        if (proj.isActive && proj.ownerId === "boss") {
+          const pW = proj.size.width / 2;
+          const pH = proj.size.height / 2;
+
+          const isHit = (
+            pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
+            pogoHitbox.x < proj.position.x + pW &&
+            pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
+            pogoHitbox.y < proj.position.y + pH
+          );
+
+          if (isHit) {
+            pool.release(proj);
+
+            this.velocity.y = -this.pogoForce;
+            this.position.y -= 2; 
+            this.hasDoubleJump = true;
+            this.canDash = true;
+            soundSynth.playPogo();
+            return; 
+          }
+        }
+      }
+    }
+
     for (const solid of PhysicsComponent.solids) {
       const isHit = (
         pogoHitbox.x + pogoHitbox.width > solid.x &&
@@ -295,6 +395,21 @@ export class Player extends BaseEntity {
     );
 
     ctx.shadowBlur = 0;
+
+    if (this.isCharging && this.chargeTimer >= 0.25) {
+      const isLvl2 = this.chargeTimer >= 1.12;
+      ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
+      ctx.lineWidth = isLvl2 ? 3 : 1.5;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x,
+        this.position.y,
+        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    }
 
     if (this.attackActive) {
       this.drawAttackVisual(ctx);

@@ -2,6 +2,8 @@ import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
 import { Registry } from "@/core/Registry";
+import { soundSynth } from "@/core/SoundSynth";
+import { Projectile } from "@/entities/Projectile";
 
 export type BossState = "COOLDOWN" | "PATROL" | "TELEGRAPH" | "LUNGE" | "DEAD";
 
@@ -9,21 +11,22 @@ export class Boss extends BaseEntity {
   public health!: HealthComponent;
   private physics!: PhysicsComponent;
 
-  // Configuration Speed & Tuning
   private patrolSpeed: number = 200;
   private lungeSpeed: number = 1200;
   
-  // State Machine Timers
   public state: BossState = "COOLDOWN";
   private stateTimer: number = 1.0;
   private facingDirection: number = -1;
   private currentPhase: number = 1;
 
+  private shootTimer: number = 0;
+  private volleyCount: number = 0;
+  private volleyTimer: number = 0;
+
   constructor(id: string) {
     super(id);
     this.size = { width: 60, height: 60 };
 
-    // Register active components
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 30,
@@ -39,40 +42,45 @@ export class Boss extends BaseEntity {
       return;
     }
 
-    // 1. Process Phase Shifts based on HP thresholds (70% and 40%)
     this.evaluatePhaseShifts();
-
-    // 2. Track Player Direction
     this.trackPlayer();
 
-    // 3. Process State Timers
     this.stateTimer -= dt;
+    this.shootTimer -= dt;
 
-    // 4. State Updates
+    if (this.shootTimer <= 0) {
+      this.triggerRangedAttack();
+    }
+
+    if (this.volleyCount > 0) {
+      this.volleyTimer -= dt;
+      if (this.volleyTimer <= 0) {
+        this.fireSingleShotAtPlayer();
+        this.volleyCount--;
+        this.volleyTimer = 0.2; 
+      }
+    }
+
     switch (this.state) {
       case "COOLDOWN":
         this.velocity.x = 0;
         if (this.stateTimer <= 0) {
           this.state = "PATROL";
-          this.stateTimer = this.currentPhase === 3 ? 1.5 : 2.5; // Patrol duration
+          this.stateTimer = this.currentPhase === 3 ? 1.5 : 2.5; 
         }
         break;
 
       case "PATROL":
-        // Move back and forth
         this.velocity.x = this.facingDirection * this.patrolSpeed;
         
-        // Turn around on wall hit
         if (this.physics.isOnWallLeft) {
           this.facingDirection = 1;
         } else if (this.physics.isOnWallRight) {
           this.facingDirection = -1;
         }
 
-        // Randomly check if we want to lunge at the player
         if (this.stateTimer <= 0) {
           this.state = "TELEGRAPH";
-          // Phase 3 rage reduces preparation latency
           this.stateTimer = this.currentPhase === 3 ? 0.4 : 0.8; 
           this.velocity.x = 0;
         }
@@ -82,9 +90,8 @@ export class Boss extends BaseEntity {
         this.velocity.x = 0;
         if (this.stateTimer <= 0) {
           this.state = "LUNGE";
-          this.stateTimer = 0.5; // Lunge duration
+          this.stateTimer = 0.5; 
           
-          // Set direction towards player at the exact moment of lunge
           const player = Registry.player;
           if (player) {
             const dir = Math.sign(player.position.x - this.position.x);
@@ -94,21 +101,91 @@ export class Boss extends BaseEntity {
         break;
 
       case "LUNGE":
-        // Charge with high velocity
         this.velocity.x = this.facingDirection * this.lungeSpeed;
         
         if (this.stateTimer <= 0 || this.physics.isOnWallLeft || this.physics.isOnWallRight) {
           this.state = "COOLDOWN";
-          // Phase 3 reduces post-attack recovery down-time
           this.stateTimer = this.currentPhase === 3 ? 0.5 : 1.2;
         }
         break;
     }
 
-    // Apply Contact Damage to Player on Touch
     this.checkPlayerContact();
 
     super.update(dt);
+  }
+
+  private triggerRangedAttack() {
+    if (this.state === "TELEGRAPH" || this.state === "LUNGE") {
+      this.shootTimer = 0.5; 
+      return;
+    }
+
+    if (this.currentPhase === 1) {
+      this.fireSingleShotAtPlayer();
+      this.shootTimer = 2.0;
+    } else if (this.currentPhase === 2) {
+      this.volleyCount = 3;
+      this.volleyTimer = 0;
+      this.shootTimer = 2.5;
+    } else if (this.currentPhase === 3) {
+      this.fireRadialOmniBurst();
+      this.shootTimer = 3.0;
+    }
+  }
+
+  private fireSingleShotAtPlayer() {
+    const player = Registry.player;
+    if (!player || !Registry.projectilePool || player.isDead) return;
+
+    const dx = player.position.x - this.position.x;
+    const dy = player.position.y - this.position.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag === 0) return;
+
+    const dirX = dx / mag;
+    const dirY = dy / mag;
+
+    Registry.projectilePool.get(
+      this.position.x + dirX * 40,
+      this.position.y + dirY * 40,
+      dirX,
+      dirY,
+      "boss",
+      1,
+      250, 
+      10.0, 
+      (p: Projectile) => Registry.projectilePool?.release(p)
+    );
+
+    soundSynth.playSlash(); 
+  }
+
+  private fireRadialOmniBurst() {
+    if (!Registry.projectilePool) return;
+
+    const projectileCount = 8;
+    const angleStep = (Math.PI * 2) / projectileCount;
+
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = Math.cos(angle);
+      const dirY = Math.sin(angle);
+
+      Registry.projectilePool.get(
+        this.position.x + dirX * 40,
+        this.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280, 
+        4.0,
+        (p: Projectile) => Registry.projectilePool?.release(p)
+      );
+    }
+
+    soundSynth.playDash(); 
   }
 
   private evaluatePhaseShifts() {
@@ -116,8 +193,8 @@ export class Boss extends BaseEntity {
     
     if (hpRatio <= 0.4 && this.currentPhase < 3) {
       this.currentPhase = 3;
-      this.patrolSpeed = 350; // Accelerate base patrol rate
-      this.lungeSpeed = 1400; // Intenisify lunge speeds
+      this.patrolSpeed = 350; 
+      this.lungeSpeed = 1400; 
     } else if (hpRatio <= 0.7 && this.currentPhase < 2) {
       this.currentPhase = 2;
       this.patrolSpeed = 260;
@@ -129,7 +206,6 @@ export class Boss extends BaseEntity {
     if (player && this.state !== "LUNGE") {
       const dirToPlayer = Math.sign(player.position.x - this.position.x);
       if (dirToPlayer !== 0) {
-        // Slowly update facing to follow player when in neutral/cooldown states
         this.facingDirection = dirToPlayer;
       }
     }
@@ -139,7 +215,6 @@ export class Boss extends BaseEntity {
     const player = Registry.player;
     if (!player || player.isDead) return;
 
-    // AABB overlapping check between Boss and Player bounding boxes
     const playerHalfW = player.size.width / 2;
     const playerHalfH = player.size.height / 2;
     const bossHalfW = this.size.width / 2;
@@ -159,7 +234,6 @@ export class Boss extends BaseEntity {
         const damaged = playerHealth.takeDamage(damageAmount);
         
         if (damaged) {
-          // Push player away from contact point (Knockback recoil)
           const knockbackDir = Math.sign(player.position.x - this.position.x);
           player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 500;
           player.velocity.y = -400;
@@ -171,19 +245,17 @@ export class Boss extends BaseEntity {
   public draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead) return;
 
-    // Hit-Flash Tint Layering
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; // Base Salmon Red
+      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
     }
 
-    // Phase 3 Rage Glow Accent
     if (this.currentPhase === 3) {
       ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
       ctx.shadowBlur = 25;
     } else if (this.state === "TELEGRAPH") {
-      ctx.fillStyle = "hsl(45, 100%, 50%)"; // Warning Gold
+      ctx.fillStyle = "hsl(45, 100%, 50%)"; 
       ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
       ctx.shadowBlur = 15;
     }

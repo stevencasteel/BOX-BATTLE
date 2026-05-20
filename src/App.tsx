@@ -6,6 +6,8 @@ import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { Registry } from "@/core/Registry";
 import { HealthComponent } from "@/components/HealthComponent";
+import { ObjectPool } from "@/core/ObjectPool";
+import { Projectile } from "@/entities/Projectile";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,6 +39,10 @@ export default function App() {
 
     PhysicsComponent.setSolids(solids);
 
+    // Initialize high-performance Projectile Object Pool
+    const pool = new ObjectPool(() => new Projectile(), 60);
+    Registry.projectilePool = pool;
+
     const player = new Player("player-01");
     player.position = { x: 200, y: 800 };
 
@@ -47,9 +53,17 @@ export default function App() {
     Registry.boss = boss;
 
     const handleUpdate = (dt: number) => {
+      // 1. Update Entities
       player.update(dt);
       boss.update(dt);
 
+      // 2. Update Active Projectiles
+      const activeProjectiles = [...pool.getActive()];
+      for (const proj of activeProjectiles) {
+        proj.update(dt);
+      }
+
+      // 3. Sync React state for HUD overlays
       const pHealth = player.getComponent(HealthComponent);
       const bHealth = boss.getComponent(HealthComponent);
 
@@ -76,8 +90,15 @@ export default function App() {
         ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
       }
 
+      // Draw Entities
       boss.draw(ctx);
       player.draw(ctx);
+
+      // Draw Active Projectiles
+      const activeProjectiles = pool.getActive();
+      for (const proj of activeProjectiles) {
+        proj.draw(ctx);
+      }
     };
 
     const loop = new GameLoop(handleUpdate, handleRender);
@@ -87,8 +108,10 @@ export default function App() {
       loop.cleanup();
       player.teardown();
       boss.teardown();
+      pool.clear();
       Registry.player = null;
       Registry.boss = null;
+      Registry.projectilePool = null;
     };
   }, []);
 
