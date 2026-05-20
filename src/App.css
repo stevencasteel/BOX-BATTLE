@@ -44,7 +44,7 @@ body {
   border-radius: 28px;
   background: #0f1218;
   padding: 20px;
-  box-shadow: 
+  box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
     inset 0 0 30px rgba(0, 0, 0, 0.9);
@@ -103,7 +103,7 @@ body {
   height: 100%;
 }
 
-/* CRT Filters - STRICTLY gameplay canvas only */
+/* CRT Filters - gameplay canvas only */
 .crt-scanlines {
   position: relative;
 }
@@ -112,7 +112,10 @@ body {
   content: " ";
   display: block;
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
   z-index: 99;
   background-size: 100% 4px;
@@ -124,8 +127,13 @@ body {
 }
 
 @keyframes crt-flicker-animation {
-  0% { opacity: 0.985; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.985;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Neumorphic Core Rules */
@@ -146,8 +154,10 @@ body {
   box-shadow: var(--shadow-light), var(--shadow-dark);
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
-  padding: 22px 44px;
-  font-size: 16px;
+  padding: 24px 48px;
+  /* Taller button padding */
+  font-size: 18px;
+  /* Scaled up text size */
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -199,18 +209,20 @@ body {
 
 /* Specific Modules */
 .title-banner {
-  margin-top: 24px;
+  padding-top: 45px;
+  /* Increased top padding across screen headers */
+  margin-top: 0;
   text-align: center;
 }
 
 .title-banner h1 {
   font-size: 4.8rem;
-  text-shadow: 0 4px 15px rgba(0,0,0,0.95);
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.95);
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
   text-transform: uppercase;
 }
 
@@ -225,8 +237,13 @@ body {
 }
 
 @keyframes crt-pulse {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .btn-container {
@@ -252,7 +269,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 36px;
+  padding: 28px 40px;
+  /* Taller card container */
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -329,7 +347,8 @@ body {
   gap: 14px;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 52vh;
+  max-height: 40vh;
+  /* Reduced slightly to prevent vertical layout compression */
 }
 
 .binding-row {
@@ -337,7 +356,7 @@ body {
   align-items: center;
   justify-content: space-between;
   font-size: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   padding: 12px 6px;
 }
 
@@ -351,12 +370,13 @@ body {
 .binding-btn {
   min-width: 100px;
   text-align: center;
-  font-size: 13px;
-  padding: 10px 16px;
+  font-size: 14px;
+  padding: 14px 22px;
+  /* Taller binding layout buttons */
   border-radius: 8px;
 }
 
-/* New Status Panel (Positions completely above game arena) */
+/* Status Panel */
 .cabinet-status-panel {
   width: 100%;
   display: flex;
@@ -427,11 +447,18 @@ body {
 }
 
 @keyframes arrow-blink {
-  0% { opacity: 0.3; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1.15); }
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
-/* Dialogue Board Classes (Renders completely below playing canvas) */
+/* Dialogue Board Classes */
 .dialogue-console {
   width: 100%;
   height: 130px;
@@ -442,7 +469,8 @@ body {
   flex-shrink: 0;
 }
 
-.dialogue-box-left, .dialogue-box-right {
+.dialogue-box-left,
+.dialogue-box-right {
   flex: 1;
   border-radius: 14px;
   padding: 16px 24px;
@@ -475,7 +503,7 @@ body {
   height: 64px;
   border-radius: 8px;
   flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.4);
+  border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .dialogue-text-container {
@@ -507,12 +535,29 @@ body {
 }
 
 @keyframes rumble-anim {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  20% { transform: translate(-1px, -1px) rotate(-1deg); }
-  40% { transform: translate(-1px, 1px) rotate(1deg); }
-  60% { transform: translate(1px, -1px) rotate(0deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  100% { transform: translate(1px, 1px) rotate(-1deg); }
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+
+  20% {
+    transform: translate(-1px, -1px) rotate(-1deg);
+  }
+
+  40% {
+    transform: translate(-1px, 1px) rotate(1deg);
+  }
+
+  60% {
+    transform: translate(1px, -1px) rotate(0deg);
+  }
+
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+
+  100% {
+    transform: translate(1px, 1px) rotate(-1deg);
+  }
 }
 
 /* Low Health Vignette Pulse */
@@ -532,8 +577,13 @@ body {
 }
 
 @keyframes vignette-heartbeat {
-  0% { opacity: 0.35; }
-  100% { opacity: 0.95; }
+  0% {
+    opacity: 0.35;
+  }
+
+  100% {
+    opacity: 0.95;
+  }
 }
 
 /* Chromatic split-channel CSS filter */
@@ -546,7 +596,7 @@ body {
   position: absolute;
   border-radius: 50%;
   border: 4px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 
+  box-shadow:
     inset 0 0 30px rgba(255, 255, 255, 0.3),
     0 0 40px rgba(255, 255, 255, 0.15);
   pointer-events: none;
@@ -556,7 +606,259 @@ body {
 }
 
 @keyframes blast-wave-expand {
-  0% { width: 0px; height: 0px; opacity: 1; filter: blur(1px); }
-  50% { filter: blur(6px); }
-  100% { width: 1200px; height: 1200px; opacity: 0; filter: blur(12px); }
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+    filter: blur(1px);
+  }
+
+  50% {
+    filter: blur(6px);
+  }
+
+  100% {
+    width: 1200px;
+    height: 1200px;
+    opacity: 0;
+    filter: blur(12px);
+  }
+}
+
+/* =========================================================================
+   OVERHAULED TITLE SCREEN DESIGN SYSTEM
+   ========================================================================= */
+
+.title-screen-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  padding: 14px 24px;
+  position: relative;
+}
+
+.title-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-screen-header {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 45px;
+  /* Added top padding space */
+}
+
+.system-tag {
+  font-size: 9px;
+  color: #4a5568;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 5px 14px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title-banner-overhauled {
+  text-align: center;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.title-banner-overhauled h1 {
+  font-size: 3.5rem;
+  margin: 0;
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+}
+
+.title-subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.subtitle-line {
+  height: 1px;
+  flex-grow: 1;
+  max-width: 80px;
+  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
+}
+
+.subtitle-text {
+  font-size: 11px;
+  color: var(--signal-green);
+  margin: 0;
+  letter-spacing: 0.35em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.title-screen-center {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.btn-container-overhauled {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Large Interactive Vector Buttons */
+.neo-btn-large {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 24px 32px;
+  /* Taller button layout */
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  text-align: left;
+}
+
+.neo-btn-large:hover {
+  background: #141922;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.neo-btn-large-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+}
+
+.neo-btn-large .btn-indicator-light {
+  width: 8px;
+  /* Slightly scaled up */
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  margin-right: 24px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-large-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow: 0 0 10px var(--signal-green), 0 0 20px var(--signal-green-glow);
+}
+
+.btn-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.btn-main-label {
+  font-size: 18px;
+  /* Scaled up main text inside button */
+  font-weight: 800;
+  color: #a0aec0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large-focused .btn-main-label {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.btn-sub-label {
+  font-size: 10px;
+  /* Scaled up subtitle text inside button */
+  font-weight: 500;
+  color: #4a5568;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large-focused .btn-sub-label {
+  color: var(--signal-green);
+  opacity: 0.85;
+}
+
+.cursor-arrow-large {
+  color: var(--signal-green);
+  font-size: 18px;
+  /* Scaled up arrow icon */
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  margin-left: 10px;
+}
+
+/* Title Footer elements */
+.title-screen-footer {
+  z-index: 2;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.footer-deco-line {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 80%, transparent);
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.footer-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  color: #4a5568;
+  letter-spacing: 0.15em;
+  padding: 0 16px;
+  text-transform: uppercase;
+}
+
+.footer-center-prompt {
+  color: #718096;
+  font-weight: bold;
 }

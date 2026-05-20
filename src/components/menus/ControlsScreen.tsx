@@ -23,12 +23,12 @@ export function ControlsScreen({
 }: ControlsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "12px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY BINDINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Keyboard mapping configuration</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY BINDINGS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Keyboard mapping configuration</p>
       </div>
 
-      <div className="flex-row" style={{ gap: "16px", margin: "4px 0" }}>
+      <div className="flex-row" style={{ gap: "16px", margin: "12px 0" }}>
         <button
           onClick={() => {
             settingsManager.setPreset("DEFAULT_1");
@@ -36,10 +36,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
           }}
         >
           PRESET 1
@@ -51,10 +52,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
           }}
         >
           PRESET 2
@@ -66,10 +68,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
           }}
         >
           CUSTOM
@@ -82,7 +85,7 @@ export function ControlsScreen({
           const isFocusedRow = menuIndex === idx;
           return (
             <div key={action} className="binding-row">
-              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "" }}>
+              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "13px" }}>
                 {isFocusedRow && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
                 {action.replace("_", " ")}
               </span>
@@ -93,7 +96,7 @@ export function ControlsScreen({
                     setRebindTarget({ action, index: 0 });
                   }}
                   className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
-                  style={{ 
+                  style={{
                     borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                     color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
                   }}
@@ -112,7 +115,7 @@ export function ControlsScreen({
         onClick={onBack}
         onMouseEnter={() => { playHoverTick(); setMenuIndex(7); }}
         className={`neo-btn ${menuIndex === 7 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
+        style={{ width: "100%", maxWidth: "240px", marginTop: "12px" }}
       >
         {menuIndex === 7 && <span className="cursor-arrow">▶</span>}
         Back
