@@ -1,21 +1,8 @@
+import { settingsManager } from "@/core/SettingsManager";
+
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
-  private keyMap: Record<string, Action> = {
-    "ArrowLeft": "MOVE_LEFT",
-    "KeyA": "MOVE_LEFT",
-    "ArrowRight": "MOVE_RIGHT",
-    "KeyD": "MOVE_RIGHT",
-    "ArrowUp": "MOVE_UP",
-    "KeyW": "MOVE_UP",
-    "ArrowDown": "MOVE_DOWN",
-    "KeyS": "MOVE_DOWN",
-    "KeyX": "JUMP",
-    "Space": "JUMP",
-    "KeyC": "ATTACK",
-    "KeyZ": "DASH"
-  };
-
   private pressed: Record<Action, boolean> = {
     MOVE_LEFT: false,
     MOVE_RIGHT: false,
@@ -53,10 +40,19 @@ class InputProvider {
     }
   }
 
+  private getActionFromCode(code: string): Action | null {
+    const keyMap = settingsManager.getKeyMap();
+    for (const action in keyMap) {
+      if (keyMap[action as Action]?.includes(code)) {
+        return action as Action;
+      }
+    }
+    return null;
+  }
+
   private handleKeyDown = (e: KeyboardEvent) => {
-    const action = this.keyMap[e.code];
+    const action = this.getActionFromCode(e.code);
     if (action) {
-      // Prevent browser default scroll behaviors
       e.preventDefault();
       if (!this.pressed[action]) {
         this.justPressed[action] = true;
@@ -66,7 +62,7 @@ class InputProvider {
   };
 
   private handleKeyUp = (e: KeyboardEvent) => {
-    const action = this.keyMap[e.code];
+    const action = this.getActionFromCode(e.code);
     if (action) {
       e.preventDefault();
       if (this.pressed[action]) {
@@ -95,10 +91,6 @@ class InputProvider {
     return axis;
   }
 
-  /**
-   * Clears single-frame state buffers.
-   * MUST be called at the very end of your Game Loop update tick.
-   */
   public postUpdate() {
     for (const key in this.justPressed) {
       const action = key as Action;

@@ -1,0 +1,39 @@
+===========================================================================
+  STEVEN CASTEEL // BOX BATTLE CABINET ENGINE
+  AI Architecture & Development Guidelines
+===========================================================================
+
+1. SYSTEM IDENTITY & THEME DESIGN
+---------------------------------
+This project represents a professional high-performance retro-arcade game engine built on TypeScript and a flat, responsive HTML5 Canvas context.
+- Colors: Dominant void black surfaces (#0c0d11), secondary dark steel blocks (#1e1e24), primary neon Matrix green indicators (#22c55e / hsl(142, 71%, 58%)), hazard red warning spikes/lasers (hsl(350, 80%, 60%)).
+- Geometry: Pure high-precision geometric rectangle forms. Static block structures, laser arrays, and flat entities.
+
+2. MODULAR ARCHITECTURE (ECS-LITE)
+----------------------------------
+- Entities (BaseEntity.ts): Act as pure spatial nodes carrying state (position, velocity, size).
+- Components (Component.ts): Separate logic controllers (Health, Physics, Input) attached to entities that orchestrate behavior.
+- Solvers: Axis-independent kinematic collision solvers to isolate axes, snap to block interfaces, and avoid boundary clipping during performance drops.
+
+3. WEB AUDIO RETRO SYNTHESIS
+----------------------------
+- Avoid static MP3/WAV file assets.
+- Generate procedural retro sounds on-the-fly using the Web Audio API (OscillatorNode, GainNode, AudioBuffer).
+- Keep sound-gain controls relative and bound to real-time mixer configurations.
+
+4. WORKFLOW PROTOCOLS (CRITICAL)
+--------------------------------
+- Fulloverwrites only: Overwrite or create files completely using the "cat << 'EOF' > path/to/file" terminal command structures.
+- No Bash Comments: Never include hash comments (#) inside any active shell/bash code blocks to maintain Zsh-interactive parser integrity.
+- ESM Only: All build tool scripts must be pure ES Modules (import/export).
+- Testing: Instruct the developer on specific testing targets via "npm run dev" to verify build consistency at any checkpoint.
+
+
+Commits
+     
+     git add / commit / push commands with a detailed commit
+     description. Format:
+       git add . && git commit -m "title" -m "description" && git push
+     Don't provide the commit until the user asks for it.
+     For git add, always use the period .
+     Don't repeat information from previous commits.

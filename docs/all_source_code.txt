@@ -1,0 +1,2514 @@
+┌──────────────────────────────────────────────────┐
+│              BOX BATTLE ENGINE WEB               │
+│               Vite + React Context               │
+└──────────────────────────────────────────────────┘
+ [SYSTEM] Generated: 5/20/2026, 3:07:06 PM
+ [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
+
+─── SOURCE FILES ───────────────────────────────────
+
+● ./README.md
+────────────────────────────────────────────────────
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+
+
+● ./eslint.config.js
+────────────────────────────────────────────────────
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+])
+
+
+
+● ./index.html
+────────────────────────────────────────────────────
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>box-battle</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+
+
+● ./package.json
+────────────────────────────────────────────────────
+{
+  "name": "box-battle",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}
+
+
+
+● ./src/App.css
+────────────────────────────────────────────────────
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+
+
+
+● ./src/App.tsx
+────────────────────────────────────────────────────
+import { useEffect, useRef, useState } from "react";
+import GameLoop from "@/core/GameLoop";
+import { inputProvider } from "@/core/InputProvider";
+import { PhysicsComponent, Rectangle } from "@/components/PhysicsComponent";
+import { Player } from "@/entities/Player";
+import { Boss } from "@/entities/Boss";
+import { Registry } from "@/core/Registry";
+import { HealthComponent } from "@/components/HealthComponent";
+import { ObjectPool } from "@/core/ObjectPool";
+import { Projectile } from "@/entities/Projectile";
+import { Camera } from "@/core/Camera";
+
+export default function App() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const [playerHP, setPlayerHP] = useState(5);
+  const [bossHP, setBossHP] = useState(30);
+  const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
+
+  const solids: Rectangle[] = [
+    // Left Floor (Standard 80px height)
+    { x: 0, y: 920, width: 300, height: 80 },
+    // Central Floor Base (Half height: 40px)
+    { x: 300, y: 960, width: 400, height: 40 },
+    // Right Floor (Standard 80px height)
+    { x: 700, y: 920, width: 300, height: 80 },
+    
+    // Ceiling
+    { x: 0, y: 0, width: 1000, height: 50 },
+    // Left Wall
+    { x: 0, y: 0, width: 50, height: 1000 },
+    // Right Wall
+    { x: 950, y: 0, width: 50, height: 1000 },
+    
+    // Floating Platforms
+    { x: 300, y: 650, width: 400, height: 40 },
+    { x: 50, y: 420, width: 200, height: 40 },
+    { x: 750, y: 420, width: 200, height: 40 }
+  ];
+
+  // Hazards (Spikes) occupy the top half of the central gap (starts at 920, height 80)
+  const hazards: Rectangle[] = [
+    { x: 300, y: 920, width: 400, height: 80 }
+  ];
+
+  const restartGame = () => {
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    PhysicsComponent.setSolids(solids);
+    PhysicsComponent.setHazards(hazards);
+
+    const pool = new ObjectPool(() => new Projectile(), 60);
+    Registry.projectilePool = pool;
+
+    const player = new Player("player-01");
+    player.position = { x: 150, y: 800 };
+
+    const boss = new Boss("boss-01");
+    boss.position = { x: 850, y: 800 };
+
+    Registry.player = player;
+    Registry.boss = boss;
+
+    Camera.reset();
+
+    const handleUpdate = (dt: number) => {
+      if (Camera.hitStopTimer > 0) {
+        Camera.update(dt);
+        return; 
+      }
+
+      Camera.update(dt);
+      player.update(dt);
+      boss.update(dt);
+
+      const activeProjectiles = [...pool.getActive()];
+      for (const proj of activeProjectiles) {
+        proj.update(dt);
+      }
+
+      const pHealth = player.getComponent(HealthComponent);
+      const bHealth = boss.getComponent(HealthComponent);
+
+      if (pHealth) setPlayerHP(pHealth.currentHealth);
+      if (bHealth) setBossHP(bHealth.currentHealth);
+
+      if (player.isDead) {
+        setGameResult("GAMEOVER");
+      } else if (boss.isDead) {
+        setGameResult("VICTORY");
+      }
+
+      inputProvider.postUpdate();
+    };
+
+    const handleRender = () => {
+      ctx.fillStyle = "#0c0d11"; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(Camera.offsetX, Camera.offsetY);
+
+      // Draw Solids
+      ctx.fillStyle = "#1e1e24"; 
+      for (const solid of solids) {
+        ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+      }
+
+      // Draw Spikes resting on the solid base (y: 960) pointing up to standard floor level (y: 920)
+      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      for (const hazard of hazards) {
+        const spikeWidth = 25;
+        const spikeCount = Math.floor(hazard.width / spikeWidth);
+        for (let i = 0; i < spikeCount; i++) {
+          ctx.beginPath();
+          ctx.moveTo(hazard.x + i * spikeWidth, 960); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960); 
+          ctx.fill();
+        }
+      }
+
+      boss.draw(ctx);
+      player.draw(ctx);
+
+      const activeProjectiles = pool.getActive();
+      for (const proj of activeProjectiles) {
+        proj.draw(ctx);
+      }
+
+      ctx.restore();
+    };
+
+    const loop = new GameLoop(handleUpdate, handleRender);
+    loop.start();
+
+    return () => {
+      loop.cleanup();
+      player.teardown();
+      boss.teardown();
+      pool.clear();
+      Camera.reset();
+      Registry.player = null;
+      Registry.boss = null;
+      Registry.projectilePool = null;
+    };
+  }, []);
+
+  return (
+    <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#050505] p-4 select-none relative">
+      <div className="relative rounded-2xl border border-white/5 bg-[#0c0d11] p-[4px] shadow-[0_20px_50px_rgba(0,0,0,0.95)] max-h-[85vh] max-w-[85vh] aspect-square">
+        <canvas
+          ref={canvasRef}
+          width={1000}
+          height={1000}
+          className="rounded-xl block w-full h-full object-contain"
+        />
+
+        <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
+          <div className="flex justify-between items-start w-full">
+            <div className="flex flex-col gap-1 bg-black/40 backdrop-blur-md border border-white/5 p-3 rounded-lg pointer-events-auto">
+              <span className="text-[10px] font-mono text-muted uppercase tracking-widest">Player HP</span>
+              <div className="flex gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-3.5 h-3.5 rounded-sm border ${
+                      i < playerHP
+                        ? "bg-green-500 border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+                        : "bg-void border-white/10"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-1 bg-black/40 backdrop-blur-md border border-white/5 p-3 rounded-lg w-48 sm:w-64 pointer-events-auto">
+              <div className="flex justify-between w-full text-[10px] font-mono uppercase tracking-widest">
+                <span className="text-red-400 font-bold">Ruler Box</span>
+                <span className="text-muted">{bossHP}/30</span>
+              </div>
+              <div className="w-full h-2 bg-void border border-white/10 rounded-sm overflow-hidden">
+                <div
+                  className="h-full bg-red-500 transition-all duration-150 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                  style={{ width: `${(bossHP / 30) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {gameResult !== "PLAYING" && (
+            <div className="absolute inset-0 bg-void/90 backdrop-blur-md rounded-xl flex flex-col items-center justify-center p-6 pointer-events-auto z-50">
+              {gameResult === "GAMEOVER" ? (
+                <div className="text-center space-y-4">
+                  <h1 className="text-3xl md:text-5xl font-mono font-bold uppercase tracking-widest text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.7)] animate-pulse">
+                    Transmission Lost
+                  </h1>
+                  <p className="text-xs font-mono text-muted uppercase tracking-widest">
+                    The cabinet connection has been terminated.
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <h1 className="text-3xl md:text-5xl font-mono font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-yellow-400 to-blue-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.7)]">
+                    Ruler Decimated
+                  </h1>
+                  <p className="text-xs font-mono text-muted uppercase tracking-widest">
+                    The square room has been pacified successfully.
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={restartGame}
+                className="mt-8 font-mono font-bold text-xs uppercase tracking-widest border border-white/10 px-6 py-3 rounded-lg bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all text-white cursor-none"
+              >
+                [ Restart Simulation ]
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+● ./src/components/HealthComponent.ts
+────────────────────────────────────────────────────
+import { Component } from "@/entities/Component";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { soundSynth } from "@/core/SoundSynth";
+import { Camera } from "@/core/Camera";
+
+export class HealthComponent implements Component {
+  public owner!: BaseEntity;
+  public maxHealth: number = 5;
+  public currentHealth: number = 5;
+  
+  public invincibilityDuration: number = 0.15;
+  private invincibilityTimer: number = 0;
+  
+  public hitFlashTimer: number = 0;
+  public hitFlashDuration: number = 0.12;
+
+  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+    this.owner = owner;
+    if (dependencies) {
+      if (dependencies.maxHealth !== undefined) {
+        this.maxHealth = dependencies.maxHealth;
+        this.currentHealth = dependencies.maxHealth;
+      }
+      if (dependencies.invincibilityDuration !== undefined) {
+        this.invincibilityDuration = dependencies.invincibilityDuration;
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    if (this.invincibilityTimer > 0) this.invincibilityTimer -= dt;
+    if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
+  }
+
+  public takeDamage(amount: number): boolean {
+    if (this.invincibilityTimer > 0 || this.owner.isDead) {
+      return false;
+    }
+
+    this.currentHealth = Math.max(0, this.currentHealth - amount);
+    this.invincibilityTimer = this.invincibilityDuration;
+    this.hitFlashTimer = this.hitFlashDuration;
+
+    if (this.owner.id === "player-01") {
+      soundSynth.playHurt();
+      Camera.shake(15, 0.3); // Heavy player damage shake
+      Camera.triggerHitStop(0.08); // Tactile player hurt hit-stop
+    } else {
+      soundSynth.playHitConfirm();
+      
+      if (this.currentHealth <= 0) {
+        Camera.shake(25, 0.6); // Massive boss death shake
+        Camera.triggerHitStop(0.15); // Long boss death freeze
+      } else {
+        Camera.shake(8, 0.15); // Standard boss damage shake
+        Camera.triggerHitStop(0.04); // Quick hit-stop
+      }
+    }
+
+    if (this.currentHealth <= 0) {
+      this.owner.isDead = true;
+    }
+
+    return true;
+  }
+
+  public isInvincible(): boolean {
+    return this.invincibilityTimer > 0;
+  }
+
+  public isFlashing(): boolean {
+    return this.hitFlashTimer > 0;
+  }
+}
+
+
+
+● ./src/components/PhysicsComponent.ts
+────────────────────────────────────────────────────
+import { Component } from "@/entities/Component";
+import { BaseEntity } from "@/entities/BaseEntity";
+
+export interface Rectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export class PhysicsComponent implements Component {
+  public owner!: BaseEntity;
+  public gravity: number = 1200;
+  public isGrounded: boolean = false;
+  public isOnWallLeft: boolean = false;
+  public isOnWallRight: boolean = false;
+  
+  public static solids: Rectangle[] = [];
+  public static hazards: Rectangle[] = [];
+
+  public static setSolids(solids: Rectangle[]) {
+    PhysicsComponent.solids = solids;
+  }
+
+  public static setHazards(hazards: Rectangle[]) {
+    PhysicsComponent.hazards = hazards;
+  }
+
+  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+    this.owner = owner;
+    if (dependencies) {
+      if (dependencies.gravity !== undefined) {
+        this.gravity = dependencies.gravity;
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    if (!this.isGrounded) {
+      this.owner.velocity.y += this.gravity * dt;
+    }
+
+    this.isOnWallLeft = false;
+    this.isOnWallRight = false;
+
+    this.owner.position.x += this.owner.velocity.x * dt;
+    this.resolveCollisionsX();
+
+    this.isGrounded = false;
+    this.owner.position.y += this.owner.velocity.y * dt;
+    this.resolveCollisionsY();
+  }
+
+  private resolveCollisionsX() {
+    const ownerHalfW = this.owner.size.width / 2;
+
+    for (const solid of PhysicsComponent.solids) {
+      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+        if (this.owner.velocity.x > 0) {
+          this.owner.position.x = solid.x - ownerHalfW;
+          this.isOnWallRight = true;
+        } else if (this.owner.velocity.x < 0) {
+          this.owner.position.x = solid.x + solid.width + ownerHalfW;
+          this.isOnWallLeft = true;
+        }
+        this.owner.velocity.x = 0;
+      }
+    }
+  }
+
+  private resolveCollisionsY() {
+    const ownerHalfH = this.owner.size.height / 2;
+
+    for (const solid of PhysicsComponent.solids) {
+      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+        if (this.owner.velocity.y > 0) {
+          this.owner.position.y = solid.y - ownerHalfH;
+          this.owner.velocity.y = 0;
+          this.isGrounded = true;
+        } else if (this.owner.velocity.y < 0) {
+          this.owner.position.y = solid.y + solid.height + ownerHalfH;
+          this.owner.velocity.y = 0;
+        }
+      }
+    }
+  }
+
+  private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
+    const halfW = this.owner.size.width / 2;
+    const halfH = this.owner.size.height / 2;
+
+    const left = x - halfW;
+    const right = x + halfW;
+    const top = y - halfH;
+    const bottom = y + halfH;
+
+    return (
+      right > rect.x &&
+      left < rect.x + rect.width &&
+      bottom > rect.y &&
+      top < rect.y + rect.height
+    );
+  }
+}
+
+
+
+● ./src/core/Camera.ts
+────────────────────────────────────────────────────
+export class Camera {
+  public static offsetX: number = 0;
+  public static offsetY: number = 0;
+  public static hitStopTimer: number = 0;
+
+  private static shakeTimer: number = 0;
+  private static shakeDuration: number = 0;
+  private static shakeAmplitude: number = 0;
+
+  public static shake(amplitude: number, duration: number) {
+    Camera.shakeAmplitude = amplitude;
+    Camera.shakeDuration = duration;
+    Camera.shakeTimer = duration;
+  }
+
+  public static triggerHitStop(duration: number) {
+    Camera.hitStopTimer = duration;
+  }
+
+  public static update(dt: number) {
+    // 1. Tick Hit Stop
+    if (Camera.hitStopTimer > 0) {
+      Camera.hitStopTimer -= dt;
+    }
+
+    // 2. Tick Screen Shake
+    if (Camera.shakeTimer > 0) {
+      Camera.shakeTimer -= dt;
+      
+      if (Camera.shakeTimer <= 0) {
+        Camera.offsetX = 0;
+        Camera.offsetY = 0;
+      } else {
+        const decay = Camera.shakeTimer / Camera.shakeDuration;
+        Camera.offsetX = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
+        Camera.offsetY = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
+      }
+    } else {
+      Camera.offsetX = 0;
+      Camera.offsetY = 0;
+    }
+  }
+
+  public static reset() {
+    Camera.offsetX = 0;
+    Camera.offsetY = 0;
+    Camera.shakeTimer = 0;
+    Camera.hitStopTimer = 0;
+  }
+}
+
+
+
+● ./src/core/GameLoop.ts
+────────────────────────────────────────────────────
+class GameLoop {
+  private lastTime: number = 0;
+  private rafId: number | null = null;
+  private isRunning: boolean = false;
+
+  private onUpdate: (dt: number) => void;
+  private onRender: () => void;
+
+  constructor(onUpdate: (dt: number) => void, onRender: () => void) {
+    this.onUpdate = onUpdate;
+    this.onRender = onRender;
+
+    if (typeof window !== "undefined") {
+      document.addEventListener("visibilitychange", this.handleVisibilityChange);
+    }
+  }
+
+  public start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.lastTime = performance.now();
+    this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  public stop() {
+    this.isRunning = false;
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  private loop = (currentTime: number) => {
+    if (!this.isRunning) return;
+
+    let dt = (currentTime - this.lastTime) / 1000;
+    this.lastTime = currentTime;
+
+    if (dt > 0.1) {
+      dt = 0.1;
+    }
+
+    this.onUpdate(dt);
+    this.onRender();
+
+    this.rafId = requestAnimationFrame(this.loop);
+  };
+
+  private handleVisibilityChange = () => {
+    if (document.hidden) {
+      this.stop();
+    } else {
+      this.start();
+    }
+  };
+
+  public cleanup() {
+    this.stop();
+    if (typeof window !== "undefined") {
+      document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+    }
+  }
+}
+
+export default GameLoop;
+
+
+
+● ./src/core/InputProvider.ts
+────────────────────────────────────────────────────
+export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
+
+class InputProvider {
+  private keyMap: Record<string, Action> = {
+    "ArrowLeft": "MOVE_LEFT",
+    "KeyA": "MOVE_LEFT",
+    "ArrowRight": "MOVE_RIGHT",
+    "KeyD": "MOVE_RIGHT",
+    "ArrowUp": "MOVE_UP",
+    "KeyW": "MOVE_UP",
+    "ArrowDown": "MOVE_DOWN",
+    "KeyS": "MOVE_DOWN",
+    "KeyX": "JUMP",
+    "Space": "JUMP",
+    "KeyC": "ATTACK",
+    "KeyZ": "DASH"
+  };
+
+  private pressed: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false
+  };
+
+  private justPressed: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false
+  };
+
+  private justReleased: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false
+  };
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", this.handleKeyDown);
+      window.addEventListener("keyup", this.handleKeyUp);
+    }
+  }
+
+  private handleKeyDown = (e: KeyboardEvent) => {
+    const action = this.keyMap[e.code];
+    if (action) {
+      // Prevent browser default scroll behaviors
+      e.preventDefault();
+      if (!this.pressed[action]) {
+        this.justPressed[action] = true;
+        this.pressed[action] = true;
+      }
+    }
+  };
+
+  private handleKeyUp = (e: KeyboardEvent) => {
+    const action = this.keyMap[e.code];
+    if (action) {
+      e.preventDefault();
+      if (this.pressed[action]) {
+        this.justReleased[action] = true;
+        this.pressed[action] = false;
+      }
+    }
+  };
+
+  public isPressed(action: Action): boolean {
+    return this.pressed[action];
+  }
+
+  public isJustPressed(action: Action): boolean {
+    return this.justPressed[action];
+  }
+
+  public isJustReleased(action: Action): boolean {
+    return this.justReleased[action];
+  }
+
+  public getAxis(negative: Action, positive: Action): number {
+    let axis = 0;
+    if (this.pressed[negative]) axis -= 1;
+    if (this.pressed[positive]) axis += 1;
+    return axis;
+  }
+
+  /**
+   * Clears single-frame state buffers.
+   * MUST be called at the very end of your Game Loop update tick.
+   */
+  public postUpdate() {
+    for (const key in this.justPressed) {
+      const action = key as Action;
+      this.justPressed[action] = false;
+      this.justReleased[action] = false;
+    }
+  }
+
+  public cleanup() {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("keydown", this.handleKeyDown);
+      window.removeEventListener("keyup", this.handleKeyUp);
+    }
+  }
+}
+
+export const inputProvider = new InputProvider();
+
+
+
+● ./src/core/ObjectPool.ts
+────────────────────────────────────────────────────
+export interface Poolable {
+  isActive: boolean;
+  activate(...args: any[]): void;
+  deactivate(): void;
+}
+
+export class ObjectPool<T extends Poolable> {
+  private inactivePool: T[] = [];
+  private activePool: T[] = [];
+  private factory: () => T;
+
+  constructor(factory: () => T, initialSize: number = 20) {
+    this.factory = factory;
+
+    // Pre-populate pool
+    for (let i = 0; i < initialSize; i++) {
+      const instance = this.factory();
+      instance.deactivate();
+      this.inactivePool.push(instance);
+    }
+  }
+
+  /**
+   * Retrieves an inactive instance from the pool, activates it, 
+   * and tracks it in the active list.
+   */
+  public get(...args: any[]): T {
+    let instance: T;
+
+    if (this.inactivePool.length > 0) {
+      instance = this.inactivePool.pop()!;
+    } else {
+      // Fallback: scale pool size dynamically if we run out under heavy load
+      instance = this.factory();
+    }
+
+    instance.activate(...args);
+    this.activePool.push(instance);
+    return instance;
+  }
+
+  /**
+   * Deactivates an active instance and returns it to the inactive pool.
+   */
+  public release(instance: T) {
+    const index = this.activePool.indexOf(instance);
+    if (index !== -1) {
+      this.activePool.splice(index, 1);
+      instance.deactivate();
+      this.inactivePool.push(instance);
+    }
+  }
+
+  public getActive(): readonly T[] {
+    return this.activePool;
+  }
+
+  public clear() {
+    this.inactivePool = [];
+    this.activePool = [];
+  }
+}
+
+
+
+● ./src/core/Registry.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "@/entities/BaseEntity";
+import { ObjectPool } from "@/core/ObjectPool";
+import { Projectile } from "@/entities/Projectile";
+
+export class Registry {
+  public static player: BaseEntity | null = null;
+  public static boss: BaseEntity | null = null;
+  public static projectilePool: ObjectPool<Projectile> | null = null;
+}
+
+
+
+● ./src/core/SoundSynth.ts
+────────────────────────────────────────────────────
+class SoundSynth {
+  private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+
+  private init() {
+    if (this.ctx) return;
+    
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    this.ctx = new AudioContextClass();
+    
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.setValueAtTime(0.2, this.ctx.currentTime); // Standard 20% volume limit
+    this.masterGain.connect(this.ctx.destination);
+  }
+
+  private resumeContext() {
+    this.init();
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+  }
+
+  public playJump() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "triangle";
+    const now = this.ctx.currentTime;
+
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.12);
+
+    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
+  }
+
+  public playDash() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const now = this.ctx.currentTime;
+    const duration = 0.15;
+
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noiseNode = this.ctx.createBufferSource();
+    noiseNode.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.setValueAtTime(1200, now);
+    filter.frequency.exponentialRampToValueAtTime(600, now + duration);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    noiseNode.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    noiseNode.start(now);
+    noiseNode.stop(now + duration);
+  }
+
+  public playSlash() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.11);
+  }
+
+  public playHitConfirm() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = "square";
+    osc1.frequency.setValueAtTime(800, now);
+    osc1.frequency.setValueAtTime(1200, now + 0.04);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(400, now);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.09);
+    osc2.stop(now + 0.09);
+  }
+
+  public playPogo() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+
+    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.11);
+  }
+
+  public playHurt() {
+    this.resumeContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(250, now);
+
+    gain.gain.setValueAtTime(0.8, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
+  }
+}
+
+export const soundSynth = new SoundSynth();
+
+
+
+● ./src/entities/BaseEntity.ts
+────────────────────────────────────────────────────
+import { Component } from "./Component";
+
+export class BaseEntity {
+  public position = { x: 0, y: 0 };
+  public velocity = { x: 0, y: 0 };
+  public size = { width: 50, height: 50 };
+  public id: string;
+  public isDead: boolean = false;
+
+  private components = new Map<any, Component>();
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  public addComponent<T extends Component>(
+    componentClass: new (...args: any[]) => T,
+    component: T,
+    dependencies?: Record<string, any>
+  ): T {
+    component.setup(this, dependencies);
+    this.components.set(componentClass, component);
+    return component;
+  }
+
+  public getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | null {
+    const component = this.components.get(componentClass);
+    return (component as T) || null;
+  }
+
+  public update(dt: number) {
+    if (this.isDead) return;
+
+    for (const component of this.components.values()) {
+      if (component.update) {
+        component.update(dt);
+      }
+    }
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    if (this.isDead) return;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillRect(
+      this.position.x - this.size.width / 2,
+      this.position.y - this.size.height / 2,
+      this.size.width,
+      this.size.height
+    );
+  }
+
+  public teardown() {
+    for (const component of this.components.values()) {
+      if (component.teardown) {
+        component.teardown();
+      }
+    }
+    this.components.clear();
+  }
+}
+
+
+
+● ./src/entities/Boss.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "./BaseEntity";
+import { PhysicsComponent } from "@/components/PhysicsComponent";
+import { HealthComponent } from "@/components/HealthComponent";
+import { Registry } from "@/core/Registry";
+import { soundSynth } from "@/core/SoundSynth";
+import { Projectile } from "@/entities/Projectile";
+
+export type BossState = "COOLDOWN" | "PATROL" | "TELEGRAPH" | "LUNGE" | "DEAD";
+
+export class Boss extends BaseEntity {
+  public health!: HealthComponent;
+  private physics!: PhysicsComponent;
+
+  private patrolSpeed: number = 200;
+  private lungeSpeed: number = 1200;
+  
+  public state: BossState = "COOLDOWN";
+  private stateTimer: number = 1.0;
+  private facingDirection: number = -1;
+  private currentPhase: number = 1;
+
+  private shootTimer: number = 0;
+  private volleyCount: number = 0;
+  private volleyTimer: number = 0;
+
+  constructor(id: string) {
+    super(id);
+    this.size = { width: 60, height: 60 };
+
+    this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 30,
+      invincibilityDuration: 0.25 
+    });
+  }
+
+  public update(dt: number) {
+    if (this.isDead) {
+      this.state = "DEAD";
+      this.velocity.x = 0;
+      super.update(dt);
+      return;
+    }
+
+    this.evaluatePhaseShifts();
+    this.trackPlayer();
+
+    this.stateTimer -= dt;
+    this.shootTimer -= dt;
+
+    if (this.shootTimer <= 0) {
+      this.triggerRangedAttack();
+    }
+
+    if (this.volleyCount > 0) {
+      this.volleyTimer -= dt;
+      if (this.volleyTimer <= 0) {
+        this.fireSingleShotAtPlayer();
+        this.volleyCount--;
+        this.volleyTimer = 0.2; 
+      }
+    }
+
+    switch (this.state) {
+      case "COOLDOWN":
+        this.velocity.x = 0;
+        if (this.stateTimer <= 0) {
+          this.state = "PATROL";
+          this.stateTimer = this.currentPhase === 3 ? 1.5 : 2.5; 
+        }
+        break;
+
+      case "PATROL":
+        this.velocity.x = this.facingDirection * this.patrolSpeed;
+        
+        if (this.physics.isOnWallLeft) {
+          this.facingDirection = 1;
+        } else if (this.physics.isOnWallRight) {
+          this.facingDirection = -1;
+        }
+
+        if (this.stateTimer <= 0) {
+          this.state = "TELEGRAPH";
+          this.stateTimer = this.currentPhase === 3 ? 0.4 : 0.8; 
+          this.velocity.x = 0;
+        }
+        break;
+
+      case "TELEGRAPH":
+        this.velocity.x = 0;
+        if (this.stateTimer <= 0) {
+          this.state = "LUNGE";
+          this.stateTimer = 0.5; 
+          
+          const player = Registry.player;
+          if (player) {
+            const dir = Math.sign(player.position.x - this.position.x);
+            this.facingDirection = dir !== 0 ? dir : this.facingDirection;
+          }
+        }
+        break;
+
+      case "LUNGE":
+        this.velocity.x = this.facingDirection * this.lungeSpeed;
+        
+        if (this.stateTimer <= 0 || this.physics.isOnWallLeft || this.physics.isOnWallRight) {
+          this.state = "COOLDOWN";
+          this.stateTimer = this.currentPhase === 3 ? 0.5 : 1.2;
+        }
+        break;
+    }
+
+    this.checkPlayerContact();
+    this.checkHazardContact();
+
+    super.update(dt);
+  }
+
+  private triggerRangedAttack() {
+    if (this.state === "TELEGRAPH" || this.state === "LUNGE") {
+      this.shootTimer = 0.5; 
+      return;
+    }
+
+    if (this.currentPhase === 1) {
+      this.fireSingleShotAtPlayer();
+      this.shootTimer = 2.0;
+    } else if (this.currentPhase === 2) {
+      this.volleyCount = 3;
+      this.volleyTimer = 0;
+      this.shootTimer = 2.5;
+    } else if (this.currentPhase === 3) {
+      this.fireRadialOmniBurst();
+      this.shootTimer = 3.0;
+    }
+  }
+
+  private fireSingleShotAtPlayer() {
+    const player = Registry.player;
+    if (!player || !Registry.projectilePool || player.isDead) return;
+
+    const dx = player.position.x - this.position.x;
+    const dy = player.position.y - this.position.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag === 0) return;
+
+    const dirX = dx / mag;
+    const dirY = dy / mag;
+
+    Registry.projectilePool.get(
+      this.position.x + dirX * 40,
+      this.position.y + dirY * 40,
+      dirX,
+      dirY,
+      "boss",
+      1,
+      250, 
+      10.0, 
+      (p: Projectile) => Registry.projectilePool?.release(p)
+    );
+
+    soundSynth.playSlash(); 
+  }
+
+  private fireRadialOmniBurst() {
+    if (!Registry.projectilePool) return;
+
+    const projectileCount = 8;
+    const angleStep = (Math.PI * 2) / projectileCount;
+
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = Math.cos(angle);
+      const dirY = Math.sin(angle);
+
+      Registry.projectilePool.get(
+        this.position.x + dirX * 40,
+        this.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280, 
+        4.0,
+        (p: Projectile) => Registry.projectilePool?.release(p)
+      );
+    }
+
+    soundSynth.playDash(); 
+  }
+
+  private evaluatePhaseShifts() {
+    const hpRatio = this.health.currentHealth / this.health.maxHealth;
+    
+    if (hpRatio <= 0.4 && this.currentPhase < 3) {
+      this.currentPhase = 3;
+      this.patrolSpeed = 350; 
+      this.lungeSpeed = 1400; 
+    } else if (hpRatio <= 0.7 && this.currentPhase < 2) {
+      this.currentPhase = 2;
+      this.patrolSpeed = 260;
+    }
+  }
+
+  private trackPlayer() {
+    const player = Registry.player;
+    if (player && this.state !== "LUNGE") {
+      const dirToPlayer = Math.sign(player.position.x - this.position.x);
+      if (dirToPlayer !== 0) {
+        this.facingDirection = dirToPlayer;
+      }
+    }
+  }
+
+  private checkPlayerContact() {
+    const player = Registry.player;
+    if (!player || player.isDead) return;
+
+    const playerHalfW = player.size.width / 2;
+    const playerHalfH = player.size.height / 2;
+    const bossHalfW = this.size.width / 2;
+    const bossHalfH = this.size.height / 2;
+
+    const isColliding = (
+      this.position.x + bossHalfW > player.position.x - playerHalfW &&
+      this.position.x - bossHalfW < player.position.x + playerHalfW &&
+      this.position.y + bossHalfH > player.position.y - playerHalfH &&
+      this.position.y - bossHalfH < player.position.y + playerHalfH
+    );
+
+    if (isColliding) {
+      const playerHealth = player.getComponent(HealthComponent);
+      if (playerHealth) {
+        const damageAmount = this.state === "LUNGE" ? 2 : 1;
+        const damaged = playerHealth.takeDamage(damageAmount);
+        
+        if (damaged) {
+          const knockbackDir = Math.sign(player.position.x - this.position.x);
+          player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 500;
+          player.velocity.y = -400;
+        }
+      }
+    }
+  }
+
+  private checkHazardContact() {
+    if (this.health.isInvincible() || this.isDead) return;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+
+    for (const hazard of PhysicsComponent.hazards) {
+      const isHit = (
+        this.position.x + halfW > hazard.x &&
+        this.position.x - halfW < hazard.x + hazard.width &&
+        this.position.y + halfH > hazard.y &&
+        this.position.y - hazard.height < hazard.y + hazard.height
+      );
+
+      if (isHit) {
+        const damaged = this.health.takeDamage(1);
+        if (damaged && !this.isDead) {
+          this.velocity.y = -550; // Hazard bounce
+          this.physics.isGrounded = false;
+        }
+        break;
+      }
+    }
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    if (this.isDead) return;
+
+    if (this.health.isFlashing()) {
+      ctx.fillStyle = "white";
+    } else {
+      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+    }
+
+    if (this.currentPhase === 3) {
+      ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
+      ctx.shadowBlur = 25;
+    } else if (this.state === "TELEGRAPH") {
+      ctx.fillStyle = "hsl(45, 100%, 50%)"; 
+      ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
+      ctx.shadowBlur = 15;
+    }
+
+    ctx.fillRect(
+      this.position.x - this.size.width / 2,
+      this.position.y - this.size.height / 2,
+      this.size.width,
+      this.size.height
+    );
+
+    ctx.shadowBlur = 0;
+  }
+}
+
+
+
+● ./src/entities/Component.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "./BaseEntity";
+
+export interface Component {
+  setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
+  update?(dt: number): void;
+  teardown?(): void;
+}
+
+
+
+● ./src/entities/Player.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "./BaseEntity";
+import { PhysicsComponent, Rectangle } from "@/components/PhysicsComponent";
+import { HealthComponent } from "@/components/HealthComponent";
+import { inputProvider } from "@/core/InputProvider";
+import { Registry } from "@/core/Registry";
+import { soundSynth } from "@/core/SoundSynth";
+import { Projectile } from "@/entities/Projectile";
+
+interface GhostFrame {
+  x: number;
+  y: number;
+  opacity: number;
+}
+
+export class Player extends BaseEntity {
+  public health!: HealthComponent;
+  private physics!: PhysicsComponent;
+  
+  private moveSpeed: number = 450;
+  private jumpForce: number = 680;
+  private wallSlideSpeed: number = 120;
+  private dashSpeed: number = 1400;
+  private pogoForce: number = 450;
+
+  private coyoteTimer: number = 0;
+  private jumpBufferTimer: number = 0;
+  private hasDoubleJump: boolean = true;
+  private facingDirection: number = 1;
+
+  private wallCoyoteTimer: number = 0;
+  private lastWallNormal: number = 0;
+
+  private isDashing: boolean = false;
+  private dashTimer: number = 0;
+  private dashCooldown: number = 0;
+  private canDash: boolean = true;
+  private dashDirection: number = 1;
+
+  private attackCooldownTimer: number = 0;
+  private attackActiveTimer: number = 0;
+  private attackActive: boolean = false;
+  private attackDirection: "side" | "up" | "down" | null = null;
+  private hasHitEnemyThisSwing: boolean = false;
+
+  private chargeTimer: number = 0;
+  private isCharging: boolean = false;
+
+  private ghosts: GhostFrame[] = [];
+  private ghostSpawnTimer: number = 0;
+
+  constructor(id: string) {
+    super(id);
+    this.size = { width: 40, height: 80 }; 
+    this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 5,
+      invincibilityDuration: 1.5 
+    });
+  }
+
+  public update(dt: number) {
+    if (this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.dashCooldown -= dt;
+    this.attackCooldownTimer -= dt;
+    this.attackActiveTimer -= dt;
+
+    for (const ghost of this.ghosts) {
+      ghost.opacity -= dt * 5.0; 
+    }
+    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
+
+    if (this.attackActive && this.attackActiveTimer <= 0) {
+      this.attackActive = false;
+      this.attackDirection = null;
+    }
+
+    if (this.isDashing) {
+      this.dashTimer -= dt;
+      this.velocity.x = this.dashDirection * this.dashSpeed;
+      this.velocity.y = 0;
+
+      this.ghostSpawnTimer -= dt;
+      if (this.ghostSpawnTimer <= 0) {
+        this.ghosts.push({
+          x: this.position.x,
+          y: this.position.y,
+          opacity: 0.6
+        });
+        this.ghostSpawnTimer = 0.025;
+      }
+
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+        this.velocity.x *= 0.5; 
+      }
+
+      super.update(dt);
+      return;
+    }
+
+    if (this.physics.isGrounded) {
+      this.coyoteTimer = 0.1;
+      this.hasDoubleJump = true;
+      this.canDash = true;
+    } else {
+      this.coyoteTimer -= dt;
+    }
+
+    if (this.physics.isOnWallLeft) {
+      this.wallCoyoteTimer = 0.05;
+      this.lastWallNormal = 1; 
+      this.hasDoubleJump = true;
+      this.canDash = true;
+    } else if (this.physics.isOnWallRight) {
+      this.wallCoyoteTimer = 0.05;
+      this.lastWallNormal = -1; 
+      this.hasDoubleJump = true;
+      this.canDash = true;
+    } else {
+      this.wallCoyoteTimer -= dt;
+    }
+
+    const moveAxis = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+    this.velocity.x = moveAxis * this.moveSpeed;
+
+    if (moveAxis !== 0) {
+      this.facingDirection = Math.sign(moveAxis);
+    }
+
+    if (!this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0) {
+      if (moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal) {
+        this.velocity.y = Math.min(this.velocity.y, this.wallSlideSpeed);
+      }
+    }
+
+    if (inputProvider.isJustPressed("DASH") && this.canDash && this.dashCooldown <= 0) {
+      this.isDashing = true;
+      this.dashTimer = 0.15;
+      this.dashCooldown = 0.5;
+      this.canDash = false;
+      this.dashDirection = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
+      this.velocity.y = 0;
+      this.ghostSpawnTimer = 0; 
+      soundSynth.playDash();
+      
+      super.update(dt);
+      return;
+    }
+
+    if (inputProvider.isJustPressed("JUMP")) {
+      this.jumpBufferTimer = 0.1;
+    } else {
+      this.jumpBufferTimer -= dt;
+    }
+
+    if (this.jumpBufferTimer > 0) {
+      if (this.coyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.coyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        soundSynth.playJump();
+      } else if (this.wallCoyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.velocity.x = this.lastWallNormal * 1650; 
+        this.wallCoyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        this.canDash = true;
+        soundSynth.playJump();
+      } else if (this.hasDoubleJump) {
+        this.velocity.y = -this.jumpForce;
+        this.hasDoubleJump = false;
+        this.jumpBufferTimer = 0;
+        soundSynth.playJump();
+      }
+    }
+
+    if (inputProvider.isJustReleased("JUMP") && this.velocity.y < 0) {
+      this.velocity.y *= 0.4;
+    }
+
+    // --- Responsive Combat Input Checks ---
+    if (inputProvider.isJustPressed("ATTACK")) {
+      this.isCharging = true;
+      this.chargeTimer = 0;
+
+      // Instant standard slash on button press
+      if (this.attackCooldownTimer <= 0) {
+        this.attackActive = true;
+        this.attackActiveTimer = 0.1; 
+        this.attackCooldownTimer = 0.15; 
+        this.hasHitEnemyThisSwing = false;
+
+        if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+          this.attackDirection = "down";
+          this.checkPogoAttack();
+        } else if (inputProvider.isPressed("MOVE_UP")) {
+          this.attackDirection = "up";
+          soundSynth.playSlash();
+        } else {
+          this.attackDirection = "side";
+          soundSynth.playSlash();
+        }
+      }
+    }
+
+    if (this.isCharging && inputProvider.isPressed("ATTACK")) {
+      this.chargeTimer += dt;
+    }
+
+    if (inputProvider.isJustReleased("ATTACK")) {
+      if (this.isCharging) {
+        this.isCharging = false;
+        
+        // Fire Fireballs on release after holding
+        if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
+          this.fireFireball();
+        }
+      }
+    }
+
+    if (this.attackActive && !this.hasHitEnemyThisSwing && this.attackDirection !== "down") {
+      this.checkMeleeAttackContact();
+    }
+
+    this.checkHazardContact();
+
+    super.update(dt);
+  }
+
+  private checkHazardContact() {
+    if (this.health.isInvincible() || this.isDead) return;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+
+    for (const hazard of PhysicsComponent.hazards) {
+      const isHit = (
+        this.position.x + halfW > hazard.x &&
+        this.position.x - halfW < hazard.x + hazard.width &&
+        this.position.y + halfH > hazard.y &&
+        this.position.y - halfH < hazard.y + hazard.height
+      );
+
+      if (isHit) {
+        const damaged = this.health.takeDamage(1);
+        if (damaged && !this.isDead) {
+          this.velocity.y = -550; 
+          this.physics.isGrounded = false;
+        }
+        break;
+      }
+    }
+  }
+
+  private fireFireball() {
+    if (!Registry.projectilePool) return;
+
+    this.attackCooldownTimer = 0.12;
+
+    let dirX = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+    let dirY = 0;
+    
+    if (inputProvider.isPressed("MOVE_UP")) {
+      dirY = -1;
+    } else if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+      dirY = 1;
+    }
+
+    if (dirX === 0 && dirY === 0) {
+      dirX = this.facingDirection;
+    }
+
+    const mag = Math.sqrt(dirX * dirX + dirY * dirY);
+    const normalizedDir = { x: dirX / mag, y: dirY / mag };
+
+    const isLvl2 = this.chargeTimer >= 1.12;
+    const damage = isLvl2 ? 3 : 1;
+    const speed = isLvl2 ? 900 : 800;
+    const lifespan = isLvl2 ? 3.0 : 2.0;
+
+    const spawnX = this.position.x + normalizedDir.x * 30;
+    const spawnY = this.position.y + normalizedDir.y * 30;
+
+    const proj = Registry.projectilePool.get(
+      spawnX,
+      spawnY,
+      normalizedDir.x,
+      normalizedDir.y,
+      "player",
+      damage,
+      speed,
+      lifespan,
+      (p: Projectile) => Registry.projectilePool?.release(p)
+    );
+
+    if (isLvl2) {
+      proj.size = { width: 28, height: 28 };
+      soundSynth.playDash(); 
+    } else {
+      proj.size = { width: 14, height: 14 };
+      soundSynth.playJump(); 
+    }
+  }
+
+  private checkMeleeAttackContact() {
+    const boss = Registry.boss;
+    if (!boss || boss.isDead) return;
+
+    let attackHitbox: Rectangle;
+    if (this.attackDirection === "up") {
+      attackHitbox = {
+        x: this.position.x - 30,
+        y: this.position.y - 77.5,
+        width: 60,
+        height: 75
+      };
+    } else {
+      const offset = this.facingDirection * 40;
+      attackHitbox = {
+        x: this.position.x + offset - 50,
+        y: this.position.y - 40,
+        width: 100,
+        height: 80
+      };
+    }
+
+    const bossHalfW = boss.size.width / 2;
+    const bossHalfH = boss.size.height / 2;
+
+    const isHit = (
+      attackHitbox.x + attackHitbox.width > boss.position.x - bossHalfW &&
+      attackHitbox.x < boss.position.x + bossHalfW &&
+      attackHitbox.y + attackHitbox.height > boss.position.y - bossHalfH &&
+      attackHitbox.y < boss.position.y + bossHalfH
+    );
+
+    if (isHit) {
+      const bossHealth = boss.getComponent(HealthComponent);
+      if (bossHealth) {
+        const damaged = bossHealth.takeDamage(1);
+        if (damaged) {
+          this.hasHitEnemyThisSwing = true;
+        }
+      }
+    }
+  }
+
+  private checkPogoAttack() {
+    const pogoHitbox = {
+      x: this.position.x - 45,
+      y: this.position.y + 40, 
+      width: 90,
+      height: 44.5
+    };
+
+    const boss = Registry.boss;
+    if (boss && !boss.isDead) {
+      const bossHalfW = boss.size.width / 2;
+      const bossHalfH = boss.size.height / 2;
+
+      const isHit = (
+        pogoHitbox.x + pogoHitbox.width > boss.position.x - bossHalfW &&
+        pogoHitbox.x < boss.position.x + bossHalfW &&
+        pogoHitbox.y + pogoHitbox.height > boss.position.y - bossHalfH &&
+        pogoHitbox.y < boss.position.y + bossHalfH
+      );
+
+      if (isHit) {
+        const bossHealth = boss.getComponent(HealthComponent);
+        if (bossHealth) {
+          bossHealth.takeDamage(1);
+        }
+
+        this.velocity.y = -this.pogoForce;
+        this.position.y -= 2; 
+        this.hasDoubleJump = true;
+        this.canDash = true;
+        soundSynth.playPogo();
+        return; 
+      }
+    }
+
+    const pool = Registry.projectilePool;
+    if (pool) {
+      const activeProjectiles = [...pool.getActive()];
+      for (const proj of activeProjectiles) {
+        if (proj.isActive && proj.ownerId === "boss") {
+          const pW = proj.size.width / 2;
+          const pH = proj.size.height / 2;
+
+          const isHit = (
+            pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
+            pogoHitbox.x < proj.position.x + pW &&
+            pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
+            pogoHitbox.y < proj.position.y + pH
+          );
+
+          if (isHit) {
+            pool.release(proj);
+
+            this.velocity.y = -this.pogoForce;
+            this.position.y -= 2; 
+            this.hasDoubleJump = true;
+            this.canDash = true;
+            soundSynth.playPogo();
+            return; 
+          }
+        }
+      }
+    }
+
+    for (const solid of PhysicsComponent.solids) {
+      const isHit = (
+        pogoHitbox.x + pogoHitbox.width > solid.x &&
+        pogoHitbox.x < solid.x + solid.width &&
+        pogoHitbox.y + pogoHitbox.height > solid.y &&
+        pogoHitbox.y < solid.y + solid.height
+      );
+
+      if (isHit) {
+        this.velocity.y = -this.pogoForce;
+        this.position.y -= 2; 
+        this.hasDoubleJump = true;
+        this.canDash = true;
+        soundSynth.playPogo();
+        break;
+      }
+    }
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    if (this.isDead) return;
+
+    for (const ghost of this.ghosts) {
+      ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+      ctx.fillRect(
+        ghost.x - this.size.width / 2,
+        ghost.y - this.size.height / 2,
+        this.size.width,
+        this.size.height
+      );
+    }
+
+    if (this.health.isFlashing()) {
+      ctx.fillStyle = "white";
+    } else {
+      ctx.fillStyle = "hsl(142, 71%, 58%)"; 
+    }
+
+    ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
+    ctx.shadowBlur = this.isDashing ? 25 : 15;
+    
+    ctx.fillRect(
+      this.position.x - this.size.width / 2,
+      this.position.y - this.size.height / 2,
+      this.size.width,
+      this.size.height
+    );
+
+    ctx.shadowBlur = 0;
+
+    if (this.isCharging && this.chargeTimer >= 0.25) {
+      const isLvl2 = this.chargeTimer >= 1.12;
+      ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
+      ctx.lineWidth = isLvl2 ? 3 : 1.5;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x,
+        this.position.y,
+        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    }
+
+    if (this.attackActive) {
+      this.drawAttackVisual(ctx);
+    }
+  }
+
+  private drawAttackVisual(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = "hsl(142, 71%, 58%)"; // Thick, neon Matrix Green
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    if (this.attackDirection === "side") {
+      const offset = this.facingDirection * 60;
+      ctx.arc(
+        this.position.x + offset / 2,
+        this.position.y,
+        45,
+        this.facingDirection > 0 ? -Math.PI / 3 : Math.PI - Math.PI / 3,
+        this.facingDirection > 0 ? Math.PI / 3 : Math.PI + Math.PI / 3
+      );
+    } else if (this.attackDirection === "up") {
+      ctx.arc(
+        this.position.x,
+        this.position.y - 40,
+        45,
+        -Math.PI * 0.8,
+        -Math.PI * 0.2
+      );
+    } else if (this.attackDirection === "down") {
+      ctx.arc(
+        this.position.x,
+        this.position.y + 40,
+        45,
+        Math.PI * 0.2,
+        Math.PI * 0.8
+      );
+    }
+    ctx.stroke();
+  }
+}
+
+
+
+● ./src/entities/Projectile.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "./BaseEntity";
+import { Poolable } from "@/core/ObjectPool";
+import { PhysicsComponent } from "@/components/PhysicsComponent";
+import { HealthComponent } from "@/components/HealthComponent";
+import { Registry } from "@/core/Registry";
+import { soundSynth } from "@/core/SoundSynth";
+
+export class Projectile extends BaseEntity implements Poolable {
+  public isActive: boolean = false;
+  public ownerId: "player" | "boss" = "player";
+  public damage: number = 1;
+  
+  private lifespan: number = 0;
+  private onRelease?: (proj: Projectile) => void;
+
+  constructor() {
+    super("projectile");
+    this.size = { width: 14, height: 14 };
+  }
+
+  public activate(
+    x: number,
+    y: number,
+    dirX: number,
+    dirY: number,
+    ownerId: "player" | "boss",
+    damage: number,
+    speed: number,
+    lifespan: number,
+    onRelease: (proj: Projectile) => void
+  ) {
+    this.position = { x, y };
+    this.velocity = { x: dirX * speed, y: dirY * speed };
+    
+    this.ownerId = ownerId;
+    this.damage = damage;
+    this.lifespan = lifespan;
+    this.onRelease = onRelease;
+    
+    this.isActive = true;
+    this.isDead = false;
+  }
+
+  public deactivate() {
+    this.isActive = false;
+    this.isDead = true;
+    this.velocity = { x: 0, y: 0 };
+  }
+
+  public update(dt: number) {
+    if (!this.isActive) return;
+
+    this.position.x += this.velocity.x * dt;
+    this.position.y += this.velocity.y * dt;
+
+    this.lifespan -= dt;
+    if (this.lifespan <= 0) {
+      this.selfRelease();
+      return;
+    }
+
+    if (this.checkSolidCollisions()) {
+      this.selfRelease();
+      return;
+    }
+
+    if (this.checkProjectileClashes()) {
+      this.selfRelease();
+      return;
+    }
+
+    if (this.checkEntityCollisions()) {
+      this.selfRelease();
+      return;
+    }
+  }
+
+  private checkSolidCollisions(): boolean {
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+
+    for (const solid of PhysicsComponent.solids) {
+      const isHit = (
+        this.position.x + halfW > solid.x &&
+        this.position.x - halfW < solid.x + solid.width &&
+        this.position.y + halfH > solid.y &&
+        this.position.y - halfH < solid.y + solid.height
+      );
+
+      if (isHit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private checkProjectileClashes(): boolean {
+    if (this.ownerId !== "player" || !Registry.projectilePool) return false;
+
+    const pW = this.size.width / 2;
+    const pH = this.size.height / 2;
+
+    for (const other of Registry.projectilePool.getActive()) {
+      if (other.isActive && other.ownerId === "boss") {
+        const oW = other.size.width / 2;
+        const oH = other.size.height / 2;
+
+        const isColliding = (
+          this.position.x + pW > other.position.x - oW &&
+          this.position.x - pW < other.position.x + oW &&
+          this.position.y + pH > other.position.y - oH &&
+          this.position.y - pH < other.position.y + oH
+        );
+
+        if (isColliding) {
+          Registry.projectilePool.release(other);
+          soundSynth.playHitConfirm();
+          return true; 
+        }
+      }
+    }
+    return false;
+  }
+
+  private checkEntityCollisions(): boolean {
+    const target = this.ownerId === "player" ? Registry.boss : Registry.player;
+    if (!target || target.isDead) return false;
+
+    const pW = this.size.width / 2;
+    const pH = this.size.height / 2;
+    const tW = target.size.width / 2;
+    const tH = target.size.height / 2;
+
+    const isColliding = (
+      this.position.x + pW > target.position.x - tW &&
+      this.position.x - pW < target.position.x + tW &&
+      this.position.y + pH > target.position.y - tH &&
+      this.position.y - pH < target.position.y + tH
+    );
+
+    if (isColliding) {
+      const targetHealth = target.getComponent(HealthComponent);
+      if (targetHealth) {
+        targetHealth.takeDamage(this.damage);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private selfRelease() {
+    if (this.onRelease) {
+      this.onRelease(this);
+    }
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    if (!this.isActive) return;
+
+    if (this.ownerId === "player") {
+      ctx.fillStyle = "hsl(142, 71%, 58%)";
+      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+    } else {
+      ctx.fillStyle = "hsl(350, 80%, 60%)";
+      ctx.shadowColor = "rgba(239, 68, 68, 0.6)";
+    }
+
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(this.position.x, this.position.y, this.size.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+
+
+● ./src/index.css
+────────────────────────────────────────────────────
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #050505;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+
+
+● ./src/main.tsx
+────────────────────────────────────────────────────
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+
+
+● ./tsconfig.app.json
+────────────────────────────────────────────────────
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "noUncheckedSideEffectImports": false,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
+
+
+
+● ./tsconfig.json
+────────────────────────────────────────────────────
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+
+
+● ./tsconfig.node.json
+────────────────────────────────────────────────────
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+
+
+● ./vite.config.ts
+────────────────────────────────────────────────────
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    port: 6502,
+    strictPort: true,
+  },
+})
+
+
+
