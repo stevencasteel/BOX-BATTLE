@@ -249,6 +249,39 @@ class SoundSynth {
     osc.stop(now + 0.13);
   }
 
+  public playDialogueTick(speaker: "player" | "boss", char: string) {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    const charCode = char.charCodeAt(0) || 65;
+
+    if (speaker === "player") {
+      osc.type = "sine";
+      const freq = 240 + (charCode % 6) * 35;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } else {
+      osc.type = "triangle";
+      const freq = 70 + (charCode % 5) * 12;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    }
+  }
+
   public startMusic() {
     this.resumeContext();
     if (this.isMusicPlaying) return;

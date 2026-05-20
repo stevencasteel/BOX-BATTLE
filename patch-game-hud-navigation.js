@@ -1,548 +1,51 @@
-import { useEffect, useRef, useState } from "react";
-import GameLoop from "@/core/GameLoop";
-import { inputProvider, Action } from "@/core/InputProvider";
-import { PhysicsComponent, Rectangle } from "@/components/PhysicsComponent";
-import { Player } from "@/entities/Player";
-import { Boss } from "@/entities/Boss";
-import { Registry } from "@/core/Registry";
-import { HealthComponent } from "@/components/HealthComponent";
-import { ObjectPool } from "@/core/ObjectPool";
-import { Projectile } from "@/entities/Projectile";
-import { Camera } from "@/core/Camera";
-import { saveManager, SaveSlotData } from "@/core/SaveManager";
-import { settingsManager, AudioSettings } from "@/core/SettingsManager";
-import { soundSynth } from "@/core/SoundSynth";
-import "./App.css";
-
-type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
-
-interface DialogueState {
-  text: string;
-  displayed: string;
-  active: boolean;
-  isTyping: boolean;
-}
-
-export default function App() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  const [currentScreen, setCurrentScreen] = useState<ScreenState>("TITLE");
-  const [menuIndex, setMenuIndex] = useState<number>(0);
-  
-  const [playerHP, setPlayerHP] = useState(5);
-  const [bossHP, setBossHP] = useState(30);
-  const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
-
-  const [slots, setSlots] = useState<SaveSlotData[]>([]);
-  const [copySourceIndex, setCopySourceIndex] = useState<number>(-1);
-  const [isCopyMode, setIsCopyMode] = useState<boolean>(false);
-  const [isEraseMode, setIsEraseMode] = useState<boolean>(false);
-
-  const [audio, setAudio] = useState<AudioSettings>({ ...settingsManager.getAudio() });
-  const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
-
-  // Dialogue States
-  const [playerDialogue, setPlayerDialogue] = useState<DialogueState>({ text: "", displayed: "", active: false, isTyping: false });
-  const [bossDialogue, setBossDialogue] = useState<DialogueState>({ text: "", displayed: "", active: false, isTyping: false });
-
-  // Cinematic Triggers Tracker
-  const hasTriggeredFirstHit = useRef<boolean>(false);
-  const hasTriggeredPhase2 = useRef<boolean>(false);
-  const hasTriggeredPhase3 = useRef<boolean>(false);
-
-  const solids: Rectangle[] = [
-    { x: 0, y: 920, width: 300, height: 80 },
-    { x: 300, y: 960, width: 400, height: 40 },
-    { x: 700, y: 920, width: 300, height: 80 },
-    { x: 0, y: 0, width: 1000, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1000 },
-    { x: 950, y: 0, width: 50, height: 1000 },
-    { x: 300, y: 650, width: 400, height: 40 },
-    { x: 50, y: 420, width: 200, height: 40 },
-    { x: 750, y: 420, width: 200, height: 40 }
-  ];
-
-  const hazards: Rectangle[] = [
-    { x: 300, y: 920, width: 400, height: 80 }
-  ];
-
-  const reloadSaveSlots = () => {
-    setSlots(saveManager.getSlots());
-  };
-
-  const navTo = (screen: ScreenState) => {
-    soundSynth.playSelectTick();
-    setCurrentScreen(screen);
-  };
-
-  const playHoverTick = () => {
-    soundSynth.playSelectTick();
-  };
-
-  useEffect(() => {
-    soundSynth.startMusic();
-    reloadSaveSlots();
-    return () => {
-      soundSynth.stopMusic();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rebindTarget) return;
-
-    const handleKeyCapture = (e: KeyboardEvent) => {
-      e.preventDefault();
-      settingsManager.remapKey(rebindTarget.action, rebindTarget.index, e.code);
-      setRebindTarget(null);
-      soundSynth.playHitConfirm();
-    };
-
-    window.addEventListener("keydown", handleKeyCapture);
-    return () => {
-      window.removeEventListener("keydown", handleKeyCapture);
-    };
-  }, [rebindTarget]);
-
-  // Audio adjustments modifiers
-  const handleVolumeChange = (field: keyof AudioSettings, value: number | boolean) => {
-    const updated = { ...audio, [field]: value };
-    setAudio(updated);
-    settingsManager.setAudio(updated);
-    soundSynth.updateVolumes();
-  };
-
-  // Dialogue Typewriter Hook (Player)
-  useEffect(() => {
-    if (!playerDialogue.text || !playerDialogue.active) return;
-
-    let idx = 0;
-    const interval = setInterval(() => {
-      if (idx < playerDialogue.text.length) {
-        const char = playerDialogue.text[idx];
-        setPlayerDialogue((prev) => ({
-          ...prev,
-          displayed: prev.displayed + char
-        }));
-        soundSynth.playDialogueTick("player", char);
-        idx++;
-      } else {
-        setPlayerDialogue((prev) => ({ ...prev, isTyping: false }));
-        clearInterval(interval);
-        
-        // Auto fade out dialogue box after 3 seconds
-        setTimeout(() => {
-          setPlayerDialogue((prev) => ({ ...prev, active: false }));
-        }, 3000);
-      }
-    }, 45);
-
-    return () => clearInterval(interval);
-  }, [playerDialogue.text, playerDialogue.active]);
-
-  // Dialogue Typewriter Hook (Boss)
-  useEffect(() => {
-    if (!bossDialogue.text || !bossDialogue.active) return;
-
-    let idx = 0;
-    const interval = setInterval(() => {
-      if (idx < bossDialogue.text.length) {
-        const char = bossDialogue.text[idx];
-        setBossDialogue((prev) => ({
-          ...prev,
-          displayed: prev.displayed + char
-        }));
-        soundSynth.playDialogueTick("boss", char);
-        idx++;
-      } else {
-        setBossDialogue((prev) => ({ ...prev, isTyping: false }));
-        clearInterval(interval);
-
-        setTimeout(() => {
-          setBossDialogue((prev) => ({ ...prev, active: false }));
-        }, 3000);
-      }
-    }, 55);
-
-    return () => clearInterval(interval);
-  }, [bossDialogue.text, bossDialogue.active]);
-
-  const triggerDialogue = (speaker: "player" | "boss", text: string) => {
-    if (speaker === "player") {
-      setPlayerDialogue({ text, displayed: "", active: true, isTyping: true });
-    } else {
-      setBossDialogue({ text, displayed: "", active: true, isTyping: true });
-    }
-  };
-
-  // Keyboard navigation for menu structures
-  useEffect(() => {
-    if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
-
-    const handleMenuNavigation = (e: KeyboardEvent) => {
-      let maxIndex = 0;
-
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") maxIndex = 1;
-      else if (currentScreen === "TITLE") maxIndex = 2; // START, SETTINGS, CREDITS
-      else if (currentScreen === "SAVE_SELECT") maxIndex = 5; // Slot 1, Slot 2, Slot 3, Copy, Erase, Back
-      else if (currentScreen === "OPTIONS") maxIndex = 2; // SOUND, KEYBIND, BACK
-      else if (currentScreen === "SOUND") maxIndex = 3; // Master, SFX, Music, Back
-      else if (currentScreen === "CONTROLS") maxIndex = 7; // 7 key actions + Back
-      else if (currentScreen === "CREDITS") maxIndex = 0; // Just Back
-
-      if (e.key === "ArrowDown" || e.key === "KeyS") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev + 1) % (maxIndex + 1));
-      } else if (e.key === "ArrowUp" || e.key === "KeyW") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
-        e.preventDefault();
-        triggerMenuSelection();
-      } else if (e.key === "Escape" || e.key === "Backspace") {
-        e.preventDefault();
-        triggerBackNavigation();
-      }
-
-      // Slider adjustments via left/right arrows on SOUND page
-      if (currentScreen === "SOUND" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-        e.preventDefault();
-        const direction = e.key === "ArrowRight" ? 0.05 : -0.05;
-        if (menuIndex === 0 && !audio.masterMuted) {
-          handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 1 && !audio.sfxMuted) {
-          handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 2 && !audio.musicMuted) {
-          handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + direction)));
-          soundSynth.playSelectTick();
-        }
-      }
-    };
-
-    const triggerMenuSelection = () => {
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") {
-        if (menuIndex === 0) {
-          navTo("PLAYING");
-        } else {
-          navTo("TITLE");
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "TITLE") {
-        if (menuIndex === 0) {
-          reloadSaveSlots();
-          setCurrentScreen("SAVE_SELECT");
-          setMenuIndex(0);
-        } else if (menuIndex === 1) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
-        } else if (menuIndex === 2) {
-          setCurrentScreen("CREDITS");
-          setMenuIndex(0);
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SAVE_SELECT") {
-        if (menuIndex >= 0 && menuIndex <= 2) {
-          handleSlotSelect(menuIndex);
-        } else if (menuIndex === 3) {
-          setIsCopyMode(!isCopyMode);
-          setCopySourceIndex(-1);
-          setIsEraseMode(false);
-          soundSynth.playHitConfirm();
-        } else if (menuIndex === 4) {
-          setIsEraseMode(!isEraseMode);
-          setIsCopyMode(false);
-          soundSynth.playHitConfirm();
-        } else if (menuIndex === 5) {
-          setIsCopyMode(false);
-          setIsEraseMode(false);
-          setCopySourceIndex(-1);
-          setCurrentScreen("TITLE");
-          setMenuIndex(0);
-          soundSynth.playErrorTick();
-        }
-      } else if (currentScreen === "OPTIONS") {
-        if (menuIndex === 0) {
-          setCurrentScreen("SOUND");
-          setMenuIndex(0);
-        } else if (menuIndex === 1) {
-          setCurrentScreen("CONTROLS");
-          setMenuIndex(0);
-        } else if (menuIndex === 2) {
-          setCurrentScreen("TITLE");
-          setMenuIndex(1);
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SOUND") {
-        if (menuIndex === 3) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
-          soundSynth.playErrorTick();
-        } else {
-          if (menuIndex === 0) handleVolumeChange("masterMuted", !audio.masterMuted);
-          else if (menuIndex === 1) handleVolumeChange("sfxMuted", !audio.sfxMuted);
-          else if (menuIndex === 2) handleVolumeChange("musicMuted", !audio.musicMuted);
-          soundSynth.playHitConfirm();
-        }
-      } else if (currentScreen === "CONTROLS") {
-        if (menuIndex === 7) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(1);
-          soundSynth.playErrorTick();
-        } else {
-          const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
-          soundSynth.playHitConfirm();
-          setRebindTarget({ action, index: 0 });
-        }
-      } else if (currentScreen === "CREDITS") {
-        setCurrentScreen("TITLE");
-        setMenuIndex(2);
-        soundSynth.playErrorTick();
-      }
-    };
-
-    const triggerBackNavigation = () => {
-      soundSynth.playErrorTick();
-      if (currentScreen === "SAVE_SELECT" || currentScreen === "OPTIONS" || currentScreen === "CREDITS") {
-        setCurrentScreen("TITLE");
-        setMenuIndex(0);
-      } else if (currentScreen === "SOUND" || currentScreen === "CONTROLS") {
-        setCurrentScreen("OPTIONS");
-        setMenuIndex(0);
-      }
-    };
-
-    window.addEventListener("keydown", handleMenuNavigation);
-    return () => {
-      window.removeEventListener("keydown", handleMenuNavigation);
-    };
-  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);
-
-  // Handle game instances and setup during game-state loading
-  useEffect(() => {
-    if (currentScreen !== "PLAYING") return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Reset Dialogue Triggers for a fresh round
-    hasTriggeredFirstHit.current = false;
-    hasTriggeredPhase2.current = false;
-    hasTriggeredPhase3.current = false;
-    setPlayerDialogue({ text: "", displayed: "", active: false, isTyping: false });
-    setBossDialogue({ text: "", displayed: "", active: false, isTyping: false });
-
-    PhysicsComponent.setSolids(solids);
-    PhysicsComponent.setHazards(hazards);
-
-    const pool = new ObjectPool(() => new Projectile(), 60);
-    Registry.projectilePool = pool;
-
-    const player = new Player("player-01");
-    player.position = { x: 150, y: 800 };
-
-    const boss = new Boss("boss-01");
-    boss.position = { x: 850, y: 800 };
-
-    Registry.player = player;
-    Registry.boss = boss;
-
-    Camera.reset();
-    setGameResult("PLAYING");
-
-    const handleUpdate = (dt: number) => {
-      if (Camera.hitStopTimer > 0) {
-        Camera.update(dt);
-        return; 
-      }
-
-      Camera.update(dt);
-      player.update(dt);
-      boss.update(dt);
-
-      const activeProjectiles = [...pool.getActive()];
-      for (const proj of activeProjectiles) {
-        proj.update(dt);
-      }
-
-      const pHealth = player.getComponent(HealthComponent);
-      const bHealth = boss.getComponent(HealthComponent);
-
-      if (pHealth) setPlayerHP(pHealth.currentHealth);
-      if (bHealth) setBossHP(bHealth.currentHealth);
-
-      // --- IN-GAME REAL-TIME DIALOGUE TRIGGERS ---
-      
-      // 1. First Hit Trigger (Player speaks)
-      if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
-        hasTriggeredFirstHit.current = true;
-        triggerDialogue("player", "I found you. Your control over this chamber ends now!");
-      }
-
-      // 2. Phase 2 Shift (Boss speaks at 70% / 21 HP)
-      if (bHealth && bHealth.currentHealth <= 21 && !hasTriggeredPhase2.current) {
-        hasTriggeredPhase2.current = true;
-        triggerDialogue("boss", "Insolent square! Prepare for my rapid volleys!");
-      }
-
-      // 3. Phase 3 Shift (Boss speaks at 40% / 12 HP)
-      if (bHealth && bHealth.currentHealth <= 12 && !hasTriggeredPhase3.current) {
-        hasTriggeredPhase3.current = true;
-        triggerDialogue("boss", "Danger! Max charge active! Omni-burst engaged!");
-      }
-
-      if (player.isDead) {
-        setGameResult("GAMEOVER");
-        saveManager.recordLoss();
-        triggerDialogue("player", "Power failing... system shutting down...");
-        triggerDialogue("boss", "The cage remains ours. Another simulation completed.");
-        loop.stop();
-      } else if (boss.isDead) {
-        setGameResult("VICTORY");
-        saveManager.recordWin();
-        triggerDialogue("boss", "How... could a simple opponent... pacify me...");
-        triggerDialogue("player", "The chamber has been cleared. Returning to terminal.");
-        loop.stop();
-      }
-
-      inputProvider.postUpdate();
-    };
-
-    const handleRender = () => {
-      ctx.fillStyle = "#0c0d11"; 
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.save();
-      ctx.translate(Camera.offsetX, Camera.offsetY);
-
-      ctx.fillStyle = "#1e1e24"; 
-      for (const solid of solids) {
-        ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-        ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
-      }
-
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
-      for (const hazard of hazards) {
-        const spikeWidth = 25;
-        const spikeCount = Math.floor(hazard.width / spikeWidth);
-        for (let i = 0; i < spikeCount; i++) {
-          ctx.beginPath();
-          ctx.moveTo(hazard.x + i * spikeWidth, 960); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960); 
-          ctx.fill();
-        }
-      }
-
-      boss.draw(ctx);
-      player.draw(ctx);
-
-      const activeProjectiles = pool.getActive();
-      for (const proj of activeProjectiles) {
-        proj.draw(ctx);
-      }
-
-      ctx.restore();
-    };
-
-    const loop = new GameLoop(handleUpdate, handleRender);
-    loop.start();
-
-    return () => {
-      loop.cleanup();
-      player.teardown();
-      boss.teardown();
-      pool.clear();
-      Camera.reset();
-      Registry.player = null;
-      Registry.boss = null;
-      Registry.projectilePool = null;
-    };
-  }, [currentScreen]);
-
-  const handleSlotSelect = (index: number) => {
-    if (isEraseMode) {
-      saveManager.eraseSlot(index);
-      setIsEraseMode(false);
-      soundSynth.playErrorTick();
-      reloadSaveSlots();
-      return;
-    }
-
-    if (isCopyMode) {
-      if (copySourceIndex === -1) {
-        if (slots[index].empty) {
-          soundSynth.playErrorTick();
-          return;
-        }
-        setCopySourceIndex(index);
-        soundSynth.playSelectTick();
-      } else {
-        if (index === copySourceIndex) {
-          soundSynth.playErrorTick();
-          return;
-        }
-        saveManager.copySlot(copySourceIndex, index);
-        setCopySourceIndex(-1);
-        setIsCopyMode(false);
-        soundSynth.playSelectTick();
-        reloadSaveSlots();
-      }
-      return;
-    }
-
-    saveManager.selectSlot(index);
-    soundSynth.playHitConfirm();
-    setCurrentScreen("PLAYING");
-  };
-
-  return (
+import fs from 'fs';
+
+const filePath = 'src/App.tsx';
+let content = fs.readFileSync(filePath, 'utf8');
+
+// 1. Add gameResult to the key listener dependency array
+content = content.replace(
+  '  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget]);',
+  '  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);'
+);
+
+// 2. Overhaul the JSX rendering blocks to always keep layout frames static
+const oldRenderBlock = `  return (
     <div className="app-wrapper">
       <div className="cabinet-outer">
         
-        {/* Status Panel (Health HUD) situated above gameplay arena */}
-        <div className="cabinet-status-panel neo-pressed">
-          <div className="hud-panel-block">
-            <span className="hud-panel-title">PLAYER HP</span>
-            <div className="flex-row" style={{ gap: "6px" }}>
-              {[...Array(5)].map((_, i) => (
+        {/* Repositioned Status Panel (situated completely above gameplay arena) */}
+        {currentScreen === "PLAYING" && (
+          <div className="cabinet-status-panel neo-pressed">
+            <div className="hud-panel-block">
+              <span className="hud-panel-title">PLAYER HP</span>
+              <div className="flex-row" style={{ gap: "6px" }}>
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={\`led-dot \${i < playerHP ? "led-green" : ""}\`}
+                    style={{ background: i < playerHP ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
+              <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+              <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
                 <div
-                  key={i}
-                  className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
-                  style={{ background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
+                  className="led-red"
+                  style={{ height: "100%", borderRadius: "2px", width: \`\${(bossHP / 30) * 100}%\`, transition: "all 0.15s ease" }}
                 />
-              ))}
+              </div>
             </div>
           </div>
-
-          <div className="hud-panel-block" style={{ alignItems: "center" }}>
-            <span className="hud-panel-title" style={{ color: "#718096" }}>SYSTEM CONSOLE</span>
-            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
-              {currentScreen === "PLAYING" ? "SIMULATION ACTIVE" : "NOMINAL STATE // ONLINE"}
-            </span>
-          </div>
-
-          <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-            <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
-            <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
-              <div
-                className={currentScreen === "PLAYING" ? "led-red" : ""}
-                style={{ height: "100%", borderRadius: "2px", width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%", transition: "all 0.15s ease", background: currentScreen === "PLAYING" ? "" : "#07080b" }}
-              />
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="game-viewport-container">
           {currentScreen === "PLAYING" ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
+              <div style={{ flexGrow: 1, position: "relative" }}>
                 <canvas
                   ref={canvasRef}
                   width={1000}
@@ -552,7 +55,7 @@ export default function App() {
                 />
 
                 {gameResult !== "PLAYING" && (
-                  <div className="gameover-overlay">
+                  <div className="gameover-overlay crt-scanlines crt-flicker">
                     {gameResult === "GAMEOVER" ? (
                       <div className="flex-col-center" style={{ gap: "16px" }}>
                         <h1 style={{ fontSize: "2.5rem", color: "#ef4444", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.2em", textShadow: "0 0 15px rgba(239, 68, 68, 0.75)" }}>
@@ -577,7 +80,7 @@ export default function App() {
                       <button
                         onClick={() => navTo("PLAYING")}
                         onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                        className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                        className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
                       >
                         {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
                         RETRY
@@ -586,7 +89,7 @@ export default function App() {
                       <button
                         onClick={() => navTo("TITLE")}
                         onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                        className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                        className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
                       >
                         {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
                         MENU
@@ -616,7 +119,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                      className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
                     >
                       {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
                       START GAME
@@ -628,7 +131,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                      className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
                     >
                       {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
                       SETTINGS
@@ -640,7 +143,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-                      className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 2 ? "neo-btn-focused" : ""}\`}
                     >
                       {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
                       CREDITS
@@ -676,7 +179,7 @@ export default function App() {
                         key={i}
                         onClick={() => handleSlotSelect(i)}
                         onMouseEnter={() => { playHoverTick(); setMenuIndex(i); }}
-                        className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
+                        className={\`slot-card \${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}\`}
                       >
                         <div className="flex-col">
                           <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.1em", textTransform: "uppercase" }}>
@@ -684,15 +187,15 @@ export default function App() {
                             Slot {i + 1}
                           </span>
                           <span style={{ fontSize: "9px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "4px", paddingLeft: menuIndex === i ? "16px" : "0" }}>
-                            {slot.empty ? "EMPTY" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+                            {slot.empty ? "EMPTY" : \`WINS: \${slot.wins} / LOSSES: \${slot.losses}\`}
                           </span>
                         </div>
                         <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
-                          <div className={`led-dot ${
+                          <div className={\`led-dot \${
                             slot.empty 
                               ? i === copySourceIndex ? "led-yellow" : "" 
                               : isEraseMode ? "led-red" : "led-green"
-                          }`} style={{ background: slot.empty && i !== copySourceIndex ? "#07080b" : "" }} />
+                          }\`} style={{ background: slot.empty && i !== copySourceIndex ? "#07080b" : "" }} />
                           <span style={{ fontSize: "9px", textTransform: "uppercase", color: "#718096" }}>
                             {slot.empty ? "EMPTY" : "USED"}
                           </span>
@@ -712,7 +215,7 @@ export default function App() {
                           setMenuIndex(3);
                         }}
                         onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
-                        className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}`}
+                        className={\`neo-btn \${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}\`}
                         style={{ flex: 1, padding: "10px" }}
                       >
                         {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
@@ -727,7 +230,7 @@ export default function App() {
                           setMenuIndex(4);
                         }}
                         onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
-                        className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}`}
+                        className={\`neo-btn \${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}\`}
                         style={{ flex: 1, padding: "10px" }}
                       >
                         {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
@@ -744,7 +247,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(5); }}
-                      className={`neo-btn ${menuIndex === 5 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 5 ? "neo-btn-focused" : ""}\`}
                       style={{ padding: "10px" }}
                     >
                       {menuIndex === 5 && <span className="cursor-arrow">▶</span>}
@@ -770,7 +273,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                      className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
                     >
                       {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
                       AUDIO
@@ -782,7 +285,7 @@ export default function App() {
                         setMenuIndex(0);
                       }}
                       onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                      className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                      className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
                     >
                       {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
                       KEY BINDINGS
@@ -796,7 +299,7 @@ export default function App() {
                       setMenuIndex(1);
                     }}
                     onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-                    className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+                    className={\`neo-btn \${menuIndex === 2 ? "neo-btn-focused" : ""}\`}
                     style={{ width: "100%", maxWidth: "240px" }}
                   >
                     {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
@@ -823,7 +326,7 @@ export default function App() {
                           MASTER VOLUME
                         </span>
                         <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80" }}>
-                          {audio.masterMuted ? "MUTED" : `${Math.round(audio.masterVolume * 100)}%`}
+                          {audio.masterMuted ? "MUTED" : \`\${Math.round(audio.masterVolume * 100)}%\`}
                         </span>
                       </div>
                       <div className="slider-row">
@@ -849,7 +352,7 @@ export default function App() {
                           EFFECTS VOLUME
                         </span>
                         <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
-                          {audio.sfxMuted ? "MUTED" : `${Math.round(audio.sfxVolume * 100)}%`}
+                          {audio.sfxMuted ? "MUTED" : \`\${Math.round(audio.sfxVolume * 100)}%\`}
                         </span>
                       </div>
                       <div className="slider-row">
@@ -875,7 +378,7 @@ export default function App() {
                           MUSIC VOLUME
                         </span>
                         <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
-                          {audio.musicMuted ? "MUTED" : `${Math.round(audio.musicVolume * 100)}%`}
+                          {audio.musicMuted ? "MUTED" : \`\${Math.round(audio.musicVolume * 100)}%\`}
                         </span>
                       </div>
                       <div className="slider-row">
@@ -900,7 +403,7 @@ export default function App() {
                       setMenuIndex(0);
                     }}
                     onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
-                    className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
+                    className={\`neo-btn \${menuIndex === 3 ? "neo-btn-focused" : ""}\`}
                     style={{ width: "100%", maxWidth: "240px" }}
                   >
                     {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
@@ -982,7 +485,7 @@ export default function App() {
                                 soundSynth.playHitConfirm();
                                 setRebindTarget({ action, index: 0 });
                               }}
-                              className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
+                              className={\`binding-btn neo-btn \${isFocusedRow ? "neo-btn-focused" : ""}\`}
                               style={{ 
                                 borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                                 color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
@@ -1004,7 +507,7 @@ export default function App() {
                       setMenuIndex(1);
                     }}
                     onMouseEnter={() => { playHoverTick(); setMenuIndex(7); }}
-                    className={`neo-btn ${menuIndex === 7 ? "neo-btn-focused" : ""}`}
+                    className={\`neo-btn \${menuIndex === 7 ? "neo-btn-focused" : ""}\`}
                     style={{ width: "100%", maxWidth: "240px" }}
                   >
                     {menuIndex === 7 && <span className="cursor-arrow">▶</span>}
@@ -1053,27 +556,34 @@ export default function App() {
         </div>
 
         {/* Dialogue Console (Sits completely outside/below playing arena) */}
-        <div className="dialogue-console">
-          {/* Player Dialogue Box (Left) */}
-          <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
-            <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
-            <div className="dialogue-text-container">
-              <div className="dialogue-speaker-label">PLAYER</div>
-              <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+        {currentScreen === "PLAYING" && (
+          <div className="dialogue-console">
+            {/* Player Dialogue Box (Left) */}
+            <div className={\`dialogue-box-left neo-pressed \${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}\`}>
+              <div className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""}\`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
+              <div className="dialogue-text-container">
+                <div className="dialogue-speaker-label">PLAYER</div>
+                <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+              </div>
             </div>
-          </div>
 
-          {/* Boss Dialogue Box (Right) */}
-          <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
-            <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-              <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-              <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+            {/* Boss Dialogue Box (Right) */}
+            <div className={\`dialogue-box-right neo-pressed \${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}\`}>
+              <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+                <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
+                <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+              </div>
+              <div className={\`portrait-square led-red \${bossDialogue.isTyping ? "portrait-rumble" : ""}\`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
             </div>
-            <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
           </div>
-        </div>
+        )}
 
       </div>
     </div>
   );
-}
+}`;
+
+content = content.replace(oldRenderBlock, finalDialogueConsoleInsert);
+
+fs.writeFileSync(filePath, content);
+console.log('Unified static layout frames successfully created.');
