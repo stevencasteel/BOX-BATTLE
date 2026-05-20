@@ -16,9 +16,14 @@ export class PhysicsComponent implements Component {
   public isOnWallRight: boolean = false;
   
   public static solids: Rectangle[] = [];
+  public static hazards: Rectangle[] = [];
 
   public static setSolids(solids: Rectangle[]) {
     PhysicsComponent.solids = solids;
+  }
+
+  public static setHazards(hazards: Rectangle[]) {
+    PhysicsComponent.hazards = hazards;
   }
 
   public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {

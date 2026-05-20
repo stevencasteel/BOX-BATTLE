@@ -18,13 +18,29 @@ export default function App() {
   const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
 
   const solids: Rectangle[] = [
-    { x: 0, y: 920, width: 1000, height: 80 },
+    // Left Floor (Standard 80px height)
+    { x: 0, y: 920, width: 300, height: 80 },
+    // Central Floor Base (Half height: 40px)
+    { x: 300, y: 960, width: 400, height: 40 },
+    // Right Floor (Standard 80px height)
+    { x: 700, y: 920, width: 300, height: 80 },
+    
+    // Ceiling
     { x: 0, y: 0, width: 1000, height: 50 },
+    // Left Wall
     { x: 0, y: 0, width: 50, height: 1000 },
+    // Right Wall
     { x: 950, y: 0, width: 50, height: 1000 },
+    
+    // Floating Platforms
     { x: 300, y: 650, width: 400, height: 40 },
-    { x: 50, y: 420, width: 250, height: 40 },
-    { x: 700, y: 420, width: 250, height: 40 }
+    { x: 50, y: 420, width: 200, height: 40 },
+    { x: 750, y: 420, width: 200, height: 40 }
+  ];
+
+  // Hazards (Spikes) occupy the top half of the central gap (starts at 920, height 80)
+  const hazards: Rectangle[] = [
+    { x: 300, y: 920, width: 400, height: 80 }
   ];
 
   const restartGame = () => {
@@ -39,15 +55,16 @@ export default function App() {
     if (!ctx) return;
 
     PhysicsComponent.setSolids(solids);
+    PhysicsComponent.setHazards(hazards);
 
     const pool = new ObjectPool(() => new Projectile(), 60);
     Registry.projectilePool = pool;
 
     const player = new Player("player-01");
-    player.position = { x: 200, y: 800 };
+    player.position = { x: 150, y: 800 };
 
     const boss = new Boss("boss-01");
-    boss.position = { x: 800, y: 800 };
+    boss.position = { x: 850, y: 800 };
 
     Registry.player = player;
     Registry.boss = boss;
@@ -55,13 +72,11 @@ export default function App() {
     Camera.reset();
 
     const handleUpdate = (dt: number) => {
-      // 1. Process active freeze-frames (Hit-Stop)
       if (Camera.hitStopTimer > 0) {
         Camera.update(dt);
-        return; // Intercept updates: freeze all positions
+        return; 
       }
 
-      // 2. Normal Frame Updates
       Camera.update(dt);
       player.update(dt);
       boss.update(dt);
@@ -87,11 +102,9 @@ export default function App() {
     };
 
     const handleRender = () => {
-      // Clear viewport
       ctx.fillStyle = "#0c0d11"; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // --- 1. Apply Camera Translate Shakes ---
       ctx.save();
       ctx.translate(Camera.offsetX, Camera.offsetY);
 
@@ -103,17 +116,28 @@ export default function App() {
         ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
       }
 
-      // Draw Entities
+      // Draw Spikes resting on the solid base (y: 960) pointing up to standard floor level (y: 920)
+      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      for (const hazard of hazards) {
+        const spikeWidth = 25;
+        const spikeCount = Math.floor(hazard.width / spikeWidth);
+        for (let i = 0; i < spikeCount; i++) {
+          ctx.beginPath();
+          ctx.moveTo(hazard.x + i * spikeWidth, 960); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960); 
+          ctx.fill();
+        }
+      }
+
       boss.draw(ctx);
       player.draw(ctx);
 
-      // Draw Active Projectiles
       const activeProjectiles = pool.getActive();
       for (const proj of activeProjectiles) {
         proj.draw(ctx);
       }
 
-      // --- 2. Restore Camera Translate ---
       ctx.restore();
     };
 

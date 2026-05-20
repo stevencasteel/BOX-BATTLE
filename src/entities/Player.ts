@@ -6,6 +6,12 @@ import { Registry } from "@/core/Registry";
 import { soundSynth } from "@/core/SoundSynth";
 import { Projectile } from "@/entities/Projectile";
 
+interface GhostFrame {
+  x: number;
+  y: number;
+  opacity: number;
+}
+
 export class Player extends BaseEntity {
   public health!: HealthComponent;
   private physics!: PhysicsComponent;
@@ -39,6 +45,9 @@ export class Player extends BaseEntity {
   private chargeTimer: number = 0;
   private isCharging: boolean = false;
 
+  private ghosts: GhostFrame[] = [];
+  private ghostSpawnTimer: number = 0;
+
   constructor(id: string) {
     super(id);
     this.size = { width: 40, height: 80 }; 
@@ -59,6 +68,11 @@ export class Player extends BaseEntity {
     this.attackCooldownTimer -= dt;
     this.attackActiveTimer -= dt;
 
+    for (const ghost of this.ghosts) {
+      ghost.opacity -= dt * 5.0; 
+    }
+    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
+
     if (this.attackActive && this.attackActiveTimer <= 0) {
       this.attackActive = false;
       this.attackDirection = null;
@@ -68,6 +82,16 @@ export class Player extends BaseEntity {
       this.dashTimer -= dt;
       this.velocity.x = this.dashDirection * this.dashSpeed;
       this.velocity.y = 0;
+
+      this.ghostSpawnTimer -= dt;
+      if (this.ghostSpawnTimer <= 0) {
+        this.ghosts.push({
+          x: this.position.x,
+          y: this.position.y,
+          opacity: 0.6
+        });
+        this.ghostSpawnTimer = 0.025;
+      }
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
@@ -120,6 +144,7 @@ export class Player extends BaseEntity {
       this.canDash = false;
       this.dashDirection = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
       this.velocity.y = 0;
+      this.ghostSpawnTimer = 0; 
       soundSynth.playDash();
       
       super.update(dt);
@@ -157,9 +182,29 @@ export class Player extends BaseEntity {
       this.velocity.y *= 0.4;
     }
 
+    // --- Responsive Combat Input Checks ---
     if (inputProvider.isJustPressed("ATTACK")) {
       this.isCharging = true;
       this.chargeTimer = 0;
+
+      // Instant standard slash on button press
+      if (this.attackCooldownTimer <= 0) {
+        this.attackActive = true;
+        this.attackActiveTimer = 0.1; 
+        this.attackCooldownTimer = 0.15; 
+        this.hasHitEnemyThisSwing = false;
+
+        if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+          this.attackDirection = "down";
+          this.checkPogoAttack();
+        } else if (inputProvider.isPressed("MOVE_UP")) {
+          this.attackDirection = "up";
+          soundSynth.playSlash();
+        } else {
+          this.attackDirection = "side";
+          soundSynth.playSlash();
+        }
+      }
     }
 
     if (this.isCharging && inputProvider.isPressed("ATTACK")) {
@@ -170,24 +215,9 @@ export class Player extends BaseEntity {
       if (this.isCharging) {
         this.isCharging = false;
         
+        // Fire Fireballs on release after holding
         if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
           this.fireFireball();
-        } else {
-          this.attackActive = true;
-          this.attackActiveTimer = 0.1;
-          this.attackCooldownTimer = 0.12;
-          this.hasHitEnemyThisSwing = false;
-
-          if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
-            this.attackDirection = "down";
-            this.checkPogoAttack();
-          } else if (inputProvider.isPressed("MOVE_UP")) {
-            this.attackDirection = "up";
-            soundSynth.playSlash();
-          } else {
-            this.attackDirection = "side";
-            soundSynth.playSlash();
-          }
         }
       }
     }
@@ -196,7 +226,34 @@ export class Player extends BaseEntity {
       this.checkMeleeAttackContact();
     }
 
+    this.checkHazardContact();
+
     super.update(dt);
+  }
+
+  private checkHazardContact() {
+    if (this.health.isInvincible() || this.isDead) return;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+
+    for (const hazard of PhysicsComponent.hazards) {
+      const isHit = (
+        this.position.x + halfW > hazard.x &&
+        this.position.x - halfW < hazard.x + hazard.width &&
+        this.position.y + halfH > hazard.y &&
+        this.position.y - halfH < hazard.y + hazard.height
+      );
+
+      if (isHit) {
+        const damaged = this.health.takeDamage(1);
+        if (damaged && !this.isDead) {
+          this.velocity.y = -550; 
+          this.physics.isGrounded = false;
+        }
+        break;
+      }
+    }
   }
 
   private fireFireball() {
@@ -378,6 +435,16 @@ export class Player extends BaseEntity {
   public draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead) return;
 
+    for (const ghost of this.ghosts) {
+      ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+      ctx.fillRect(
+        ghost.x - this.size.width / 2,
+        ghost.y - this.size.height / 2,
+        this.size.width,
+        this.size.height
+      );
+    }
+
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
@@ -417,8 +484,8 @@ export class Player extends BaseEntity {
   }
 
   private drawAttackVisual(ctx: CanvasRenderingContext2D) {
-    ctx.strokeStyle = "rgba(34, 197, 94, 0.8)";
-    ctx.lineWidth = 6;
+    ctx.strokeStyle = "hsl(142, 71%, 58%)"; // Thick, neon Matrix Green
+    ctx.lineWidth = 8;
     ctx.lineCap = "round";
 
     ctx.beginPath();
