@@ -1,39 +1,41 @@
 ===========================================================================
   STEVEN CASTEEL // BOX BATTLE CABINET ENGINE
-  AI Architecture & Development Guidelines
+  AI Terminal Execution & Development Guidelines
 ===========================================================================
 
-1. SYSTEM IDENTITY & THEME DESIGN
----------------------------------
-This project represents a professional high-performance retro-arcade game engine built on TypeScript and a flat, responsive HTML5 Canvas context.
-- Colors: Dominant void black surfaces (#0c0d11), secondary dark steel blocks (#1e1e24), primary neon Matrix green indicators (#22c55e / hsl(142, 71%, 58%)), hazard red warning spikes/lasers (hsl(350, 80%, 60%)).
-- Geometry: Pure high-precision geometric rectangle forms. Static block structures, laser arrays, and flat entities.
+1. TERMINAL EXECUTION & HEREDOC PROTOCOLS (CRITICAL)
+----------------------------------------------------
+To prevent Zsh parsing failures, environment errors, variable corruption, or script truncation on macOS systems, strictly adhere to the following execution protocols:
 
-2. MODULAR ARCHITECTURE (ECS-LITE)
-----------------------------------
-- Entities (BaseEntity.ts): Act as pure spatial nodes carrying state (position, velocity, size).
-- Components (Component.ts): Separate logic controllers (Health, Physics, Input) attached to entities that orchestrate behavior.
-- Solvers: Axis-independent kinematic collision solvers to isolate axes, snap to block interfaces, and avoid boundary clipping during performance drops.
+1.1 Quoted Starting Delimiters (Shell Protection)
+    - Always wrap the starting heredoc delimiter in single quotes (e.g., cat << 'EOF' > path/to/file or cat << 'ENDOFSCRIPT').
+    - Unquoted delimiters allow the terminal shell (Zsh/Bash) to perform immediate variable expansion ($variable) and backtick execution (`` ` ``) *before* writing the text to the file. This process strips or corrupts raw JavaScript, TypeScript, and CSS rules.
 
-3. WEB AUDIO RETRO SYNTHESIS
-----------------------------
-- Avoid static MP3/WAV file assets.
-- Generate procedural retro sounds on-the-fly using the Web Audio API (OscillatorNode, GainNode, AudioBuffer).
-- Keep sound-gain controls relative and bound to real-time mixer configurations.
+1.2 Zero Shell Comments
+    - Never include hash symbols (#) inside any active terminal or shell code blocks.
+    - Copy-pasting shell commands containing hash lines directly into macOS interactive Zsh terminals triggers parsing errors or partial executions. Keep shell blocks strictly functional and describe operations in the accompanying markdown text instead.
 
-4. WORKFLOW PROTOCOLS (CRITICAL)
---------------------------------
-- Fulloverwrites only: Overwrite or create files completely using the "cat << 'EOF' > path/to/file" terminal command structures.
-- No Bash Comments: Never include hash comments (#) inside any active shell/bash code blocks to maintain Zsh-interactive parser integrity.
-- ESM Only: All build tool scripts must be pure ES Modules (import/export).
-- Testing: Instruct the developer on specific testing targets via "npm run dev" to verify build consistency at any checkpoint.
+1.3 Delimiter Syntax and Formatting
+    - The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its own line with zero leading or trailing whitespace.
+    - If any space, tab, or comment character is placed on the delimiter line, the shell will fail to recognize the boundary and keep appending input, causing truncation or terminal lockup.
 
+1.4 Temporary Script ESM Standard
+    - Since this project operates with "type": "module", all temporary Node.js scripts must use ES Module syntax (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
 
-Commits
-     
-     git add / commit / push commands with a detailed commit
-     description. Format:
-       git add . && git commit -m "title" -m "description" && git push
-     Don't provide the commit until the user asks for it.
-     For git add, always use the period .
-     Don't repeat information from previous commits.
+1.5 Script Execution and Automatic Cleanup
+    - All file patches using temporary Node.js scripts must always append the self-delete command on the exact same execution line (e.g., "node ./patch.js && rm ./patch.js") to prevent cluttering the repository.
+
+1.6 Zsh Compatibility & Special Characters
+    - Do not use unescaped exclamation marks (!) inside shell string variables. Zsh treats them as history expansion operators and will fail to execute the command. 
+
+1.7 Surgical Patches vs. Overwrites
+    - For small-to-medium files, perform full overwrites (cat << 'EOF' > file).
+    - For large files, write a temporary Node.js script using fs.readFileSync and regex/string replacement (as defined in 1.4 and 1.5) to avoid file truncation during large output generation.
+
+2. BUILD & TESTING VERIFICATION
+-------------------------------
+- Build Verification: Validate all TypeScript compilation updates by running "npm run build" before concluding.
+- Procedural Assets: Keep codebase dependencies light. Generate retro game assets and audio procedurally rather than using static imports.
+- Atomic Commits: When requested, output: git add . && git commit -m "title" -m "description" && git push
+  Do not present commit strings until requested. Always use the period (.) for git add.
+

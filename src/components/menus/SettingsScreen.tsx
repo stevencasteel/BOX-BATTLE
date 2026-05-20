@@ -17,9 +17,9 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "20px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SETTINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Mixers and controller binding profiles</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SETTINGS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Adjust sounds and change keys</p>
       </div>
 
       <div className="btn-container" style={{ margin: "auto 0" }}>
@@ -29,7 +29,7 @@ export function SettingsScreen({
           className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
         >
           {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-          AUDIO
+          SOUND SETTINGS
           {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
         </button>
         <button
@@ -38,7 +38,7 @@ export function SettingsScreen({
           className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
         >
           {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-          KEY BINDINGS
+          KEYBOARD CONTROLS
           {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
         </button>
       </div>

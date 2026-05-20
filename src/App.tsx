@@ -21,10 +21,10 @@ type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | 
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("TITLE");
   const [menuIndex, setMenuIndex] = useState<number>(0);
-  
+
   const [playerHP, setPlayerHP] = useState(5);
   const [bossHP, setBossHP] = useState(30);
   const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
@@ -98,11 +98,11 @@ export default function App() {
       let maxIndex = 0;
 
       if (currentScreen === "PLAYING" && gameResult !== "PLAYING") maxIndex = 1;
-      else if (currentScreen === "TITLE") maxIndex = 2; 
-      else if (currentScreen === "SAVE_SELECT") maxIndex = 5; 
-      else if (currentScreen === "OPTIONS") maxIndex = 2; 
-      else if (currentScreen === "SOUND") maxIndex = 3; 
-      else if (currentScreen === "CONTROLS") maxIndex = 7; 
+      else if (currentScreen === "TITLE") maxIndex = 2;
+      else if (currentScreen === "SAVE_SELECT") maxIndex = 5;
+      else if (currentScreen === "OPTIONS") maxIndex = 2;
+      else if (currentScreen === "SOUND") maxIndex = 3;
+      else if (currentScreen === "CONTROLS") maxIndex = 7;
       else if (currentScreen === "CREDITS") maxIndex = 0;
 
       const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
@@ -234,7 +234,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div className="cabinet-outer">
-        
+
         {/* Status Panel (Health HUD) situated above gameplay arena */}
         <div className="cabinet-status-panel neo-pressed">
           <div className="hud-panel-block" style={{ gap: "4px" }}>
@@ -248,8 +248,8 @@ export default function App() {
                 />
               ))}
             </div>
-            
-            {/* Real-time Sub-HUD for Healing Charges (glowing purple LEDs) and Determination (fraction dots) */}
+
+            {/* Healing Charges & Determination visual indicators */}
             {currentScreen === "PLAYING" && (
               <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
                 <div className="flex-row" style={{ gap: "4px" }}>
@@ -266,17 +266,24 @@ export default function App() {
                     <div
                       key={i}
                       className="led-dot"
-                      style={{ 
-                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b", 
+                      style={{
+                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
                         boxShadow: i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
-                        width: "4px", 
-                        height: "4px" 
+                        width: "4px",
+                        height: "4px"
                       }}
                     />
                   ))}
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="hud-panel-block" style={{ alignItems: "center" }}>
+            <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
+            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
+              {currentScreen === "PLAYING" ? "PLAYING" : "READY"}
+            </span>
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>

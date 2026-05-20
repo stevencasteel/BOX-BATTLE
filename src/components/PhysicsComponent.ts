@@ -14,7 +14,9 @@ export class PhysicsComponent implements Component {
   public isGrounded: boolean = false;
   public isOnWallLeft: boolean = false;
   public isOnWallRight: boolean = false;
-  
+
+  public disablePlatformCollisionTimer: number = 0; // Timer to temporarily bypass one-way platforms
+
   public static solids: Rectangle[] = [];
   public static hazards: Rectangle[] = [];
   public static onewayPlatforms: Rectangle[] = [];
@@ -41,6 +43,10 @@ export class PhysicsComponent implements Component {
   }
 
   public update(dt: number): void {
+    if (this.disablePlatformCollisionTimer > 0) {
+      this.disablePlatformCollisionTimer -= dt;
+    }
+
     if (!this.isGrounded) {
       this.owner.velocity.y += this.gravity * dt;
     }
@@ -90,10 +96,10 @@ export class PhysicsComponent implements Component {
       }
     }
 
-    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing)
-    if (this.owner.velocity.y >= 0) {
+    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing and timer is not active)
+    if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
       const prevY = this.owner.position.y - this.owner.velocity.y * 0.016; // approximate previous position
-      
+
       for (const platform of PhysicsComponent.onewayPlatforms) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
           // Only collide if feet were above the platform's top edge in the previous frame

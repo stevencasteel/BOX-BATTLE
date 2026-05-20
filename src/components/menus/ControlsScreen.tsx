@@ -24,8 +24,8 @@ export function ControlsScreen({
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
       <div className="title-banner">
-        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY BINDINGS</h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Keyboard mapping configuration</p>
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Change keyboard buttons</p>
       </div>
 
       <div className="flex-row" style={{ gap: "16px", margin: "12px 0" }}>
@@ -102,7 +102,7 @@ export function ControlsScreen({
                   }}
                 >
                   {rebindTarget?.action === action && rebindTarget?.index === 0
-                    ? "PRESS KEY..."
+                    ? "PRESS ANY KEY..."
                     : keys[0] || "[ EMPTY ]"}
                 </button>
               </div>

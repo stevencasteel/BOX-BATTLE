@@ -2,8 +2,77 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/20/2026, 6:01:11 PM
+ [SYSTEM] Generated: 5/20/2026, 6:44:15 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
+
+─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
+.
+├── dist/ (contents skipped)
+├── docs/
+│   ├── AI_INSTRUCTIONS.txt
+│   └── all_source_code.txt
+├── node_modules/ (contents skipped)
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
+├── scripts/ (contents skipped)
+├── src/
+│   ├── assets/
+│   │   ├── hero.png
+│   │   ├── react.svg
+│   │   └── vite.svg
+│   ├── components/
+│   │   ├── menus/
+│   │   │   ├── AudioScreen.tsx
+│   │   │   ├── ControlsScreen.tsx
+│   │   │   ├── CreditsScreen.tsx
+│   │   │   ├── SaveSelectScreen.tsx
+│   │   │   ├── SettingsScreen.tsx
+│   │   │   └── TitleScreen.tsx
+│   │   ├── GameArena.tsx
+│   │   ├── HealthComponent.ts
+│   │   └── PhysicsComponent.ts
+│   ├── core/
+│   │   ├── Camera.ts
+│   │   ├── GameLoop.ts
+│   │   ├── InputProvider.ts
+│   │   ├── ObjectPool.ts
+│   │   ├── Registry.ts
+│   │   ├── SaveManager.ts
+│   │   ├── SettingsManager.ts
+│   │   └── SoundSynth.ts
+│   ├── entities/
+│   │   ├── BaseEntity.ts
+│   │   ├── Boss.ts
+│   │   ├── Component.ts
+│   │   ├── Minion.ts
+│   │   ├── Player.ts
+│   │   ├── Projectile.ts
+│   │   └── Spawner.ts
+│   ├── hooks/
+│   │   ├── useAudioSettings.ts
+│   │   ├── useGameDialogue.ts
+│   │   └── useSaveSlots.ts
+│   ├── states/
+│   ├── store/
+│   ├── styles/
+│   ├── App.css
+│   ├── App.tsx
+│   ├── index.css
+│   └── main.tsx
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── patch-cabinet.js
+├── patch-game-hud-navigation.js
+├── README.md
+├── TODO.txt
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
 
 ─── SOURCE FILES ───────────────────────────────────
 
@@ -107,43 +176,45 @@ export default defineConfig([
 ────────────────────────────────────────────────────
 ===========================================================================
   STEVEN CASTEEL // BOX BATTLE CABINET ENGINE
-  AI Architecture & Development Guidelines
+  AI Terminal Execution & Development Guidelines
 ===========================================================================
 
-1. SYSTEM IDENTITY & THEME DESIGN
----------------------------------
-This project represents a professional high-performance retro-arcade game engine built on TypeScript and a flat, responsive HTML5 Canvas context.
-- Colors: Dominant void black surfaces (#0c0d11), secondary dark steel blocks (#1e1e24), primary neon Matrix green indicators (#22c55e / hsl(142, 71%, 58%)), hazard red warning spikes/lasers (hsl(350, 80%, 60%)).
-- Geometry: Pure high-precision geometric rectangle forms. Static block structures, laser arrays, and flat entities.
+1. TERMINAL EXECUTION & HEREDOC PROTOCOLS (CRITICAL)
+----------------------------------------------------
+To prevent Zsh parsing failures, environment errors, variable corruption, or script truncation on macOS systems, strictly adhere to the following execution protocols:
 
-2. MODULAR ARCHITECTURE (ECS-LITE)
-----------------------------------
-- Entities (BaseEntity.ts): Act as pure spatial nodes carrying state (position, velocity, size).
-- Components (Component.ts): Separate logic controllers (Health, Physics, Input) attached to entities that orchestrate behavior.
-- Solvers: Axis-independent kinematic collision solvers to isolate axes, snap to block interfaces, and avoid boundary clipping during performance drops.
+1.1 Quoted Starting Delimiters (Shell Protection)
+    - Always wrap the starting heredoc delimiter in single quotes (e.g., cat << 'EOF' > path/to/file or cat << 'ENDOFSCRIPT').
+    - Unquoted delimiters allow the terminal shell (Zsh/Bash) to perform immediate variable expansion ($variable) and backtick execution (`` ` ``) *before* writing the text to the file. This process strips or corrupts raw JavaScript, TypeScript, and CSS rules.
 
-3. WEB AUDIO RETRO SYNTHESIS
-----------------------------
-- Avoid static MP3/WAV file assets.
-- Generate procedural retro sounds on-the-fly using the Web Audio API (OscillatorNode, GainNode, AudioBuffer).
-- Keep sound-gain controls relative and bound to real-time mixer configurations.
+1.2 Zero Shell Comments
+    - Never include hash symbols (#) inside any active terminal or shell code blocks.
+    - Copy-pasting shell commands containing hash lines directly into macOS interactive Zsh terminals triggers parsing errors or partial executions. Keep shell blocks strictly functional and describe operations in the accompanying markdown text instead.
 
-4. WORKFLOW PROTOCOLS (CRITICAL)
---------------------------------
-- Fulloverwrites only: Overwrite or create files completely using the "cat << 'EOF' > path/to/file" terminal command structures.
-- No Bash Comments: Never include hash comments (#) inside any active shell/bash code blocks to maintain Zsh-interactive parser integrity.
-- ESM Only: All build tool scripts must be pure ES Modules (import/export).
-- Testing: Instruct the developer on specific testing targets via "npm run dev" to verify build consistency at any checkpoint.
+1.3 Delimiter Syntax and Formatting
+    - The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its own line with zero leading or trailing whitespace.
+    - If any space, tab, or comment character is placed on the delimiter line, the shell will fail to recognize the boundary and keep appending input, causing truncation or terminal lockup.
 
+1.4 Temporary Script ESM Standard
+    - Since this project operates with "type": "module", all temporary Node.js scripts must use ES Module syntax (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
 
-Commits
-     
-     git add / commit / push commands with a detailed commit
-     description. Format:
-       git add . && git commit -m "title" -m "description" && git push
-     Don't provide the commit until the user asks for it.
-     For git add, always use the period .
-     Don't repeat information from previous commits.
+1.5 Script Execution and Automatic Cleanup
+    - All file patches using temporary Node.js scripts must always append the self-delete command on the exact same execution line (e.g., "node ./patch.js && rm ./patch.js") to prevent cluttering the repository.
+
+1.6 Zsh Compatibility & Special Characters
+    - Do not use unescaped exclamation marks (!) inside shell string variables. Zsh treats them as history expansion operators and will fail to execute the command. 
+
+1.7 Surgical Patches vs. Overwrites
+    - For small-to-medium files, perform full overwrites (cat << 'EOF' > file).
+    - For large files, write a temporary Node.js script using fs.readFileSync and regex/string replacement (as defined in 1.4 and 1.5) to avoid file truncation during large output generation.
+
+2. BUILD & TESTING VERIFICATION
+-------------------------------
+- Build Verification: Validate all TypeScript compilation updates by running "npm run build" before concluding.
+- Procedural Assets: Keep codebase dependencies light. Generate retro game assets and audio procedurally rather than using static imports.
+- Atomic Commits: When requested, output: git add . && git commit -m "title" -m "description" && git push
+  Do not present commit strings until requested. Always use the period (.) for git add.
+
 
 
 
@@ -1496,7 +1567,7 @@ body {
   border-radius: 28px;
   background: #0f1218;
   padding: 20px;
-  box-shadow: 
+  box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
     inset 0 0 30px rgba(0, 0, 0, 0.9);
@@ -1555,7 +1626,7 @@ body {
   height: 100%;
 }
 
-/* CRT Filters - STRICTLY gameplay canvas only */
+/* CRT Filters - gameplay canvas only */
 .crt-scanlines {
   position: relative;
 }
@@ -1564,7 +1635,10 @@ body {
   content: " ";
   display: block;
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
   z-index: 99;
   background-size: 100% 4px;
@@ -1576,8 +1650,13 @@ body {
 }
 
 @keyframes crt-flicker-animation {
-  0% { opacity: 0.985; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.985;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Neumorphic Core Rules */
@@ -1598,8 +1677,10 @@ body {
   box-shadow: var(--shadow-light), var(--shadow-dark);
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
-  padding: 22px 44px;
-  font-size: 16px;
+  padding: 24px 48px;
+  /* Taller button padding */
+  font-size: 18px;
+  /* Scaled up text size */
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1651,18 +1732,20 @@ body {
 
 /* Specific Modules */
 .title-banner {
-  margin-top: 24px;
+  padding-top: 45px;
+  /* Increased top padding across screen headers */
+  margin-top: 0;
   text-align: center;
 }
 
 .title-banner h1 {
   font-size: 4.8rem;
-  text-shadow: 0 4px 15px rgba(0,0,0,0.95);
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.95);
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
   text-transform: uppercase;
 }
 
@@ -1677,8 +1760,13 @@ body {
 }
 
 @keyframes crt-pulse {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .btn-container {
@@ -1704,7 +1792,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 36px;
+  padding: 28px 40px;
+  /* Taller card container */
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1781,7 +1870,8 @@ body {
   gap: 14px;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 52vh;
+  max-height: 40vh;
+  /* Reduced slightly to prevent vertical layout compression */
 }
 
 .binding-row {
@@ -1789,7 +1879,7 @@ body {
   align-items: center;
   justify-content: space-between;
   font-size: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   padding: 12px 6px;
 }
 
@@ -1803,12 +1893,13 @@ body {
 .binding-btn {
   min-width: 100px;
   text-align: center;
-  font-size: 13px;
-  padding: 10px 16px;
+  font-size: 14px;
+  padding: 14px 22px;
+  /* Taller binding layout buttons */
   border-radius: 8px;
 }
 
-/* New Status Panel (Positions completely above game arena) */
+/* Status Panel */
 .cabinet-status-panel {
   width: 100%;
   display: flex;
@@ -1879,11 +1970,18 @@ body {
 }
 
 @keyframes arrow-blink {
-  0% { opacity: 0.3; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1.15); }
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
-/* Dialogue Board Classes (Renders completely below playing canvas) */
+/* Dialogue Board Classes */
 .dialogue-console {
   width: 100%;
   height: 130px;
@@ -1894,7 +1992,8 @@ body {
   flex-shrink: 0;
 }
 
-.dialogue-box-left, .dialogue-box-right {
+.dialogue-box-left,
+.dialogue-box-right {
   flex: 1;
   border-radius: 14px;
   padding: 16px 24px;
@@ -1927,7 +2026,7 @@ body {
   height: 64px;
   border-radius: 8px;
   flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.4);
+  border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .dialogue-text-container {
@@ -1959,12 +2058,29 @@ body {
 }
 
 @keyframes rumble-anim {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  20% { transform: translate(-1px, -1px) rotate(-1deg); }
-  40% { transform: translate(-1px, 1px) rotate(1deg); }
-  60% { transform: translate(1px, -1px) rotate(0deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  100% { transform: translate(1px, 1px) rotate(-1deg); }
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+
+  20% {
+    transform: translate(-1px, -1px) rotate(-1deg);
+  }
+
+  40% {
+    transform: translate(-1px, 1px) rotate(1deg);
+  }
+
+  60% {
+    transform: translate(1px, -1px) rotate(0deg);
+  }
+
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+
+  100% {
+    transform: translate(1px, 1px) rotate(-1deg);
+  }
 }
 
 /* Low Health Vignette Pulse */
@@ -1984,8 +2100,13 @@ body {
 }
 
 @keyframes vignette-heartbeat {
-  0% { opacity: 0.35; }
-  100% { opacity: 0.95; }
+  0% {
+    opacity: 0.35;
+  }
+
+  100% {
+    opacity: 0.95;
+  }
 }
 
 /* Chromatic split-channel CSS filter */
@@ -1998,7 +2119,7 @@ body {
   position: absolute;
   border-radius: 50%;
   border: 4px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 
+  box-shadow:
     inset 0 0 30px rgba(255, 255, 255, 0.3),
     0 0 40px rgba(255, 255, 255, 0.15);
   pointer-events: none;
@@ -2008,11 +2129,262 @@ body {
 }
 
 @keyframes blast-wave-expand {
-  0% { width: 0px; height: 0px; opacity: 1; filter: blur(1px); }
-  50% { filter: blur(6px); }
-  100% { width: 1200px; height: 1200px; opacity: 0; filter: blur(12px); }
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+    filter: blur(1px);
+  }
+
+  50% {
+    filter: blur(6px);
+  }
+
+  100% {
+    width: 1200px;
+    height: 1200px;
+    opacity: 0;
+    filter: blur(12px);
+  }
 }
 
+/* =========================================================================
+   OVERHAULED TITLE SCREEN DESIGN SYSTEM
+   ========================================================================= */
+
+.title-screen-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  padding: 14px 24px;
+  position: relative;
+}
+
+.title-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-screen-header {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 45px;
+  /* Added top padding space */
+}
+
+.system-tag {
+  font-size: 9px;
+  color: #4a5568;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 5px 14px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title-banner-overhauled {
+  text-align: center;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.title-banner-overhauled h1 {
+  font-size: 3.5rem;
+  margin: 0;
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+}
+
+.title-subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.subtitle-line {
+  height: 1px;
+  flex-grow: 1;
+  max-width: 80px;
+  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
+}
+
+.subtitle-text {
+  font-size: 11px;
+  color: var(--signal-green);
+  margin: 0;
+  letter-spacing: 0.35em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.title-screen-center {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.btn-container-overhauled {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Large Interactive Vector Buttons */
+.neo-btn-large {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 24px 32px;
+  /* Taller button layout */
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  text-align: left;
+}
+
+.neo-btn-large:hover {
+  background: #141922;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.neo-btn-large-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+}
+
+.neo-btn-large .btn-indicator-light {
+  width: 8px;
+  /* Slightly scaled up */
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  margin-right: 24px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-large-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow: 0 0 10px var(--signal-green), 0 0 20px var(--signal-green-glow);
+}
+
+.btn-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.btn-main-label {
+  font-size: 18px;
+  /* Scaled up main text inside button */
+  font-weight: 800;
+  color: #a0aec0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large-focused .btn-main-label {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.btn-sub-label {
+  font-size: 10px;
+  /* Scaled up subtitle text inside button */
+  font-weight: 500;
+  color: #4a5568;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large-focused .btn-sub-label {
+  color: var(--signal-green);
+  opacity: 0.85;
+}
+
+.cursor-arrow-large {
+  color: var(--signal-green);
+  font-size: 18px;
+  /* Scaled up arrow icon */
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  margin-left: 10px;
+}
+
+/* Title Footer elements */
+.title-screen-footer {
+  z-index: 2;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.footer-deco-line {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 80%, transparent);
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.footer-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  color: #4a5568;
+  letter-spacing: 0.15em;
+  padding: 0 16px;
+  text-transform: uppercase;
+}
+
+.footer-center-prompt {
+  color: #718096;
+  font-weight: bold;
+}
 
 
 ● ./src/App.tsx
@@ -2040,10 +2412,10 @@ type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | 
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const [currentScreen, setCurrentScreen] = useState<ScreenState>("TITLE");
   const [menuIndex, setMenuIndex] = useState<number>(0);
-  
+
   const [playerHP, setPlayerHP] = useState(5);
   const [bossHP, setBossHP] = useState(30);
   const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
@@ -2117,11 +2489,11 @@ export default function App() {
       let maxIndex = 0;
 
       if (currentScreen === "PLAYING" && gameResult !== "PLAYING") maxIndex = 1;
-      else if (currentScreen === "TITLE") maxIndex = 2; 
-      else if (currentScreen === "SAVE_SELECT") maxIndex = 5; 
-      else if (currentScreen === "OPTIONS") maxIndex = 2; 
-      else if (currentScreen === "SOUND") maxIndex = 3; 
-      else if (currentScreen === "CONTROLS") maxIndex = 7; 
+      else if (currentScreen === "TITLE") maxIndex = 2;
+      else if (currentScreen === "SAVE_SELECT") maxIndex = 5;
+      else if (currentScreen === "OPTIONS") maxIndex = 2;
+      else if (currentScreen === "SOUND") maxIndex = 3;
+      else if (currentScreen === "CONTROLS") maxIndex = 7;
       else if (currentScreen === "CREDITS") maxIndex = 0;
 
       const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
@@ -2253,7 +2625,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div className="cabinet-outer">
-        
+
         {/* Status Panel (Health HUD) situated above gameplay arena */}
         <div className="cabinet-status-panel neo-pressed">
           <div className="hud-panel-block" style={{ gap: "4px" }}>
@@ -2267,8 +2639,8 @@ export default function App() {
                 />
               ))}
             </div>
-            
-            {/* Real-time Sub-HUD for Healing Charges (glowing purple LEDs) and Determination (fraction dots) */}
+
+            {/* Healing Charges & Determination visual indicators */}
             {currentScreen === "PLAYING" && (
               <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
                 <div className="flex-row" style={{ gap: "4px" }}>
@@ -2285,17 +2657,24 @@ export default function App() {
                     <div
                       key={i}
                       className="led-dot"
-                      style={{ 
-                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b", 
+                      style={{
+                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
                         boxShadow: i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
-                        width: "4px", 
-                        height: "4px" 
+                        width: "4px",
+                        height: "4px"
                       }}
                     />
                   ))}
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="hud-panel-block" style={{ alignItems: "center" }}>
+            <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
+            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
+              {currentScreen === "PLAYING" ? "PLAYING" : "READY"}
+            </span>
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
@@ -2490,10 +2869,8 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
-import { saveManager } from "@/core/SaveManager";
-import { inputProvider } from "@/core/InputProvider";
-import { soundSynth } from "@/core/SoundSynth";
 import { Spawner } from "@/entities/Spawner";
+import { inputProvider } from "@/core/InputProvider";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -2508,7 +2885,7 @@ interface GameArenaProps {
   navTo: (screen: any) => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
-  setHealingCharges?: (charges: number) => void; // Optional callbacks for status HUD sync
+  setHealingCharges?: (charges: number) => void;
   setDetermination?: (count: number) => void;
 }
 
@@ -2527,8 +2904,7 @@ export function GameArena({
   setHealingCharges,
   setDetermination,
 }: GameArenaProps) {
-  
-  // Resized solids & platform boundaries to fit the expanded 1250x1250 grid
+
   const solids: Rectangle[] = [
     // Outer Border Blocks
     { x: 0, y: 1150, width: 400, height: 100 },  // Left Ground
@@ -2537,18 +2913,16 @@ export function GameArena({
     { x: 0, y: 0, width: 1250, height: 50 },      // Ceiling
     { x: 0, y: 0, width: 50, height: 1250 },      // Left Wall
     { x: 1200, y: 0, width: 50, height: 1250 },   // Right Wall
-    
+
     // Middle Floating solid block
     { x: 425, y: 800, width: 400, height: 40 }
   ];
 
-  // Wooden One-Way Drop-Through Platforms
   const onewayPlatforms: Rectangle[] = [
     { x: 50, y: 550, width: 300, height: 20 },   // Left middle perch
     { x: 900, y: 550, width: 300, height: 20 }   // Right middle perch
   ];
 
-  // Spikes (Hazard) resting on the pit floor
   const hazards: Rectangle[] = [
     { x: 400, y: 1150, width: 450, height: 100 }
   ];
@@ -2574,12 +2948,11 @@ export function GameArena({
     PhysicsComponent.setHazards(hazards);
     PhysicsComponent.setOnewayPlatforms(onewayPlatforms);
 
-    // Dynamic spawners aligned to the 1250px grid coordinates
     const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 175, 490),   // Static on Left Wooden platform
-      new Spawner("TURRET", 1075, 490),  // Static on Right Wooden platform
-      new Spawner("LANCER", 625, 740),   // Patrols Central Floating bridge
-      new Spawner("FLYER", 625, 400)     // Hover Center patroller
+      new Spawner("TURRET", 175, 490),
+      new Spawner("TURRET", 1075, 490),
+      new Spawner("LANCER", 625, 740),
+      new Spawner("FLYER", 625, 400)
     ];
 
     const pool = new ObjectPool(() => new Projectile(), 60);
@@ -2600,7 +2973,7 @@ export function GameArena({
     const handleUpdate = (dt: number) => {
       if (Camera.hitStopTimer > 0) {
         Camera.update(dt);
-        return; 
+        return;
       }
 
       Camera.update(dt);
@@ -2608,7 +2981,7 @@ export function GameArena({
       if (isCinematicActive.current) {
         player.velocity = { x: 0, y: 0 };
         boss.velocity = { x: 0, y: 0 };
-        
+
         const activeProjectiles = [...pool.getActive()];
         for (const proj of activeProjectiles) {
           proj.update(dt);
@@ -2620,17 +2993,14 @@ export function GameArena({
       player.update(dt);
       boss.update(dt);
 
-      // Update Spawners
       for (const spawner of activeSpawners) {
         spawner.update(dt);
       }
 
-      // Update Minions
       const activeMinions = [...Registry.minions];
       for (const minion of activeMinions) {
         minion.update(dt);
 
-        // Player-Minion contact damage check
         if (!player.isDead && !minion.isDead) {
           const pW = player.size.width / 2;
           const pH = player.size.height / 2;
@@ -2669,51 +3039,50 @@ export function GameArena({
       if (pHealth) setPlayerHP(pHealth.currentHealth);
       if (bHealth) setBossHP(bHealth.currentHealth);
 
-      // Sync real-time charges and determination states up to the React HUD
       if (setHealingCharges) setHealingCharges(player.healingCharges);
       if (setDetermination) setDetermination(player.determinationCounter);
 
-      // Dialogue triggers
+      // Plain Dialogue prompts
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
-        triggerDialogue("player", "I found you. Your control over this chamber ends now!");
+        triggerDialogue("player", "I found you. This battle ends now!");
       }
 
       if (bHealth && bHealth.currentHealth <= 21 && !hasTriggeredPhase2.current) {
         hasTriggeredPhase2.current = true;
-        triggerDialogue("boss", "Insolent square! Prepare for my rapid volleys!");
+        triggerDialogue("boss", "You won't beat me! Watch out for my rapid fire!");
       }
 
       if (bHealth && bHealth.currentHealth <= 12 && !hasTriggeredPhase3.current) {
         hasTriggeredPhase3.current = true;
-        triggerDialogue("boss", "Danger! Max charge active! Omni-burst engaged!");
+        triggerDialogue("boss", "This is my final stand! Prepare yourself!");
       }
 
-      // --- CINEMATIC END FLOW WITH TIMEOUT DELAYS ---
+      // Final defeat sequence triggers
       if (player.isDead) {
         isCinematicActive.current = true;
-        triggerDialogue("player", "Power failing... system shutting down...");
-        triggerDialogue("boss", "The cage remains ours. Another simulation completed.");
-        
+        triggerDialogue("player", "No... I can't go on...");
+        triggerDialogue("boss", "You fought well... but I am victorious.");
+
         setTimeout(() => {
           setGameResult("GAMEOVER");
           loop.stop();
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
-        
+
         const parentEl = canvas.parentElement;
         if (parentEl) {
           const xPercent = (boss.position.x / 1250) * 100;
           const yPercent = (boss.position.y / 1250) * 100;
-          
+
           const customEvent = new CustomEvent("boss-shockwave", { detail: { x: xPercent, y: yPercent } });
           window.dispatchEvent(customEvent);
         }
 
-        triggerDialogue("boss", "How... could a simple opponent... pacify me...");
-        triggerDialogue("player", "The chamber has been cleared. Returning to terminal.");
-        
+        triggerDialogue("boss", "No... How could I lose this fight...");
+        triggerDialogue("player", "It is over. The area is secure.");
+
         setTimeout(() => {
           setGameResult("VICTORY");
           loop.stop();
@@ -2724,21 +3093,19 @@ export function GameArena({
     };
 
     const handleRender = () => {
-      ctx.fillStyle = "#0c0d11"; 
+      ctx.fillStyle = "#0c0d11";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
       ctx.translate(Camera.offsetX, Camera.offsetY);
 
-      // 1. Draw solid Blocks
-      ctx.fillStyle = "#1e1e24"; 
+      ctx.fillStyle = "#1e1e24";
       for (const solid of solids) {
         ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
         ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
       }
 
-      // 2. Draw One-Way platforms (rendered as beautiful, neon-accented wooden bridges)
       ctx.fillStyle = "#2c3e50";
       for (const platform of onewayPlatforms) {
         ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
@@ -2746,15 +3113,15 @@ export function GameArena({
         ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
       }
 
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      ctx.fillStyle = "hsl(350, 80%, 60%)";
       for (const hazard of hazards) {
         const spikeWidth = 25;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
           ctx.beginPath();
-          ctx.moveTo(hazard.x + i * spikeWidth, 1200); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200); 
+          ctx.moveTo(hazard.x + i * spikeWidth, 1200);
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
           ctx.fill();
         }
       }
@@ -2762,7 +3129,6 @@ export function GameArena({
       boss.draw(ctx);
       player.draw(ctx);
 
-      // Draw Minions
       const activeMinionsToDraw = Registry.minions;
       for (const minion of activeMinionsToDraw) {
         minion.draw(ctx);
@@ -2789,7 +3155,6 @@ export function GameArena({
       Registry.boss = null;
       Registry.projectilePool = null;
 
-      // Clean up active spawners
       for (const spawner of activeSpawners) {
         spawner.cleanup();
       }
@@ -2800,7 +3165,7 @@ export function GameArena({
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
-        
+
         <canvas
           ref={canvasRef}
           width={1250}
@@ -2809,7 +3174,6 @@ export function GameArena({
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
 
-        {/* Red Vignette overlay */}
         <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
 
         {gameResult !== "PLAYING" && (
@@ -2820,7 +3184,7 @@ export function GameArena({
                   GAME OVER
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  The cabinet connection has been terminated.
+                  You were defeated.
                 </p>
               </div>
             ) : (
@@ -2829,7 +3193,7 @@ export function GameArena({
                   VICTORY
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  The simulation has been completed.
+                  You defeated the boss!
                 </p>
               </div>
             )}
@@ -2860,7 +3224,6 @@ export function GameArena({
     </div>
   );
 }
-
 
 
 ● ./src/components/HealthComponent.ts
@@ -2978,7 +3341,9 @@ export class PhysicsComponent implements Component {
   public isGrounded: boolean = false;
   public isOnWallLeft: boolean = false;
   public isOnWallRight: boolean = false;
-  
+
+  public disablePlatformCollisionTimer: number = 0; // Timer to temporarily bypass one-way platforms
+
   public static solids: Rectangle[] = [];
   public static hazards: Rectangle[] = [];
   public static onewayPlatforms: Rectangle[] = [];
@@ -3005,6 +3370,10 @@ export class PhysicsComponent implements Component {
   }
 
   public update(dt: number): void {
+    if (this.disablePlatformCollisionTimer > 0) {
+      this.disablePlatformCollisionTimer -= dt;
+    }
+
     if (!this.isGrounded) {
       this.owner.velocity.y += this.gravity * dt;
     }
@@ -3054,10 +3423,10 @@ export class PhysicsComponent implements Component {
       }
     }
 
-    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing)
-    if (this.owner.velocity.y >= 0) {
+    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing and timer is not active)
+    if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
       const prevY = this.owner.position.y - this.owner.velocity.y * 0.016; // approximate previous position
-      
+
       for (const platform of PhysicsComponent.onewayPlatforms) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
           // Only collide if feet were above the platform's top edge in the previous frame
@@ -3090,7 +3459,6 @@ export class PhysicsComponent implements Component {
 }
 
 
-
 ● ./src/components/menus/AudioScreen.tsx
 ────────────────────────────────────────────────────
 import { AudioSettings } from "@/core/SettingsManager";
@@ -3114,9 +3482,9 @@ export function AudioScreen({
 }: AudioScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "20px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>AUDIO SETTINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Console volume configurations</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOUND SETTINGS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Adjust game sounds and music volume</p>
       </div>
 
       <div className="mixer-board neo-pressed">
@@ -3124,7 +3492,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 0 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              MASTER VOLUME
+              MAIN VOLUME
             </span>
             <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80" }}>
               {audio.masterMuted ? "MUTED" : `${Math.round(audio.masterVolume * 100)}%`}
@@ -3149,7 +3517,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 1 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              EFFECTS VOLUME
+              SOUND EFFECTS
             </span>
             <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
               {audio.sfxMuted ? "MUTED" : `${Math.round(audio.sfxVolume * 100)}%`}
@@ -3174,7 +3542,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 2 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              MUSIC VOLUME
+              MUSIC
             </span>
             <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
               {audio.musicMuted ? "MUTED" : `${Math.round(audio.musicVolume * 100)}%`}
@@ -3211,7 +3579,6 @@ export function AudioScreen({
 }
 
 
-
 ● ./src/components/menus/ControlsScreen.tsx
 ────────────────────────────────────────────────────
 import { Action } from "@/core/InputProvider";
@@ -3239,12 +3606,12 @@ export function ControlsScreen({
 }: ControlsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "12px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY BINDINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Keyboard mapping configuration</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Change keyboard buttons</p>
       </div>
 
-      <div className="flex-row" style={{ gap: "16px", margin: "4px 0" }}>
+      <div className="flex-row" style={{ gap: "16px", margin: "12px 0" }}>
         <button
           onClick={() => {
             settingsManager.setPreset("DEFAULT_1");
@@ -3252,10 +3619,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
           }}
         >
           PRESET 1
@@ -3267,10 +3635,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
           }}
         >
           PRESET 2
@@ -3282,10 +3651,11 @@ export function ControlsScreen({
             reloadSaveSlots();
           }}
           className="neo-btn"
-          style={{ 
-            padding: "8px 16px",
-            borderColor: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "", 
-            color: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "" 
+          style={{
+            padding: "16px 28px",
+            fontSize: "14px",
+            borderColor: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
+            color: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
           }}
         >
           CUSTOM
@@ -3298,7 +3668,7 @@ export function ControlsScreen({
           const isFocusedRow = menuIndex === idx;
           return (
             <div key={action} className="binding-row">
-              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "" }}>
+              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "13px" }}>
                 {isFocusedRow && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
                 {action.replace("_", " ")}
               </span>
@@ -3309,13 +3679,13 @@ export function ControlsScreen({
                     setRebindTarget({ action, index: 0 });
                   }}
                   className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
-                  style={{ 
+                  style={{
                     borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                     color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
                   }}
                 >
                   {rebindTarget?.action === action && rebindTarget?.index === 0
-                    ? "PRESS KEY..."
+                    ? "PRESS ANY KEY..."
                     : keys[0] || "[ EMPTY ]"}
                 </button>
               </div>
@@ -3328,7 +3698,7 @@ export function ControlsScreen({
         onClick={onBack}
         onMouseEnter={() => { playHoverTick(); setMenuIndex(7); }}
         className={`neo-btn ${menuIndex === 7 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
+        style={{ width: "100%", maxWidth: "240px", marginTop: "12px" }}
       >
         {menuIndex === 7 && <span className="cursor-arrow">▶</span>}
         Back
@@ -3337,7 +3707,6 @@ export function ControlsScreen({
     </div>
   );
 }
-
 
 
 ● ./src/components/menus/CreditsScreen.tsx
@@ -3349,18 +3718,18 @@ interface CreditsScreenProps {
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "20px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CREDITS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>System architecture and engineering</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CREDITS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Game Developers and Tools</p>
       </div>
 
       <div className="credits-block neo-pressed flex-col" style={{ gap: "16px", textAlign: "center" }}>
         <p style={{ fontSize: "11px", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Created by Steven Casteel</p>
         <p style={{ fontSize: "10px", color: "#4a5568", margin: 0 }}>WWW.STEVENCASTEEL.COM</p>
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "10px", textAlign: "left", fontSize: "10px", color: "#a0aec0", lineHeight: "1.5" }}>
-          <p style={{ margin: 0 }}>• Built with TypeScript & Vite using standard Web Canvas interfaces.</p>
-          <p style={{ margin: 0 }}>• Audio procedurally synthesized inside <span style={{ color: "#ffffff" }}>SoundSynth.ts</span> using zero-asset Web Audio API waveforms.</p>
-          <p style={{ margin: 0 }}>• Save profiles managed under local persistent database registers.</p>
+          <p style={{ margin: 0 }}>• Built using modern web technologies and HTML5 Canvas.</p>
+          <p style={{ margin: 0 }}>• Sounds generated dynamically using the Web Audio API.</p>
+          <p style={{ margin: 0 }}>• Game progress is saved automatically on your browser.</p>
         </div>
       </div>
 
@@ -3376,7 +3745,6 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
     </div>
   );
 }
-
 
 
 ● ./src/components/menus/SaveSelectScreen.tsx
@@ -3412,17 +3780,17 @@ export function SaveSelectScreen({
 }: SaveSelectScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "12px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>
           {isCopyMode
             ? copySourceIndex === -1
-              ? "COPY SOURCE SLOT"
-              : "COPY TARGET SLOT"
+              ? "CHOOSE SLOT TO COPY"
+              : "CHOOSE WHERE TO COPY"
             : isEraseMode
-            ? "ERASE ACTIVE SLOT"
-            : "SAVE SLOTS"}
+              ? "CHOOSE SLOT TO DELETE"
+              : "CHOOSE A SAVE SLOT"}
         </h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Select profile configuration</p>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Select a slot to load your game</p>
       </div>
 
       <div className="slot-list">
@@ -3434,48 +3802,47 @@ export function SaveSelectScreen({
             className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
           >
             <div className="flex-col">
-              <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                {menuIndex === i && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
+              <span style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                {menuIndex === i && <span className="cursor-arrow" style={{ marginRight: "8px" }}>▶</span>}
                 Slot {i + 1}
               </span>
-              <span style={{ fontSize: "9px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "4px", paddingLeft: menuIndex === i ? "16px" : "0" }}>
-                {slot.empty ? "EMPTY" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+              <span style={{ fontSize: "11px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "6px", paddingLeft: menuIndex === i ? "18px" : "0" }}>
+                {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
               </span>
             </div>
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
-              <div className={`led-dot ${
-                slot.empty 
-                  ? i === copySourceIndex ? "led-yellow" : "" 
+              <div className={`led-dot ${slot.empty
+                  ? i === copySourceIndex ? "led-yellow" : ""
                   : isEraseMode ? "led-red" : "led-green"
-              }`} style={{ background: slot.empty && i !== copySourceIndex ? "#07080b" : "" }} />
-              <span style={{ fontSize: "9px", textTransform: "uppercase", color: "#718096" }}>
-                {slot.empty ? "EMPTY" : "USED"}
+                }`} style={{ background: slot.empty && i !== copySourceIndex ? "#07080b" : "" }} />
+              <span style={{ fontSize: "11px", textTransform: "uppercase", color: "#718096" }}>
+                {slot.empty ? "EMPTY" : "SAVED GAME"}
               </span>
             </div>
           </button>
         ))}
       </div>
 
-      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "340px", marginTop: "16px" }}>
+      <div className="flex-col" style={{ gap: "16px", width: "100%", maxWidth: "420px", marginTop: "16px", paddingBottom: "10px" }}>
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
           <button
             onClick={toggleCopyMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
             className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "10px" }}
+            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
           >
             {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-            Copy
+            Copy Slot
             {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
           </button>
           <button
             onClick={toggleEraseMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
             className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "10px" }}
+            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
           >
             {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
-            Erase
+            Delete Slot
             {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
           </button>
         </div>
@@ -3483,7 +3850,7 @@ export function SaveSelectScreen({
           onClick={onBack}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(5); }}
           className={`neo-btn ${menuIndex === 5 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "10px" }}
+          style={{ padding: "18px", fontSize: "16px" }}
         >
           {menuIndex === 5 && <span className="cursor-arrow">▶</span>}
           Back
@@ -3493,7 +3860,6 @@ export function SaveSelectScreen({
     </div>
   );
 }
-
 
 
 ● ./src/components/menus/SettingsScreen.tsx
@@ -3517,9 +3883,9 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "20px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SETTINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Mixers and controller binding profiles</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SETTINGS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Adjust sounds and change keys</p>
       </div>
 
       <div className="btn-container" style={{ margin: "auto 0" }}>
@@ -3529,7 +3895,7 @@ export function SettingsScreen({
           className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
         >
           {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-          AUDIO
+          SOUND SETTINGS
           {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
         </button>
         <button
@@ -3538,7 +3904,7 @@ export function SettingsScreen({
           className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
         >
           {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-          KEY BINDINGS
+          KEYBOARD CONTROLS
           {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
         </button>
       </div>
@@ -3556,7 +3922,6 @@ export function SettingsScreen({
     </div>
   );
 }
-
 
 
 ● ./src/components/menus/TitleScreen.tsx
@@ -3579,49 +3944,76 @@ export function TitleScreen({
   setMenuIndex,
 }: TitleScreenProps) {
   return (
-    <div className="flex-col-center h-full w-full" style={{ justifyContent: "space-between" }}>
-      <div className="title-banner">
-        <h1>BOX BATTLE</h1>
-        <p>CABINET SYSTEM INTERFACE</p>
+    <div className="title-screen-container">
+      {/* Structural background line vectors */}
+      <div className="title-grid-overlay" />
+
+      <div className="title-screen-header">
+        <div className="system-tag">WELCOME TO THE ARENA</div>
+        <div className="title-banner-overhauled">
+          <h1>BOX BATTLE</h1>
+          <div className="title-subtitle-container">
+            <span className="subtitle-line"></span>
+            <p className="subtitle-text">RETRO ACTION GAME</p>
+            <span className="subtitle-line"></span>
+          </div>
+        </div>
       </div>
 
-      <div className="btn-container">
-        <button
-          onClick={onPlay}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-          className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-        >
-          {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-          START GAME
-          {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
-        </button>
-        <button
-          onClick={onSettings}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-          className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-        >
-          {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-          SETTINGS
-          {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
-        </button>
-        <button
-          onClick={onCredits}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
-        >
-          {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
-          CREDITS
-          {menuIndex === 2 && <span className="cursor-arrow">◀</span>}
-        </button>
+      <div className="title-screen-center">
+        <div className="btn-container-overhauled">
+          <button
+            onClick={onPlay}
+            onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+            className={`neo-btn-large ${menuIndex === 0 ? "neo-btn-large-focused" : ""}`}
+          >
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label">PLAY GAME</span>
+              <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
+            </div>
+            {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+
+          <button
+            onClick={onSettings}
+            onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+            className={`neo-btn-large ${menuIndex === 1 ? "neo-btn-large-focused" : ""}`}
+          >
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label">OPTIONS</span>
+              <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
+            </div>
+            {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+
+          <button
+            onClick={onCredits}
+            onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
+            className={`neo-btn-large ${menuIndex === 2 ? "neo-btn-large-focused" : ""}`}
+          >
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label">CREDITS</span>
+              <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
+            </div>
+            {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+        </div>
       </div>
 
-      <div style={{ fontSize: "9px", color: "#4a5568", textTransform: "uppercase", letterSpacing: "0.18em", marginBottom: "8px" }}>
-        Standard Keyboard Navigation Active // arrows + enter
+      <div className="title-screen-footer">
+        <div className="footer-deco-line" />
+        <div className="footer-status-bar">
+          <span>CONTROL METHOD: KEYBOARD</span>
+          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD  •  SELECT: ENTER / SPACE</span>
+          <span>SAVES: 3 AVAILABLE</span>
+        </div>
       </div>
     </div>
   );
 }
-
 
 
 ● ./src/core/Camera.ts
@@ -5170,7 +5562,7 @@ interface GhostFrame {
 export class Player extends BaseEntity {
   public health!: HealthComponent;
   private physics!: PhysicsComponent;
-  
+
   private moveSpeed: number = 450;
   private jumpForce: number = 680;
   private wallSlideSpeed: number = 120;
@@ -5209,15 +5601,15 @@ export class Player extends BaseEntity {
   public isHealing: boolean = false;
   private healTimer: number = 0;
   private readonly maxHealingCharges: number = 3;
-  private readonly healDuration: number = 2.0; // 2 seconds channel
+  private readonly healDuration: number = 2.0;
 
   constructor(id: string) {
     super(id);
-    this.size = { width: 40, height: 80 }; 
+    this.size = { width: 40, height: 80 };
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
-      invincibilityDuration: 1.5 
+      invincibilityDuration: 1.5
     });
   }
 
@@ -5232,7 +5624,7 @@ export class Player extends BaseEntity {
     this.attackActiveTimer -= dt;
 
     for (const ghost of this.ghosts) {
-      ghost.opacity -= dt * 5.0; 
+      ghost.opacity -= dt * 5.0;
     }
     this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
 
@@ -5246,7 +5638,6 @@ export class Player extends BaseEntity {
       this.velocity.x = 0;
       this.healTimer -= dt;
 
-      // Cancel heal on let-go
       if (!inputProvider.isPressed("MOVE_DOWN") || !inputProvider.isPressed("JUMP")) {
         this.isHealing = false;
       }
@@ -5280,7 +5671,7 @@ export class Player extends BaseEntity {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        this.velocity.x *= 0.5; 
+        this.velocity.x *= 0.5;
       }
 
       super.update(dt);
@@ -5297,12 +5688,12 @@ export class Player extends BaseEntity {
 
     if (this.physics.isOnWallLeft) {
       this.wallCoyoteTimer = 0.05;
-      this.lastWallNormal = 1; 
+      this.lastWallNormal = 1;
       this.hasDoubleJump = true;
       this.canDash = true;
     } else if (this.physics.isOnWallRight) {
       this.wallCoyoteTimer = 0.05;
-      this.lastWallNormal = -1; 
+      this.lastWallNormal = -1;
       this.hasDoubleJump = true;
       this.canDash = true;
     } else {
@@ -5329,9 +5720,9 @@ export class Player extends BaseEntity {
       this.canDash = false;
       this.dashDirection = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
       this.velocity.y = 0;
-      this.ghostSpawnTimer = 0; 
+      this.ghostSpawnTimer = 0;
       soundSynth.playDash();
-      
+
       super.update(dt);
       return;
     }
@@ -5346,17 +5737,22 @@ export class Player extends BaseEntity {
     if (this.jumpBufferTimer > 0) {
       // Prioritize One-way Drop-through over jump/heal if holding Down
       if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
-        this.position.y += 12; // slip through
+        const physics = this.getComponent(PhysicsComponent);
+        if (physics) {
+          physics.disablePlatformCollisionTimer = 0.25; // Disable platform collisions briefly
+        }
+        this.position.y += 12; // Slip physically below snapping threshold
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
-      } 
+        soundSynth.playJump(); // Play subtle drops/slip sound cue
+      }
       // Else if on solid floor, holding Down + Jump initiates HEAL
       else if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.healingCharges > 0 && this.health.currentHealth < this.health.maxHealth) {
         this.isHealing = true;
         this.healTimer = this.healDuration;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump(); // starting hum
-      } 
+        soundSynth.playJump();
+      }
       // Normal jump actions
       else if (this.coyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
@@ -5365,7 +5761,7 @@ export class Player extends BaseEntity {
         soundSynth.playJump();
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
-        this.velocity.x = this.lastWallNormal * 1650; 
+        this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.canDash = true;
@@ -5389,8 +5785,8 @@ export class Player extends BaseEntity {
 
       if (this.attackCooldownTimer <= 0) {
         this.attackActive = true;
-        this.attackActiveTimer = 0.1; 
-        this.attackCooldownTimer = 0.15; 
+        this.attackActiveTimer = 0.1;
+        this.attackCooldownTimer = 0.15;
         this.hasHitEnemyThisSwing = false;
 
         if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
@@ -5413,7 +5809,7 @@ export class Player extends BaseEntity {
     if (inputProvider.isJustReleased("ATTACK")) {
       if (this.isCharging) {
         this.isCharging = false;
-        
+
         if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
           this.fireFireball();
         }
@@ -5469,14 +5865,13 @@ export class Player extends BaseEntity {
       );
 
       if (isHit) {
-        // Interrupt heal channel on damage
         if (this.isHealing) {
           this.isHealing = false;
         }
 
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
-          this.velocity.y = -550; 
+          this.velocity.y = -550;
           this.physics.isGrounded = false;
         }
         break;
@@ -5491,7 +5886,7 @@ export class Player extends BaseEntity {
 
     let dirX = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     let dirY = 0;
-    
+
     if (inputProvider.isPressed("MOVE_UP")) {
       dirY = -1;
     } else if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
@@ -5527,10 +5922,10 @@ export class Player extends BaseEntity {
 
     if (isLvl2) {
       proj.size = { width: 28, height: 28 };
-      soundSynth.playDash(); 
+      soundSynth.playDash();
     } else {
       proj.size = { width: 14, height: 14 };
-      soundSynth.playJump(); 
+      soundSynth.playJump();
     }
   }
 
@@ -5576,18 +5971,18 @@ export class Player extends BaseEntity {
           const dx = target.position.x - this.position.x;
           const dy = target.position.y - this.position.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
+
           const isCloseRange = distance <= 90;
           const damage = isCloseRange ? 5 : 1;
 
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            this.registerDamageDealt(); // Charge Determination
+            this.registerDamageDealt();
 
             if (isCloseRange) {
               soundSynth.playHitConfirm();
-              Camera.shake(6, 0.12); 
+              Camera.shake(6, 0.12);
             }
           }
         }
@@ -5598,7 +5993,7 @@ export class Player extends BaseEntity {
   private checkPogoAttack() {
     const pogoHitbox = {
       x: this.position.x - 45,
-      y: this.position.y + 40, 
+      y: this.position.y + 40,
       width: 90,
       height: 44.5
     };
@@ -5624,15 +6019,15 @@ export class Player extends BaseEntity {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          this.registerDamageDealt(); // Charge Determination
+          this.registerDamageDealt();
         }
 
         this.velocity.y = -this.pogoForce;
-        this.position.y -= 2; 
+        this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
         soundSynth.playPogo();
-        return; 
+        return;
       }
     }
 
@@ -5653,20 +6048,19 @@ export class Player extends BaseEntity {
 
           if (isHit) {
             pool.release(proj);
-            this.registerDamageDealt(); // Charge Determination
+            this.registerDamageDealt();
 
             this.velocity.y = -this.pogoForce;
-            this.position.y -= 2; 
+            this.position.y -= 2;
             this.hasDoubleJump = true;
             this.canDash = true;
             soundSynth.playPogo();
-            return; 
+            return;
           }
         }
       }
     }
 
-    // Bounce off One-Way Platforms in addition to Solids
     const surfaces = [...PhysicsComponent.solids, ...PhysicsComponent.onewayPlatforms];
     for (const solid of surfaces) {
       const isHit = (
@@ -5678,7 +6072,7 @@ export class Player extends BaseEntity {
 
       if (isHit) {
         this.velocity.y = -this.pogoForce;
-        this.position.y -= 2; 
+        this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
         soundSynth.playPogo();
@@ -5703,12 +6097,12 @@ export class Player extends BaseEntity {
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
-      ctx.fillStyle = "hsl(142, 71%, 58%)"; 
+      ctx.fillStyle = "hsl(142, 71%, 58%)";
     }
 
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
-    
+
     ctx.fillRect(
       this.position.x - this.size.width / 2,
       this.position.y - this.size.height / 2,
@@ -5718,7 +6112,6 @@ export class Player extends BaseEntity {
 
     ctx.shadowBlur = 0;
 
-    // --- Draw Purple Concentric Healing Charge Aura ---
     if (this.isHealing) {
       const cycle = performance.now() * 0.008;
       ctx.strokeStyle = "hsl(280, 80%, 65%)";
@@ -5726,8 +6119,7 @@ export class Player extends BaseEntity {
       ctx.shadowBlur = 15;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      
-      // expanding and contracting nested rings
+
       const radius1 = 44 + Math.sin(cycle) * 8;
       const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
       ctx.arc(this.position.x, this.position.y, radius1, 0, Math.PI * 2);
@@ -5761,11 +6153,11 @@ export class Player extends BaseEntity {
   private drawAttackVisual(ctx: CanvasRenderingContext2D) {
     const facing = this.facingDirection;
     ctx.lineCap = "round";
-    
+
     if (this.attackDirection === "side") {
       const offset = facing * 50;
 
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)"; 
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.arc(
@@ -5777,7 +6169,7 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff"; 
+      ctx.strokeStyle = "#ffffff";
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
       ctx.shadowBlur = 12;
       ctx.lineWidth = 10;
@@ -5790,8 +6182,8 @@ export class Player extends BaseEntity {
         facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
       );
       ctx.stroke();
-      ctx.shadowBlur = 0; 
-    } 
+      ctx.shadowBlur = 0;
+    }
     else if (this.attackDirection === "up") {
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
@@ -5819,7 +6211,7 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
       ctx.shadowBlur = 0;
-    } 
+    }
     else if (this.attackDirection === "down") {
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
@@ -5850,7 +6242,6 @@ export class Player extends BaseEntity {
     }
   }
 }
-
 
 
 ● ./src/entities/Projectile.ts

@@ -21,12 +21,12 @@ export function TitleScreen({
       <div className="title-grid-overlay" />
 
       <div className="title-screen-header">
-        <div className="system-tag">BOOT STATUS: SECURE_CORE_v1.0.4</div>
+        <div className="system-tag">WELCOME TO THE ARENA</div>
         <div className="title-banner-overhauled">
           <h1>BOX BATTLE</h1>
           <div className="title-subtitle-container">
             <span className="subtitle-line"></span>
-            <p className="subtitle-text">CABINET SYSTEM INTERFACE</p>
+            <p className="subtitle-text">RETRO ACTION GAME</p>
             <span className="subtitle-line"></span>
           </div>
         </div>
@@ -41,8 +41,8 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">START SIMULATION</span>
-              <span className="btn-sub-label">ACCESS PERSISTENT DATA SLOTS</span>
+              <span className="btn-main-label">PLAY GAME</span>
+              <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
             </div>
             {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
           </button>
@@ -54,8 +54,8 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">SYSTEM CONFIG</span>
-              <span className="btn-sub-label">CALIBRATE CONTROLS & MIXERS</span>
+              <span className="btn-main-label">OPTIONS</span>
+              <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
             </div>
             {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
           </button>
@@ -67,8 +67,8 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">DIAGNOSTICS & CREDITS</span>
-              <span className="btn-sub-label">ENGINE SPECIFICATIONS & CREATOR</span>
+              <span className="btn-main-label">CREDITS</span>
+              <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
             </div>
             {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
           </button>
@@ -78,9 +78,9 @@ export function TitleScreen({
       <div className="title-screen-footer">
         <div className="footer-deco-line" />
         <div className="footer-status-bar">
-          <span>CONTROLLER: KEYBOARD MAPPED</span>
-          <span className="footer-center-prompt">NAV: ARROWS / WASD  •  SELECT: ENTER / SPACE</span>
-          <span>SLOTS: 3/3 DETECTED</span>
+          <span>CONTROL METHOD: KEYBOARD</span>
+          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD  •  SELECT: ENTER / SPACE</span>
+          <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
     </div>

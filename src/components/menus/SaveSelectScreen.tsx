@@ -33,13 +33,13 @@ export function SaveSelectScreen({
         <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>
           {isCopyMode
             ? copySourceIndex === -1
-              ? "COPY SOURCE SLOT"
-              : "COPY TARGET SLOT"
+              ? "CHOOSE SLOT TO COPY"
+              : "CHOOSE WHERE TO COPY"
             : isEraseMode
-              ? "ERASE ACTIVE SLOT"
-              : "SAVE SLOTS"}
+              ? "CHOOSE SLOT TO DELETE"
+              : "CHOOSE A SAVE SLOT"}
         </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Select profile configuration</p>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Select a slot to load your game</p>
       </div>
 
       <div className="slot-list">
@@ -56,7 +56,7 @@ export function SaveSelectScreen({
                 Slot {i + 1}
               </span>
               <span style={{ fontSize: "11px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "6px", paddingLeft: menuIndex === i ? "18px" : "0" }}>
-                {slot.empty ? "EMPTY" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+                {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
               </span>
             </div>
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
@@ -65,7 +65,7 @@ export function SaveSelectScreen({
                   : isEraseMode ? "led-red" : "led-green"
                 }`} style={{ background: slot.empty && i !== copySourceIndex ? "#07080b" : "" }} />
               <span style={{ fontSize: "11px", textTransform: "uppercase", color: "#718096" }}>
-                {slot.empty ? "EMPTY" : "USED"}
+                {slot.empty ? "EMPTY" : "SAVED GAME"}
               </span>
             </div>
           </button>
@@ -81,7 +81,7 @@ export function SaveSelectScreen({
             style={{ flex: 1, padding: "18px", fontSize: "16px" }}
           >
             {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-            Copy
+            Copy Slot
             {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
           </button>
           <button
@@ -91,7 +91,7 @@ export function SaveSelectScreen({
             style={{ flex: 1, padding: "18px", fontSize: "16px" }}
           >
             {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
-            Erase
+            Delete Slot
             {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
           </button>
         </div>

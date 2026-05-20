@@ -19,9 +19,9 @@ export function AudioScreen({
 }: AudioScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "20px" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>AUDIO SETTINGS</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0" }}>Console volume configurations</p>
+      <div className="title-banner">
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOUND SETTINGS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Adjust game sounds and music volume</p>
       </div>
 
       <div className="mixer-board neo-pressed">
@@ -29,7 +29,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 0 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              MASTER VOLUME
+              MAIN VOLUME
             </span>
             <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80" }}>
               {audio.masterMuted ? "MUTED" : `${Math.round(audio.masterVolume * 100)}%`}
@@ -54,7 +54,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 1 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              EFFECTS VOLUME
+              SOUND EFFECTS
             </span>
             <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
               {audio.sfxMuted ? "MUTED" : `${Math.round(audio.sfxVolume * 100)}%`}
@@ -79,7 +79,7 @@ export function AudioScreen({
           <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096" }}>
             <span>
               {menuIndex === 2 && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
-              MUSIC VOLUME
+              MUSIC
             </span>
             <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
               {audio.musicMuted ? "MUTED" : `${Math.round(audio.musicVolume * 100)}%`}

@@ -15,7 +15,6 @@ const outputFile = path.join(docsDir, 'all_source_code.txt');
 function shouldInclude(filePath) {
   const relPath = path.relative(rootDir, filePath).split(path.sep).join('/');
   
-  // Safety Check: Never self-ingest the generated output file
   if (path.basename(filePath) === 'all_source_code.txt') {
     return false;
   }
@@ -47,6 +46,50 @@ function getAllFiles(dir, fileList = []) {
   return fileList;
 }
 
+function generateTree(dir, prefix = '') {
+  let output = '';
+  const files = fs.readdirSync(dir);
+  
+  const items = files
+    .map(file => {
+      const filePath = path.join(dir, file);
+      let isDir = false;
+      try {
+        isDir = fs.statSync(filePath).isDirectory();
+      } catch (e) {}
+      return { name: file, isDir, path: filePath };
+    })
+    .filter(item => {
+      if (item.name.startsWith('.') && item.name !== '.env') return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.isDir && !b.isDir) return -1;
+      if (!a.isDir && b.isDir) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const isLast = i === items.length - 1;
+    const branch = isLast ? '└── ' : '├── ';
+    
+    const skippedDirs = ['node_modules', 'dist', '.git', 'BOX_BATTLE_ARCHIVE', 'scripts'];
+    if (item.isDir && skippedDirs.includes(item.name)) {
+      output += `${prefix}${branch}${item.name}/ (contents skipped)\n`;
+      continue;
+    }
+
+    output += `${prefix}${branch}${item.name}${item.isDir ? '/' : ''}\n`;
+
+    if (item.isDir) {
+      const nextPrefix = prefix + (isLast ? '    ' : '│   ');
+      output += generateTree(item.path, nextPrefix);
+    }
+  }
+  return output;
+}
+
 function closeTerminalWindow() {
   try {
     execSync(`osascript -e 'tell application "Terminal" to close front window'`);
@@ -68,7 +111,11 @@ async function main() {
     content += '└──────────────────────────────────────────────────┘\n';
     content += ` [SYSTEM] Generated: ${now}\n`;
     content += ` [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.\n\n`;
-    content += '─── SOURCE FILES ───────────────────────────────────\n\n';
+    
+    content += '─── ABRIDGED DIRECTORY STRUCTURE ───────────────────\n';
+    content += '.\n';
+    content += generateTree(rootDir, '');
+    content += '\n\n─── SOURCE FILES ───────────────────────────────────\n\n';
 
     const files = getAllFiles(rootDir);
     
@@ -87,7 +134,6 @@ async function main() {
     await fsp.writeFile(outputFile, content, 'utf8');
     process.stdout.write('\r\x1b[K');
 
-    // Calculate detailed metrics for the success report
     const stats = await fsp.stat(outputFile);
     const totalLines = content.split('\n').length;
     const totalChars = content.length;
@@ -100,7 +146,6 @@ async function main() {
       sizeStr = `${(stats.size / 1024).toFixed(1)} KB`;
     }
 
-    // Render success display
     console.clear();
     console.log('\n\x1b[32m  ┌────────────────────────────────────────────────────────┐\x1b[0m');
     console.log('\x1b[32m  │                                                        │\x1b[0m');
@@ -115,12 +160,10 @@ async function main() {
     console.log('\x1b[32m  │                                                        │\x1b[0m');
     console.log('\x1b[32m  └────────────────────────────────────────────────────────┘\x1b[0m\n');
 
-    // Play Pop sound and open the Docs directory in Finder
     const audioProcess = spawn('afplay', ['/System/Library/Sounds/Pop.aiff'], { detached: true, stdio: 'ignore' });
     audioProcess.unref();
     exec('open -g docs');
 
-    // Wait for keypress to exit and close window
     console.log('  \x1b[90mPress [Enter] or [Escape] to close this window.\x1b[0m\n');
     const mutedOut = new Writable({ write() {} });
     const rl = readline.createInterface({ input: process.stdin, output: mutedOut, terminal: true });

@@ -8,10 +8,8 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
-import { saveManager } from "@/core/SaveManager";
-import { inputProvider } from "@/core/InputProvider";
-import { soundSynth } from "@/core/SoundSynth";
 import { Spawner } from "@/entities/Spawner";
+import { inputProvider } from "@/core/InputProvider";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -26,7 +24,7 @@ interface GameArenaProps {
   navTo: (screen: any) => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
-  setHealingCharges?: (charges: number) => void; // Optional callbacks for status HUD sync
+  setHealingCharges?: (charges: number) => void;
   setDetermination?: (count: number) => void;
 }
 
@@ -45,8 +43,7 @@ export function GameArena({
   setHealingCharges,
   setDetermination,
 }: GameArenaProps) {
-  
-  // Resized solids & platform boundaries to fit the expanded 1250x1250 grid
+
   const solids: Rectangle[] = [
     // Outer Border Blocks
     { x: 0, y: 1150, width: 400, height: 100 },  // Left Ground
@@ -55,18 +52,16 @@ export function GameArena({
     { x: 0, y: 0, width: 1250, height: 50 },      // Ceiling
     { x: 0, y: 0, width: 50, height: 1250 },      // Left Wall
     { x: 1200, y: 0, width: 50, height: 1250 },   // Right Wall
-    
+
     // Middle Floating solid block
     { x: 425, y: 800, width: 400, height: 40 }
   ];
 
-  // Wooden One-Way Drop-Through Platforms
   const onewayPlatforms: Rectangle[] = [
     { x: 50, y: 550, width: 300, height: 20 },   // Left middle perch
     { x: 900, y: 550, width: 300, height: 20 }   // Right middle perch
   ];
 
-  // Spikes (Hazard) resting on the pit floor
   const hazards: Rectangle[] = [
     { x: 400, y: 1150, width: 450, height: 100 }
   ];
@@ -92,12 +87,11 @@ export function GameArena({
     PhysicsComponent.setHazards(hazards);
     PhysicsComponent.setOnewayPlatforms(onewayPlatforms);
 
-    // Dynamic spawners aligned to the 1250px grid coordinates
     const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 175, 490),   // Static on Left Wooden platform
-      new Spawner("TURRET", 1075, 490),  // Static on Right Wooden platform
-      new Spawner("LANCER", 625, 740),   // Patrols Central Floating bridge
-      new Spawner("FLYER", 625, 400)     // Hover Center patroller
+      new Spawner("TURRET", 175, 490),
+      new Spawner("TURRET", 1075, 490),
+      new Spawner("LANCER", 625, 740),
+      new Spawner("FLYER", 625, 400)
     ];
 
     const pool = new ObjectPool(() => new Projectile(), 60);
@@ -118,7 +112,7 @@ export function GameArena({
     const handleUpdate = (dt: number) => {
       if (Camera.hitStopTimer > 0) {
         Camera.update(dt);
-        return; 
+        return;
       }
 
       Camera.update(dt);
@@ -126,7 +120,7 @@ export function GameArena({
       if (isCinematicActive.current) {
         player.velocity = { x: 0, y: 0 };
         boss.velocity = { x: 0, y: 0 };
-        
+
         const activeProjectiles = [...pool.getActive()];
         for (const proj of activeProjectiles) {
           proj.update(dt);
@@ -138,17 +132,14 @@ export function GameArena({
       player.update(dt);
       boss.update(dt);
 
-      // Update Spawners
       for (const spawner of activeSpawners) {
         spawner.update(dt);
       }
 
-      // Update Minions
       const activeMinions = [...Registry.minions];
       for (const minion of activeMinions) {
         minion.update(dt);
 
-        // Player-Minion contact damage check
         if (!player.isDead && !minion.isDead) {
           const pW = player.size.width / 2;
           const pH = player.size.height / 2;
@@ -187,51 +178,50 @@ export function GameArena({
       if (pHealth) setPlayerHP(pHealth.currentHealth);
       if (bHealth) setBossHP(bHealth.currentHealth);
 
-      // Sync real-time charges and determination states up to the React HUD
       if (setHealingCharges) setHealingCharges(player.healingCharges);
       if (setDetermination) setDetermination(player.determinationCounter);
 
-      // Dialogue triggers
+      // Plain Dialogue prompts
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
-        triggerDialogue("player", "I found you. Your control over this chamber ends now!");
+        triggerDialogue("player", "I found you. This battle ends now!");
       }
 
       if (bHealth && bHealth.currentHealth <= 21 && !hasTriggeredPhase2.current) {
         hasTriggeredPhase2.current = true;
-        triggerDialogue("boss", "Insolent square! Prepare for my rapid volleys!");
+        triggerDialogue("boss", "You won't beat me! Watch out for my rapid fire!");
       }
 
       if (bHealth && bHealth.currentHealth <= 12 && !hasTriggeredPhase3.current) {
         hasTriggeredPhase3.current = true;
-        triggerDialogue("boss", "Danger! Max charge active! Omni-burst engaged!");
+        triggerDialogue("boss", "This is my final stand! Prepare yourself!");
       }
 
-      // --- CINEMATIC END FLOW WITH TIMEOUT DELAYS ---
+      // Final defeat sequence triggers
       if (player.isDead) {
         isCinematicActive.current = true;
-        triggerDialogue("player", "Power failing... system shutting down...");
-        triggerDialogue("boss", "The cage remains ours. Another simulation completed.");
-        
+        triggerDialogue("player", "No... I can't go on...");
+        triggerDialogue("boss", "You fought well... but I am victorious.");
+
         setTimeout(() => {
           setGameResult("GAMEOVER");
           loop.stop();
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
-        
+
         const parentEl = canvas.parentElement;
         if (parentEl) {
           const xPercent = (boss.position.x / 1250) * 100;
           const yPercent = (boss.position.y / 1250) * 100;
-          
+
           const customEvent = new CustomEvent("boss-shockwave", { detail: { x: xPercent, y: yPercent } });
           window.dispatchEvent(customEvent);
         }
 
-        triggerDialogue("boss", "How... could a simple opponent... pacify me...");
-        triggerDialogue("player", "The chamber has been cleared. Returning to terminal.");
-        
+        triggerDialogue("boss", "No... How could I lose this fight...");
+        triggerDialogue("player", "It is over. The area is secure.");
+
         setTimeout(() => {
           setGameResult("VICTORY");
           loop.stop();
@@ -242,21 +232,19 @@ export function GameArena({
     };
 
     const handleRender = () => {
-      ctx.fillStyle = "#0c0d11"; 
+      ctx.fillStyle = "#0c0d11";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
       ctx.translate(Camera.offsetX, Camera.offsetY);
 
-      // 1. Draw solid Blocks
-      ctx.fillStyle = "#1e1e24"; 
+      ctx.fillStyle = "#1e1e24";
       for (const solid of solids) {
         ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
         ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
       }
 
-      // 2. Draw One-Way platforms (rendered as beautiful, neon-accented wooden bridges)
       ctx.fillStyle = "#2c3e50";
       for (const platform of onewayPlatforms) {
         ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
@@ -264,15 +252,15 @@ export function GameArena({
         ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
       }
 
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      ctx.fillStyle = "hsl(350, 80%, 60%)";
       for (const hazard of hazards) {
         const spikeWidth = 25;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
           ctx.beginPath();
-          ctx.moveTo(hazard.x + i * spikeWidth, 1200); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200); 
+          ctx.moveTo(hazard.x + i * spikeWidth, 1200);
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
           ctx.fill();
         }
       }
@@ -280,7 +268,6 @@ export function GameArena({
       boss.draw(ctx);
       player.draw(ctx);
 
-      // Draw Minions
       const activeMinionsToDraw = Registry.minions;
       for (const minion of activeMinionsToDraw) {
         minion.draw(ctx);
@@ -307,7 +294,6 @@ export function GameArena({
       Registry.boss = null;
       Registry.projectilePool = null;
 
-      // Clean up active spawners
       for (const spawner of activeSpawners) {
         spawner.cleanup();
       }
@@ -318,7 +304,7 @@ export function GameArena({
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
-        
+
         <canvas
           ref={canvasRef}
           width={1250}
@@ -327,7 +313,6 @@ export function GameArena({
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
 
-        {/* Red Vignette overlay */}
         <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
 
         {gameResult !== "PLAYING" && (
@@ -338,7 +323,7 @@ export function GameArena({
                   GAME OVER
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  The cabinet connection has been terminated.
+                  You were defeated.
                 </p>
               </div>
             ) : (
@@ -347,7 +332,7 @@ export function GameArena({
                   VICTORY
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  The simulation has been completed.
+                  You defeated the boss!
                 </p>
               </div>
             )}

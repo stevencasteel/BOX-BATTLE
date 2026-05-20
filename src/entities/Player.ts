@@ -15,7 +15,7 @@ interface GhostFrame {
 export class Player extends BaseEntity {
   public health!: HealthComponent;
   private physics!: PhysicsComponent;
-  
+
   private moveSpeed: number = 450;
   private jumpForce: number = 680;
   private wallSlideSpeed: number = 120;
@@ -54,15 +54,15 @@ export class Player extends BaseEntity {
   public isHealing: boolean = false;
   private healTimer: number = 0;
   private readonly maxHealingCharges: number = 3;
-  private readonly healDuration: number = 2.0; // 2 seconds channel
+  private readonly healDuration: number = 2.0;
 
   constructor(id: string) {
     super(id);
-    this.size = { width: 40, height: 80 }; 
+    this.size = { width: 40, height: 80 };
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
-      invincibilityDuration: 1.5 
+      invincibilityDuration: 1.5
     });
   }
 
@@ -77,7 +77,7 @@ export class Player extends BaseEntity {
     this.attackActiveTimer -= dt;
 
     for (const ghost of this.ghosts) {
-      ghost.opacity -= dt * 5.0; 
+      ghost.opacity -= dt * 5.0;
     }
     this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
 
@@ -91,7 +91,6 @@ export class Player extends BaseEntity {
       this.velocity.x = 0;
       this.healTimer -= dt;
 
-      // Cancel heal on let-go
       if (!inputProvider.isPressed("MOVE_DOWN") || !inputProvider.isPressed("JUMP")) {
         this.isHealing = false;
       }
@@ -125,7 +124,7 @@ export class Player extends BaseEntity {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        this.velocity.x *= 0.5; 
+        this.velocity.x *= 0.5;
       }
 
       super.update(dt);
@@ -142,12 +141,12 @@ export class Player extends BaseEntity {
 
     if (this.physics.isOnWallLeft) {
       this.wallCoyoteTimer = 0.05;
-      this.lastWallNormal = 1; 
+      this.lastWallNormal = 1;
       this.hasDoubleJump = true;
       this.canDash = true;
     } else if (this.physics.isOnWallRight) {
       this.wallCoyoteTimer = 0.05;
-      this.lastWallNormal = -1; 
+      this.lastWallNormal = -1;
       this.hasDoubleJump = true;
       this.canDash = true;
     } else {
@@ -174,9 +173,9 @@ export class Player extends BaseEntity {
       this.canDash = false;
       this.dashDirection = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
       this.velocity.y = 0;
-      this.ghostSpawnTimer = 0; 
+      this.ghostSpawnTimer = 0;
       soundSynth.playDash();
-      
+
       super.update(dt);
       return;
     }
@@ -191,17 +190,22 @@ export class Player extends BaseEntity {
     if (this.jumpBufferTimer > 0) {
       // Prioritize One-way Drop-through over jump/heal if holding Down
       if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
-        this.position.y += 12; // slip through
+        const physics = this.getComponent(PhysicsComponent);
+        if (physics) {
+          physics.disablePlatformCollisionTimer = 0.25; // Disable platform collisions briefly
+        }
+        this.position.y += 12; // Slip physically below snapping threshold
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
-      } 
+        soundSynth.playJump(); // Play subtle drops/slip sound cue
+      }
       // Else if on solid floor, holding Down + Jump initiates HEAL
       else if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.healingCharges > 0 && this.health.currentHealth < this.health.maxHealth) {
         this.isHealing = true;
         this.healTimer = this.healDuration;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump(); // starting hum
-      } 
+        soundSynth.playJump();
+      }
       // Normal jump actions
       else if (this.coyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
@@ -210,7 +214,7 @@ export class Player extends BaseEntity {
         soundSynth.playJump();
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
-        this.velocity.x = this.lastWallNormal * 1650; 
+        this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.canDash = true;
@@ -234,8 +238,8 @@ export class Player extends BaseEntity {
 
       if (this.attackCooldownTimer <= 0) {
         this.attackActive = true;
-        this.attackActiveTimer = 0.1; 
-        this.attackCooldownTimer = 0.15; 
+        this.attackActiveTimer = 0.1;
+        this.attackCooldownTimer = 0.15;
         this.hasHitEnemyThisSwing = false;
 
         if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
@@ -258,7 +262,7 @@ export class Player extends BaseEntity {
     if (inputProvider.isJustReleased("ATTACK")) {
       if (this.isCharging) {
         this.isCharging = false;
-        
+
         if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
           this.fireFireball();
         }
@@ -314,14 +318,13 @@ export class Player extends BaseEntity {
       );
 
       if (isHit) {
-        // Interrupt heal channel on damage
         if (this.isHealing) {
           this.isHealing = false;
         }
 
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
-          this.velocity.y = -550; 
+          this.velocity.y = -550;
           this.physics.isGrounded = false;
         }
         break;
@@ -336,7 +339,7 @@ export class Player extends BaseEntity {
 
     let dirX = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     let dirY = 0;
-    
+
     if (inputProvider.isPressed("MOVE_UP")) {
       dirY = -1;
     } else if (inputProvider.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
@@ -372,10 +375,10 @@ export class Player extends BaseEntity {
 
     if (isLvl2) {
       proj.size = { width: 28, height: 28 };
-      soundSynth.playDash(); 
+      soundSynth.playDash();
     } else {
       proj.size = { width: 14, height: 14 };
-      soundSynth.playJump(); 
+      soundSynth.playJump();
     }
   }
 
@@ -421,18 +424,18 @@ export class Player extends BaseEntity {
           const dx = target.position.x - this.position.x;
           const dy = target.position.y - this.position.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
+
           const isCloseRange = distance <= 90;
           const damage = isCloseRange ? 5 : 1;
 
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            this.registerDamageDealt(); // Charge Determination
+            this.registerDamageDealt();
 
             if (isCloseRange) {
               soundSynth.playHitConfirm();
-              Camera.shake(6, 0.12); 
+              Camera.shake(6, 0.12);
             }
           }
         }
@@ -443,7 +446,7 @@ export class Player extends BaseEntity {
   private checkPogoAttack() {
     const pogoHitbox = {
       x: this.position.x - 45,
-      y: this.position.y + 40, 
+      y: this.position.y + 40,
       width: 90,
       height: 44.5
     };
@@ -469,15 +472,15 @@ export class Player extends BaseEntity {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          this.registerDamageDealt(); // Charge Determination
+          this.registerDamageDealt();
         }
 
         this.velocity.y = -this.pogoForce;
-        this.position.y -= 2; 
+        this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
         soundSynth.playPogo();
-        return; 
+        return;
       }
     }
 
@@ -498,20 +501,19 @@ export class Player extends BaseEntity {
 
           if (isHit) {
             pool.release(proj);
-            this.registerDamageDealt(); // Charge Determination
+            this.registerDamageDealt();
 
             this.velocity.y = -this.pogoForce;
-            this.position.y -= 2; 
+            this.position.y -= 2;
             this.hasDoubleJump = true;
             this.canDash = true;
             soundSynth.playPogo();
-            return; 
+            return;
           }
         }
       }
     }
 
-    // Bounce off One-Way Platforms in addition to Solids
     const surfaces = [...PhysicsComponent.solids, ...PhysicsComponent.onewayPlatforms];
     for (const solid of surfaces) {
       const isHit = (
@@ -523,7 +525,7 @@ export class Player extends BaseEntity {
 
       if (isHit) {
         this.velocity.y = -this.pogoForce;
-        this.position.y -= 2; 
+        this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
         soundSynth.playPogo();
@@ -548,12 +550,12 @@ export class Player extends BaseEntity {
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
-      ctx.fillStyle = "hsl(142, 71%, 58%)"; 
+      ctx.fillStyle = "hsl(142, 71%, 58%)";
     }
 
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
-    
+
     ctx.fillRect(
       this.position.x - this.size.width / 2,
       this.position.y - this.size.height / 2,
@@ -563,7 +565,6 @@ export class Player extends BaseEntity {
 
     ctx.shadowBlur = 0;
 
-    // --- Draw Purple Concentric Healing Charge Aura ---
     if (this.isHealing) {
       const cycle = performance.now() * 0.008;
       ctx.strokeStyle = "hsl(280, 80%, 65%)";
@@ -571,8 +572,7 @@ export class Player extends BaseEntity {
       ctx.shadowBlur = 15;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      
-      // expanding and contracting nested rings
+
       const radius1 = 44 + Math.sin(cycle) * 8;
       const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
       ctx.arc(this.position.x, this.position.y, radius1, 0, Math.PI * 2);
@@ -606,11 +606,11 @@ export class Player extends BaseEntity {
   private drawAttackVisual(ctx: CanvasRenderingContext2D) {
     const facing = this.facingDirection;
     ctx.lineCap = "round";
-    
+
     if (this.attackDirection === "side") {
       const offset = facing * 50;
 
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)"; 
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.arc(
@@ -622,7 +622,7 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff"; 
+      ctx.strokeStyle = "#ffffff";
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
       ctx.shadowBlur = 12;
       ctx.lineWidth = 10;
@@ -635,8 +635,8 @@ export class Player extends BaseEntity {
         facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
       );
       ctx.stroke();
-      ctx.shadowBlur = 0; 
-    } 
+      ctx.shadowBlur = 0;
+    }
     else if (this.attackDirection === "up") {
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
@@ -664,7 +664,7 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
       ctx.shadowBlur = 0;
-    } 
+    }
     else if (this.attackDirection === "down") {
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
