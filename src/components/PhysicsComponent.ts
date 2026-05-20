@@ -17,6 +17,7 @@ export class PhysicsComponent implements Component {
   
   public static solids: Rectangle[] = [];
   public static hazards: Rectangle[] = [];
+  public static onewayPlatforms: Rectangle[] = [];
 
   public static setSolids(solids: Rectangle[]) {
     PhysicsComponent.solids = solids;
@@ -24,6 +25,10 @@ export class PhysicsComponent implements Component {
 
   public static setHazards(hazards: Rectangle[]) {
     PhysicsComponent.hazards = hazards;
+  }
+
+  public static setOnewayPlatforms(platforms: Rectangle[]) {
+    PhysicsComponent.onewayPlatforms = platforms;
   }
 
   public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
@@ -71,6 +76,7 @@ export class PhysicsComponent implements Component {
   private resolveCollisionsY() {
     const ownerHalfH = this.owner.size.height / 2;
 
+    // 1. Resolve Solid Blocks (Impassable from all sides)
     for (const solid of PhysicsComponent.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.y > 0) {
@@ -80,6 +86,22 @@ export class PhysicsComponent implements Component {
         } else if (this.owner.velocity.y < 0) {
           this.owner.position.y = solid.y + solid.height + ownerHalfH;
           this.owner.velocity.y = 0;
+        }
+      }
+    }
+
+    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing)
+    if (this.owner.velocity.y >= 0) {
+      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016; // approximate previous position
+      
+      for (const platform of PhysicsComponent.onewayPlatforms) {
+        if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
+          // Only collide if feet were above the platform's top edge in the previous frame
+          if (prevY + ownerHalfH - 4 <= platform.y) {
+            this.owner.position.y = platform.y - ownerHalfH;
+            this.owner.velocity.y = 0;
+            this.isGrounded = true;
+          }
         }
       }
     }

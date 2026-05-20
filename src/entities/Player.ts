@@ -4,7 +4,7 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { inputProvider } from "@/core/InputProvider";
 import { Registry } from "@/core/Registry";
 import { soundSynth } from "@/core/SoundSynth";
-import { Projectile } from "@/entities/Projectile";
+import { Camera } from "@/core/Camera";
 
 interface GhostFrame {
   x: number;
@@ -48,6 +48,14 @@ export class Player extends BaseEntity {
   private ghosts: GhostFrame[] = [];
   private ghostSpawnTimer: number = 0;
 
+  // Determination & Healing States
+  public determinationCounter: number = 0;
+  public healingCharges: number = 0;
+  public isHealing: boolean = false;
+  private healTimer: number = 0;
+  private readonly maxHealingCharges: number = 3;
+  private readonly healDuration: number = 2.0; // 2 seconds channel
+
   constructor(id: string) {
     super(id);
     this.size = { width: 40, height: 80 }; 
@@ -76,6 +84,28 @@ export class Player extends BaseEntity {
     if (this.attackActive && this.attackActiveTimer <= 0) {
       this.attackActive = false;
       this.attackDirection = null;
+    }
+
+    // --- Active Healing State Update ---
+    if (this.isHealing) {
+      this.velocity.x = 0;
+      this.healTimer -= dt;
+
+      // Cancel heal on let-go
+      if (!inputProvider.isPressed("MOVE_DOWN") || !inputProvider.isPressed("JUMP")) {
+        this.isHealing = false;
+      }
+
+      if (this.healTimer <= 0) {
+        this.isHealing = false;
+        this.healingCharges = Math.max(0, this.healingCharges - 1);
+        this.health.currentHealth = Math.min(this.health.maxHealth, this.health.currentHealth + 1);
+        soundSynth.playHitConfirm();
+        Camera.shake(3, 0.1);
+      }
+
+      super.update(dt);
+      return;
     }
 
     if (this.isDashing) {
@@ -151,6 +181,7 @@ export class Player extends BaseEntity {
       return;
     }
 
+    // --- Grounded Action Controls (Drop-through vs Healing) ---
     if (inputProvider.isJustPressed("JUMP")) {
       this.jumpBufferTimer = 0.1;
     } else {
@@ -158,7 +189,21 @@ export class Player extends BaseEntity {
     }
 
     if (this.jumpBufferTimer > 0) {
-      if (this.coyoteTimer > 0) {
+      // Prioritize One-way Drop-through over jump/heal if holding Down
+      if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
+        this.position.y += 12; // slip through
+        this.physics.isGrounded = false;
+        this.jumpBufferTimer = 0;
+      } 
+      // Else if on solid floor, holding Down + Jump initiates HEAL
+      else if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.healingCharges > 0 && this.health.currentHealth < this.health.maxHealth) {
+        this.isHealing = true;
+        this.healTimer = this.healDuration;
+        this.jumpBufferTimer = 0;
+        soundSynth.playJump(); // starting hum
+      } 
+      // Normal jump actions
+      else if (this.coyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
@@ -187,7 +232,6 @@ export class Player extends BaseEntity {
       this.isCharging = true;
       this.chargeTimer = 0;
 
-      // Instant standard slash on button press
       if (this.attackCooldownTimer <= 0) {
         this.attackActive = true;
         this.attackActiveTimer = 0.1; 
@@ -215,7 +259,6 @@ export class Player extends BaseEntity {
       if (this.isCharging) {
         this.isCharging = false;
         
-        // Fire Fireballs on release after holding
         if (this.chargeTimer >= 0.35 && this.attackCooldownTimer <= 0) {
           this.fireFireball();
         }
@@ -229,6 +272,31 @@ export class Player extends BaseEntity {
     this.checkHazardContact();
 
     super.update(dt);
+  }
+
+  private isStandingOnOneway(): boolean {
+    const ownerHalfH = this.size.height / 2;
+    const feetY = this.position.y + ownerHalfH;
+
+    for (const platform of PhysicsComponent.onewayPlatforms) {
+      if (this.position.x + 10 > platform.x && this.position.x - 10 < platform.x + platform.width) {
+        if (Math.abs(feetY - platform.y) <= 6) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public registerDamageDealt() {
+    if (this.healingCharges >= this.maxHealingCharges) return;
+
+    this.determinationCounter++;
+    if (this.determinationCounter >= 5) {
+      this.determinationCounter = 0;
+      this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
+      soundSynth.playHitConfirm();
+    }
   }
 
   private checkHazardContact() {
@@ -246,6 +314,11 @@ export class Player extends BaseEntity {
       );
 
       if (isHit) {
+        // Interrupt heal channel on damage
+        if (this.isHealing) {
+          this.isHealing = false;
+        }
+
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           this.velocity.y = -550; 
@@ -294,7 +367,7 @@ export class Player extends BaseEntity {
       damage,
       speed,
       lifespan,
-      (p: Projectile) => Registry.projectilePool?.release(p)
+      (p: any) => Registry.projectilePool?.release(p)
     );
 
     if (isLvl2) {
@@ -345,9 +418,22 @@ export class Player extends BaseEntity {
       if (isHit) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          const damaged = health.takeDamage(1);
+          const dx = target.position.x - this.position.x;
+          const dy = target.position.y - this.position.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          const isCloseRange = distance <= 90;
+          const damage = isCloseRange ? 5 : 1;
+
+          const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
+            this.registerDamageDealt(); // Charge Determination
+
+            if (isCloseRange) {
+              soundSynth.playHitConfirm();
+              Camera.shake(6, 0.12); 
+            }
           }
         }
       }
@@ -383,6 +469,7 @@ export class Player extends BaseEntity {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
+          this.registerDamageDealt(); // Charge Determination
         }
 
         this.velocity.y = -this.pogoForce;
@@ -411,6 +498,7 @@ export class Player extends BaseEntity {
 
           if (isHit) {
             pool.release(proj);
+            this.registerDamageDealt(); // Charge Determination
 
             this.velocity.y = -this.pogoForce;
             this.position.y -= 2; 
@@ -423,7 +511,9 @@ export class Player extends BaseEntity {
       }
     }
 
-    for (const solid of PhysicsComponent.solids) {
+    // Bounce off One-Way Platforms in addition to Solids
+    const surfaces = [...PhysicsComponent.solids, ...PhysicsComponent.onewayPlatforms];
+    for (const solid of surfaces) {
       const isHit = (
         pogoHitbox.x + pogoHitbox.width > solid.x &&
         pogoHitbox.x < solid.x + solid.width &&
@@ -473,6 +563,26 @@ export class Player extends BaseEntity {
 
     ctx.shadowBlur = 0;
 
+    // --- Draw Purple Concentric Healing Charge Aura ---
+    if (this.isHealing) {
+      const cycle = performance.now() * 0.008;
+      ctx.strokeStyle = "hsl(280, 80%, 65%)";
+      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
+      ctx.shadowBlur = 15;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      
+      // expanding and contracting nested rings
+      const radius1 = 44 + Math.sin(cycle) * 8;
+      const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
+      ctx.arc(this.position.x, this.position.y, radius1, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(this.position.x, this.position.y, radius2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
     if (this.isCharging && this.chargeTimer >= 0.25) {
       const isLvl2 = this.chargeTimer >= 1.12;
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
@@ -500,7 +610,6 @@ export class Player extends BaseEntity {
     if (this.attackDirection === "side") {
       const offset = facing * 50;
 
-      // 1. Draw Outer, Standard Slash (radius 65, line width 5, dimmer green)
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)"; 
       ctx.lineWidth = 5;
       ctx.beginPath();
@@ -513,7 +622,6 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
 
-      // 2. Draw Inner, Heavy Proximity Slash (radius 32, line width 10, glowing neon core)
       ctx.strokeStyle = "#ffffff"; 
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
       ctx.shadowBlur = 12;
@@ -527,10 +635,9 @@ export class Player extends BaseEntity {
         facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
       );
       ctx.stroke();
-      ctx.shadowBlur = 0; // Reset canvas shadows
+      ctx.shadowBlur = 0; 
     } 
     else if (this.attackDirection === "up") {
-      // 1. Outer Slash
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
       ctx.beginPath();
@@ -543,7 +650,6 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
 
-      // 2. Inner Heavy Slash
       ctx.strokeStyle = "#ffffff";
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
       ctx.shadowBlur = 12;
@@ -560,7 +666,6 @@ export class Player extends BaseEntity {
       ctx.shadowBlur = 0;
     } 
     else if (this.attackDirection === "down") {
-      // 1. Outer Slash
       ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
       ctx.lineWidth = 5;
       ctx.beginPath();
@@ -573,7 +678,6 @@ export class Player extends BaseEntity {
       );
       ctx.stroke();
 
-      // 2. Inner Heavy Slash
       ctx.strokeStyle = "#ffffff";
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
       ctx.shadowBlur = 12;

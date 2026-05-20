@@ -29,7 +29,7 @@ export default function App() {
   const [bossHP, setBossHP] = useState(30);
   const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
 
-  // Custom Hooks integration
+  // Save Matrix stats
   const {
     slots,
     copySourceIndex,
@@ -48,6 +48,10 @@ export default function App() {
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [isGlitching, setIsGlitching] = useState<boolean>(false);
+
+  // Dynamic HUD registers for healing
+  const [healingCharges, setHealingCharges] = useState<number>(0);
+  const [determination, setDetermination] = useState<number>(0);
 
   const triggerGlitch = () => {
     setIsGlitching(true);
@@ -233,9 +237,9 @@ export default function App() {
         
         {/* Status Panel (Health HUD) situated above gameplay arena */}
         <div className="cabinet-status-panel neo-pressed">
-          <div className="hud-panel-block">
+          <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
-            <div className="flex-row" style={{ gap: "6px" }}>
+            <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
@@ -244,13 +248,35 @@ export default function App() {
                 />
               ))}
             </div>
-          </div>
-
-          <div className="hud-panel-block" style={{ alignItems: "center" }}>
-            <span className="hud-panel-title" style={{ color: "#718096" }}>SYSTEM CONSOLE</span>
-            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
-              {currentScreen === "PLAYING" ? "SIMULATION ACTIVE" : "NOMINAL STATE // ONLINE"}
-            </span>
+            
+            {/* Real-time Sub-HUD for Healing Charges (glowing purple LEDs) and Determination (fraction dots) */}
+            {currentScreen === "PLAYING" && (
+              <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
+                <div className="flex-row" style={{ gap: "4px" }}>
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`led-dot ${i < healingCharges ? "led-yellow" : ""}`}
+                      style={{ background: i < healingCharges ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
+                    />
+                  ))}
+                </div>
+                <div className="flex-row" style={{ gap: "3px" }}>
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="led-dot"
+                      style={{ 
+                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b", 
+                        boxShadow: i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
+                        width: "4px", 
+                        height: "4px" 
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
@@ -281,6 +307,8 @@ export default function App() {
               navTo={navTo}
               playHoverTick={playHoverTick}
               setMenuIndex={setMenuIndex}
+              setHealingCharges={setHealingCharges}
+              setDetermination={setDetermination}
             />
           ) : (
             <div className="screen-inner">

@@ -8,7 +8,9 @@ import { HealthComponent } from "@/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
+import { saveManager } from "@/core/SaveManager";
 import { inputProvider } from "@/core/InputProvider";
+import { soundSynth } from "@/core/SoundSynth";
 import { Spawner } from "@/entities/Spawner";
 
 interface GameArenaProps {
@@ -24,6 +26,8 @@ interface GameArenaProps {
   navTo: (screen: any) => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
+  setHealingCharges?: (charges: number) => void; // Optional callbacks for status HUD sync
+  setDetermination?: (count: number) => void;
 }
 
 export function GameArena({
@@ -38,22 +42,33 @@ export function GameArena({
   navTo,
   playHoverTick,
   setMenuIndex,
+  setHealingCharges,
+  setDetermination,
 }: GameArenaProps) {
   
+  // Resized solids & platform boundaries to fit the expanded 1250x1250 grid
   const solids: Rectangle[] = [
-    { x: 0, y: 920, width: 300, height: 80 },
-    { x: 300, y: 960, width: 400, height: 40 },
-    { x: 700, y: 920, width: 300, height: 80 },
-    { x: 0, y: 0, width: 1000, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1000 },
-    { x: 950, y: 0, width: 50, height: 1000 },
-    { x: 300, y: 650, width: 400, height: 40 },
-    { x: 50, y: 420, width: 200, height: 40 },
-    { x: 750, y: 420, width: 200, height: 40 }
+    // Outer Border Blocks
+    { x: 0, y: 1150, width: 400, height: 100 },  // Left Ground
+    { x: 850, y: 1150, width: 400, height: 100 }, // Right Ground
+    { x: 400, y: 1200, width: 450, height: 50 },  // Pit Floor
+    { x: 0, y: 0, width: 1250, height: 50 },      // Ceiling
+    { x: 0, y: 0, width: 50, height: 1250 },      // Left Wall
+    { x: 1200, y: 0, width: 50, height: 1250 },   // Right Wall
+    
+    // Middle Floating solid block
+    { x: 425, y: 800, width: 400, height: 40 }
   ];
 
+  // Wooden One-Way Drop-Through Platforms
+  const onewayPlatforms: Rectangle[] = [
+    { x: 50, y: 550, width: 300, height: 20 },   // Left middle perch
+    { x: 900, y: 550, width: 300, height: 20 }   // Right middle perch
+  ];
+
+  // Spikes (Hazard) resting on the pit floor
   const hazards: Rectangle[] = [
-    { x: 300, y: 920, width: 400, height: 80 }
+    { x: 400, y: 1150, width: 450, height: 100 }
   ];
 
   const hasTriggeredFirstHit = useRef<boolean>(false);
@@ -75,22 +90,24 @@ export function GameArena({
 
     PhysicsComponent.setSolids(solids);
     PhysicsComponent.setHazards(hazards);
+    PhysicsComponent.setOnewayPlatforms(onewayPlatforms);
 
+    // Dynamic spawners aligned to the 1250px grid coordinates
     const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 150, 370),   
-      new Spawner("TURRET", 850, 370),   
-      new Spawner("LANCER", 500, 600),   
-      new Spawner("FLYER", 500, 300)     
+      new Spawner("TURRET", 175, 490),   // Static on Left Wooden platform
+      new Spawner("TURRET", 1075, 490),  // Static on Right Wooden platform
+      new Spawner("LANCER", 625, 740),   // Patrols Central Floating bridge
+      new Spawner("FLYER", 625, 400)     // Hover Center patroller
     ];
 
     const pool = new ObjectPool(() => new Projectile(), 60);
     Registry.projectilePool = pool;
 
     const player = new Player("player-01");
-    player.position = { x: 150, y: 800 };
+    player.position = { x: 150, y: 1000 };
 
     const boss = new Boss("boss-01");
-    boss.position = { x: 850, y: 800 };
+    boss.position = { x: 1050, y: 1000 };
 
     Registry.player = player;
     Registry.boss = boss;
@@ -170,6 +187,10 @@ export function GameArena({
       if (pHealth) setPlayerHP(pHealth.currentHealth);
       if (bHealth) setBossHP(bHealth.currentHealth);
 
+      // Sync real-time charges and determination states up to the React HUD
+      if (setHealingCharges) setHealingCharges(player.healingCharges);
+      if (setDetermination) setDetermination(player.determinationCounter);
+
       // Dialogue triggers
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
@@ -186,6 +207,7 @@ export function GameArena({
         triggerDialogue("boss", "Danger! Max charge active! Omni-burst engaged!");
       }
 
+      // --- CINEMATIC END FLOW WITH TIMEOUT DELAYS ---
       if (player.isDead) {
         isCinematicActive.current = true;
         triggerDialogue("player", "Power failing... system shutting down...");
@@ -197,6 +219,16 @@ export function GameArena({
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
+        
+        const parentEl = canvas.parentElement;
+        if (parentEl) {
+          const xPercent = (boss.position.x / 1250) * 100;
+          const yPercent = (boss.position.y / 1250) * 100;
+          
+          const customEvent = new CustomEvent("boss-shockwave", { detail: { x: xPercent, y: yPercent } });
+          window.dispatchEvent(customEvent);
+        }
+
         triggerDialogue("boss", "How... could a simple opponent... pacify me...");
         triggerDialogue("player", "The chamber has been cleared. Returning to terminal.");
         
@@ -216,11 +248,20 @@ export function GameArena({
       ctx.save();
       ctx.translate(Camera.offsetX, Camera.offsetY);
 
+      // 1. Draw solid Blocks
       ctx.fillStyle = "#1e1e24"; 
       for (const solid of solids) {
         ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
         ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+      }
+
+      // 2. Draw One-Way platforms (rendered as beautiful, neon-accented wooden bridges)
+      ctx.fillStyle = "#2c3e50";
+      for (const platform of onewayPlatforms) {
+        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
       }
 
       ctx.fillStyle = "hsl(350, 80%, 60%)"; 
@@ -229,9 +270,9 @@ export function GameArena({
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
           ctx.beginPath();
-          ctx.moveTo(hazard.x + i * spikeWidth, 960); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920); 
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960); 
+          ctx.moveTo(hazard.x + i * spikeWidth, 1200); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150); 
+          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200); 
           ctx.fill();
         }
       }
@@ -280,13 +321,13 @@ export function GameArena({
         
         <canvas
           ref={canvasRef}
-          width={1000}
-          height={1000}
+          width={1250}
+          height={1250}
           className="crt-scanlines crt-flicker"
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
 
-        {/* Red Vignette placed AFTER the canvas, forcing it to render on top */}
+        {/* Red Vignette overlay */}
         <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
 
         {gameResult !== "PLAYING" && (
