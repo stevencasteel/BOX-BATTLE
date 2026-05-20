@@ -1,21 +1,24 @@
-You were right it was in there. Anything else I should remove from .gitignore again?
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Godot-specific ignores
-.import/
-export.cfg
-.mono/
-data_*/
-mono_crash.*.json
-.godot/
-*.import
-*.uid
+node_modules
+dist
+dist-ssr
+*.local
 
-# OS/Editor specific
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-Thumbs.db
-*.tmp
-
-# IDE
-.vscode/
-*.swp
-*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
