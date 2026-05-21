@@ -501,66 +501,64 @@ export class Player extends BaseEntity {
       ctx.restore();
     }
     else if (this.attackDirection === "up") {
-      /* Dynamic Up-Slash Sweep */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      const startAngle = -Math.PI * 0.85 + (progress * 0.2);
-      const endAngle = -Math.PI * 0.15 - (1.0 - progress) * 0.2;
-      ctx.arc(
-        this.position.x,
-        this.position.y - 35,
-        65,
-        startAngle,
-        endAngle
-      );
-      ctx.stroke();
+      /* Upward Splash: The 180-degree overhead canopy expands in radius rather than sweeping angles */
+      const cx = this.position.x;
+      const cy = this.position.y - 35;
 
-      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12 * opacity;
-      ctx.lineWidth = 11;
+      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
       ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y - 25,
-        32,
-        -Math.PI * 0.8 + (progress * 0.1),
-        -Math.PI * 0.2 - (1.0 - progress) * 0.1
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      /* Draw Outer expanding semi-circle pointing straight up (-PI to 0) */
+      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
+      /* Draw Inner boundary arc backward to close path */
+      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
     else if (this.attackDirection === "down") {
-      /* Dynamic Down-Slash Sweep */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      const startAngle = Math.PI * 0.15 + (1.0 - progress) * 0.2;
-      const endAngle = Math.PI * 0.85 - (progress * 0.2);
-      ctx.arc(
-        this.position.x,
-        this.position.y + 35,
-        65,
-        startAngle,
-        endAngle
-      );
-      ctx.stroke();
+      /* Downward Splash: The 180-degree pogo thruster expands rapidly downward */
+      const cx = this.position.x;
+      const cy = this.position.y + 35;
 
-      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12 * opacity;
-      ctx.lineWidth = 11;
+      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
       ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y + 25,
-        32,
-        Math.PI * 0.2 + (1.0 - progress) * 0.1,
-        Math.PI * 0.8 - (progress * 0.1)
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      /* Draw Outer expanding semi-circle pointing straight down (0 to PI) */
+      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
+      /* Draw Inner boundary arc backward to close path */
+      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
   }
 
