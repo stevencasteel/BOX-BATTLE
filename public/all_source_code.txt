@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 4:25:43 PM
+ [SYSTEM] Generated: 5/21/2026, 5:06:41 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3647,6 +3647,7 @@ export class Engine {
       this.isPaused = !this.isPaused;
       if (this.isPaused) {
         soundSynth.playErrorTick();
+        soundSynth.clearAllSlides();
       } else {
         soundSynth.playHitConfirm();
       }
@@ -3767,6 +3768,7 @@ export class Engine {
     const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      soundSynth.clearAllSlides();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
 
@@ -3787,6 +3789,7 @@ export class Engine {
       }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      soundSynth.clearAllSlides();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
 
@@ -4732,7 +4735,6 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash();
-        /* Dash Hit-Stop (Impact Freeze Frames): Apply a micro freeze-frame beat to emphasize active dash impact power */
         Camera.triggerHitStop(0.035);
       })
     );
@@ -4770,11 +4772,19 @@ export class SimulationSystems {
         Camera.triggerHitStop(duration);
       })
     );
+
+    // Consolidated sliding friction hook
+    this.unsubscribes.push(
+      eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
+        soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
+      })
+    );
   }
 
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
+    soundSynth.clearAllSlides();
   }
 }
 
@@ -4783,6 +4793,12 @@ export class SimulationSystems {
 ● ./src/core/SoundSynth.ts
 ────────────────────────────────────────────────────
 import { settingsManager } from "@/core/SettingsManager";
+
+interface FrictionVoice {
+  source: AudioBufferSourceNode;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+}
 
 class SoundSynth {
   private ctx: AudioContext | null = null;
@@ -4796,8 +4812,32 @@ class SoundSynth {
   private musicTickIndex: number = 0;
   private isMusicPlaying: boolean = false;
 
+  private noiseBuffer: AudioBuffer | null = null;
+  private activeSlides: Map<string, FrictionVoice> = new Map();
+
+  private hasUserGestured: boolean = false;
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      const resumeOnGesture = () => {
+        this.hasUserGestured = true;
+        this.resumeContext();
+        
+        window.removeEventListener("click", resumeOnGesture);
+        window.removeEventListener("keydown", resumeOnGesture);
+        window.removeEventListener("touchstart", resumeOnGesture);
+        window.removeEventListener("mousedown", resumeOnGesture);
+      };
+      window.addEventListener("click", resumeOnGesture, { passive: true });
+      window.addEventListener("keydown", resumeOnGesture, { passive: true });
+      window.addEventListener("touchstart", resumeOnGesture, { passive: true });
+      window.addEventListener("mousedown", resumeOnGesture, { passive: true });
+    }
+  }
+
   private init() {
     if (this.ctx) return;
+    if (!this.hasUserGestured) return;
 
     const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     this.ctx = new AudioContextClass();
@@ -4828,7 +4868,6 @@ class SoundSynth {
   }
 
   public updateVolumes() {
-    this.init();
     if (!this.ctx || !this.masterGain || !this.sfxGain || !this.musicGain) return;
 
     const config = settingsManager.getAudio();
@@ -4856,10 +4895,106 @@ class SoundSynth {
     this.cabinetFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.3);
   }
 
-  private resumeContext() {
+  public resumeContext() {
     this.init();
     if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume();
+    }
+  }
+
+  private getNoiseBuffer(): AudioBuffer | null {
+    if (!this.ctx) return null;
+    if (this.noiseBuffer) return this.noiseBuffer;
+
+    const bufferSize = this.ctx.sampleRate * 2;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    this.noiseBuffer = buffer;
+    return buffer;
+  }
+
+  public handleEntitySlide(id: string, width: number, height: number, speed: number, shouldSlide: boolean) {
+    if (!shouldSlide) {
+      this.stopFrictionSlide(id);
+      return;
+    }
+
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    let voice = this.activeSlides.get(id);
+
+    // Self-Healing Creation: Spawn node instantly if it is missing or was previously blocked
+    if (!voice) {
+      const buffer = this.getNoiseBuffer();
+      if (!buffer) return;
+
+      const volume = width * height;
+      const baseFreq = Math.max(120, 1600 - (volume - 1000) * 0.45);
+
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.Q.setValueAtTime(2.0, this.ctx.currentTime);
+      filter.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      source.start(0);
+
+      voice = { source, filter, gain };
+      this.activeSlides.set(id, voice);
+    }
+
+    // Direct value assignment bypassing exponential scheduling layout delays
+    const maxSpeed = 450;
+    const ratio = Math.min(1.0, speed / maxSpeed);
+    const targetGain = ratio * 0.15;
+
+    voice.gain.gain.setValueAtTime(targetGain, this.ctx.currentTime);
+  }
+
+  private stopFrictionSlide(id: string) {
+    if (!this.ctx) return;
+    const voice = this.activeSlides.get(id);
+    if (!voice) return;
+
+    const now = this.ctx.currentTime;
+    voice.gain.gain.setValueAtTime(0, now);
+
+    const source = voice.source;
+    const filter = voice.filter;
+    const gain = voice.gain;
+
+    setTimeout(() => {
+      try {
+        source.stop();
+        source.disconnect();
+        filter.disconnect();
+        gain.disconnect();
+      } catch (err) {
+        // Safe disconnection handling
+      }
+    }, 80);
+
+    this.activeSlides.delete(id);
+  }
+
+  public clearAllSlides() {
+    const ids = Array.from(this.activeSlides.keys());
+    for (const id of ids) {
+      this.stopFrictionSlide(id);
     }
   }
 
@@ -5292,6 +5427,7 @@ export type GameEventMap = {
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number };
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
+  ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean };
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -8129,6 +8265,7 @@ export class MeleeComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
+import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -8170,6 +8307,21 @@ export class PhysicsComponent implements IEntityComponent {
     this.isGrounded = false;
     this.owner.position.y += this.owner.velocity.y * dt;
     this.resolveCollisionsY();
+
+    this.updateFrictionSlideSound();
+  }
+
+  private updateFrictionSlideSound(): void {
+    const speed = Math.abs(this.owner.velocity.x);
+    const shouldSlide = this.isGrounded && speed > 15 && !this.owner.isDead;
+
+    eventBroker.publish("ENTITY_SLIDE", {
+      id: this.owner.id,
+      width: this.owner.size.width,
+      height: this.owner.size.height,
+      speed: speed,
+      shouldSlide: shouldSlide,
+    });
   }
 
   private resolveCollisionsX() {
@@ -8237,6 +8389,17 @@ export class PhysicsComponent implements IEntityComponent {
       bottom > rect.y &&
       top < rect.y + rect.height
     );
+  }
+
+  public teardown(): void {
+    // Graceful stop published directly upon entity deconstruction
+    eventBroker.publish("ENTITY_SLIDE", {
+      id: this.owner.id,
+      width: this.owner.size.width,
+      height: this.owner.size.height,
+      speed: 0,
+      shouldSlide: false,
+    });
   }
 }
 

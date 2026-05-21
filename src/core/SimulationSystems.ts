@@ -49,7 +49,6 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash();
-        /* Dash Hit-Stop (Impact Freeze Frames): Apply a micro freeze-frame beat to emphasize active dash impact power */
         Camera.triggerHitStop(0.035);
       })
     );
@@ -87,10 +86,18 @@ export class SimulationSystems {
         Camera.triggerHitStop(duration);
       })
     );
+
+    // Consolidated sliding friction hook
+    this.unsubscribes.push(
+      eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
+        soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
+      })
+    );
   }
 
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
+    soundSynth.clearAllSlides();
   }
 }

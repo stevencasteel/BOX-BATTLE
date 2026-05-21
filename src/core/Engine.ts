@@ -209,6 +209,7 @@ export class Engine {
       this.isPaused = !this.isPaused;
       if (this.isPaused) {
         soundSynth.playErrorTick();
+        soundSynth.clearAllSlides();
       } else {
         soundSynth.playHitConfirm();
       }
@@ -329,6 +330,7 @@ export class Engine {
     const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      soundSynth.clearAllSlides();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
 
@@ -349,6 +351,7 @@ export class Engine {
       }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      soundSynth.clearAllSlides();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
 

@@ -20,6 +20,7 @@ export type GameEventMap = {
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number };
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
+  ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean };
 };
 
 export type EventCallback<T> = (payload: T) => void;
