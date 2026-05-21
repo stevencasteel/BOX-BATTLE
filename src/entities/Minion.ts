@@ -73,12 +73,25 @@ export class Minion extends BaseEntity {
     this.dissolveTimer = 0.5;
     this.velocity = { x: 0, y: 0 };
     
-    // Publish initial sparkle explosion
+    const mColor = this.minionType === "LANCER" 
+      ? "hsl(280, 70%, 65%)" 
+      : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+
+    // Publish massive radial explosion of sparks
     eventBroker.publish("SPAWN_SPARKS", {
       x: this.position.x,
       y: this.position.y,
-      angle: Math.random() * Math.PI * 2,
-      color: this.minionType === "LANCER" ? "hsl(280, 60%, 55%)" : "hsl(200, 70%, 55%)"
+      angle: 0,
+      color: mColor,
+      radial: true,
+      count: 24
+    });
+
+    // Publish circular shockwave blast ring
+    eventBroker.publish("SPAWN_BLAST", {
+      x: this.position.x,
+      y: this.position.y,
+      color: mColor
     });
   }
 
@@ -89,15 +102,19 @@ export class Minion extends BaseEntity {
       this.spawnTimer -= dt;
       this.velocity = { x: 0, y: 0 };
 
-      // Spawn converging particles pulling into spawn coordinates
-      if (Math.random() < 0.35) {
+      const mColor = this.minionType === "LANCER" 
+        ? "hsl(280, 70%, 65%)" 
+        : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+
+      // Cohesive grid-construct gather particles pulling inward
+      if (Math.random() < 0.5) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = 50 + Math.random() * 50;
+        const dist = 40 + Math.random() * 30;
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x + Math.cos(angle) * dist,
           y: this.position.y + Math.sin(angle) * dist,
-          angle: angle + Math.PI, // face inwards
-          color: "rgba(34, 197, 94, 0.85)"
+          angle: angle + Math.PI, // face straight inward
+          color: mColor
         });
       }
 
@@ -112,13 +129,17 @@ export class Minion extends BaseEntity {
       this.dissolveTimer -= dt;
       this.velocity = { x: 0, y: 0 };
 
-      // Spawn ascending vapor dissolve particles
-      if (Math.random() < 0.4) {
+      const mColor = this.minionType === "LANCER" 
+        ? "hsl(280, 70%, 65%)" 
+        : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+
+      // Spawn beautiful ascending vapor dissolve embers
+      if (Math.random() < 0.6) {
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
           y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
-          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2), // float up
-          color: this.minionType === "LANCER" ? "hsl(280, 60%, 55%)" : "hsl(200, 70%, 55%)"
+          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2), // float straight up
+          color: mColor
         });
       }
 

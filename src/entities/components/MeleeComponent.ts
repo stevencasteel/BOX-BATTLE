@@ -54,7 +54,8 @@ export class MeleeComponent implements IEntityComponent {
       targets.push(this.owner.world.boss as BaseEntity);
     }
     for (const minion of this.owner.world.minions) {
-      if (minion && !minion.isDead) {
+      const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+      if (isTargetable) {
         targets.push(minion as BaseEntity);
       }
     }
@@ -178,7 +179,8 @@ export class MeleeComponent implements IEntityComponent {
       targets.push(this.owner.world.boss as BaseEntity);
     }
     for (const minion of this.owner.world.minions) {
-      if (minion && !minion.isDead) {
+      const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+      if (isTargetable) {
         targets.push(minion as BaseEntity);
       }
     }

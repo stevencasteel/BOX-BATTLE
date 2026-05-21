@@ -130,11 +130,15 @@ export class Engine {
 
     // Spark Particles Listener
     this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color }) => {
-        const count = 12;
-        for (let i = 0; i < count; i++) {
-          const pAngle = angle + (Math.random() * 0.9 - 0.45);
-          const pSpeed = 160 + Math.random() * 280;
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
+        const sparkCount = count || 12;
+        for (let i = 0; i < sparkCount; i++) {
+          const pAngle = radial 
+            ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
+            : angle + (Math.random() * 0.9 - 0.45);
+          const pSpeed = radial
+            ? 100 + Math.random() * 300
+            : 160 + Math.random() * 280;
           this.particles.push({
             x,
             y,
@@ -277,7 +281,8 @@ export class Engine {
       const minion = this.world.minions[i];
       minion.update(dt);
 
-      if (!this.player.isDead && !minion.isDead) {
+      const isMinionHazardous = !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+      if (!this.player.isDead && isMinionHazardous) {
         const pW = this.player.size.width / 2;
         const pH = this.player.size.height / 2;
         const mW = minion.size.width / 2;

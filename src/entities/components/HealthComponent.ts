@@ -32,7 +32,9 @@ export class HealthComponent implements IEntityComponent {
   }
 
   public takeDamage(amount: number): boolean {
-    if (this.invincibilityTimer > 0 || this.owner.isDead) {
+    const isDying = "isDying" in this.owner && (this.owner as any).isDying;
+    const isSpawning = "isSpawning" in this.owner && (this.owner as any).isSpawning;
+    if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
       return false;
     }
 

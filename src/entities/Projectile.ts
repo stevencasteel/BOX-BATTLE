@@ -140,7 +140,8 @@ export class Projectile extends BaseEntity implements IPoolable {
         targets.push(this.world.boss);
       }
       for (const minion of this.world.minions) {
-        if (minion && !minion.isDead) {
+        const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+        if (isTargetable) {
           targets.push(minion);
         }
       }
