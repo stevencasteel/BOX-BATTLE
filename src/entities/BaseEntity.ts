@@ -1,5 +1,5 @@
 import { IEntityComponent } from "./EntityComponent";
-import { IEntity, IWorld, Vector2D } from "@/core/Interfaces";
+import { IEntity, IWorld, Vector2D, EntityStatus } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
   public position: Vector2D = { x: 0, y: 0 };
@@ -14,6 +14,10 @@ export class BaseEntity implements IEntity {
   constructor(id: string, world: IWorld) {
     this.id = id;
     this.world = world;
+  }
+
+  public get status(): EntityStatus {
+    return this.isDead ? EntityStatus.DEAD : EntityStatus.ACTIVE;
   }
 
   public addComponent<T extends IEntityComponent>(

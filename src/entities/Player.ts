@@ -6,10 +6,10 @@ import { DashComponent } from "@/entities/components/DashComponent";
 import { MeleeComponent } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent } from "@/entities/components/HealComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, IDamageRecorder } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
-export class Player extends BaseEntity {
+export class Player extends BaseEntity implements IDamageRecorder {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;

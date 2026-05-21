@@ -1,5 +1,12 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 
+export enum EntityStatus {
+  SPAWNING = "SPAWNING",
+  ACTIVE = "ACTIVE",
+  DYING = "DYING",
+  DEAD = "DEAD"
+}
+
 export interface Vector2D {
   x: number;
   y: number;
@@ -18,6 +25,7 @@ export interface IEntity {
   velocity: Vector2D;
   size: { width: number; height: number };
   isDead: boolean;
+  status: EntityStatus;
   world: IWorld;
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D): void;
@@ -65,6 +73,16 @@ export interface IWorld {
   physicsWorld: IPhysicsWorld;
   getProjectiles(): IProjectile[];
   releaseProjectile(proj: IProjectile): void;
+  spawnProjectile(
+    x: number,
+    y: number,
+    dirX: number,
+    dirY: number,
+    ownerId: "player" | "boss",
+    damage: number,
+    speed: number,
+    lifespan: number
+  ): IProjectile;
 }
 
 export interface IDamageRecorder {

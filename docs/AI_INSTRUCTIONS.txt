@@ -43,6 +43,12 @@
      development commands (`npm run dev`) and verifying build stability 
      (`npm run build`).
 
+1.9  Line Diagnostics for Debugging
+     When debugging or analyzing an error/crash stack trace where the exact 
+     line contents of a file are uncertain, always run a quick temporary 
+     diagnostic script (or evaluation command) to inspect and output the 
+     relevant lines before designing a patch or overwrite.
+
 
 2. CODE STANDARDS & TERMINAL PROTOCOLS
 --------------------------------------

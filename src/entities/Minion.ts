@@ -1,13 +1,20 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { IMinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
 import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
 export class Minion extends BaseEntity {
+  public get status(): EntityStatus {
+    if (this.isDead) return EntityStatus.DEAD;
+    if (this.isDying) return EntityStatus.DYING;
+    if (this.isSpawning) return EntityStatus.SPAWNING;
+    return EntityStatus.ACTIVE;
+  }
+
   public minionType: MinionType;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
@@ -161,9 +168,6 @@ export class Minion extends BaseEntity {
   }
 
   public fireSingleShotAtPlayer(player: any) {
-    const pool = (this.world as any).projectilePool;
-    if (!pool) return;
-
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);
@@ -172,7 +176,7 @@ export class Minion extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    pool.get(
+    this.world.spawnProjectile(
       this.position.x + dirX * 30,
       this.position.y + dirY * 30,
       dirX,
@@ -180,9 +184,7 @@ export class Minion extends BaseEntity {
       "boss",
       1,
       400,
-      5.0,
-      (p: any) => this.world.releaseProjectile(p),
-      this.world
+      5.0
     );
   }
 

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 4:07:44 PM
+ [SYSTEM] Generated: 5/21/2026, 4:17:56 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3206,7 +3206,7 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle } from "@/core/Interfaces";
+import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
 
 interface Particle {
@@ -3443,7 +3443,7 @@ export class Engine {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
 
-      const activeProjectiles = this.pool.getActive();
+      const activeProjectiles = [...this.pool.getActive()];
       for (let i = activeProjectiles.length - 1; i >= 0; i--) {
         activeProjectiles[i].update(dt);
       }
@@ -3474,7 +3474,7 @@ export class Engine {
       const minion = this.world.minions[i];
       minion.update(dt);
 
-      const isMinionHazardous = !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+      const isMinionHazardous = minion.status === EntityStatus.ACTIVE;
       if (!this.player.isDead && isMinionHazardous) {
         const pW = this.player.size.width / 2;
         const pH = this.player.size.height / 2;
@@ -3502,7 +3502,7 @@ export class Engine {
       }
     }
 
-    const activeProjectiles = this.pool.getActive();
+    const activeProjectiles = [...this.pool.getActive()];
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }
@@ -3992,6 +3992,13 @@ export const inputProvider = new InputProvider();
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "@/entities/EntityComponent";
 
+export enum EntityStatus {
+  SPAWNING = "SPAWNING",
+  ACTIVE = "ACTIVE",
+  DYING = "DYING",
+  DEAD = "DEAD"
+}
+
 export interface Vector2D {
   x: number;
   y: number;
@@ -4010,6 +4017,7 @@ export interface IEntity {
   velocity: Vector2D;
   size: { width: number; height: number };
   isDead: boolean;
+  status: EntityStatus;
   world: IWorld;
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D): void;
@@ -4057,6 +4065,16 @@ export interface IWorld {
   physicsWorld: IPhysicsWorld;
   getProjectiles(): IProjectile[];
   releaseProjectile(proj: IProjectile): void;
+  spawnProjectile(
+    x: number,
+    y: number,
+    dirX: number,
+    dirY: number,
+    ownerId: "player" | "boss",
+    damage: number,
+    speed: number,
+    lifespan: number
+  ): IProjectile;
 }
 
 export interface IDamageRecorder {
@@ -4995,6 +5013,33 @@ export class World implements IWorld {
       this.projectilePool.release(proj as any);
     }
   }
+
+  public spawnProjectile(
+    x: number,
+    y: number,
+    dirX: number,
+    dirY: number,
+    ownerId: "player" | "boss",
+    damage: number,
+    speed: number,
+    lifespan: number
+  ): IProjectile {
+    if (!this.projectilePool) {
+      throw new Error("Projectile pool not initialized on World.");
+    }
+    return this.projectilePool.get(
+      x,
+      y,
+      dirX,
+      dirY,
+      ownerId,
+      damage,
+      speed,
+      lifespan,
+      (p: any) => this.releaseProjectile(p),
+      this
+    ) as any as IProjectile;
+  }
 }
 
 
@@ -5369,7 +5414,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
 ● ./src/entities/BaseEntity.ts
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "./EntityComponent";
-import { IEntity, IWorld, Vector2D } from "@/core/Interfaces";
+import { IEntity, IWorld, Vector2D, EntityStatus } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
   public position: Vector2D = { x: 0, y: 0 };
@@ -5384,6 +5429,10 @@ export class BaseEntity implements IEntity {
   constructor(id: string, world: IWorld) {
     this.id = id;
     this.world = world;
+  }
+
+  public get status(): EntityStatus {
+    return this.isDead ? EntityStatus.DEAD : EntityStatus.ACTIVE;
   }
 
   public addComponent<T extends IEntityComponent>(
@@ -5520,8 +5569,7 @@ export class Boss extends BaseEntity {
 
   public fireSingleShotAtPlayer() {
     const player = this.world.player;
-    const pool = (this.world as any).projectilePool;
-    if (!player || !pool || player.isDead) return;
+    if (!player || player.isDead) return;
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -5531,7 +5579,7 @@ export class Boss extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    pool.get(
+    this.world.spawnProjectile(
       this.position.x + dirX * 40,
       this.position.y + dirY * 40,
       dirX,
@@ -5539,16 +5587,11 @@ export class Boss extends BaseEntity {
       "boss",
       1,
       250, 
-      10.0, 
-      (p: any) => this.world.releaseProjectile(p),
-      this.world
+      10.0
     );
   }
 
   public fireRadialOmniBurst() {
-    const pool = (this.world as any).projectilePool;
-    if (!pool) return;
-
     const projectileCount = 8;
     const angleStep = (Math.PI * 2) / projectileCount;
 
@@ -5557,7 +5600,7 @@ export class Boss extends BaseEntity {
       const dirX = Math.cos(angle);
       const dirY = Math.sin(angle);
 
-      pool.get(
+      this.world.spawnProjectile(
         this.position.x + dirX * 40,
         this.position.y + dirY * 40,
         dirX,
@@ -5565,9 +5608,7 @@ export class Boss extends BaseEntity {
         "boss",
         1,
         280, 
-        4.0,
-        (p: any) => this.world.releaseProjectile(p),
-        this.world
+        4.0
       );
     }
   }
@@ -5937,13 +5978,20 @@ export interface IEntityComponent {
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { IMinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
 import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
 export class Minion extends BaseEntity {
+  public get status(): EntityStatus {
+    if (this.isDead) return EntityStatus.DEAD;
+    if (this.isDying) return EntityStatus.DYING;
+    if (this.isSpawning) return EntityStatus.SPAWNING;
+    return EntityStatus.ACTIVE;
+  }
+
   public minionType: MinionType;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
@@ -6097,9 +6145,6 @@ export class Minion extends BaseEntity {
   }
 
   public fireSingleShotAtPlayer(player: any) {
-    const pool = (this.world as any).projectilePool;
-    if (!pool) return;
-
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);
@@ -6108,7 +6153,7 @@ export class Minion extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    pool.get(
+    this.world.spawnProjectile(
       this.position.x + dirX * 30,
       this.position.y + dirY * 30,
       dirX,
@@ -6116,9 +6161,7 @@ export class Minion extends BaseEntity {
       "boss",
       1,
       400,
-      5.0,
-      (p: any) => this.world.releaseProjectile(p),
-      this.world
+      5.0
     );
   }
 
@@ -6365,10 +6408,10 @@ import { DashComponent } from "@/entities/components/DashComponent";
 import { MeleeComponent } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent } from "@/entities/components/HealComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, IDamageRecorder } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
-export class Player extends BaseEntity {
+export class Player extends BaseEntity implements IDamageRecorder {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
@@ -6934,7 +6977,7 @@ export class Player extends BaseEntity {
 import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
 export class Projectile extends BaseEntity implements IPoolable {
@@ -7097,8 +7140,7 @@ export class Projectile extends BaseEntity implements IPoolable {
         targets.push(this.world.boss);
       }
       for (const minion of this.world.minions) {
-        const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
-        if (isTargetable) {
+        if (minion && minion.status === EntityStatus.ACTIVE) {
           targets.push(minion);
         }
       }
@@ -7354,26 +7396,21 @@ export class FireballComponent implements IEntityComponent {
 
     eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
 
-    const pool = (this.owner.world as any).projectilePool;
-    if (pool) {
-      const proj = pool.get(
-        spawnX,
-        spawnY,
-        normalizedDir.x,
-        normalizedDir.y,
-        "player",
-        damage,
-        speed,
-        lifespan,
-        (p: any) => this.owner.world.releaseProjectile(p),
-        this.owner.world
-      );
+    const proj = this.owner.world.spawnProjectile(
+      spawnX,
+      spawnY,
+      normalizedDir.x,
+      normalizedDir.y,
+      "player",
+      damage,
+      speed,
+      lifespan
+    );
 
-      if (isLvl2) {
-        proj.size = { width: 28, height: 28 };
-      } else {
-        proj.size = { width: 14, height: 14 };
-      }
+    if (isLvl2) {
+      proj.size = { width: 28, height: 28 };
+    } else {
+      proj.size = { width: 14, height: 14 };
     }
   }
 }
@@ -7571,7 +7608,7 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { IDamageRecorder } from "@/core/Interfaces";
+import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";
 
 
 export class MeleeComponent implements IEntityComponent {
@@ -7623,8 +7660,7 @@ export class MeleeComponent implements IEntityComponent {
       targets.push(this.owner.world.boss as BaseEntity);
     }
     for (const minion of this.owner.world.minions) {
-      const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
-      if (isTargetable) {
+      if (minion && minion.status === EntityStatus.ACTIVE) {
         targets.push(minion as BaseEntity);
       }
     }
@@ -7676,7 +7712,10 @@ export class MeleeComponent implements IEntityComponent {
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
+            const recorder = this.owner as unknown as IDamageRecorder;
+            if (recorder.registerDamageDealt) {
+              recorder.registerDamageDealt();
+            }
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
@@ -7728,7 +7767,10 @@ export class MeleeComponent implements IEntityComponent {
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
@@ -7748,8 +7790,7 @@ export class MeleeComponent implements IEntityComponent {
       targets.push(this.owner.world.boss as BaseEntity);
     }
     for (const minion of this.owner.world.minions) {
-      const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
-      if (isTargetable) {
+      if (minion && minion.status === EntityStatus.ACTIVE) {
         targets.push(minion as BaseEntity);
       }
     }
@@ -7769,7 +7810,10 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
         }
 
         this.owner.velocity.y = -this.pogoForce;
@@ -7803,7 +7847,10 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;

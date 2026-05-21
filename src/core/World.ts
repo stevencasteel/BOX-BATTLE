@@ -24,4 +24,31 @@ export class World implements IWorld {
       this.projectilePool.release(proj as any);
     }
   }
+
+  public spawnProjectile(
+    x: number,
+    y: number,
+    dirX: number,
+    dirY: number,
+    ownerId: "player" | "boss",
+    damage: number,
+    speed: number,
+    lifespan: number
+  ): IProjectile {
+    if (!this.projectilePool) {
+      throw new Error("Projectile pool not initialized on World.");
+    }
+    return this.projectilePool.get(
+      x,
+      y,
+      dirX,
+      dirY,
+      ownerId,
+      damage,
+      speed,
+      lifespan,
+      (p: any) => this.releaseProjectile(p),
+      this
+    ) as any as IProjectile;
+  }
 }

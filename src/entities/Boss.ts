@@ -81,8 +81,7 @@ export class Boss extends BaseEntity {
 
   public fireSingleShotAtPlayer() {
     const player = this.world.player;
-    const pool = (this.world as any).projectilePool;
-    if (!player || !pool || player.isDead) return;
+    if (!player || player.isDead) return;
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -92,7 +91,7 @@ export class Boss extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    pool.get(
+    this.world.spawnProjectile(
       this.position.x + dirX * 40,
       this.position.y + dirY * 40,
       dirX,
@@ -100,16 +99,11 @@ export class Boss extends BaseEntity {
       "boss",
       1,
       250, 
-      10.0, 
-      (p: any) => this.world.releaseProjectile(p),
-      this.world
+      10.0
     );
   }
 
   public fireRadialOmniBurst() {
-    const pool = (this.world as any).projectilePool;
-    if (!pool) return;
-
     const projectileCount = 8;
     const angleStep = (Math.PI * 2) / projectileCount;
 
@@ -118,7 +112,7 @@ export class Boss extends BaseEntity {
       const dirX = Math.cos(angle);
       const dirY = Math.sin(angle);
 
-      pool.get(
+      this.world.spawnProjectile(
         this.position.x + dirX * 40,
         this.position.y + dirY * 40,
         dirX,
@@ -126,9 +120,7 @@ export class Boss extends BaseEntity {
         "boss",
         1,
         280, 
-        4.0,
-        (p: any) => this.world.releaseProjectile(p),
-        this.world
+        4.0
       );
     }
   }

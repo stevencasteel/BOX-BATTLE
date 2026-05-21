@@ -53,26 +53,21 @@ export class FireballComponent implements IEntityComponent {
 
     eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
 
-    const pool = (this.owner.world as any).projectilePool;
-    if (pool) {
-      const proj = pool.get(
-        spawnX,
-        spawnY,
-        normalizedDir.x,
-        normalizedDir.y,
-        "player",
-        damage,
-        speed,
-        lifespan,
-        (p: any) => this.owner.world.releaseProjectile(p),
-        this.owner.world
-      );
+    const proj = this.owner.world.spawnProjectile(
+      spawnX,
+      spawnY,
+      normalizedDir.x,
+      normalizedDir.y,
+      "player",
+      damage,
+      speed,
+      lifespan
+    );
 
-      if (isLvl2) {
-        proj.size = { width: 28, height: 28 };
-      } else {
-        proj.size = { width: 14, height: 14 };
-      }
+    if (isLvl2) {
+      proj.size = { width: 28, height: 28 };
+    } else {
+      proj.size = { width: 14, height: 14 };
     }
   }
 }

@@ -1,7 +1,7 @@
 import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
 export class Projectile extends BaseEntity implements IPoolable {
@@ -164,8 +164,7 @@ export class Projectile extends BaseEntity implements IPoolable {
         targets.push(this.world.boss);
       }
       for (const minion of this.world.minions) {
-        const isTargetable = minion && !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
-        if (isTargetable) {
+        if (minion && minion.status === EntityStatus.ACTIVE) {
           targets.push(minion);
         }
       }

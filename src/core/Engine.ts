@@ -13,7 +13,7 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle } from "@/core/Interfaces";
+import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
 
 interface Particle {
@@ -250,7 +250,7 @@ export class Engine {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
 
-      const activeProjectiles = this.pool.getActive();
+      const activeProjectiles = [...this.pool.getActive()];
       for (let i = activeProjectiles.length - 1; i >= 0; i--) {
         activeProjectiles[i].update(dt);
       }
@@ -281,7 +281,7 @@ export class Engine {
       const minion = this.world.minions[i];
       minion.update(dt);
 
-      const isMinionHazardous = !minion.isDead && !("isDying" in minion && (minion as any).isDying) && !("isSpawning" in minion && (minion as any).isSpawning);
+      const isMinionHazardous = minion.status === EntityStatus.ACTIVE;
       if (!this.player.isDead && isMinionHazardous) {
         const pW = this.player.size.width / 2;
         const pH = this.player.size.height / 2;
@@ -309,7 +309,7 @@ export class Engine {
       }
     }
 
-    const activeProjectiles = this.pool.getActive();
+    const activeProjectiles = [...this.pool.getActive()];
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }
