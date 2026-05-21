@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 10:51:25 AM
+ [SYSTEM] Generated: 5/21/2026, 11:39:52 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -40,6 +40,7 @@
 │   │   └── PhysicsComponent.ts
 │   ├── core/
 │   │   ├── Camera.ts
+│   │   ├── CanvasResizer.ts
 │   │   ├── Engine.ts
 │   │   ├── EventBroker.ts
 │   │   ├── GameLoop.ts
@@ -2129,7 +2130,7 @@ body {
 .vignette-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.45) 100%);
+  background: radial-gradient(circle, transparent 65%, rgba(239, 68, 68, 0.28) 100%);
   pointer-events: none;
   z-index: 80;
   opacity: 0;
@@ -2143,11 +2144,11 @@ body {
 
 @keyframes vignette-heartbeat {
   0% {
-    opacity: 0.35;
+    opacity: 0.15;
   }
 
   100% {
-    opacity: 0.95;
+    opacity: 0.55;
   }
 }
 
@@ -2437,8 +2438,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
-import { useGameDialogue } from "@/hooks/useGameDialogue";
-import { useGameStore } from "@/store/useGameStore";
+import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
 import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
 
@@ -2454,20 +2454,18 @@ import "./App.css";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const statusPanelRef = useRef<HTMLDivElement>(null);
+  const dialogueConsoleRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
-  const currentScreen = useGameStore((state) => state.currentScreen);
-  const menuIndex = useGameStore((state) => state.menuIndex);
-  const playerHP = useGameStore((state) => state.playerHP);
-  const bossHP = useGameStore((state) => state.bossHP);
-  const gameResult = useGameStore((state) => state.gameResult);
-  const retryCount = useGameStore((state) => state.retryCount);
-  const isGlitching = useGameStore((state) => state.isGlitching);
-  const healingCharges = useGameStore((state) => state.healingCharges);
-  const determination = useGameStore((state) => state.determination);
+  const currentScreen = useSessionStore((state) => state.currentScreen);
+  const menuIndex = useSessionStore((state) => state.menuIndex);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const retryCount = useSessionStore((state) => state.retryCount);
 
-  const navTo = useGameStore((state) => state.navTo);
-  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
-  const resetGameSession = useGameStore((state) => state.resetGameSession);
+  const navTo = useSessionStore((state) => state.navTo);
+  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
+  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   const {
     slots,
@@ -2482,9 +2480,12 @@ export default function App() {
   } = useSaveSlots();
 
   const { audio, handleVolumeChange } = useAudioSettings();
-  const { playerDialogue, bossDialogue, triggerDialogue } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
+
+  useEffect(() => {
+    soundSynth.setCabinetMuffle(currentScreen !== "PLAYING");
+  }, [currentScreen]);
 
   const playHoverTick = () => {
     soundSynth.playSelectTick();
@@ -2494,29 +2495,224 @@ export default function App() {
     soundSynth.startMusic();
     reloadSaveSlots();
 
+    const updatePlayerHP = (hp: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-hp-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < hp) {
+          elem.className = "led-dot led-green";
+          elem.style.background = "";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+        }
+      });
+    };
+
+    const updateHealCharges = (charges: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-heal-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < charges) {
+          elem.className = "led-dot led-yellow";
+          elem.style.background = "";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+        }
+      });
+    };
+
+    const updateDetermination = (det: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-det-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < det) {
+          elem.className = "led-dot";
+          elem.style.background = "hsl(280, 80%, 65%)";
+          elem.style.boxShadow = "0 0 6px rgba(168, 85, 247, 0.8)";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+          elem.style.boxShadow = "none";
+        }
+      });
+    };
+
+    const updateBossHP = (hp: number) => {
+      const bar = statusPanelRef.current?.querySelector("[data-boss-bar]") as HTMLElement | null;
+      if (!bar) return;
+      const pct = (hp / 30) * 100;
+      bar.className = "led-red";
+      bar.style.width = pct + "%";
+      bar.style.background = "";
+    };
+
+    const updateGameStatus = (status: string) => {
+      const label = statusPanelRef.current?.querySelector("[data-game-status]") as HTMLElement | null;
+      if (!label) return;
+      label.textContent = status;
+      label.style.color = status === "PLAYING" ? "var(--signal-green)" : "#4a5568";
+      label.style.textShadow = status === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "";
+    };
+
+    let playerDialogueTimeout: ReturnType<typeof setInterval> | null = null;
+    let playerDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+    let bossDialogueTimeout: ReturnType<typeof setInterval> | null = null;
+    let bossDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const animateDialogue = (speaker: "player" | "boss", text: string) => {
+      const box = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-dialogue]" : "[data-boss-dialogue]"
+      ) as HTMLElement | null;
+      const textElem = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-text]" : "[data-boss-text]"
+      ) as HTMLElement | null;
+      const portrait = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-portrait]" : "[data-boss-portrait]"
+      ) as HTMLElement | null;
+
+      if (!box || !textElem || !portrait) return;
+
+      if (speaker === "player") {
+        if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
+        if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+      } else {
+        if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
+        if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+      }
+
+      box.className =
+        speaker === "player"
+          ? "dialogue-box-left neo-pressed dialogue-active-green"
+          : "dialogue-box-right neo-pressed dialogue-active-red";
+      portrait.className =
+        speaker === "player"
+          ? "portrait-square led-green portrait-rumble"
+          : "portrait-square led-red portrait-rumble";
+      portrait.style.background = "";
+
+      let idx = 0;
+      textElem.textContent = "";
+
+      const intervalTime = speaker === "player" ? 45 : 55;
+      const timer = setInterval(() => {
+        if (idx < text.length) {
+          const char = text[idx];
+          textElem.textContent += char;
+          soundSynth.playDialogueTick(speaker, char);
+          idx++;
+        } else {
+          clearInterval(timer);
+          portrait.className =
+            speaker === "player" ? "portrait-square led-green" : "portrait-square led-red";
+
+          const cleanupTimer = setTimeout(() => {
+            box.className =
+              speaker === "player"
+                ? "dialogue-box-left neo-pressed dialogue-inactive"
+                : "dialogue-box-right neo-pressed dialogue-inactive";
+            portrait.style.background = "#07080b";
+            textElem.textContent = "[ NO SIGNAL ]";
+          }, 3000);
+
+          if (speaker === "player") {
+            playerDialogueCleanupTimeout = cleanupTimer;
+          } else {
+            bossDialogueCleanupTimeout = cleanupTimer;
+          }
+        }
+      }, intervalTime);
+
+      if (speaker === "player") {
+        playerDialogueTimeout = timer;
+      } else {
+        bossDialogueTimeout = timer;
+      }
+    };
+
+    const unsubGameplay = useGameplayStore.subscribe((state) => {
+      const viewport = viewportRef.current;
+      if (viewport) {
+        if (state.isGlitching) {
+          viewport.classList.add("filter-chromatic");
+        } else {
+          viewport.classList.remove("filter-chromatic");
+        }
+      }
+    });
+
     const unsubs = [
       eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
-        useGameStore.getState().setPlayerHP(currentHealth);
+        updatePlayerHP(currentHealth);
       }),
       eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
-        useGameStore.getState().setPlayerHP(currentHealth);
+        updatePlayerHP(currentHealth);
       }),
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        useGameStore.getState().setBossHP(currentHealth);
+        updateBossHP(currentHealth);
       }),
       eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
-        useGameStore.getState().setHealingCharges(charges);
+        updateHealCharges(charges);
       }),
       eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: dValue }) => {
-        useGameStore.getState().setDetermination(dValue);
+        updateDetermination(dValue);
+      }),
+      eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
+        animateDialogue(speaker, text);
       })
     ];
 
+    if (currentScreen === "PLAYING") {
+      const initialGameplay = useGameplayStore.getState();
+      updatePlayerHP(initialGameplay.playerHP);
+      updateBossHP(initialGameplay.bossHP);
+      updateHealCharges(initialGameplay.healingCharges);
+      updateDetermination(initialGameplay.determination);
+      updateGameStatus("PLAYING");
+    } else {
+      updatePlayerHP(0);
+      updateBossHP(0);
+      updateHealCharges(0);
+      updateDetermination(0);
+      updateGameStatus("READY");
+    }
+
     return () => {
       soundSynth.stopMusic();
+      unsubGameplay();
       unsubs.forEach((unsub) => unsub());
+      if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
+      if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+      if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
+      if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+
+      // Thorough dialogue console element release
+      const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
+      const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
+      const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
+      const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
+      const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
+      const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
+
+      if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
+      if (pText) pText.textContent = "[ NO SIGNAL ]";
+      if (pPortrait) {
+        pPortrait.className = "portrait-square led-green";
+        pPortrait.style.background = "#07080b";
+      }
+
+      if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
+      if (bText) bText.textContent = "[ NO SIGNAL ]";
+      if (bPortrait) {
+        bPortrait.className = "portrait-square led-red";
+        bPortrait.style.background = "#07080b";
+      }
     };
-  }, []);
+  }, [currentScreen]);
 
   useEffect(() => {
     if (!rebindTarget) return;
@@ -2597,52 +2793,52 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        <div className="cabinet-status-panel neo-pressed">
+        <div className="cabinet-status-panel neo-pressed" ref={statusPanelRef}>
           <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
             <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
-                  style={{ background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
+                  data-hp-dot={i}
+                  className="led-dot"
+                  style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
                 />
               ))}
             </div>
 
-            {currentScreen === "PLAYING" && (
-              <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
-                <div className="flex-row" style={{ gap: "4px" }}>
-                  {[...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`led-dot ${i < healingCharges ? "led-yellow" : ""}`}
-                      style={{ background: i < healingCharges ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
-                    />
-                  ))}
-                </div>
-                <div className="flex-row" style={{ gap: "3px" }}>
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="led-dot"
-                      style={{
-                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
-                        boxShadow: i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
-                        width: "4px",
-                        height: "4px"
-                      }}
-                    />
-                  ))}
-                </div>
+            <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
+              <div className="flex-row" style={{ gap: "4px" }}>
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    data-heal-dot={i}
+                    className="led-dot"
+                    style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
+                  />
+                ))}
               </div>
-            )}
+              <div className="flex-row" style={{ gap: "3px" }}>
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    data-det-dot={i}
+                    className="led-dot"
+                    style={{
+                      background: "#07080b",
+                      width: "4px",
+                      height: "4px"
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "center" }}>
             <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
-            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
-              {currentScreen === "PLAYING" ? "PLAYING" : "READY"}
+            <span data-game-status style={{ fontSize: "9px", color: "#4a5568", fontWeight: "bold" }}>
+              READY
             </span>
           </div>
 
@@ -2650,21 +2846,21 @@ export default function App() {
             <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
             <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
               <div
-                className={currentScreen === "PLAYING" ? "led-red" : ""}
-                style={{ height: "100%", borderRadius: "2px", width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%", transition: "all 0.15s ease", background: currentScreen === "PLAYING" ? "" : "#07080b" }}
+                data-boss-bar
+                style={{ height: "100%", borderRadius: "2px", width: "0%", transition: "all 0.15s ease", background: "#07080b" }}
               />
             </div>
           </div>
         </div>
 
-        <div className={`game-viewport-container ${isGlitching ? "filter-chromatic" : ""}`}>
+        <div className="game-viewport-container" ref={viewportRef}>
           {currentScreen === "PLAYING" ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
                 <GameArena
                   key={retryCount}
                   canvasRef={canvasRef}
-                  triggerDialogue={triggerDialogue}
+                  triggerDialogue={() => {}}
                   playHoverTick={playHoverTick}
                 />
               </div>
@@ -2766,25 +2962,23 @@ export default function App() {
           )}
         </div>
 
-        {currentScreen === "PLAYING" && (
-          <div className="dialogue-console">
-            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
-              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
-              <div className="dialogue-text-container">
-                <div className="dialogue-speaker-label">PLAYER</div>
-                <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
-              </div>
-            </div>
-
-            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
-              <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-                <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-                <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
-              </div>
-              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
+        <div className="dialogue-console" ref={dialogueConsoleRef}>
+          <div data-player-dialogue className="dialogue-box-left neo-pressed dialogue-inactive">
+            <div data-player-portrait className="portrait-square led-green" style={{ background: "#07080b" }} />
+            <div className="dialogue-text-container">
+              <div className="dialogue-speaker-label">PLAYER</div>
+              <div data-player-text className="dialogue-body-text">[ NO SIGNAL ]</div>
             </div>
           </div>
-        )}
+
+          <div data-boss-dialogue className="dialogue-box-right neo-pressed dialogue-inactive">
+            <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+              <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
+              <div data-boss-text className="dialogue-body-text">[ NO SIGNAL ]</div>
+            </div>
+            <div data-boss-portrait className="portrait-square led-red" style={{ background: "#07080b" }} />
+          </div>
+        </div>
 
       </div>
 
@@ -2805,7 +2999,6 @@ export default function App() {
     </div>
   );
 }
-
 
 
 ● ./src/components/DashComponent.ts
@@ -2976,7 +3169,9 @@ export class FireballComponent implements Component {
 ────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
-import { useGameStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { eventBroker } from "@/core/EventBroker";
+import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -2989,8 +3184,6 @@ export function GameArena({
   triggerDialogue,
   playHoverTick,
 }: GameArenaProps) {
-  // Store the trigger callback in a mutable ref to prevent recreating 
-  // the Engine when the parent dialogue state updates.
   const triggerRef = useRef(triggerDialogue);
   
   useEffect(() => {
@@ -2998,10 +3191,58 @@ export function GameArena({
   }, [triggerDialogue]);
 
   useEffect(() => {
+    const updateVignette = (hp: number) => {
+      const overlay = canvasRef.current?.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+      if (overlay) {
+        if (hp === 1) {
+          overlay.classList.add("vignette-pulse");
+        } else {
+          overlay.classList.remove("vignette-pulse");
+        }
+      }
+    };
+
+    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }: { currentHealth: number }) => {
+      updateVignette(currentHealth);
+    });
+    const unsubHealed = eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }: { currentHealth: number }) => {
+      updateVignette(currentHealth);
+    });
+
+    const initialHP = useGameplayStore.getState().playerHP;
+    updateVignette(initialHP);
+
+    return () => {
+      unsubHurt();
+      unsubHealed();
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = canvas?.parentElement;
+    if (!canvas || !container) return;
+
+    const resizer = new CanvasResizer(canvas, 1250, 1250);
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        resizer.resize(width, height);
+      }
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Pass a stable execution wrapper to the engine
     const engine = new Engine(canvas, (speaker, text) => {
       triggerRef.current(speaker, text);
     });
@@ -3010,14 +3251,14 @@ export function GameArena({
     return () => {
       engine.cleanup();
     };
-  }, [canvasRef]); // Restrict recreation strictly to canvas attachment/detachment
+  }, [canvasRef]);
 
-  const gameResult = useGameStore((state) => state.gameResult);
-  const menuIndex = useGameStore((state) => state.menuIndex);
-  const navTo = useGameStore((state) => state.navTo);
-  const resetGameSession = useGameStore((state) => state.resetGameSession);
-  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
-  const playerHP = useGameStore((state) => state.playerHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const menuIndex = useSessionStore((state) => state.menuIndex);
+  const navTo = useSessionStore((state) => state.navTo);
+  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
+
+  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -3031,7 +3272,7 @@ export function GameArena({
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
 
-        <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
+        <div className="vignette-overlay" />
 
         {gameResult !== "PLAYING" && (
           <div className="gameover-overlay">
@@ -3253,6 +3494,10 @@ export class InputReceiverComponent implements Component {
 
   public isJustReleased(action: Action): boolean {
     return inputProvider.isJustReleased(action);
+  }
+
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    return inputProvider.consumeBufferedAction(action, windowMs);
   }
 
   public getAxis(negative: Action, positive: Action): number {
@@ -4242,6 +4487,55 @@ export class Camera {
 
 
 
+● ./src/core/CanvasResizer.ts
+────────────────────────────────────────────────────
+export class CanvasResizer {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private internalWidth: number;
+  private internalHeight: number;
+  private lastWidth = 0;
+  private lastHeight = 0;
+
+  constructor(canvas: HTMLCanvasElement, internalWidth = 1250, internalHeight = 1250) {
+    this.canvas = canvas;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not acquire 2D context.");
+    this.ctx = context;
+    this.internalWidth = internalWidth;
+    this.internalHeight = internalHeight;
+  }
+
+  public resize(containerWidth: number, containerHeight: number): boolean {
+    if (containerWidth === this.lastWidth && containerHeight === this.lastHeight) {
+      return false;
+    }
+
+    this.lastWidth = containerWidth;
+    this.lastHeight = containerHeight;
+
+    const dpr = window.devicePixelRatio || 1;
+    const scale = Math.min(containerWidth / this.internalWidth, containerHeight / this.internalHeight);
+
+    const displayWidth = this.internalWidth * scale;
+    const displayHeight = this.internalHeight * scale;
+
+    this.canvas.style.width = `${displayWidth}px`;
+    this.canvas.style.height = `${displayHeight}px`;
+
+    this.canvas.width = displayWidth * dpr;
+    this.canvas.height = displayHeight * dpr;
+
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.scale(dpr * scale, dpr * scale);
+    this.ctx.imageSmoothingEnabled = false;
+
+    return true;
+  }
+}
+
+
+
 ● ./src/core/Engine.ts
 ────────────────────────────────────────────────────
 import GameLoop from "@/core/GameLoop";
@@ -4254,14 +4548,13 @@ import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
-import { useGameStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/EventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
 export class Engine {
-  private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
 
@@ -4307,7 +4600,6 @@ export class Engine {
     canvas: HTMLCanvasElement,
     triggerDialogue: (speaker: "player" | "boss", text: string) => void
   ) {
-    this.canvas = canvas;
     const context = canvas.getContext("2d");
     if (!context) {
       throw new Error("Could not construct 2D context.");
@@ -4348,15 +4640,16 @@ export class Engine {
 
     Camera.reset();
 
-    const state = useGameStore.getState();
-    state.setGameResult("PLAYING");
+    const sessionState = useSessionStore.getState();
+    const gameplayState = useGameplayStore.getState();
+    sessionState.setGameResult("PLAYING");
 
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
-    if (pHealth) state.setPlayerHP(pHealth.currentHealth);
-    if (bHealth) state.setBossHP(bHealth.currentHealth);
-    state.setHealingCharges(this.player.healingCharges);
-    state.setDetermination(this.player.determinationCounter);
+    if (pHealth) gameplayState.setPlayerHP(pHealth.currentHealth);
+    if (bHealth) gameplayState.setBossHP(bHealth.currentHealth);
+    gameplayState.setHealingCharges(this.player.healingCharges);
+    gameplayState.setDetermination(this.player.determinationCounter);
 
     this.unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
       this.triggerDialogue(speaker, text);
@@ -4459,7 +4752,7 @@ export class Engine {
       eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
     }
 
-    const state = useGameStore.getState();
+    const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       this.bossDeathTimer = 0;
@@ -4468,7 +4761,7 @@ export class Engine {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
       this.deathTimeoutId = setTimeout(() => {
-        state.setGameResult("GAMEOVER");
+        sessionState.setGameResult("GAMEOVER");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
@@ -4481,7 +4774,7 @@ export class Engine {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
       this.deathTimeoutId = setTimeout(() => {
-        state.setGameResult("VICTORY");
+        sessionState.setGameResult("VICTORY");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
@@ -4493,7 +4786,7 @@ export class Engine {
 
   private render() {
     this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, 1250, 1250);
 
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);
@@ -4546,7 +4839,7 @@ export class Engine {
       if (t < 0.25) {
         const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
         this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, 1250, 1250);
       }
 
       const ringCount = 3;
@@ -4760,6 +5053,16 @@ import { settingsManager } from "@/core/SettingsManager";
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
+  private pressTimestamps: Record<Action, number> = {
+    MOVE_LEFT: 0,
+    MOVE_RIGHT: 0,
+    MOVE_UP: 0,
+    MOVE_DOWN: 0,
+    JUMP: 0,
+    ATTACK: 0,
+    DASH: 0
+  };
+
   private pressed: Record<Action, boolean> = {
     MOVE_LEFT: false,
     MOVE_RIGHT: false,
@@ -4814,9 +5117,19 @@ class InputProvider {
       if (!this.pressed[action]) {
         this.justPressed[action] = true;
         this.pressed[action] = true;
+        this.pressTimestamps[action] = performance.now();
       }
     }
   };
+
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    const elapsed = performance.now() - this.pressTimestamps[action];
+    if (elapsed <= windowMs) {
+      this.pressTimestamps[action] = 0;
+      return true;
+    }
+    return false;
+  }
 
   private handleKeyUp = (e: KeyboardEvent) => {
     const action = this.getActionFromCode(e.code);
@@ -5548,6 +5861,8 @@ class SoundSynth {
   private masterGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
+  private cabinetFilter: BiquadFilterNode | null = null;
+  private limiter: DynamicsCompressorNode | null = null;
 
   private musicInterval: ReturnType<typeof setInterval> | null = null;
   private musicTickIndex: number = 0;
@@ -5562,10 +5877,24 @@ class SoundSynth {
     this.masterGain = this.ctx.createGain();
     this.sfxGain = this.ctx.createGain();
     this.musicGain = this.ctx.createGain();
+    this.cabinetFilter = this.ctx.createBiquadFilter();
+    this.limiter = this.ctx.createDynamicsCompressor();
 
+    this.cabinetFilter.type = "lowpass";
+    this.cabinetFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
+    this.cabinetFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
+
+    this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
+    this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
+    this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+    this.limiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
+    this.limiter.release.setValueAtTime(0.08, this.ctx.currentTime);
+
+    this.sfxGain.connect(this.cabinetFilter);
+    this.musicGain.connect(this.cabinetFilter);
+    this.cabinetFilter.connect(this.limiter);
+    this.limiter.connect(this.masterGain);
     this.masterGain.connect(this.ctx.destination);
-    this.sfxGain.connect(this.masterGain);
-    this.musicGain.connect(this.masterGain);
 
     this.updateVolumes();
   }
@@ -5577,15 +5906,26 @@ class SoundSynth {
     const config = settingsManager.getAudio();
     const now = this.ctx.currentTime;
 
-    // Standardized mixing levels modeled after professional audio channels
-    const master = config.masterMuted ? 0 : config.masterVolume * 0.35;
-    const sfx = config.sfxMuted ? 0 : config.sfxVolume * 0.85;
-    const music = config.musicMuted ? 0 : config.musicVolume * 0.30;
+    const master = config.masterMuted ? 0 : Math.pow(config.masterVolume, 2) * 0.35;
+    const sfx = config.sfxMuted ? 0 : Math.pow(config.sfxVolume, 2) * 0.85;
+    const music = config.musicMuted ? 0 : Math.pow(config.musicVolume, 2) * 0.30;
 
-    // Apply linear ramps to prevent audio clicks on slider adjustment
-    this.masterGain.gain.linearRampToValueAtTime(master, now + 0.05);
-    this.sfxGain.gain.linearRampToValueAtTime(sfx, now + 0.05);
-    this.musicGain.gain.linearRampToValueAtTime(music, now + 0.05);
+    this.masterGain.gain.setTargetAtTime(master, now, 0.05);
+    this.sfxGain.gain.setTargetAtTime(sfx, now, 0.05);
+    this.musicGain.gain.setTargetAtTime(music, now, 0.05);
+  }
+
+  public setCabinetMuffle(active: boolean) {
+    this.init();
+    if (!this.ctx || !this.cabinetFilter) return;
+
+    const now = this.ctx.currentTime;
+    const targetFreq = active ? 600 : 20000;
+
+    this.cabinetFilter.frequency.cancelScheduledValues(now);
+    const currentVal = Math.max(0.1, this.cabinetFilter.frequency.value);
+    this.cabinetFilter.frequency.setValueAtTime(currentVal, now);
+    this.cabinetFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.3);
   }
 
   private resumeContext() {
@@ -5595,9 +5935,6 @@ class SoundSynth {
     }
   }
 
-  /**
-   * Generates a procedural pitch bend with an ADSR envelope
-   */
   public playJump() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -5611,21 +5948,18 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    // Pitch envelope
     osc.frequency.setValueAtTime(160, now);
     osc.frequency.exponentialRampToValueAtTime(480, now + 0.12);
 
-    // Resonant filter envelope
     filter.frequency.setValueAtTime(1200, now);
     filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
     filter.Q.setValueAtTime(4.0, now);
 
-    // Amplitude envelope (ADSR)
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02); // Attack
-    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08); // Decay
-    envelope.gain.setValueAtTime(0.1, now + 0.12); // Sustain
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15); // Release
+    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02);
+    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08);
+    envelope.gain.setValueAtTime(0.1, now + 0.12);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
 
     osc.connect(filter);
     filter.connect(envelope);
@@ -5635,9 +5969,6 @@ class SoundSynth {
     osc.stop(now + 0.16);
   }
 
-  /**
-   * Generates custom filtered white noise
-   */
   public playDash() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -5663,8 +5994,8 @@ class SoundSynth {
 
     const envelope = this.ctx.createGain();
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01); // Snappy Attack
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
+    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
     noiseNode.connect(filter);
     filter.connect(envelope);
@@ -5915,6 +6246,7 @@ class SoundSynth {
 }
 
 export const soundSynth = new SoundSynth();
+
 
 
 ● ./src/core/StateMachine.ts
@@ -6660,10 +6992,10 @@ export class Minion extends BaseEntity {
       }
     }
 
-    if (this.minionType === "LANCER" && this.attackState === "TELEGRAPH") {
+    if (this.attackState === "TELEGRAPH") {
       ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
+      ctx.shadowBlur = 14;
     }
 
     ctx.fillRect(
@@ -6700,13 +7032,26 @@ export class TurretBehavior implements MinionBehavior {
   public update(minion: Minion, _dt: number): void {
     minion.velocity = { x: 0, y: 0 };
     const player = minion.world.player;
-    if (player && !player.isDead) {
-      const dx = player.position.x - minion.position.x;
-      const dy = player.position.y - minion.position.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 400 && minion.shootTimer <= 0) {
-        minion.shootTimer = 2.5;
-        minion.fireSingleShotAtPlayer(player);
+    const playerValid = player && !player.isDead;
+
+    if (minion.attackState === "PATROL") {
+      if (playerValid) {
+        const dx = player.position.x - minion.position.x;
+        const dy = player.position.y - minion.position.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 400 && minion.shootTimer <= 0) {
+          minion.attackState = "TELEGRAPH";
+          minion.stateTimer = 0.5; // 500ms warning
+        }
+      }
+    }
+    else if (minion.attackState === "TELEGRAPH") {
+      if (minion.stateTimer <= 0) {
+        if (playerValid) {
+          minion.fireSingleShotAtPlayer(player);
+        }
+        minion.shootTimer = 2.5; // Cooldown
+        minion.attackState = "PATROL";
       }
     }
   }
@@ -6762,38 +7107,56 @@ export class LancerBehavior implements MinionBehavior {
 
 export class FlyerBehavior implements MinionBehavior {
   public update(minion: Minion, dt: number): void {
-    const targetPos = minion.flyerTarget === "A" ? minion.pointA : minion.pointB;
-    const dx = targetPos.x - minion.position.x;
-    const dy = targetPos.y - minion.position.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < 5) {
-      minion.flyerTarget = minion.flyerTarget === "A" ? "B" : "A";
-    } else {
-      minion.velocity.x = (dx / dist) * minion.patrolSpeed;
-      minion.velocity.y = (dy / dist) * minion.patrolSpeed;
-    }
-
     const player = minion.world.player;
     const playerValid = player && !player.isDead;
 
-    if (playerValid) {
-      const dxP = player.position.x - minion.position.x;
-      const dyP = player.position.y - minion.position.y;
-      const playerDist = Math.sqrt(dxP * dxP + dyP * dyP);
-      if (playerDist < 480 && minion.shootTimer <= 0 && minion.volleyCount === 0) {
-        minion.volleyCount = 3;
-        minion.volleyTimer = 0;
-        minion.shootTimer = 3.5;
+    if (minion.attackState === "PATROL") {
+      const targetPos = minion.flyerTarget === "A" ? minion.pointA : minion.pointB;
+      const dx = targetPos.x - minion.position.x;
+      const dy = targetPos.y - minion.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 5) {
+        minion.flyerTarget = minion.flyerTarget === "A" ? "B" : "A";
+      } else {
+        minion.velocity.x = (dx / dist) * minion.patrolSpeed;
+        minion.velocity.y = (dy / dist) * minion.patrolSpeed;
+      }
+
+      if (playerValid) {
+        const dxP = player.position.x - minion.position.x;
+        const dyP = player.position.y - minion.position.y;
+        const playerDist = Math.sqrt(dxP * dxP + dyP * dyP);
+        if (playerDist < 480 && minion.shootTimer <= 0 && minion.volleyCount === 0) {
+          minion.attackState = "TELEGRAPH";
+          minion.stateTimer = 0.6; // 600ms warning
+          minion.velocity = { x: 0, y: 0 }; // Halt patrol
+        }
       }
     }
+    else if (minion.attackState === "TELEGRAPH") {
+      minion.velocity = { x: 0, y: 0 };
+      if (minion.stateTimer <= 0) {
+        minion.attackState = "ATTACK";
+        minion.volleyCount = 3;
+        minion.volleyTimer = 0;
+        minion.shootTimer = 3.5; // Overall cooldown
+      }
+    }
+    else if (minion.attackState === "ATTACK") {
+      minion.velocity = { x: minion.velocity.x * 0.9, y: minion.velocity.y * 0.9 };
 
-    if (minion.volleyCount > 0) {
-      minion.volleyTimer -= dt;
-      if (minion.volleyTimer <= 0 && playerValid) {
-        minion.fireSingleShotAtPlayer(player);
-        minion.volleyCount--;
-        minion.volleyTimer = 0.18;
+      if (minion.volleyCount > 0) {
+        minion.volleyTimer -= dt;
+        if (minion.volleyTimer <= 0 && playerValid) {
+          minion.fireSingleShotAtPlayer(player);
+          minion.volleyCount--;
+          minion.volleyTimer = 0.18;
+        }
+      }
+
+      if (minion.volleyCount === 0) {
+        minion.attackState = "PATROL";
       }
     }
   }
@@ -6913,7 +7276,7 @@ export class Player extends BaseEntity {
     }
 
     if (this.physics.isGrounded) {
-      this.coyoteTimer = 0.1;
+      this.coyoteTimer = 0.15;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
     } else {
@@ -6921,12 +7284,12 @@ export class Player extends BaseEntity {
     }
 
     if (this.physics.isOnWallLeft) {
-      this.wallCoyoteTimer = 0.05;
+      this.wallCoyoteTimer = 0.1;
       this.lastWallNormal = 1;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
     } else if (this.physics.isOnWallRight) {
-      this.wallCoyoteTimer = 0.05;
+      this.wallCoyoteTimer = 0.1;
       this.lastWallNormal = -1;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
@@ -6954,7 +7317,7 @@ export class Player extends BaseEntity {
       }
     }
 
-    if (this.inputReceiver.isJustPressed("DASH") && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
+    if (this.inputReceiver.consumeBufferedAction("DASH", 100) && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
       let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
       let dirY = 0;
       if (this.inputReceiver.isPressed("MOVE_UP")) {
@@ -6976,16 +7339,17 @@ export class Player extends BaseEntity {
       return;
     }
 
-    if (this.inputReceiver.isJustPressed("JUMP")) {
+    if (this.inputReceiver.consumeBufferedAction("JUMP", 100)) {
       this.jumpBufferTimer = 0.1;
     } else {
       this.jumpBufferTimer -= dt;
     }
 
     if (this.jumpBufferTimer > 0) {
-      if (this.inputReceiver.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
+      if (this.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
         this.physics.disablePlatformCollisionTimer = 0.25;
         this.position.y += 12;
+        this.velocity.y = 180;
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
       }
@@ -7014,7 +7378,7 @@ export class Player extends BaseEntity {
       this.velocity.y *= 0.4;
     }
 
-    if (this.inputReceiver.isJustPressed("ATTACK")) {
+    if (this.inputReceiver.consumeBufferedAction("ATTACK", 100)) {
       this.fireballComponent.startCharging();
 
       if (this.meleeComponent.attackCooldownTimer <= 0) {
@@ -7040,10 +7404,11 @@ export class Player extends BaseEntity {
   private isStandingOnOneway(): boolean {
     const ownerHalfH = this.size.height / 2;
     const feetY = this.position.y + ownerHalfH;
+    const halfW = this.size.width / 2;
 
     for (const platform of this.world.physicsWorld.onewayPlatforms) {
-      if (this.position.x + 10 > platform.x && this.position.x - 10 < platform.x + platform.width) {
-        if (Math.abs(feetY - platform.y) <= 6) {
+      if (this.position.x + halfW > platform.x && this.position.x - halfW < platform.x + platform.width) {
+        if (Math.abs(feetY - platform.y) <= 12) {
           return true;
         }
       }
@@ -7759,108 +8124,97 @@ import { create } from "zustand";
 export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 
-interface GameState {
+interface SessionState {
   currentScreen: ScreenState;
   menuIndex: number;
+  gameResult: GameResultState;
+  retryCount: number;
+  navTo: (screen: ScreenState) => void;
+  setMenuIndex: (index: number) => void;
+  setGameResult: (result: GameResultState) => void;
+  incrementRetry: () => void;
+}
+
+export const useSessionStore = create<SessionState>((set) => ({
+  currentScreen: "TITLE",
+  menuIndex: 0,
+  gameResult: "PLAYING",
+  retryCount: 0,
+  navTo: (screen) => {
+    set((state) => ({
+      currentScreen: screen,
+      menuIndex: 0,
+      gameResult: "PLAYING",
+      retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
+    }));
+  },
+  setMenuIndex: (index) => set({ menuIndex: index }),
+  setGameResult: (result) => set({ gameResult: result }),
+  incrementRetry: () => set((state) => ({ retryCount: state.retryCount + 1 })),
+}));
+
+interface GameplayState {
   playerHP: number;
   bossHP: number;
   healingCharges: number;
   determination: number;
-  gameResult: GameResultState;
-  retryCount: number;
   isGlitching: boolean;
   bossDeathCoordinates: { x: number; y: number } | null;
-
-  navTo: (screen: ScreenState) => void;
-  setMenuIndex: (index: number) => void;
   setPlayerHP: (hp: number) => void;
   setBossHP: (hp: number) => void;
   setHealingCharges: (charges: number) => void;
   setDetermination: (determination: number) => void;
-  setGameResult: (result: GameResultState) => void;
   triggerGlitch: (duration?: number) => void;
   triggerBossDefeat: (x: number, y: number) => void;
   resetGameSession: () => void;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
-  currentScreen: "TITLE",
-  menuIndex: 0,
+export const useGameplayStore = create<GameplayState>((set, get) => ({
   playerHP: 5,
   bossHP: 30,
   healingCharges: 0,
   determination: 0,
-  gameResult: "PLAYING",
-  retryCount: 0,
   isGlitching: false,
   bossDeathCoordinates: null,
-
-  navTo: (screen) => {
-    set((state) => ({
-      currentScreen: screen,
-      menuIndex: 0,
-      isGlitching: false,
-      bossDeathCoordinates: null,
-      retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
-    }));
-  },
-
-  setMenuIndex: (index) => set({ menuIndex: index }),
-
   setPlayerHP: (hp) => {
     const current = get().playerHP;
     if (hp !== current) {
       set({ playerHP: hp });
-      if (hp < current && get().currentScreen === "PLAYING") {
+      if (hp < current) {
         get().triggerGlitch(150);
       }
     }
   },
-
   setBossHP: (hp) => {
     if (hp !== get().bossHP) {
       set({ bossHP: hp });
     }
   },
-
   setHealingCharges: (charges) => {
     if (charges !== get().healingCharges) {
       set({ healingCharges: charges });
     }
   },
-
-  setDetermination: (determination) => {
-    if (determination !== get().determination) {
-      set({ determination });
+  setDetermination: (det) => {
+    if (det !== get().determination) {
+      set({ determination: det });
     }
   },
-
-  setGameResult: (result) => {
-    if (result !== get().gameResult) {
-      set({ gameResult: result });
-    }
-  },
-
   triggerGlitch: (duration = 150) => {
     set({ isGlitching: true });
     setTimeout(() => {
       set({ isGlitching: false });
     }, duration);
   },
-
   triggerBossDefeat: (x, y) => {
-    set({
-      bossDeathCoordinates: { x, y }
-    });
+    set({ bossDeathCoordinates: { x, y } });
   },
-
   resetGameSession: () => {
     set({
       playerHP: 5,
       bossHP: 30,
       healingCharges: 0,
       determination: 0,
-      gameResult: "PLAYING",
       isGlitching: false,
       bossDeathCoordinates: null,
     });

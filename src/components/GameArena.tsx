@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
+import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -50,42 +51,22 @@ export function GameArena({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = canvas?.parentElement;
+    if (!canvas || !container) return;
 
-    const handleResize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const container = canvas.parentElement;
-      if (!container) return;
+    const resizer = new CanvasResizer(canvas, 1250, 1250);
 
-      const internalW = 1250;
-      const internalH = 1250;
-
-      const containerW = container.clientWidth;
-      const containerH = container.clientHeight;
-
-      const scale = Math.min(containerW / internalW, containerH / internalH);
-      const displayW = internalW * scale;
-      const displayH = internalH * scale;
-
-      canvas.style.width = displayW + "px";
-      canvas.style.height = displayH + "px";
-
-      canvas.width = displayW * dpr;
-      canvas.height = displayH * dpr;
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(dpr * scale, dpr * scale);
-        ctx.imageSmoothingEnabled = false;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        resizer.resize(width, height);
       }
-    };
+    });
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    observer.observe(container);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
     };
   }, [canvasRef]);
 

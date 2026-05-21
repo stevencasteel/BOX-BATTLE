@@ -5,8 +5,8 @@ class SoundSynth {
   private masterGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
-  private masterFilter: BiquadFilterNode | null = null;
-  private masterCompressor: DynamicsCompressorNode | null = null;
+  private cabinetFilter: BiquadFilterNode | null = null;
+  private limiter: DynamicsCompressorNode | null = null;
 
   private musicInterval: ReturnType<typeof setInterval> | null = null;
   private musicTickIndex: number = 0;
@@ -21,28 +21,24 @@ class SoundSynth {
     this.masterGain = this.ctx.createGain();
     this.sfxGain = this.ctx.createGain();
     this.musicGain = this.ctx.createGain();
-    this.masterFilter = this.ctx.createBiquadFilter();
-    this.masterCompressor = this.ctx.createDynamicsCompressor();
+    this.cabinetFilter = this.ctx.createBiquadFilter();
+    this.limiter = this.ctx.createDynamicsCompressor();
 
-    // 1. Configure the retro lowpass filter
-    this.masterFilter.type = "lowpass";
-    this.masterFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
+    this.cabinetFilter.type = "lowpass";
+    this.cabinetFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
+    this.cabinetFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
 
-    // 2. Configure the Dynamics Compressor to avoid digital clipping
-    this.masterCompressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
-    this.masterCompressor.knee.setValueAtTime(30, this.ctx.currentTime);
-    this.masterCompressor.ratio.setValueAtTime(12, this.ctx.currentTime);
-    this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
-    this.masterCompressor.release.setValueAtTime(0.08, this.ctx.currentTime);
+    this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
+    this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
+    this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+    this.limiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
+    this.limiter.release.setValueAtTime(0.08, this.ctx.currentTime);
 
-    // 3. Connect routing channels:
-    // Sources -> [SFX / Music Gain] -> Master Lowpass Filter -> Master Gain -> Master Compressor -> Destination
-    this.masterGain.connect(this.masterCompressor);
-    this.masterCompressor.connect(this.ctx.destination);
-
-    this.sfxGain.connect(this.masterFilter);
-    this.musicGain.connect(this.masterFilter);
-    this.masterFilter.connect(this.masterGain);
+    this.sfxGain.connect(this.cabinetFilter);
+    this.musicGain.connect(this.cabinetFilter);
+    this.cabinetFilter.connect(this.limiter);
+    this.limiter.connect(this.masterGain);
+    this.masterGain.connect(this.ctx.destination);
 
     this.updateVolumes();
   }
@@ -54,26 +50,26 @@ class SoundSynth {
     const config = settingsManager.getAudio();
     const now = this.ctx.currentTime;
 
-    const master = config.masterMuted ? 0 : config.masterVolume * 0.35;
-    const sfx = config.sfxMuted ? 0 : config.sfxVolume * 0.85;
-    const music = config.musicMuted ? 0 : config.musicVolume * 0.30;
+    const master = config.masterMuted ? 0 : Math.pow(config.masterVolume, 2) * 0.35;
+    const sfx = config.sfxMuted ? 0 : Math.pow(config.sfxVolume, 2) * 0.85;
+    const music = config.musicMuted ? 0 : Math.pow(config.musicVolume, 2) * 0.30;
 
-    this.masterGain.gain.linearRampToValueAtTime(master, now + 0.05);
-    this.sfxGain.gain.linearRampToValueAtTime(sfx, now + 0.05);
-    this.musicGain.gain.linearRampToValueAtTime(music, now + 0.05);
+    this.masterGain.gain.setTargetAtTime(master, now, 0.05);
+    this.sfxGain.gain.setTargetAtTime(sfx, now, 0.05);
+    this.musicGain.gain.setTargetAtTime(music, now, 0.05);
   }
 
   public setCabinetMuffle(active: boolean) {
     this.init();
-    if (!this.ctx || !this.masterFilter) return;
+    if (!this.ctx || !this.cabinetFilter) return;
 
     const now = this.ctx.currentTime;
     const targetFreq = active ? 600 : 20000;
 
-    this.masterFilter.frequency.cancelScheduledValues(now);
-    const currentVal = Math.max(0.1, this.masterFilter.frequency.value);
-    this.masterFilter.frequency.setValueAtTime(currentVal, now);
-    this.masterFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.35);
+    this.cabinetFilter.frequency.cancelScheduledValues(now);
+    const currentVal = Math.max(0.1, this.cabinetFilter.frequency.value);
+    this.cabinetFilter.frequency.setValueAtTime(currentVal, now);
+    this.cabinetFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.3);
   }
 
   private resumeContext() {
