@@ -15,7 +15,8 @@ export class DashComponent implements Component {
   public dashTimer: number = 0;
   public dashCooldown: number = 0;
   public canDash: boolean = true;
-  public dashDirection: number = 1;
+  public dashDirectionX: number = 1;
+  public dashDirectionY: number = 0;
   public ghosts: GhostFrame[] = [];
   public ghostSpawnTimer: number = 0;
 
@@ -37,8 +38,8 @@ export class DashComponent implements Component {
 
     if (this.isDashing) {
       this.dashTimer -= dt;
-      this.owner.velocity.x = this.dashDirection * this.dashSpeed;
-      this.owner.velocity.y = 0;
+      this.owner.velocity.x = this.dashDirectionX * this.dashSpeed;
+      this.owner.velocity.y = this.dashDirectionY * this.dashSpeed;
 
       this.ghostSpawnTimer -= dt;
       if (this.ghostSpawnTimer <= 0) {
@@ -52,20 +53,21 @@ export class DashComponent implements Component {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        this.owner.velocity.x *= 0.5;
+        if (this.dashDirectionX !== 0) this.owner.velocity.x *= 0.5;
+        if (this.dashDirectionY !== 0) this.owner.velocity.y = 0;
       }
     }
   }
 
-  public triggerDash(direction: number): void {
+  public triggerDash(directionX: number, directionY: number): void {
     this.isDashing = true;
     this.dashTimer = 0.15;
     this.dashCooldown = 0.5;
     this.canDash = false;
-    this.dashDirection = direction;
-    this.owner.velocity.y = 0;
+    this.dashDirectionX = directionX;
+    this.dashDirectionY = directionY;
     this.ghostSpawnTimer = 0;
-    eventBroker.publish("PLAYER_DASHED", { direction });
+    eventBroker.publish("PLAYER_DASHED", { direction: directionX });
   }
 
   public resetDashCharge(): void {

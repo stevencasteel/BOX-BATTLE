@@ -34,6 +34,9 @@ export class Player extends BaseEntity {
   public healingCharges: number = 0;
   public readonly maxHealingCharges: number = 3;
 
+  public hurtTimer: number = 0;
+  private unsubHurt!: () => void;
+
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
@@ -49,6 +52,13 @@ export class Player extends BaseEntity {
     this.meleeComponent = this.addComponent(MeleeComponent, new MeleeComponent());
     this.fireballComponent = this.addComponent(FireballComponent, new FireballComponent());
     this.healComponent = this.addComponent(HealComponent, new HealComponent());
+
+    this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+      this.hurtTimer = 0.15; // Enable knockback input-stun window
+      if (this.healComponent.isHealing) {
+        this.healComponent.cancelHealing();
+      }
+    });
   }
 
   public get isDashing(): boolean { return this.dashComponent.isDashing; }
@@ -63,6 +73,18 @@ export class Player extends BaseEntity {
     if (this.isDead) {
       super.update(dt);
       return;
+    }
+
+    if (this.hurtTimer > 0) {
+      this.hurtTimer -= dt;
+      // Let physics / gravity resolve
+      this.velocity.y += this.physics.gravity * dt;
+      // High friction/drag on horizontal velocity during knockback
+      const knockbackFriction = 800.0;
+      this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
+      
+      super.update(dt);
+      return; // Stun active, cancel all key polling
     }
 
     super.update(dt);
@@ -101,7 +123,14 @@ export class Player extends BaseEntity {
     }
 
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-    this.velocity.x = moveAxis * this.moveSpeed;
+    
+    if (this.meleeComponent.attackActive) {
+      // Ground the player horizontally during melee slash
+      const friction = 2000.0;
+      this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
+    } else {
+      this.velocity.x = moveAxis * this.moveSpeed;
+    }
 
     if (moveAxis !== 0) {
       this.facingDirection = Math.sign(moveAxis);
@@ -114,8 +143,24 @@ export class Player extends BaseEntity {
     }
 
     if (this.inputReceiver.isJustPressed("DASH") && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
-      const finalDir = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
-      this.dashComponent.triggerDash(finalDir);
+      let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+      let dirY = 0;
+      if (this.inputReceiver.isPressed("MOVE_UP")) {
+        dirY = -1;
+      } else if (this.inputReceiver.isPressed("MOVE_DOWN")) {
+        dirY = 1;
+      }
+      
+      if (dirX === 0 && dirY === 0) {
+        dirX = this.facingDirection;
+      }
+      
+      const len = Math.sqrt(dirX * dirX + dirY * dirY);
+      const normX = dirX / len;
+      const normY = dirY / len;
+      
+      this.dashComponent.triggerDash(normX, normY);
+      super.update(dt);
       return;
     }
 
@@ -394,5 +439,10 @@ export class Player extends BaseEntity {
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
+  }
+
+  public teardown() {
+    this.unsubHurt();
+    super.teardown();
   }
 }

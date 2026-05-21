@@ -151,8 +151,13 @@ export class MeleeComponent implements Component {
 
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
-        (this.owner as any).hasDoubleJump = true;
-        (this.owner as any).canDash = true;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
         eventBroker.publish("PLAYER_POGOED", undefined);
         return;
       }
@@ -177,15 +182,25 @@ export class MeleeComponent implements Component {
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;
-          (this.owner as any).hasDoubleJump = true;
-          (this.owner as any).canDash = true;
+          
+          const player = this.owner as any;
+          player.hasDoubleJump = true;
+          if (player.dashComponent) {
+            player.dashComponent.resetDashCharge();
+          }
+          
           eventBroker.publish("PLAYER_POGOED", undefined);
           return;
         }
       }
     }
 
-    const surfaces = [...this.owner.world.physicsWorld.solids, ...this.owner.world.physicsWorld.onewayPlatforms];
+    const surfaces = [
+      ...this.owner.world.physicsWorld.solids, 
+      ...this.owner.world.physicsWorld.onewayPlatforms,
+      ...this.owner.world.physicsWorld.hazards
+    ];
+    
     for (const solid of surfaces) {
       const isHit = (
         pogoHitbox.x + pogoHitbox.width > solid.x &&
@@ -197,8 +212,13 @@ export class MeleeComponent implements Component {
       if (isHit) {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
-        (this.owner as any).hasDoubleJump = true;
-        (this.owner as any).canDash = true;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
         eventBroker.publish("PLAYER_POGOED", undefined);
         break;
       }
