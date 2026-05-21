@@ -65,7 +65,6 @@ export class SimulationSystems {
       })
     );
 
-    // Bespoke Fireball Launcher Hook
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
         if (level === 2) {
@@ -88,17 +87,41 @@ export class SimulationSystems {
       })
     );
 
-    // Consolidated sliding friction hook
     this.unsubscribes.push(
       eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
         soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
       })
     );
 
-    // Dynamic Landing Thump Hook
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_LANDED", () => {
         soundSynth.playLanding();
+      })
+    );
+
+    // Healing Progression Subscribers
+    this.unsubscribes.push(
+      eventBroker.subscribe("HEAL_START", () => {
+        soundSynth.playHealStart();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("HEAL_CANCEL", () => {
+        soundSynth.playHealCancel();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("HEAL_COMPLETE", () => {
+        soundSynth.playHealComplete();
+      })
+    );
+
+    // Spike Collision Subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_SPIKED", () => {
+        soundSynth.playSpikeStrike();
       })
     );
   }
@@ -107,5 +130,6 @@ export class SimulationSystems {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
     soundSynth.clearAllSlides();
+    soundSynth.stopHealDrone(); // Force stop any healing progress drones
   }
 }

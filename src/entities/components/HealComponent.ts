@@ -30,10 +30,14 @@ export class HealComponent implements IEntityComponent {
   public startHealing(): void {
     this.isHealing = true;
     this.healTimer = this.healDuration;
+    eventBroker.publish("HEAL_START", undefined);
   }
 
   public cancelHealing(): void {
-    this.isHealing = false;
+    if (this.isHealing) {
+      this.isHealing = false;
+      eventBroker.publish("HEAL_CANCEL", undefined);
+    }
   }
 
   private completeHealing(): void {
@@ -52,5 +56,6 @@ export class HealComponent implements IEntityComponent {
       });
     }
     eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+    eventBroker.publish("HEAL_COMPLETE", undefined);
   }
 }

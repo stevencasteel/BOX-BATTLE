@@ -22,6 +22,10 @@ export type GameEventMap = {
   SPAWN_BLAST: { x: number; y: number; color: string };
   ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean };
   PLAYER_LANDED: void;
+  HEAL_START: void;
+  HEAL_CANCEL: void;
+  HEAL_COMPLETE: void;
+  PLAYER_SPIKED: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;

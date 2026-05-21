@@ -330,6 +330,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
           this.healComponent.cancelHealing();
         }
 
+        eventBroker.publish("PLAYER_SPIKED", undefined);
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;

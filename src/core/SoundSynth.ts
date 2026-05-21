@@ -6,6 +6,12 @@ interface FrictionVoice {
   gain: GainNode;
 }
 
+interface DroneVoice {
+  osc: OscillatorNode;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+}
+
 class SoundSynth {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -20,6 +26,7 @@ class SoundSynth {
 
   private noiseBuffer: AudioBuffer | null = null;
   private activeSlides: Map<string, FrictionVoice> = new Map();
+  private healDrone: DroneVoice | null = null;
 
   private hasUserGestured: boolean = false;
 
@@ -202,13 +209,157 @@ class SoundSynth {
     }
   }
 
+  public playHealStart() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+    this.stopHealDrone();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // FM Sine Sweep: Rise smoothly from 220Hz (A3) to 660Hz (E5) over the 2-second progression
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(660, now + 2.0);
+
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(440, now);
+    filter.frequency.exponentialRampToValueAtTime(1320, now + 2.0);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.1);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+
+    this.healDrone = { osc, filter, gain };
+  }
+
+  public stopHealDrone() {
+    if (!this.ctx || !this.healDrone) return;
+    const now = this.ctx.currentTime;
+    const { osc, filter, gain } = this.healDrone;
+
+    gain.gain.setTargetAtTime(0, now, 0.05);
+    setTimeout(() => {
+      try {
+        osc.stop();
+        osc.disconnect();
+        filter.disconnect();
+        gain.disconnect();
+      } catch (e) {
+        // Safe cleanup
+      }
+    }, 150);
+
+    this.healDrone = null;
+  }
+
+  public playHealComplete() {
+    this.stopHealDrone();
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    // Harmonic A Major chime chord sweep
+    const notes = [440, 554.37, 659.25, 880];
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+      gain.gain.setValueAtTime(0, now + idx * 0.04);
+      gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.04 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain!);
+
+      osc.start(now + idx * 0.04);
+      osc.stop(now + idx * 0.04 + 0.28);
+    });
+  }
+
+  public playHealCancel() {
+    this.stopHealDrone();
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(330, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(300, now);
+    filter.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
+  }
+
+  public playSpikeStrike() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // High-pitched discordant high-passed square waves mimicking metallic spikes strike
+    osc1.type = "square";
+    osc1.frequency.setValueAtTime(1400, now);
+    osc1.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(850, now);
+    osc2.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+
+    filter.type = "highpass";
+    filter.frequency.setValueAtTime(900, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.3, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.16);
+    osc2.stop(now + 0.16);
+  }
+
   public playLanding() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
 
     const now = this.ctx.currentTime;
 
-    // 1. Sub-bass and mid-bass triangle thump (Raised starting pitch to be audible on standard speakers)
     const osc = this.ctx.createOscillator();
     const filter = this.ctx.createBiquadFilter();
     const envelope = this.ctx.createGain();
@@ -231,7 +382,6 @@ class SoundSynth {
     osc.start(now);
     osc.stop(now + 0.14);
 
-    // 2. High-frequency dust puff layer (White noise burst to cut through standard speaker drivers)
     const noiseBuffer = this.getNoiseBuffer();
     if (noiseBuffer) {
       const noiseNode = this.ctx.createBufferSource();
@@ -265,7 +415,6 @@ class SoundSynth {
     const osc2 = this.ctx.createOscillator();
     const envelope = this.ctx.createGain();
 
-    // Small Fireball: High-pitched cohesive counterpart using identical dual analog shapes (sawtooth + triangle)
     osc1.type = "sawtooth";
     osc1.frequency.setValueAtTime(440, now);
     osc1.frequency.exponentialRampToValueAtTime(160, now + 0.15);
@@ -302,7 +451,6 @@ class SoundSynth {
     const osc2 = this.ctx.createOscillator();
     const envelope = this.ctx.createGain();
 
-    // Large Fireball: Deep, heavy analog-warm dual-oscillator sweep
     osc1.type = "sawtooth";
     osc1.frequency.setValueAtTime(220, now);
     osc1.frequency.exponentialRampToValueAtTime(80, now + 0.25);
