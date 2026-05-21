@@ -57,6 +57,8 @@
      overwrites to prevent command truncation or buffer loss.
      CRITICAL: Always append the cleanup command (e.g., "&& rm ./patch.js") 
      on the exact same execution line to keep the repository untracked space clean.
+     Actively clean up and delete any other transient scripts or patch helpers 
+     immediately after execution to prevent workspace clutter.
 
 2.3  Zsh Compatibility & Escaping
      The development environment is on macOS running Zsh. Never use raw, unescaped 
