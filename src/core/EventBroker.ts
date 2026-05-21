@@ -16,6 +16,10 @@ export type GameEventMap = {
   BOSS_DEFEATED: { x: number; y: number };
   GAME_OVER: void;
   VICTORY: void;
+  CLEAR_DIALOGUES: void;
+  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string };
+  SPAWN_DUST: { x: number; y: number };
+  SPAWN_BLAST: { x: number; y: number; color: string };
 };
 
 export type EventCallback<T> = (payload: T) => void;

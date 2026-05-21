@@ -110,7 +110,7 @@ export default function App() {
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         triggerDialogue(speaker, text);
       }),
-      eventBroker.subscribe("CLEAR_DIALOGUES" as any, () => {
+      eventBroker.subscribe("CLEAR_DIALOGUES", () => {
         resetDialogues();
       })
     ];

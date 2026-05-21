@@ -173,7 +173,7 @@ export class Projectile extends BaseEntity implements Poolable {
 
   private selfRelease() {
     /* Spawn Radial Projectile Impact Ring */
-    eventBroker.publish("SPAWN_BLAST" as any, {
+    eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
       color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)"

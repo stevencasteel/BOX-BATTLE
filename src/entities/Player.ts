@@ -94,7 +94,7 @@ export class Player extends BaseEntity {
         /* Compress vertically upon hitting solid ground to represent landing compression */
         this.visualScale = { x: 1.22, y: 0.78 };
         /* Spawn Landing Dust Puff */
-        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
       }
       this.airtimeDuration = 0;
     }
@@ -233,7 +233,7 @@ export class Player extends BaseEntity {
         /* Visual Squash and Stretch: Stretch vertically on ground jump */
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Jump Dust Puff */
-        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
@@ -243,7 +243,7 @@ export class Player extends BaseEntity {
         /* Visual Squash and Stretch: Stretch vertically on wall jump */
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Wall Slide Dust Puff */
-        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;

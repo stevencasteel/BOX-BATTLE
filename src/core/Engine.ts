@@ -147,7 +147,7 @@ export class Engine {
 
     // Spark Particles Listener
     this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_SPARKS" as any, ({ x, y, angle, color }) => {
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color }) => {
         const count = 12;
         for (let i = 0; i < count; i++) {
           const pAngle = angle + (Math.random() * 0.9 - 0.45);
@@ -169,7 +169,7 @@ export class Engine {
 
     // Friction Dust Puff Listener
     this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_DUST" as any, ({ x, y }) => {
+      eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
         const count = 10;
         for (let i = 0; i < count; i++) {
           const dir = i % 2 === 0 ? 1 : -1;
@@ -192,7 +192,7 @@ export class Engine {
 
     // Shockwave Blast Ring Listener
     this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_BLAST" as any, ({ x, y, color }) => {
+      eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
         this.particles.push({
           x,
           y,
@@ -360,7 +360,7 @@ export class Engine {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
         }, 1800);
         this.dialogueClearTimeoutId = setTimeout(() => {
-          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+          eventBroker.publish("CLEAR_DIALOGUES", undefined);
         }, 5200);
       }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
@@ -380,7 +380,7 @@ export class Engine {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
         }, 2800);
         this.dialogueClearTimeoutId = setTimeout(() => {
-          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+          eventBroker.publish("CLEAR_DIALOGUES", undefined);
         }, 5200);
       }, 2000);
     }
