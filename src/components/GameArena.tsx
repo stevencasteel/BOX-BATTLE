@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { eventBroker } from "@/core/EventBroker";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -13,8 +14,6 @@ export function GameArena({
   triggerDialogue,
   playHoverTick,
 }: GameArenaProps) {
-  // Store the trigger callback in a mutable ref to prevent recreating 
-  // the Engine when the parent dialogue state updates.
   const triggerRef = useRef(triggerDialogue);
   
   useEffect(() => {
@@ -22,10 +21,37 @@ export function GameArena({
   }, [triggerDialogue]);
 
   useEffect(() => {
+    const updateVignette = (hp: number) => {
+      const overlay = canvasRef.current?.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+      if (overlay) {
+        if (hp === 1) {
+          overlay.classList.add("vignette-pulse");
+        } else {
+          overlay.classList.remove("vignette-pulse");
+        }
+      }
+    };
+
+    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }: { currentHealth: number }) => {
+      updateVignette(currentHealth);
+    });
+    const unsubHealed = eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }: { currentHealth: number }) => {
+      updateVignette(currentHealth);
+    });
+
+    const initialHP = useGameplayStore.getState().playerHP;
+    updateVignette(initialHP);
+
+    return () => {
+      unsubHurt();
+      unsubHealed();
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Pass a stable execution wrapper to the engine
     const engine = new Engine(canvas, (speaker, text) => {
       triggerRef.current(speaker, text);
     });
@@ -34,7 +60,7 @@ export function GameArena({
     return () => {
       engine.cleanup();
     };
-  }, [canvasRef]); // Restrict recreation strictly to canvas attachment/detachment
+  }, [canvasRef]);
 
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -42,7 +68,6 @@ export function GameArena({
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
 
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
-  const playerHP = useGameplayStore((state) => state.playerHP);
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -56,7 +81,7 @@ export function GameArena({
           style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
         />
 
-        <div className={`vignette-overlay ${playerHP === 1 ? "vignette-pulse" : ""}`} />
+        <div className="vignette-overlay" />
 
         {gameResult !== "PLAYING" && (
           <div className="gameover-overlay">

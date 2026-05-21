@@ -4,8 +4,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
-import { useGameDialogue } from "@/hooks/useGameDialogue";
-import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
 import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
 
@@ -21,19 +20,17 @@ import "./App.css";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const statusPanelRef = useRef<HTMLDivElement>(null);
+  const dialogueConsoleRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
   const retryCount = useSessionStore((state) => state.retryCount);
+
   const navTo = useSessionStore((state) => state.navTo);
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
-
-  const playerHP = useGameplayStore((state) => state.playerHP);
-  const bossHP = useGameplayStore((state) => state.bossHP);
-  const isGlitching = useGameplayStore((state) => state.isGlitching);
-  const healingCharges = useGameplayStore((state) => state.healingCharges);
-  const determination = useGameplayStore((state) => state.determination);
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   const {
@@ -49,7 +46,6 @@ export default function App() {
   } = useSaveSlots();
 
   const { audio, handleVolumeChange } = useAudioSettings();
-  const { playerDialogue, bossDialogue, triggerDialogue } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
@@ -61,29 +57,194 @@ export default function App() {
     soundSynth.startMusic();
     reloadSaveSlots();
 
+    const updatePlayerHP = (hp: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-hp-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < hp) {
+          elem.className = "led-dot led-green";
+          elem.style.background = "";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+        }
+      });
+    };
+
+    const updateHealCharges = (charges: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-heal-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < charges) {
+          elem.className = "led-dot led-yellow";
+          elem.style.background = "";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+        }
+      });
+    };
+
+    const updateDetermination = (det: number) => {
+      const dots = statusPanelRef.current?.querySelectorAll("[data-det-dot]");
+      if (!dots) return;
+      dots.forEach((dot, i) => {
+        const elem = dot as HTMLElement;
+        if (i < det) {
+          elem.className = "led-dot";
+          elem.style.background = "hsl(280, 80%, 65%)";
+          elem.style.boxShadow = "0 0 6px rgba(168, 85, 247, 0.8)";
+        } else {
+          elem.className = "led-dot";
+          elem.style.background = "#07080b";
+          elem.style.boxShadow = "none";
+        }
+      });
+    };
+
+    const updateBossHP = (hp: number) => {
+      const bar = statusPanelRef.current?.querySelector("[data-boss-bar]") as HTMLElement | null;
+      if (!bar) return;
+      const pct = (hp / 30) * 100;
+      bar.className = "led-red";
+      bar.style.width = pct + "%";
+      bar.style.background = "";
+    };
+
+    const updateGameStatus = (status: string) => {
+      const label = statusPanelRef.current?.querySelector("[data-game-status]") as HTMLElement | null;
+      if (!label) return;
+      label.textContent = status;
+      label.style.color = status === "PLAYING" ? "var(--signal-green)" : "#4a5568";
+      label.style.textShadow = status === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "";
+    };
+
+    let playerDialogueTimeout: ReturnType<typeof setInterval> | null = null;
+    let playerDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+    let bossDialogueTimeout: ReturnType<typeof setInterval> | null = null;
+    let bossDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const animateDialogue = (speaker: "player" | "boss", text: string) => {
+      const box = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-dialogue]" : "[data-boss-dialogue]"
+      ) as HTMLElement | null;
+      const textElem = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-text]" : "[data-boss-text]"
+      ) as HTMLElement | null;
+      const portrait = dialogueConsoleRef.current?.querySelector(
+        speaker === "player" ? "[data-player-portrait]" : "[data-boss-portrait]"
+      ) as HTMLElement | null;
+
+      if (!box || !textElem || !portrait) return;
+
+      if (speaker === "player") {
+        if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
+        if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+      } else {
+        if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
+        if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+      }
+
+      box.className =
+        speaker === "player"
+          ? "dialogue-box-left neo-pressed dialogue-active-green"
+          : "dialogue-box-right neo-pressed dialogue-active-red";
+      portrait.className =
+        speaker === "player"
+          ? "portrait-square led-green portrait-rumble"
+          : "portrait-square led-red portrait-rumble";
+      portrait.style.background = "";
+
+      let idx = 0;
+      textElem.textContent = "";
+
+      const intervalTime = speaker === "player" ? 45 : 55;
+      const timer = setInterval(() => {
+        if (idx < text.length) {
+          const char = text[idx];
+          textElem.textContent += char;
+          soundSynth.playDialogueTick(speaker, char);
+          idx++;
+        } else {
+          clearInterval(timer);
+          portrait.className =
+            speaker === "player" ? "portrait-square led-green" : "portrait-square led-red";
+
+          const cleanupTimer = setTimeout(() => {
+            box.className =
+              speaker === "player"
+                ? "dialogue-box-left neo-pressed dialogue-inactive"
+                : "dialogue-box-right neo-pressed dialogue-inactive";
+            portrait.style.background = "#07080b";
+            textElem.textContent = "[ NO SIGNAL ]";
+          }, 3000);
+
+          if (speaker === "player") {
+            playerDialogueCleanupTimeout = cleanupTimer;
+          } else {
+            bossDialogueCleanupTimeout = cleanupTimer;
+          }
+        }
+      }, intervalTime);
+
+      if (speaker === "player") {
+        playerDialogueTimeout = timer;
+      } else {
+        bossDialogueTimeout = timer;
+      }
+    };
+
+    const unsubGameplay = useGameplayStore.subscribe((state) => {
+      const viewport = viewportRef.current;
+      if (viewport) {
+        if (state.isGlitching) {
+          viewport.classList.add("filter-chromatic");
+        } else {
+          viewport.classList.remove("filter-chromatic");
+        }
+      }
+    });
+
     const unsubs = [
       eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
-        useGameplayStore.getState().setPlayerHP(currentHealth);
+        updatePlayerHP(currentHealth);
       }),
       eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
-        useGameplayStore.getState().setPlayerHP(currentHealth);
+        updatePlayerHP(currentHealth);
       }),
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        useGameplayStore.getState().setBossHP(currentHealth);
+        updateBossHP(currentHealth);
       }),
       eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
-        useGameplayStore.getState().setHealingCharges(charges);
+        updateHealCharges(charges);
       }),
       eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: dValue }) => {
-        useGameplayStore.getState().setDetermination(dValue);
+        updateDetermination(dValue);
+      }),
+      eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
+        animateDialogue(speaker, text);
       })
     ];
 
+    const initialGameplay = useGameplayStore.getState();
+    updatePlayerHP(initialGameplay.playerHP);
+    updateBossHP(initialGameplay.bossHP);
+    updateHealCharges(initialGameplay.healingCharges);
+    updateDetermination(initialGameplay.determination);
+    updateGameStatus(currentScreen);
+
     return () => {
       soundSynth.stopMusic();
+      unsubGameplay();
       unsubs.forEach((unsub) => unsub());
+      if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
+      if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+      if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
+      if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
     };
-  }, []);
+  }, [currentScreen]);
 
   useEffect(() => {
     if (!rebindTarget) return;
@@ -164,52 +325,52 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        <div className="cabinet-status-panel neo-pressed">
+        <div className="cabinet-status-panel neo-pressed" ref={statusPanelRef}>
           <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
             <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
-                  style={{ background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
+                  data-hp-dot={i}
+                  className="led-dot"
+                  style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
                 />
               ))}
             </div>
 
-            {currentScreen === "PLAYING" && (
-              <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
-                <div className="flex-row" style={{ gap: "4px" }}>
-                  {[...Array(3)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`led-dot ${i < healingCharges ? "led-yellow" : ""}`}
-                      style={{ background: i < healingCharges ? "" : "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
-                    />
-                  ))}
-                </div>
-                <div className="flex-row" style={{ gap: "3px" }}>
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="led-dot"
-                      style={{
-                        background: i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
-                        boxShadow: i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
-                        width: "4px",
-                        height: "4px"
-                      }}
-                    />
-                  ))}
-                </div>
+            <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
+              <div className="flex-row" style={{ gap: "4px" }}>
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    data-heal-dot={i}
+                    className="led-dot"
+                    style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
+                  />
+                ))}
               </div>
-            )}
+              <div className="flex-row" style={{ gap: "3px" }}>
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    data-det-dot={i}
+                    className="led-dot"
+                    style={{
+                      background: "#07080b",
+                      width: "4px",
+                      height: "4px"
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "center" }}>
             <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
-            <span style={{ fontSize: "9px", color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568", textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "", fontWeight: "bold" }}>
-              {currentScreen === "PLAYING" ? "PLAYING" : "READY"}
+            <span data-game-status style={{ fontSize: "9px", color: "#4a5568", fontWeight: "bold" }}>
+              READY
             </span>
           </div>
 
@@ -217,21 +378,21 @@ export default function App() {
             <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
             <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
               <div
-                className={currentScreen === "PLAYING" ? "led-red" : ""}
-                style={{ height: "100%", borderRadius: "2px", width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%", transition: "all 0.15s ease", background: currentScreen === "PLAYING" ? "" : "#07080b" }}
+                data-boss-bar
+                style={{ height: "100%", borderRadius: "2px", width: "0%", transition: "all 0.15s ease", background: "#07080b" }}
               />
             </div>
           </div>
         </div>
 
-        <div className={`game-viewport-container ${isGlitching ? "filter-chromatic" : ""}`}>
+        <div className="game-viewport-container" ref={viewportRef}>
           {currentScreen === "PLAYING" ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
                 <GameArena
                   key={retryCount}
                   canvasRef={canvasRef}
-                  triggerDialogue={triggerDialogue}
+                  triggerDialogue={() => {}}
                   playHoverTick={playHoverTick}
                 />
               </div>
@@ -333,25 +494,23 @@ export default function App() {
           )}
         </div>
 
-        {currentScreen === "PLAYING" && (
-          <div className="dialogue-console">
-            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
-              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
-              <div className="dialogue-text-container">
-                <div className="dialogue-speaker-label">PLAYER</div>
-                <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
-              </div>
-            </div>
-
-            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
-              <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-                <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-                <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
-              </div>
-              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
+        <div className="dialogue-console" ref={dialogueConsoleRef}>
+          <div data-player-dialogue className="dialogue-box-left neo-pressed dialogue-inactive">
+            <div data-player-portrait className="portrait-square led-green" style={{ background: "#07080b" }} />
+            <div className="dialogue-text-container">
+              <div className="dialogue-speaker-label">PLAYER</div>
+              <div data-player-text className="dialogue-body-text">[ NO SIGNAL ]</div>
             </div>
           </div>
-        )}
+
+          <div data-boss-dialogue className="dialogue-box-right neo-pressed dialogue-inactive">
+            <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+              <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
+              <div data-boss-text className="dialogue-body-text">[ NO SIGNAL ]</div>
+            </div>
+            <div data-boss-portrait className="portrait-square led-red" style={{ background: "#07080b" }} />
+          </div>
+        </div>
 
       </div>
 
