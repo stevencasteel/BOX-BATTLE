@@ -34,6 +34,7 @@ export class Engine {
 
   private bossDeathTimer: number = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
+  private deathTimeoutId: any = null;
 
   private unsubDialogue!: () => void;
 
@@ -213,22 +214,27 @@ export class Engine {
     }
 
     const state = useGameStore.getState();
-    if (this.player.isDead) {
+    if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
-      setTimeout(() => {
+      this.bossDeathTimer = 0;
+      this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
+
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
+
+      this.deathTimeoutId = setTimeout(() => {
         state.setGameResult("GAMEOVER");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
       }, 3500);
-    } else if (this.boss.isDead) {
+    } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
 
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
-      setTimeout(() => {
+      this.deathTimeoutId = setTimeout(() => {
         state.setGameResult("VICTORY");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
@@ -352,6 +358,10 @@ export class Engine {
   }
 
   public cleanup() {
+    if (this.deathTimeoutId !== null) {
+      clearTimeout(this.deathTimeoutId);
+      this.deathTimeoutId = null;
+    }
     this.loop.cleanup();
     this.player.teardown();
     this.boss.teardown();

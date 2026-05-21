@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { useGameStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
+import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
@@ -88,16 +88,26 @@ export default function App() {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
-      let maxIndex = 0;
+      const config = screenConfigs[currentScreen];
+      if (!config) return;
 
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") maxIndex = 1;
-      else if (currentScreen === "TITLE") maxIndex = 2;
-      else if (currentScreen === "SAVE_SELECT") maxIndex = 5;
-      else if (currentScreen === "OPTIONS") maxIndex = 2;
-      else if (currentScreen === "SOUND") maxIndex = 3;
-      else if (currentScreen === "CONTROLS") maxIndex = 7;
-      else if (currentScreen === "CREDITS") maxIndex = 0;
+      const context: MenuContext = {
+        navTo,
+        menuIndex,
+        setMenuIndex,
+        reloadSaveSlots,
+        resetGameSession,
+        handleSlotAction,
+        toggleCopyMode,
+        toggleEraseMode,
+        resetActions,
+        audio,
+        handleVolumeChange,
+        setRebindTarget,
+        gameResult
+      };
 
+      const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
 
       if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
@@ -110,105 +120,21 @@ export default function App() {
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
         e.preventDefault();
-        triggerMenuSelection();
+        config.onSelect(context);
       } else if (e.key === "Escape" || e.key === "Backspace") {
         e.preventDefault();
-        triggerBackNavigation();
+        if (config.onBack) {
+          soundSynth.playErrorTick();
+          config.onBack(context);
+        }
       }
 
-      if (currentScreen === "SOUND" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-        e.preventDefault();
-        const direction = e.key === "ArrowRight" ? 0.05 : -0.05;
-        if (menuIndex === 0 && !audio.masterMuted) {
-          handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 1 && !audio.sfxMuted) {
-          handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 2 && !audio.musicMuted) {
-          handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + direction)));
-          soundSynth.playSelectTick();
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (config.onHorizontal) {
+          e.preventDefault();
+          const direction = e.key === "ArrowRight" ? 1 : -1;
+          config.onHorizontal(direction, context);
         }
-      }
-    };
-
-    const triggerMenuSelection = () => {
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") {
-        if (menuIndex === 0) {
-          resetGameSession();
-          navTo("PLAYING");
-        } else {
-          navTo("TITLE");
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "TITLE") {
-        if (menuIndex === 0) {
-          reloadSaveSlots();
-          navTo("SAVE_SELECT");
-        } else if (menuIndex === 1) {
-          navTo("OPTIONS");
-        } else if (menuIndex === 2) {
-          navTo("CREDITS");
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SAVE_SELECT") {
-        if (menuIndex >= 0 && menuIndex <= 2) {
-          handleSlotAction(menuIndex, () => {
-            resetGameSession();
-            navTo("PLAYING");
-          });
-        } else if (menuIndex === 3) {
-          toggleCopyMode();
-        } else if (menuIndex === 4) {
-          toggleEraseMode();
-        } else if (menuIndex === 5) {
-          resetActions();
-          navTo("TITLE");
-          soundSynth.playErrorTick();
-        }
-      } else if (currentScreen === "OPTIONS") {
-        if (menuIndex === 0) {
-          navTo("SOUND");
-        } else if (menuIndex === 1) {
-          navTo("CONTROLS");
-        } else if (menuIndex === 2) {
-          navTo("TITLE");
-          setMenuIndex(1);
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SOUND") {
-        if (menuIndex === 3) {
-          navTo("OPTIONS");
-          soundSynth.playErrorTick();
-        } else {
-          if (menuIndex === 0) handleVolumeChange("masterMuted", !audio.masterMuted);
-          else if (menuIndex === 1) handleVolumeChange("sfxMuted", !audio.sfxMuted);
-          else if (menuIndex === 2) handleVolumeChange("musicMuted", !audio.musicMuted);
-          soundSynth.playHitConfirm();
-        }
-      } else if (currentScreen === "CONTROLS") {
-        if (menuIndex === 7) {
-          navTo("OPTIONS");
-          setMenuIndex(1);
-          soundSynth.playErrorTick();
-        } else {
-          const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
-          soundSynth.playHitConfirm();
-          setRebindTarget({ action, index: 0 });
-        }
-      } else if (currentScreen === "CREDITS") {
-        navTo("TITLE");
-        soundSynth.playErrorTick();
-      }
-    };
-
-    const triggerBackNavigation = () => {
-      soundSynth.playErrorTick();
-      if (currentScreen === "SAVE_SELECT" || currentScreen === "OPTIONS" || currentScreen === "CREDITS") {
-        resetActions();
-        navTo("TITLE");
-      } else if (currentScreen === "SOUND" || currentScreen === "CONTROLS") {
-        navTo("OPTIONS");
       }
     };
 
