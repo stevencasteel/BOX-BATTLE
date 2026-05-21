@@ -2,6 +2,7 @@ import { BaseEntity } from "./BaseEntity";
 import { Poolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
+import { eventBroker } from "@/core/eventBroker";
 
 export class Projectile extends BaseEntity implements Poolable {
   public isActive: boolean = false;
@@ -171,6 +172,12 @@ export class Projectile extends BaseEntity implements Poolable {
   }
 
   private selfRelease() {
+    /* Spawn Radial Projectile Impact Ring */
+    eventBroker.publish("SPAWN_BLAST" as any, {
+      x: this.position.x,
+      y: this.position.y,
+      color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)"
+    });
     if (this.onRelease) {
       this.onRelease(this);
     }

@@ -107,6 +107,13 @@ export class MeleeComponent implements EntityComponent {
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.12 });
             }
+            /* Spawn Melee Impact Sparks flying in the direction of the swing */
+            eventBroker.publish("SPAWN_SPARKS" as any, {
+              x: target.position.x,
+              y: target.position.y,
+              angle: facing > 0 ? 0 : Math.PI,
+              color: "hsl(142, 71%, 58%)"
+            });
           }
         }
       }

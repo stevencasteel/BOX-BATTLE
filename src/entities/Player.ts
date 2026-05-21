@@ -93,6 +93,8 @@ export class Player extends BaseEntity {
       if (this.airtimeDuration > 0.08) {
         /* Compress vertically upon hitting solid ground to represent landing compression */
         this.visualScale = { x: 1.22, y: 0.78 };
+        /* Spawn Landing Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
       }
       this.airtimeDuration = 0;
     }
@@ -230,6 +232,8 @@ export class Player extends BaseEntity {
         this.jumpBufferTimer = 0;
         /* Visual Squash and Stretch: Stretch vertically on ground jump */
         this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Jump Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
@@ -238,6 +242,8 @@ export class Player extends BaseEntity {
         this.dashComponent.resetDashCharge();
         /* Visual Squash and Stretch: Stretch vertically on wall jump */
         this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Wall Slide Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
@@ -411,88 +417,122 @@ export class Player extends BaseEntity {
     const facing = this.facingDirection;
     ctx.lineCap = "round";
 
+    /* Swipe & Smear calculations: Compute elapsed progress of the active sword slash */
+    const progress = 1.0 - (this.meleeComponent.attackActiveTimer / 0.12);
+    const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.12);
+
     if (this.attackDirection === "side") {
       const offset = facing * 50;
 
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
+      /* 1. Draw Outer Smear Arc (Sweeps dynamically based on swing progress) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 6;
       ctx.beginPath();
+      const startAngle = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.15) : (Math.PI - Math.PI / 3.2) - (progress * 0.15);
+      const endAngle = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.95) : (Math.PI - Math.PI / 3.2) - (progress * 0.95);
       ctx.arc(
         this.position.x + offset / 2,
         this.position.y,
         65,
-        facing > 0 ? -Math.PI / 3 : Math.PI - Math.PI / 3,
-        facing > 0 ? Math.PI / 3 : Math.PI + Math.PI / 3
+        facing > 0 ? startAngle : endAngle,
+        facing > 0 ? endAngle : startAngle
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff";
+      /* 2. Draw Fading Core Arc (White) */
+      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      ctx.shadowBlur = 12 * opacity;
+      ctx.lineWidth = 11;
       ctx.beginPath();
+      const coreStart = facing > 0 ? (-Math.PI / 2.6) + (progress * 0.2) : (Math.PI - Math.PI / 2.6) - (progress * 0.2);
+      const coreEnd = facing > 0 ? (-Math.PI / 2.6) + (progress * 0.85) : (Math.PI - Math.PI / 2.6) - (progress * 0.85);
       ctx.arc(
         this.position.x + offset / 3,
         this.position.y,
         32,
-        facing > 0 ? -Math.PI / 2.5 : Math.PI - Math.PI / 2.5,
-        facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
+        facing > 0 ? coreStart : coreEnd,
+        facing > 0 ? coreEnd : coreStart
       );
       ctx.stroke();
       ctx.shadowBlur = 0;
+
+      /* 3. Chronological Ghosting: Faded trail represent past frame coordinates of the sword tip */
+      const ghostOpacity = Math.max(0, opacity - 0.35);
+      if (ghostOpacity > 0) {
+        ctx.strokeStyle = `rgba(34, 197, 94, ${ghostOpacity * 0.25})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const gStart = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.05) : (Math.PI - Math.PI / 3.2) - (progress * 0.05);
+        const gEnd = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.7) : (Math.PI - Math.PI / 3.2) - (progress * 0.7);
+        ctx.arc(
+          this.position.x + offset / 2,
+          this.position.y,
+          65,
+          facing > 0 ? gStart : gEnd,
+          facing > 0 ? gEnd : gStart
+        );
+        ctx.stroke();
+      }
     }
     else if (this.attackDirection === "up") {
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
+      /* Dynamic Up-Slash Sweep */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 6;
       ctx.beginPath();
+      const startAngle = -Math.PI * 0.85 + (progress * 0.2);
+      const endAngle = -Math.PI * 0.15 - (1.0 - progress) * 0.2;
       ctx.arc(
         this.position.x,
         this.position.y - 35,
         65,
-        -Math.PI * 0.8,
-        -Math.PI * 0.2
+        startAngle,
+        endAngle
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      ctx.shadowBlur = 12 * opacity;
+      ctx.lineWidth = 11;
       ctx.beginPath();
       ctx.arc(
         this.position.x,
         this.position.y - 25,
         32,
-        -Math.PI * 0.75,
-        -Math.PI * 0.25
+        -Math.PI * 0.8 + (progress * 0.1),
+        -Math.PI * 0.2 - (1.0 - progress) * 0.1
       );
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
     else if (this.attackDirection === "down") {
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
+      /* Dynamic Down-Slash Sweep */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 6;
       ctx.beginPath();
+      const startAngle = Math.PI * 0.15 + (1.0 - progress) * 0.2;
+      const endAngle = Math.PI * 0.85 - (progress * 0.2);
       ctx.arc(
         this.position.x,
         this.position.y + 35,
         65,
-        Math.PI * 0.2,
-        Math.PI * 0.8
+        startAngle,
+        endAngle
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
       ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      ctx.shadowBlur = 12 * opacity;
+      ctx.lineWidth = 11;
       ctx.beginPath();
       ctx.arc(
         this.position.x,
         this.position.y + 25,
         32,
-        Math.PI * 0.25,
-        Math.PI * 0.75
+        Math.PI * 0.2 + (1.0 - progress) * 0.1,
+        Math.PI * 0.8 - (progress * 0.1)
       );
       ctx.stroke();
       ctx.shadowBlur = 0;

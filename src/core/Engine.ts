@@ -39,6 +39,10 @@ export class Engine {
 
   private unsubDialogue!: () => void;
 
+  /* Particles Database */
+  private particles: any[] = [];
+  private unsubEvents: (() => void)[] = [];
+
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
@@ -120,6 +124,70 @@ export class Engine {
       this.triggerDialogue(speaker, text);
     });
 
+    this.particles = [];
+
+    // Spark Particles Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_SPARKS" as any, ({ x, y, angle, color }) => {
+        const count = 12;
+        for (let i = 0; i < count; i++) {
+          const pAngle = angle + (Math.random() * 0.9 - 0.45);
+          const pSpeed = 160 + Math.random() * 280;
+          this.particles.push({
+            x,
+            y,
+            vx: Math.cos(pAngle) * pSpeed,
+            vy: Math.sin(pAngle) * pSpeed,
+            color: color || "hsl(142, 71%, 58%)",
+            size: 2.5 + Math.random() * 3.5,
+            life: 0.22,
+            maxLife: 0.22,
+            shape: "spark"
+          });
+        }
+      })
+    );
+
+    // Friction Dust Puff Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_DUST" as any, ({ x, y }) => {
+        const count = 10;
+        for (let i = 0; i < count; i++) {
+          const dir = i % 2 === 0 ? 1 : -1;
+          const pSpeedX = dir * (50 + Math.random() * 110);
+          const pSpeedY = -8 - Math.random() * 30;
+          this.particles.push({
+            x,
+            y,
+            vx: pSpeedX,
+            vy: pSpeedY,
+            color: "rgba(255, 255, 255, 0.40)",
+            size: 3 + Math.random() * 3,
+            life: 0.24,
+            maxLife: 0.24,
+            shape: "dust"
+          });
+        }
+      })
+    );
+
+    // Shockwave Blast Ring Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_BLAST" as any, ({ x, y, color }) => {
+        this.particles.push({
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+          color,
+          size: 8,
+          life: 0.16,
+          maxLife: 0.16,
+          shape: "ring"
+        });
+      })
+    );
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
@@ -168,6 +236,18 @@ export class Engine {
       }
       inputProvider.postUpdate();
       return;
+    }
+
+    /* Update Particle Coordinates and age Lifespans */
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+        continue;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
     }
 
     this.player.update(dt);
@@ -304,6 +384,38 @@ export class Engine {
     }
 
     this.boss.draw(this.ctx);
+
+    /* Render Active Particles */
+    for (const p of this.particles) {
+      const pct = p.life / p.maxLife;
+      this.ctx.save();
+      
+      if (p.shape === "spark") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 8;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      } 
+      else if (p.shape === "dust") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+      } 
+      else if (p.shape === "ring") {
+        const radius = p.size + (1.0 - pct) * 44;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 10 * pct;
+        this.ctx.stroke();
+      }
+      
+      this.ctx.restore();
+    }
     this.player.draw(this.ctx);
 
     const activeMinionsToDraw = this.world.minions;
@@ -401,6 +513,9 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.unsubDialogue();
+    this.unsubEvents.forEach((unsub) => unsub());
+    this.unsubEvents = [];
+    this.particles = [];
     Registry.player = null;
     Registry.boss = null;
     Registry.projectilePool = null;
