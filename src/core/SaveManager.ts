@@ -1,3 +1,5 @@
+import { ConfigurationValidator } from "./schemas";
+
 export interface SaveSlotData {
   wins: number;
   losses: number;
@@ -25,7 +27,16 @@ class SaveManager {
 
   public getSlots(): SaveSlotData[] {
     const data = localStorage.getItem(this.storageKey);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    try {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed.map((slot) => ConfigurationValidator.validateSaveSlot(slot));
+      }
+    } catch {
+      // Intentionally fall back below if JSON error occurs
+    }
+    return Array.from({ length: 3 }, () => ({ wins: 0, losses: 0, empty: true }));
   }
 
   public getSlot(index: number): SaveSlotData | null {
@@ -51,7 +62,7 @@ class SaveManager {
   public writeSlot(index: number, data: SaveSlotData) {
     const slots = this.getSlots();
     if (index >= 0 && index < slots.length) {
-      slots[index] = data;
+      slots[index] = ConfigurationValidator.validateSaveSlot(data);
       localStorage.setItem(this.storageKey, JSON.stringify(slots));
     }
   }

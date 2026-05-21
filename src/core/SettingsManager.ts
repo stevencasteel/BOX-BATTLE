@@ -1,4 +1,5 @@
 import type { Action } from "@/core/InputProvider";
+import { ConfigurationValidator } from "./schemas";
 
 export interface AudioSettings {
   masterVolume: number;
@@ -66,9 +67,15 @@ class SettingsManager {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.audio) this.audioSettings = { ...this.audioSettings, ...parsed.audio };
-        if (parsed.preset) this.currentPreset = parsed.preset;
-        if (parsed.customKeyMap) this.customKeyMap = { ...this.customKeyMap, ...parsed.customKeyMap };
+        if (parsed.audio) {
+          this.audioSettings = ConfigurationValidator.validateAudioSettings(parsed.audio, this.audioSettings);
+        }
+        if (parsed.preset === "DEFAULT_1" || parsed.preset === "DEFAULT_2" || parsed.preset === "CUSTOM") {
+          this.currentPreset = parsed.preset;
+        }
+        if (parsed.customKeyMap) {
+          this.customKeyMap = ConfigurationValidator.validateKeyMap(parsed.customKeyMap, this.customKeyMap);
+        }
       } catch (e) {
         console.warn("Could not read settings from disk. Restoring defaults.", e);
       }
