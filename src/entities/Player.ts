@@ -422,55 +422,74 @@ export class Player extends BaseEntity {
     const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.12);
 
     if (this.attackDirection === "side") {
-      const offset = facing * 50;
+      const offset = facing * 35;
 
-      /* 1. Draw Outer Smear Arc (Sweeps dynamically based on swing progress) */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
-      ctx.lineWidth = 6;
+      /* Compute full vertical 180 degree angles (top to bottom) */
+      const baseStart = -Math.PI / 2;
+      const angleLength = Math.PI;
+
+      const currentSweepAngle = angleLength * progress;
+
+      /* Layer 1: Outer Fading Green Arc (Max Damage Reach - 90px) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.50})`;
+      ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
+      ctx.shadowBlur = 10 * opacity;
+      ctx.lineWidth = 7;
       ctx.beginPath();
-      const startAngle = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.15) : (Math.PI - Math.PI / 3.2) - (progress * 0.15);
-      const endAngle = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.95) : (Math.PI - Math.PI / 3.2) - (progress * 0.95);
       ctx.arc(
-        this.position.x + offset / 2,
+        this.position.x + offset,
         this.position.y,
-        65,
-        facing > 0 ? startAngle : endAngle,
-        facing > 0 ? endAngle : startAngle
+        90,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing < 0
       );
       ctx.stroke();
 
-      /* 2. Draw Fading Core Arc (White) */
-      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12 * opacity;
+      /* Layer 2: Middle Lime Transition Arc (70px) */
+      ctx.strokeStyle = `rgba(132, 239, 158, ${opacity * 0.65})`;
       ctx.lineWidth = 11;
       ctx.beginPath();
-      const coreStart = facing > 0 ? (-Math.PI / 2.6) + (progress * 0.2) : (Math.PI - Math.PI / 2.6) - (progress * 0.2);
-      const coreEnd = facing > 0 ? (-Math.PI / 2.6) + (progress * 0.85) : (Math.PI - Math.PI / 2.6) - (progress * 0.85);
       ctx.arc(
-        this.position.x + offset / 3,
+        this.position.x + offset,
         this.position.y,
-        32,
-        facing > 0 ? coreStart : coreEnd,
-        facing > 0 ? coreEnd : coreStart
+        70,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle * 0.95 : Math.PI - (baseStart + currentSweepAngle * 0.95),
+        facing < 0
+      );
+      ctx.stroke();
+
+      /* Layer 3: Inner Solid White Core (Critical Zone - 50px) */
+      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+      ctx.shadowColor = "rgba(255, 255, 255, 0.85)";
+      ctx.shadowBlur = 14 * opacity;
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.arc(
+        this.position.x + offset,
+        this.position.y,
+        50,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle * 0.90 : Math.PI - (baseStart + currentSweepAngle * 0.90),
+        facing < 0
       );
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      /* 3. Chronological Ghosting: Faded trail represent past frame coordinates of the sword tip */
+      /* Layer 4: Chronological Ghosting: Faded trails represent past frames of the sweep */
       const ghostOpacity = Math.max(0, opacity - 0.35);
       if (ghostOpacity > 0) {
-        ctx.strokeStyle = `rgba(34, 197, 94, ${ghostOpacity * 0.25})`;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(34, 197, 94, ${ghostOpacity * 0.30})`;
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        const gStart = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.05) : (Math.PI - Math.PI / 3.2) - (progress * 0.05);
-        const gEnd = facing > 0 ? (-Math.PI / 3.2) + (progress * 0.7) : (Math.PI - Math.PI / 3.2) - (progress * 0.7);
         ctx.arc(
-          this.position.x + offset / 2,
+          this.position.x + offset,
           this.position.y,
-          65,
-          facing > 0 ? gStart : gEnd,
-          facing > 0 ? gEnd : gStart
+          90,
+          facing > 0 ? baseStart : Math.PI - baseStart,
+          facing > 0 ? baseStart + currentSweepAngle * 0.70 : Math.PI - (baseStart + currentSweepAngle * 0.70),
+          facing < 0
         );
         ctx.stroke();
       }

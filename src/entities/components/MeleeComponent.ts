@@ -96,7 +96,7 @@ export class MeleeComponent implements EntityComponent {
           const dy = target.position.y - this.owner.position.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          const isCloseRange = distance <= 90;
+          const isCloseRange = distance <= 75;
           const damage = isCloseRange ? 5 : 1;
 
           const damaged = health.takeDamage(damage);
@@ -105,7 +105,8 @@ export class MeleeComponent implements EntityComponent {
             (this.owner as any).registerDamageDealt?.();
 
             if (isCloseRange) {
-              eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.12 });
+              /* Shake heavily on close-range critical hits */
+              eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
             /* Spawn Melee Impact Sparks flying in the direction of the swing */
             eventBroker.publish("SPAWN_SPARKS" as any, {
