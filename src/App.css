@@ -564,7 +564,7 @@ body {
 .vignette-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.45) 100%);
+  background: radial-gradient(circle, transparent 65%, rgba(239, 68, 68, 0.28) 100%);
   pointer-events: none;
   z-index: 80;
   opacity: 0;
@@ -578,11 +578,11 @@ body {
 
 @keyframes vignette-heartbeat {
   0% {
-    opacity: 0.35;
+    opacity: 0.15;
   }
 
   100% {
-    opacity: 0.95;
+    opacity: 0.55;
   }
 }
 
