@@ -29,6 +29,10 @@ export type GameEventMap = {
   BOSS_PHASE_SHIFT: void;
   MINION_SPAWNING: void;
   MINION_DISSOLVING: void;
+  PLAYER_DASH_RECHARGED: void;
+  BOSS_SWIPED: void;
+  BOSS_TELEGRAPH: void;
+  BOSS_LUNGED: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;

@@ -1,6 +1,7 @@
 import { IState } from "@/core/StateMachine";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { eventBroker } from "@/core/eventBroker";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -93,6 +94,7 @@ export class BossMeleeState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = 0.5;
+    eventBroker.publish("BOSS_SWIPED", undefined);
   }
 
   public update(dt: number): void {
@@ -177,6 +179,7 @@ export class BossTelegraphState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    eventBroker.publish("BOSS_TELEGRAPH", undefined);
   }
 
   public update(dt: number): void {
@@ -200,6 +203,7 @@ export class BossLungeState extends BossState {
 
   public enter(): void {
     this.duration = 0.5;
+    eventBroker.publish("BOSS_LUNGED", undefined);
   }
 
   public update(dt: number): void {

@@ -71,6 +71,9 @@ export class DashComponent implements IEntityComponent {
   }
 
   public resetDashCharge(): void {
-    this.canDash = true;
+    if (!this.canDash) {
+      this.canDash = true;
+      eventBroker.publish("PLAYER_DASH_RECHARGED", undefined);
+    }
   }
 }

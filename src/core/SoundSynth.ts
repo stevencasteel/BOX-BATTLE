@@ -209,6 +209,129 @@ class SoundSynth {
     }
   }
 
+  public playBossTelegraph() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // High-pitched warning alarm sweep representing weapon charging sequence
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(680, now + 0.35);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(1600, now + 0.35);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.42, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.36);
+  }
+
+  public playBossLunge() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const duration = 0.45;
+
+    const noiseBuffer = this.getNoiseBuffer();
+    if (!noiseBuffer) return;
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(1100, now);
+    filter.frequency.exponentialRampToValueAtTime(180, now + duration);
+    filter.Q.setValueAtTime(3.5, now);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.72, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    source.start(now);
+    source.stop(now + duration + 0.01);
+  }
+
+  public playDashRecharge() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, now);
+    osc1.frequency.setValueAtTime(1174.66, now + 0.04);
+
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1320, now);
+    osc2.frequency.setValueAtTime(1760, now + 0.04);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.13);
+    osc2.stop(now + 0.13);
+  }
+
+  public playBossSwipe() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.22);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(450, now);
+    filter.frequency.exponentialRampToValueAtTime(120, now + 0.22);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.50, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.23);
+  }
+
   public playMinionSpawning() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -218,7 +341,6 @@ class SoundSynth {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    // Harmonic triangle wave through a resonant lowpass filter representing digital construction
     osc.type = "triangle";
     osc.frequency.setValueAtTime(180, now);
     osc.frequency.exponentialRampToValueAtTime(720, now + 0.3);
@@ -249,7 +371,6 @@ class SoundSynth {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    // High-prominence resonant sawtooth sweep representing system deconstruct breakdown
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(280, now);
     osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);

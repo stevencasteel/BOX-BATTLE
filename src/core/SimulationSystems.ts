@@ -129,17 +129,28 @@ export class SimulationSystems {
       })
     );
 
-    // Minion Assembly Spawning Subscriber
     this.unsubscribes.push(
       eventBroker.subscribe("MINION_SPAWNING", () => {
         soundSynth.playMinionSpawning();
       })
     );
 
-    // Minion Dissolution Deconstruction Subscriber
     this.unsubscribes.push(
       eventBroker.subscribe("MINION_DISSOLVING", () => {
         soundSynth.playMinionDeconstruct();
+      })
+    );
+
+    // Movement Recharge & Boss Swipe Subscribers
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
+        soundSynth.playDashRecharge();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("BOSS_SWIPED", () => {
+        soundSynth.playBossSwipe();
       })
     );
   }
