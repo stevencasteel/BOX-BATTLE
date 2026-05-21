@@ -60,7 +60,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       return;
     }
 
-    if (this.checkSolidCollisions()) {
+    if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
       this.selfRelease();
       return;
     }
@@ -90,6 +90,30 @@ export class Projectile extends BaseEntity implements IPoolable {
 
       if (isHit) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  private checkOnewayCollisions(): boolean {
+    if (this.velocity.y < 0) return false;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+    const prevY = this.position.y - this.velocity.y * 0.016;
+
+    for (const platform of this.world.physicsWorld.onewayPlatforms) {
+      const isHit = (
+        this.position.x + halfW > platform.x &&
+        this.position.x - halfW < platform.x + platform.width &&
+        this.position.y + halfH > platform.y &&
+        this.position.y - halfH < platform.y + platform.height
+      );
+
+      if (isHit) {
+        if (prevY + halfH - 4 <= platform.y) {
+          return true;
+        }
       }
     }
     return false;
