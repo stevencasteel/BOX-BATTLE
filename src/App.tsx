@@ -222,7 +222,15 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div className="cabinet-outer">
+      <div 
+        className="cabinet-outer"
+        style={isFullHeightScreen ? {
+          width: "96vw",
+          height: "95vh",
+          maxWidth: "1600px",
+          maxHeight: "1080px"
+        } : undefined}
+      >
 
         {/* 1. HUD Panel - hidden in full-height screens */}
         {!isFullHeightScreen && (

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 3:23:58 PM
+ [SYSTEM] Generated: 5/21/2026, 3:45:32 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -328,7 +328,8 @@ export default defineConfig([
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "zustand": "^5.0.13"
+    "zustand": "^5.0.13",
+    "react-syntax-highlighter": "^15.6.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -342,7 +343,8 @@ export default defineConfig([
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "@types/react-syntax-highlighter": "^15.5.13"
   }
 }
 
@@ -1611,7 +1613,15 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div className="cabinet-outer">
+      <div 
+        className="cabinet-outer"
+        style={isFullHeightScreen ? {
+          width: "96vw",
+          height: "95vh",
+          maxWidth: "1600px",
+          maxHeight: "1080px"
+        } : undefined}
+      >
 
         {/* 1. HUD Panel - hidden in full-height screens */}
         {!isFullHeightScreen && (
@@ -2596,6 +2606,8 @@ export function SettingsScreen({
 ────────────────────────────────────────────────────
 import { useEffect, useState, useRef } from "react";
 import { soundSynth } from "@/core/SoundSynth";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface SourceViewScreenProps {
   onBack: () => void;
@@ -2661,6 +2673,18 @@ function flattenVisible(node: FileNode, expanded: Record<string, boolean>, list:
   }
 
   return list;
+}
+
+// Maps file extensions to their corresponding Prism highlight profiles
+function getLanguageFromPath(filePath: string): string {
+  const ext = filePath.split('.').pop() || '';
+  if (ext === 'tsx') return 'tsx';
+  if (ext === 'ts') return 'typescript';
+  if (ext === 'js' || ext === 'jsx') return 'javascript';
+  if (ext === 'css') return 'css';
+  if (ext === 'json') return 'json';
+  if (ext === 'md') return 'markdown';
+  return 'text';
 }
 
 export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
@@ -2767,7 +2791,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       <div style={{ display: "flex", gap: "16px", flexGrow: 1, height: "0", minHeight: "0", width: "100%", boxSizing: "border-box", margin: "14px 0" }}>
         
         {/* Left Pane: Directory Tree */}
-        <div ref={listRef} className="neo-pressed" style={{ width: "38%", overflowY: "auto", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
+        <div ref={listRef} className="neo-pressed" style={{ width: "24%", overflowY: "auto", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
             const isExpanded = node.isDir && !!expandedDirs[node.path];
@@ -2831,14 +2855,29 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        {/* Right Pane: Monospaced Raw File Content */}
-        <div className="neo-pressed" style={{ width: "62%", overflowY: "auto", borderRadius: "12px", padding: "16px", boxSizing: "border-box", background: "#06070a" }}>
+        {/* Right Pane: Syntax-Highlighted Code Block */}
+        <div className="neo-pressed" style={{ width: "76%", overflowY: "auto", borderRadius: "12px", padding: "16px", boxSizing: "border-box", background: "#1d1f21" }}>
           {selectedFile ? (
-            <pre style={{ margin: 0, padding: 0, textAlign: "left", fontSize: "11px", lineHeight: "1.5", fontFamily: "monospace", color: "#a0aec0", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-              <code style={{ color: "hsl(142, 70%, 75%)" }}>// FILE: {selectedFile}</code>
-              {"\n\n"}
-              {manifest[selectedFile]}
-            </pre>
+            <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
+              <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
+                // FILE: {selectedFile}
+              </div>
+              <div style={{ flexGrow: 1, overflow: "auto" }}>
+                <SyntaxHighlighter
+                  language={getLanguageFromPath(selectedFile)}
+                  style={atomDark}
+                  customStyle={{
+                    margin: 0,
+                    padding: 0,
+                    background: "transparent",
+                    fontSize: "11px",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {manifest[selectedFile] || ""}
+                </SyntaxHighlighter>
+              </div>
+            </div>
           ) : (
             <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
           )}
@@ -2849,14 +2888,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       {/* 3. Navigation & Action Control Footer Row (Bottom) */}
       <div className="flex-row" style={{ width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "8px", boxSizing: "border-box" }}>
         
-        {/* Left: GitHub Repository link with Inline Vector Icon */}
+        {/* Left: GitHub Repository neomorphic button */}
         <a 
           href="https://github.com/stevencasteel/BOX-BATTLE" 
           target="_blank" 
           rel="noopener noreferrer" 
-          style={{ fontSize: "11px", color: "#4a5568", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease", display: "flex", alignItems: "center", gap: "8px" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
+          className="neo-btn"
+          style={{ padding: "16px 28px", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center" }}
         >
           <svg 
             viewBox="0 0 24 24" 
@@ -2867,7 +2905,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             fill="none" 
             strokeLinecap="round" 
             strokeLinejoin="round"
-            style={{ display: "inline-block" }}
+            style={{ display: "inline-block", marginRight: "8px" }}
           >
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
           </svg>

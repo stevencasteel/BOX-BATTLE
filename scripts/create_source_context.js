@@ -153,14 +153,19 @@ async function main() {
     console.log('\x1b[32m  │                                                        │\x1b[0m');
     console.log('\x1b[32m  │    \x1b[1;32m✔\x1b[0;37m  SOURCE CONTEXT COMPILED SUCCESSFULLY             \x1b[32m│\x1b[0m');
     console.log('\x1b[32m  │                                                        │\x1b[0m');
-    console.log(`\x1b[32m  │      Files Bundled: \x1b[1;37m${String(fileCount).padEnd(35)}\x1b[32m │\x1b[0m`);
-    console.log(`\x1b[32m  │      Total Lines:   \x1b[1;37m${String(totalLines.toLocaleString()).padEnd(35)}\x1b[32m │\x1b[0m`);
-    console.log(`\x1b[32m  │      Total Chars:   \x1b[1;37m${String(totalChars.toLocaleString()).padEnd(35)}\x1b[32m │\x1b[0m`);
-    console.log(`\x1b[32m  │      File Size:     \x1b[1;37m${sizeStr.padEnd(35)}\x1b[32m │\x1b[0m`);
+    console.log(`\x1b[32m  │      Files Bundled: \x1b[1;37m${String(fileCount).padEnd(34)}\x1b[32m │\x1b[0m`);
+    console.log(`\x1b[32m  │      Total Lines:   \x1b[1;37m${String(totalLines.toLocaleString()).padEnd(34)}\x1b[32m │\x1b[0m`);
+    console.log(`\x1b[32m  │      Total Chars:   \x1b[1;37m${String(totalChars.toLocaleString()).padEnd(34)}\x1b[32m │\x1b[0m`);
+    console.log(`\x1b[32m  │      File Size:     \x1b[1;37m${sizeStr.padEnd(34)}\x1b[32m │\x1b[0m`);
     console.log('\x1b[32m  │                                                        │\x1b[0m');
     console.log('\x1b[32m  │      Output: \x1b[37mdocs/all_source_code.txt\x1b[32m                  │\x1b[0m');
     console.log('\x1b[32m  │                                                        │\x1b[0m');
     console.log('\x1b[32m  └────────────────────────────────────────────────────────┘\x1b[0m\n');
+
+    const isNpmLifecycle = !!process.env.npm_lifecycle_event;
+    if (isNpmLifecycle) {
+      process.exit(0);
+    }
 
     const audioProcess = spawn('afplay', ['/System/Library/Sounds/Pop.aiff'], { detached: true, stdio: 'ignore' });
     audioProcess.unref();
