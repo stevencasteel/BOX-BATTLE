@@ -430,45 +430,30 @@ export class Player extends BaseEntity {
       const cx = this.position.x + offset;
       const cy = this.position.y;
 
-      /* Render unified, solid radial gradient swipe path (No Concentric Gaps) */
-      const gradient = ctx.createRadialGradient(cx, cy, 30, cx, cy, 95);
-      gradient.addColorStop(0.0, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.35, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.80, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, `rgba(34, 197, 94, 0)`);
-
       ctx.save();
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-      ctx.shadowBlur = 15 * opacity;
+      /* Apply flat lineCap to cleanly terminate lines, eliminating any capsule-shaped endpoints poking out */
+      ctx.lineCap = "butt";
+
+      /* Layer 1: Dual Razor-Sharp Trailing Speedlines (Draws sleek, thin speed trails mimicking wind friction) */
+      const trailAngle = currentSweepAngle * 0.75;
       
+      /* Outer Edge Speedline (Radius 88px, Width 4px) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      /* Draw Outer Boundary Wedge edge (95px reach) */
       ctx.arc(
         cx,
         cy,
-        95,
+        88,
         facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
         facing < 0
       );
-      /* Draw Inner Boundary Edge (30px reach) backward to close path cleanly */
-      ctx.arc(
-        cx,
-        cy,
-        30,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0
-      );
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      ctx.stroke();
 
-      /* Render motion ghost blur trail layer */
-      const trailAngle = currentSweepAngle * 0.80;
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.35})`;
-      ctx.lineWidth = 35;
+      /* Mid-Blade Speedline (Radius 65px, Width 2px) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(
         cx,
@@ -479,6 +464,41 @@ export class Player extends BaseEntity {
         facing < 0
       );
       ctx.stroke();
+
+      /* Layer 2: Unified, Single-Filled Radial Gradient Wedge (Fuses white-hot core and green blade into one seamless object) */
+      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");                               // Inner transparent hollow
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);                      // Intense white-hot core (39px radius)
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);               // Glowing neon-lime transition (60px radius)
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);                // Rich green blade edge (84px radius)
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");                                 // Soft outer fade-out (95px reach)
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+      
+      ctx.beginPath();
+      /* Draw Outer boundary arc (95px reach) */
+      ctx.arc(
+        cx,
+        cy,
+        95,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing < 0
+      );
+      /* Draw Inner boundary arc (25px reach) backward to close path */
+      ctx.arc(
+        cx,
+        cy,
+        25,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
     else if (this.attackDirection === "up") {
       /* Dynamic Up-Slash Sweep */

@@ -2,6 +2,7 @@ import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { Registry } from "@/core/Registry";
+import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -36,6 +37,9 @@ export class Engine {
   private deathTimeoutId: any = null;
   private dialogueTimeoutId: any = null;
   private dialogueStaggerTimeoutId: any = null;
+
+  /* Pause Diagnostics */
+  public isPaused: boolean = false;
 
   private unsubDialogue!: () => void;
 
@@ -124,6 +128,8 @@ export class Engine {
       this.triggerDialogue(speaker, text);
     });
 
+    window.addEventListener("keydown", this.handlePauseKey);
+
     this.particles = [];
 
     // Spark Particles Listener
@@ -202,7 +208,21 @@ export class Engine {
     this.loop.stop();
   }
 
-    private update(dt: number) {
+      private handlePauseKey = (e: KeyboardEvent) => {
+    if (e.code === "KeyP") {
+      this.isPaused = !this.isPaused;
+      if (this.isPaused) {
+        soundSynth.playErrorTick();
+      } else {
+        soundSynth.playHitConfirm();
+      }
+    }
+  };
+
+  private update(dt: number) {
+    if (this.isPaused) {
+      return;
+    }
     this.accumulator += dt;
     if (this.accumulator > 0.25) {
       this.accumulator = 0.25;
@@ -414,7 +434,23 @@ export class Engine {
         this.ctx.stroke();
       }
       
-      this.ctx.restore();
+      if (this.isPaused) {
+      /* Draw semi-transparent overlay */
+      this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
+      this.ctx.fillRect(0, 0, 1250, 1250);
+
+      /* Draw paused diagnostic text */
+      this.ctx.fillStyle = "#ffffff";
+      this.ctx.font = "bold 44px monospace";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
+
+      this.ctx.font = "bold 18px monospace";
+      this.ctx.fillStyle = "var(--signal-green)";
+      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
+    }
+
+    this.ctx.restore();
     }
     this.player.draw(this.ctx);
 
@@ -516,6 +552,7 @@ export class Engine {
     this.unsubEvents.forEach((unsub) => unsub());
     this.unsubEvents = [];
     this.particles = [];
+    window.removeEventListener("keydown", this.handlePauseKey);
     Registry.player = null;
     Registry.boss = null;
     Registry.projectilePool = null;
