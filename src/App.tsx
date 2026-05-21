@@ -47,7 +47,7 @@ export default function App() {
   } = useSaveSlots();
 
   const { audio, handleVolumeChange } = useAudioSettings();
-  const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
+  const { playerDialogue, bossDialogue, triggerDialogue } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 

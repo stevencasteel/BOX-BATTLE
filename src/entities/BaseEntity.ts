@@ -1,6 +1,7 @@
 import { Component } from "./Component";
+import { IEntity } from "@/core/Interfaces";
 
-export class BaseEntity {
+export class BaseEntity implements IEntity {
   public position = { x: 0, y: 0 };
   public velocity = { x: 0, y: 0 };
   public size = { width: 50, height: 50 };

@@ -1,7 +1,6 @@
 import { Component } from "@/entities/Component";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { soundSynth } from "@/core/SoundSynth";
-import { Camera } from "@/core/Camera";
+import { eventBroker } from "@/core/EventBroker";
 
 export class HealthComponent implements Component {
   public owner!: BaseEntity;
@@ -42,37 +41,24 @@ export class HealthComponent implements Component {
     this.hitFlashTimer = this.hitFlashDuration;
 
     if (this.owner.id === "player-01") {
-      soundSynth.playHurt();
-      Camera.shake(15, 0.3); // Heavy player damage shake
-      Camera.triggerHitStop(0.08); // Tactile player hurt hit-stop
-    } else {
-      soundSynth.playHitConfirm();
-      
-      if (this.owner.id === "boss-01") {
-        if (this.currentHealth <= 0) {
-          Camera.shake(25, 0.6); // Massive boss death shake
-          Camera.triggerHitStop(0.15); // Long boss death freeze
-        } else {
-          Camera.shake(8, 0.15); // Standard boss damage shake
-          Camera.triggerHitStop(0.04); // Quick hit-stop
-        }
-      } else if (this.owner.id.startsWith("minion-")) {
-        if (this.currentHealth <= 0) {
-          Camera.shake(4, 0.15); // Light, clean minion death thud
-          Camera.triggerHitStop(0.03); // Quick, snappy death freeze
-        } else {
-          Camera.shake(2, 0.08); // Subtle minion hit rumble
-          Camera.triggerHitStop(0.01); // Snap-second fluid hit-stop
-        }
-      } else {
-        if (this.currentHealth <= 0) {
-          Camera.shake(10, 0.3);
-          Camera.triggerHitStop(0.08);
-        } else {
-          Camera.shake(4, 0.1);
-          Camera.triggerHitStop(0.02);
-        }
-      }
+      eventBroker.publish("PLAYER_HURT", {
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
+    } else if (this.owner.id === "boss-01") {
+      eventBroker.publish("BOSS_HURT", {
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
+    } else if (this.owner.id.startsWith("minion-")) {
+      eventBroker.publish("MINION_HURT", {
+        id: this.owner.id,
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
     }
 
     if (this.currentHealth <= 0) {

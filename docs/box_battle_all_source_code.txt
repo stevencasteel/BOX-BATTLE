@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/20/2026, 6:44:15 PM
+ [SYSTEM] Generated: 5/20/2026, 7:14:11 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -29,6 +29,7 @@
 │   │   │   ├── SaveSelectScreen.tsx
 │   │   │   ├── SettingsScreen.tsx
 │   │   │   └── TitleScreen.tsx
+│   │   ├── ui/
 │   │   ├── GameArena.tsx
 │   │   ├── HealthComponent.ts
 │   │   └── PhysicsComponent.ts
@@ -55,6 +56,7 @@
 │   │   └── useSaveSlots.ts
 │   ├── states/
 │   ├── store/
+│   │   └── useGameStore.ts
 │   ├── styles/
 │   ├── App.css
 │   ├── App.tsx
@@ -80,78 +82,12 @@
 ────────────────────────────────────────────────────
 # React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
+This README will be updated as we go along.
 
 
 ● ./TODO.txt
@@ -179,42 +115,139 @@ export default defineConfig([
   AI Terminal Execution & Development Guidelines
 ===========================================================================
 
-1. TERMINAL EXECUTION & HEREDOC PROTOCOLS (CRITICAL)
-----------------------------------------------------
-To prevent Zsh parsing failures, environment errors, variable corruption, or script truncation on macOS systems, strictly adhere to the following execution protocols:
+1. WORKFLOW RULES (CRITICAL)
+----------------------------
+1.1  Terminal Only
+     Do not ask the user to manually create or modify files. Provide full 
+     terminal commands using `cat << 'EOF' > path/to/file` to create or 
+     overwrite files. Organize terminal commands into logical, clean batches.
 
-1.1 Quoted Starting Delimiters (Shell Protection)
-    - Always wrap the starting heredoc delimiter in single quotes (e.g., cat << 'EOF' > path/to/file or cat << 'ENDOFSCRIPT').
-    - Unquoted delimiters allow the terminal shell (Zsh/Bash) to perform immediate variable expansion ($variable) and backtick execution (`` ` ``) *before* writing the text to the file. This process strips or corrupts raw JavaScript, TypeScript, and CSS rules.
+1.2  No Placeholders
+     Write complete, fully functional, compilation-safe code. Avoid using 
+     comments like "// ... rest of code" or placeholder stubs.
 
-1.2 Zero Shell Comments
-    - Never include hash symbols (#) inside any active terminal or shell code blocks.
-    - Copy-pasting shell commands containing hash lines directly into macOS interactive Zsh terminals triggers parsing errors or partial executions. Keep shell blocks strictly functional and describe operations in the accompanying markdown text instead.
+1.3  Step-by-Step Phase-Based Workflow
+     Before making changes, outline the phases of work. Provide the files and 
+     patches sequentially in distinct, logical steps rather than all at once.
 
-1.3 Delimiter Syntax and Formatting
-    - The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its own line with zero leading or trailing whitespace.
-    - If any space, tab, or comment character is placed on the delimiter line, the shell will fail to recognize the boundary and keep appending input, causing truncation or terminal lockup.
+1.4  Verification Checklist
+     After providing code, list specific, actionable manual tests or compile 
+     checks for the user to run to verify the change has succeeded.
 
-1.4 Temporary Script ESM Standard
-    - Since this project operates with "type": "module", all temporary Node.js scripts must use ES Module syntax (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
+1.5  Atomic Commits
+     When requested, output Git commit command sequences. Format as:
+       git add . && git commit -m "title" -m "description" && git push
+     Do not present commit commands until explicitly requested. Always use the 
+     period (.) for `git add` to capture all staged modifications.
 
-1.5 Script Execution and Automatic Cleanup
-    - All file patches using temporary Node.js scripts must always append the self-delete command on the exact same execution line (e.g., "node ./patch.js && rm ./patch.js") to prevent cluttering the repository.
+1.6  Lean Ship
+     Keep external runtime dependencies low. Generate game assets, procedural 
+     waveforms, and canvas graphics programmatically rather than relying on 
+     static binaries or heavy external loaders.
 
-1.6 Zsh Compatibility & Special Characters
-    - Do not use unescaped exclamation marks (!) inside shell string variables. Zsh treats them as history expansion operators and will fail to execute the command. 
+1.7  WAIT (Communication Checkpoint)
+     Do not output extensive code blocks for a proposed plan until the user 
+     confirms the outline. Articulate the approach clearly first, then wait 
+     for the confirmation signal.
 
-1.7 Surgical Patches vs. Overwrites
-    - For small-to-medium files, perform full overwrites (cat << 'EOF' > file).
-    - For large files, write a temporary Node.js script using fs.readFileSync and regex/string replacement (as defined in 1.4 and 1.5) to avoid file truncation during large output generation.
+1.8  Local Testing
+     All verification must be supported by running the local Vite server 
+     development commands (`npm run dev`) and verifying build stability 
+     (`npm run build`).
 
-2. BUILD & TESTING VERIFICATION
--------------------------------
-- Build Verification: Validate all TypeScript compilation updates by running "npm run build" before concluding.
-- Procedural Assets: Keep codebase dependencies light. Generate retro game assets and audio procedurally rather than using static imports.
-- Atomic Commits: When requested, output: git add . && git commit -m "title" -m "description" && git push
-  Do not present commit strings until requested. Always use the period (.) for git add.
 
+2. CODE STANDARDS & TERMINAL PROTOCOLS
+--------------------------------------
+2.1  Node Scripts Must Be ESM
+     Since this project operates with "type": "module" in package.json, all 
+     temporary or auxiliary Node.js scripts must use ES Module syntax 
+     (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
+
+2.2  Surgical Patch Scripts
+     When modifying large source files, prefer writing temporary Node.js 
+     scripts (utilizing `fs.readFileSync` and `.replace()`) over full file 
+     overwrites to prevent command truncation or buffer loss.
+     CRITICAL: Always append the cleanup command (e.g., "&& rm ./patch.js") 
+     on the exact same execution line to keep the repository untracked space clean.
+
+2.3  Zsh Compatibility & Escaping
+     The development environment is on macOS running Zsh. Never use raw, unescaped 
+     exclamation marks (!) inside shell string variables, as Zsh parses them 
+     as history expansion operators and will fail execution. 
+
+2.4  Zero Bash Comments
+     Never include hash symbols (#) inside any active terminal or shell code 
+     blocks. Copy-pasting shell commands containing hash lines directly into 
+     macOS interactive Zsh terminals triggers immediate parsing errors or partial 
+     execution. Keep shell blocks strictly functional and describe operations 
+     in the accompanying markdown text instead.
+
+2.5  Strict Structured File Patching
+     When modifying CSS, JSON, or complex TypeScript layouts with nested brackets, 
+     do not use lazy regex matching (e.g. "[\s\S]*?") to replace large blocks, 
+     as it easily misaligns closing braces and corrupts files. Perform full 
+     overwrites for small-to-medium files or strict literal string matching 
+     for surgical updates.
+
+2.6  Unicode and Escapes in Bash
+     When writing inline scripts via terminal heredoc, never use raw unicode 
+     escapes (such as "\u00A0") if they risk being parsed by the terminal shell 
+     as literal invisible characters. Instead, use runtime code conversions 
+     like `String.fromCharCode(160)` to safely inject special characters.
+
+2.7  Quoted Starting Delimiters (Shell Protection)
+     Always wrap the starting heredoc delimiter in single quotes (e.g., 
+     `cat << 'EOF' > file` or `cat << 'ENDOFSCRIPT'`). Unquoted delimiters 
+     allow the shell to perform immediate variable expansion ($variable) and 
+     backtick execution before writing, stripping or corrupting raw JS, TS, 
+     and CSS structures.
+
+2.8  Delimiter Syntax and Formatting
+     The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its 
+     own line with zero leading or trailing whitespace. Any leading spaces or 
+     tabs will prevent the terminal from recognizing the block boundary, 
+     causing terminal lockup or truncation.
+
+
+3. REMOTE INSPECTION & EDITING TECHNIQUES
+-----------------------------------------
+When debugging, analyzing, or modifying files, select the most efficient 
+protocol based on scope:
+
+3.1  Quick Inline Checks (node -e)
+     For single-purpose evaluations (verifying file contents, counting pattern 
+     instances, checking directory listings):
+       node -e "console.log(require('fs').readFileSync('src/App.tsx','utf8').includes('useGameStore'))"
+
+3.2  Multi-Line Analysis Scripts (Heredoc + Self-Delete)
+     For complex log analysis, directory traversal, or file verification:
+       cat << 'ENDOFSCRIPT' > ./analysis.js
+       import fs from 'fs';
+       import path from 'path';
+       // Analysis logic...
+       ENDOFSCRIPT
+       node ./analysis.js && rm ./analysis.js
+
+3.3  File Modification by Full Overwrite
+     For small to medium files, overwrite the target path directly:
+       cat << 'EOF' > src/components/ui/MyNewComponent.tsx
+       // Complete implementation...
+       EOF
+
+3.4  File Modification by Surgical Patch
+     For large files where only specific lines need adjustment:
+       cat << 'ENDOFSCRIPT' > ./patch.js
+       import fs from 'fs';
+       let content = fs.readFileSync('src/components/GameArena.tsx', 'utf8');
+       content = content.replace('old code block', 'new code block');
+       fs.writeFileSync('src/components/GameArena.tsx', content);
+       ENDOFSCRIPT
+       node ./patch.js && rm ./patch.js
+
+3.5  Build Verification
+     Validate all TypeScript compilations and bundler configurations after any 
+     file updates before concluding:
+       npm run build
 
 
 
@@ -277,9 +310,11 @@ export default defineConfig([
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^12.39.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -2396,8 +2431,8 @@ import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
+import { useGameStore } from "@/store/useGameStore";
 
-// Standalone Screens
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
 import { SettingsScreen } from "@/components/menus/SettingsScreen";
@@ -2408,19 +2443,23 @@ import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
 
-type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
-
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [currentScreen, setCurrentScreen] = useState<ScreenState>("TITLE");
-  const [menuIndex, setMenuIndex] = useState<number>(0);
+  const currentScreen = useGameStore((state) => state.currentScreen);
+  const menuIndex = useGameStore((state) => state.menuIndex);
+  const playerHP = useGameStore((state) => state.playerHP);
+  const bossHP = useGameStore((state) => state.bossHP);
+  const gameResult = useGameStore((state) => state.gameResult);
+  const retryCount = useGameStore((state) => state.retryCount);
+  const isGlitching = useGameStore((state) => state.isGlitching);
+  const healingCharges = useGameStore((state) => state.healingCharges);
+  const determination = useGameStore((state) => state.determination);
 
-  const [playerHP, setPlayerHP] = useState(5);
-  const [bossHP, setBossHP] = useState(30);
-  const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
+  const navTo = useGameStore((state) => state.navTo);
+  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
+  const resetGameSession = useGameStore((state) => state.resetGameSession);
 
-  // Save Matrix stats
   const {
     slots,
     copySourceIndex,
@@ -2437,41 +2476,10 @@ export default function App() {
   const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [isGlitching, setIsGlitching] = useState<boolean>(false);
-
-  // Dynamic HUD registers for healing
-  const [healingCharges, setHealingCharges] = useState<number>(0);
-  const [determination, setDetermination] = useState<number>(0);
-
-  const triggerGlitch = () => {
-    setIsGlitching(true);
-    setTimeout(() => {
-      setIsGlitching(false);
-    }, 150);
-  };
-
-  const navTo = (screen: ScreenState) => {
-    soundSynth.playSelectTick();
-    if (screen === "PLAYING") {
-      setRetryCount((prev) => prev + 1);
-    }
-    setCurrentScreen(screen);
-    setMenuIndex(0);
-    resetActions();
-    resetDialogues();
-  };
 
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };
-
-  // Trigger chromatic glitch on damage
-  useEffect(() => {
-    if (playerHP < 5 && currentScreen === "PLAYING") {
-      triggerGlitch();
-    }
-  }, [playerHP]);
 
   useEffect(() => {
     soundSynth.startMusic();
@@ -2481,7 +2489,6 @@ export default function App() {
     };
   }, []);
 
-  // Centralized Menu Navigation Listeners
   useEffect(() => {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
 
@@ -2501,11 +2508,11 @@ export default function App() {
       if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev + 1) % (maxIndex + 1));
+        setMenuIndex((menuIndex + 1) % (maxIndex + 1));
       } else if (e.key === "ArrowUp" || e.key === "KeyW" || (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"))) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev - 1 + (maxIndex + 1)) % (maxIndex + 1));
+        setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
         e.preventDefault();
         triggerMenuSelection();
@@ -2533,6 +2540,7 @@ export default function App() {
     const triggerMenuSelection = () => {
       if (currentScreen === "PLAYING" && gameResult !== "PLAYING") {
         if (menuIndex === 0) {
+          resetGameSession();
           navTo("PLAYING");
         } else {
           navTo("TITLE");
@@ -2541,45 +2549,41 @@ export default function App() {
       } else if (currentScreen === "TITLE") {
         if (menuIndex === 0) {
           reloadSaveSlots();
-          setCurrentScreen("SAVE_SELECT");
-          setMenuIndex(0);
+          navTo("SAVE_SELECT");
         } else if (menuIndex === 1) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
+          navTo("OPTIONS");
         } else if (menuIndex === 2) {
-          setCurrentScreen("CREDITS");
-          setMenuIndex(0);
+          navTo("CREDITS");
         }
         soundSynth.playHitConfirm();
       } else if (currentScreen === "SAVE_SELECT") {
         if (menuIndex >= 0 && menuIndex <= 2) {
-          handleSlotAction(menuIndex, () => navTo("PLAYING"));
+          handleSlotAction(menuIndex, () => {
+            resetGameSession();
+            navTo("PLAYING");
+          });
         } else if (menuIndex === 3) {
           toggleCopyMode();
         } else if (menuIndex === 4) {
           toggleEraseMode();
         } else if (menuIndex === 5) {
           resetActions();
-          setCurrentScreen("TITLE");
-          setMenuIndex(0);
+          navTo("TITLE");
           soundSynth.playErrorTick();
         }
       } else if (currentScreen === "OPTIONS") {
         if (menuIndex === 0) {
-          setCurrentScreen("SOUND");
-          setMenuIndex(0);
+          navTo("SOUND");
         } else if (menuIndex === 1) {
-          setCurrentScreen("CONTROLS");
-          setMenuIndex(0);
+          navTo("CONTROLS");
         } else if (menuIndex === 2) {
-          setCurrentScreen("TITLE");
+          navTo("TITLE");
           setMenuIndex(1);
         }
         soundSynth.playHitConfirm();
       } else if (currentScreen === "SOUND") {
         if (menuIndex === 3) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
+          navTo("OPTIONS");
           soundSynth.playErrorTick();
         } else {
           if (menuIndex === 0) handleVolumeChange("masterMuted", !audio.masterMuted);
@@ -2589,7 +2593,7 @@ export default function App() {
         }
       } else if (currentScreen === "CONTROLS") {
         if (menuIndex === 7) {
-          setCurrentScreen("OPTIONS");
+          navTo("OPTIONS");
           setMenuIndex(1);
           soundSynth.playErrorTick();
         } else {
@@ -2598,8 +2602,7 @@ export default function App() {
           setRebindTarget({ action, index: 0 });
         }
       } else if (currentScreen === "CREDITS") {
-        setCurrentScreen("TITLE");
-        setMenuIndex(2);
+        navTo("TITLE");
         soundSynth.playErrorTick();
       }
     };
@@ -2608,11 +2611,9 @@ export default function App() {
       soundSynth.playErrorTick();
       if (currentScreen === "SAVE_SELECT" || currentScreen === "OPTIONS" || currentScreen === "CREDITS") {
         resetActions();
-        setCurrentScreen("TITLE");
-        setMenuIndex(0);
+        navTo("TITLE");
       } else if (currentScreen === "SOUND" || currentScreen === "CONTROLS") {
-        setCurrentScreen("OPTIONS");
-        setMenuIndex(0);
+        navTo("OPTIONS");
       }
     };
 
@@ -2626,7 +2627,6 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        {/* Status Panel (Health HUD) situated above gameplay arena */}
         <div className="cabinet-status-panel neo-pressed">
           <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
@@ -2640,7 +2640,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Healing Charges & Determination visual indicators */}
             {currentScreen === "PLAYING" && (
               <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
                 <div className="flex-row" style={{ gap: "4px" }}>
@@ -2688,26 +2687,18 @@ export default function App() {
           </div>
         </div>
 
-        {/* Dynamic Viewport Container */}
         <div className={`game-viewport-container ${isGlitching ? "filter-chromatic" : ""}`}>
           {currentScreen === "PLAYING" ? (
-            <GameArena
-              key={retryCount}
-              canvasRef={canvasRef}
-              playerHP={playerHP}
-              bossHP={bossHP}
-              gameResult={gameResult}
-              menuIndex={menuIndex}
-              setPlayerHP={setPlayerHP}
-              setBossHP={setBossHP}
-              setGameResult={setGameResult}
-              triggerDialogue={triggerDialogue}
-              navTo={navTo}
-              playHoverTick={playHoverTick}
-              setMenuIndex={setMenuIndex}
-              setHealingCharges={setHealingCharges}
-              setDetermination={setDetermination}
-            />
+            <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
+                <GameArena
+                  key={retryCount}
+                  canvasRef={canvasRef}
+                  triggerDialogue={triggerDialogue}
+                  playHoverTick={playHoverTick}
+                />
+              </div>
+            </div>
           ) : (
             <div className="screen-inner">
               {currentScreen === "TITLE" && (
@@ -2715,16 +2706,13 @@ export default function App() {
                   menuIndex={menuIndex}
                   onPlay={() => {
                     reloadSaveSlots();
-                    setCurrentScreen("SAVE_SELECT");
-                    setMenuIndex(0);
+                    navTo("SAVE_SELECT");
                   }}
                   onSettings={() => {
-                    setCurrentScreen("OPTIONS");
-                    setMenuIndex(0);
+                    navTo("OPTIONS");
                   }}
                   onCredits={() => {
-                    setCurrentScreen("CREDITS");
-                    setMenuIndex(0);
+                    navTo("CREDITS");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -2743,8 +2731,7 @@ export default function App() {
                   toggleEraseMode={toggleEraseMode}
                   onBack={() => {
                     resetActions();
-                    setCurrentScreen("TITLE");
-                    setMenuIndex(0);
+                    navTo("TITLE");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -2755,15 +2742,13 @@ export default function App() {
                 <SettingsScreen
                   menuIndex={menuIndex}
                   onAudio={() => {
-                    setCurrentScreen("SOUND");
-                    setMenuIndex(0);
+                    navTo("SOUND");
                   }}
                   onControls={() => {
-                    setCurrentScreen("CONTROLS");
-                    setMenuIndex(0);
+                    navTo("CONTROLS");
                   }}
                   onBack={() => {
-                    setCurrentScreen("TITLE");
+                    navTo("TITLE");
                     setMenuIndex(1);
                   }}
                   playHoverTick={playHoverTick}
@@ -2777,8 +2762,7 @@ export default function App() {
                   menuIndex={menuIndex}
                   handleVolumeChange={handleVolumeChange}
                   onBack={() => {
-                    setCurrentScreen("OPTIONS");
-                    setMenuIndex(0);
+                    navTo("OPTIONS");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -2790,7 +2774,7 @@ export default function App() {
                   menuIndex={menuIndex}
                   rebindTarget={rebindTarget}
                   onBack={() => {
-                    setCurrentScreen("OPTIONS");
+                    navTo("OPTIONS");
                     setMenuIndex(1);
                   }}
                   playHoverTick={playHoverTick}
@@ -2803,7 +2787,7 @@ export default function App() {
               {currentScreen === "CREDITS" && (
                 <CreditsScreen
                   onBack={() => {
-                    setCurrentScreen("TITLE");
+                    navTo("TITLE");
                     setMenuIndex(2);
                   }}
                 />
@@ -2812,10 +2796,8 @@ export default function App() {
           )}
         </div>
 
-        {/* Dialogue Console (Sits completely outside/below playing arena) */}
         {currentScreen === "PLAYING" && (
           <div className="dialogue-console">
-            {/* Player Dialogue Box (Left) */}
             <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
               <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
               <div className="dialogue-text-container">
@@ -2824,7 +2806,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Boss Dialogue Box (Right) */}
             <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
               <div className="dialogue-text-container" style={{ textAlign: "right" }}>
                 <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
@@ -2837,7 +2818,6 @@ export default function App() {
 
       </div>
 
-      {/* Hardware-accelerated split-channel Chromatic Aberration filter */}
       <svg style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}>
         <defs>
           <filter id="chromatic-aberration">
@@ -2857,6 +2837,7 @@ export default function App() {
 }
 
 
+
 ● ./src/components/GameArena.tsx
 ────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
@@ -2871,56 +2852,33 @@ import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
+import { useGameStore } from "@/store/useGameStore";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  playerHP: number;
-  bossHP: number;
-  gameResult: "PLAYING" | "GAMEOVER" | "VICTORY";
-  menuIndex: number;
-  setPlayerHP: (hp: number) => void;
-  setBossHP: (hp: number) => void;
-  setGameResult: (result: "PLAYING" | "GAMEOVER" | "VICTORY") => void;
   triggerDialogue: (speaker: "player" | "boss", text: string) => void;
-  navTo: (screen: any) => void;
   playHoverTick: () => void;
-  setMenuIndex: (index: number) => void;
-  setHealingCharges?: (charges: number) => void;
-  setDetermination?: (count: number) => void;
 }
 
 export function GameArena({
   canvasRef,
-  playerHP,
-  gameResult,
-  menuIndex,
-  setPlayerHP,
-  setBossHP,
-  setGameResult,
   triggerDialogue,
-  navTo,
   playHoverTick,
-  setMenuIndex,
-  setHealingCharges,
-  setDetermination,
 }: GameArenaProps) {
 
   const solids: Rectangle[] = [
-    // Outer Border Blocks
-    { x: 0, y: 1150, width: 400, height: 100 },  // Left Ground
-    { x: 850, y: 1150, width: 400, height: 100 }, // Right Ground
-    { x: 400, y: 1200, width: 450, height: 50 },  // Pit Floor
-    { x: 0, y: 0, width: 1250, height: 50 },      // Ceiling
-    { x: 0, y: 0, width: 50, height: 1250 },      // Left Wall
-    { x: 1200, y: 0, width: 50, height: 1250 },   // Right Wall
-
-    // Middle Floating solid block
+    { x: 0, y: 1150, width: 400, height: 100 },
+    { x: 850, y: 1150, width: 400, height: 100 },
+    { x: 400, y: 1200, width: 450, height: 50 },
+    { x: 0, y: 0, width: 1250, height: 50 },
+    { x: 0, y: 0, width: 50, height: 1250 },
+    { x: 1200, y: 0, width: 50, height: 1250 },
     { x: 425, y: 800, width: 400, height: 40 }
   ];
 
   const onewayPlatforms: Rectangle[] = [
-    { x: 50, y: 550, width: 300, height: 20 },   // Left middle perch
-    { x: 900, y: 550, width: 300, height: 20 }   // Right middle perch
+    { x: 50, y: 550, width: 300, height: 20 },
+    { x: 900, y: 550, width: 300, height: 20 }
   ];
 
   const hazards: Rectangle[] = [
@@ -2931,6 +2889,9 @@ export function GameArena({
   const hasTriggeredPhase2 = useRef<boolean>(false);
   const hasTriggeredPhase3 = useRef<boolean>(false);
   const isCinematicActive = useRef<boolean>(false);
+
+  const bossDeathTimer = useRef<number>(-1);
+  const bossDeathPos = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -2943,6 +2904,8 @@ export function GameArena({
     hasTriggeredPhase2.current = false;
     hasTriggeredPhase3.current = false;
     isCinematicActive.current = false;
+    bossDeathTimer.current = -1;
+    bossDeathPos.current = null;
 
     PhysicsComponent.setSolids(solids);
     PhysicsComponent.setHazards(hazards);
@@ -2968,7 +2931,9 @@ export function GameArena({
     Registry.boss = boss;
 
     Camera.reset();
-    setGameResult("PLAYING");
+    
+    const state = useGameStore.getState();
+    state.setGameResult("PLAYING");
 
     const handleUpdate = (dt: number) => {
       if (Camera.hitStopTimer > 0) {
@@ -2977,6 +2942,10 @@ export function GameArena({
       }
 
       Camera.update(dt);
+
+      if (bossDeathTimer.current >= 0) {
+        bossDeathTimer.current += dt;
+      }
 
       if (isCinematicActive.current) {
         player.velocity = { x: 0, y: 0 };
@@ -3036,13 +3005,16 @@ export function GameArena({
       const pHealth = player.getComponent(HealthComponent);
       const bHealth = boss.getComponent(HealthComponent);
 
-      if (pHealth) setPlayerHP(pHealth.currentHealth);
-      if (bHealth) setBossHP(bHealth.currentHealth);
+      if (pHealth) state.setPlayerHP(pHealth.currentHealth);
+      if (bHealth) state.setBossHP(bHealth.currentHealth);
 
-      if (setHealingCharges) setHealingCharges(player.healingCharges);
-      if (setDetermination) setDetermination(player.determinationCounter);
+      if (player.healingCharges !== state.healingCharges) {
+        state.setHealingCharges(player.healingCharges);
+      }
+      if (player.determinationCounter !== state.determination) {
+        state.setDetermination(player.determinationCounter);
+      }
 
-      // Plain Dialogue prompts
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
         triggerDialogue("player", "I found you. This battle ends now!");
@@ -3058,34 +3030,26 @@ export function GameArena({
         triggerDialogue("boss", "This is my final stand! Prepare yourself!");
       }
 
-      // Final defeat sequence triggers
       if (player.isDead) {
         isCinematicActive.current = true;
-        triggerDialogue("player", "No... I can't go on...");
-        triggerDialogue("boss", "You fought well... but I am victorious.");
-
         setTimeout(() => {
-          setGameResult("GAMEOVER");
+          state.setGameResult("GAMEOVER");
           loop.stop();
+          triggerDialogue("player", "No... I can't go on...");
+          triggerDialogue("boss", "You fought well... but I am victorious.");
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
+        bossDeathTimer.current = 0;
+        bossDeathPos.current = { x: boss.position.x, y: boss.position.y };
 
-        const parentEl = canvas.parentElement;
-        if (parentEl) {
-          const xPercent = (boss.position.x / 1250) * 100;
-          const yPercent = (boss.position.y / 1250) * 100;
-
-          const customEvent = new CustomEvent("boss-shockwave", { detail: { x: xPercent, y: yPercent } });
-          window.dispatchEvent(customEvent);
-        }
-
-        triggerDialogue("boss", "No... How could I lose this fight...");
-        triggerDialogue("player", "It is over. The area is secure.");
+        Camera.shake(30, 1.8);
 
         setTimeout(() => {
-          setGameResult("VICTORY");
+          state.setGameResult("VICTORY");
           loop.stop();
+          triggerDialogue("boss", "No... How could I lose this fight...");
+          triggerDialogue("player", "It is over. The area is secure.");
         }, 3500);
       }
 
@@ -3139,6 +3103,68 @@ export function GameArena({
         proj.draw(ctx);
       }
 
+      if (bossDeathTimer.current >= 0 && bossDeathPos.current) {
+        const t = bossDeathTimer.current;
+        const px = bossDeathPos.current.x;
+        const py = bossDeathPos.current.y;
+
+        if (t < 0.25) {
+          const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
+          ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        const ringCount = 3;
+        const speed = 750;
+        for (let i = 0; i < ringCount; i++) {
+          const delay = i * 0.15;
+          const ringTime = t - delay;
+          if (ringTime > 0 && ringTime < 1.2) {
+            const radius = ringTime * speed;
+            const opacity = Math.max(0, 1 - ringTime / 1.2);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
+            ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
+            ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+            ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+            ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        const particleCount = 24;
+        const particleSpeed = 550;
+        const particleLife = 1.0;
+        if (t < particleLife) {
+          const opacity = Math.max(0, 1 - t / particleLife);
+          ctx.save();
+          ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+          ctx.shadowBlur = 15;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
+            const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
+            const x = px + Math.cos(angle) * distance;
+            const y = py + Math.sin(angle) * distance;
+
+            ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
+            ctx.fillRect(x - 4, y - 4, 8, 8);
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.fillRect(x - 2, y - 2, 4, 4);
+          }
+          ctx.restore();
+        }
+      }
+
       ctx.restore();
     };
 
@@ -3161,6 +3187,13 @@ export function GameArena({
       Registry.minions = [];
     };
   }, []);
+
+  const gameResult = useGameStore((state) => state.gameResult);
+  const menuIndex = useGameStore((state) => state.menuIndex);
+  const navTo = useGameStore((state) => state.navTo);
+  const resetGameSession = useGameStore((state) => state.resetGameSession);
+  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
+  const playerHP = useGameStore((state) => state.playerHP);
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -3194,36 +3227,40 @@ export function GameArena({
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
                   You defeated the boss!
-                </p>
-              </div>
-            )}
+                  </p>
+                </div>
+              )}
 
-            <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
-              <button
-                onClick={() => navTo("PLAYING")}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-                RETRY
-                {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
-              </button>
-              <button
-                onClick={() => navTo("TITLE")}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-                MENU
-                {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
-              </button>
+              <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
+                <button
+                  onClick={() => {
+                    resetGameSession();
+                    navTo("PLAYING");
+                  }}
+                  onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+                  className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                >
+                  {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
+                  RETRY
+                  {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
+                </button>
+                <button
+                  onClick={() => navTo("TITLE")}
+                  onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+                  className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                >
+                  {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
+                  MENU
+                  {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
 }
+
 
 
 ● ./src/components/HealthComponent.ts
@@ -4579,7 +4616,7 @@ class SoundSynth {
   private sfxGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
 
-  private musicInterval: any = null;
+  private musicInterval: ReturnType<typeof setInterval> | null = null;
   private musicTickIndex: number = 0;
   private isMusicPlaying: boolean = false;
 
@@ -4607,13 +4644,15 @@ class SoundSynth {
     const config = settingsManager.getAudio();
     const now = this.ctx.currentTime;
 
-    const master = config.masterMuted ? 0 : config.masterVolume * 0.25;
-    const sfx = config.sfxMuted ? 0 : config.sfxVolume;
-    const music = config.musicMuted ? 0 : config.musicVolume * 0.4;
+    // Standardized mixing levels modeled after professional audio channels
+    const master = config.masterMuted ? 0 : config.masterVolume * 0.35;
+    const sfx = config.sfxMuted ? 0 : config.sfxVolume * 0.85;
+    const music = config.musicMuted ? 0 : config.musicVolume * 0.30;
 
-    this.masterGain.gain.setValueAtTime(master, now);
-    this.sfxGain.gain.setValueAtTime(sfx, now);
-    this.musicGain.gain.setValueAtTime(music, now);
+    // Apply linear ramps to prevent audio clicks on slider adjustment
+    this.masterGain.gain.linearRampToValueAtTime(master, now + 0.05);
+    this.sfxGain.gain.linearRampToValueAtTime(sfx, now + 0.05);
+    this.musicGain.gain.linearRampToValueAtTime(music, now + 0.05);
   }
 
   private resumeContext() {
@@ -4623,35 +4662,55 @@ class SoundSynth {
     }
   }
 
+  /**
+   * Generates a procedural pitch bend with an ADSR envelope
+   */
   public playJump() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
 
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
 
     osc.type = "triangle";
+    filter.type = "lowpass";
+
     const now = this.ctx.currentTime;
 
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.exponentialRampToValueAtTime(450, now + 0.12);
+    // Pitch envelope
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(480, now + 0.12);
 
-    gain.gain.setValueAtTime(0.6, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    // Resonant filter envelope
+    filter.frequency.setValueAtTime(1200, now);
+    filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+    filter.Q.setValueAtTime(4.0, now);
 
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
+    // Amplitude envelope (ADSR)
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02); // Attack
+    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08); // Decay
+    envelope.gain.setValueAtTime(0.1, now + 0.12); // Sustain
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15); // Release
+
+    osc.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.16);
   }
 
+  /**
+   * Generates custom filtered white noise
+   */
   public playDash() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
 
     const now = this.ctx.currentTime;
-    const duration = 0.15;
+    const duration = 0.18;
 
     const bufferSize = this.ctx.sampleRate * duration;
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -4664,17 +4723,19 @@ class SoundSynth {
     noiseNode.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.setValueAtTime(1200, now);
-    filter.frequency.exponentialRampToValueAtTime(600, now + duration);
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(500, now + duration);
+    filter.Q.setValueAtTime(2.5, now);
 
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    const envelope = this.ctx.createGain();
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01); // Snappy Attack
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
 
     noiseNode.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     noiseNode.start(now);
     noiseNode.stop(now + duration);
@@ -4686,20 +4747,21 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(500, now);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
 
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.45, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
+    osc.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
-    osc.stop(now + 0.11);
+    osc.stop(now + 0.13);
   }
 
   public playHitConfirm() {
@@ -4709,7 +4771,7 @@ class SoundSynth {
     const now = this.ctx.currentTime;
     const osc1 = this.ctx.createOscillator();
     const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     osc1.type = "square";
     osc1.frequency.setValueAtTime(800, now);
@@ -4718,17 +4780,18 @@ class SoundSynth {
     osc2.type = "triangle";
     osc2.frequency.setValueAtTime(400, now);
 
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.28, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(this.sfxGain);
+    osc1.connect(envelope);
+    osc2.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc1.start(now);
     osc2.start(now);
-    osc1.stop(now + 0.09);
-    osc2.stop(now + 0.09);
+    osc1.stop(now + 0.10);
+    osc2.stop(now + 0.10);
   }
 
   public playPogo() {
@@ -4737,20 +4800,21 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(300, now);
-    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.09);
 
-    gain.gain.setValueAtTime(0.6, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.65, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
 
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
+    osc.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
-    osc.stop(now + 0.11);
+    osc.stop(now + 0.12);
   }
 
   public playHurt() {
@@ -4759,25 +4823,27 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    const envelope = this.ctx.createGain();
 
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
 
-    const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.setValueAtTime(250, now);
+    filter.frequency.setValueAtTime(280, now);
+    filter.Q.setValueAtTime(2.0, now);
 
-    gain.gain.setValueAtTime(0.8, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.85, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
 
     osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
-    osc.stop(now + 0.16);
+    osc.stop(now + 0.17);
   }
 
   public playSelectTick() {
@@ -4786,16 +4852,17 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.setValueAtTime(620, now);
 
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.15, now + 0.005);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
 
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
+    osc.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.05);
@@ -4807,16 +4874,17 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.setValueAtTime(105, now);
 
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    envelope.gain.setValueAtTime(0.0, now);
+    envelope.gain.linearRampToValueAtTime(0.32, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
-    osc.connect(gain);
-    gain.connect(this.sfxGain);
+    osc.connect(envelope);
+    envelope.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.13);
@@ -4828,7 +4896,7 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const envelope = this.ctx.createGain();
 
     const charCode = char.charCodeAt(0) || 65;
 
@@ -4836,23 +4904,25 @@ class SoundSynth {
       osc.type = "sine";
       const freq = 240 + (charCode % 6) * 35;
       osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(now);
-      osc.stop(now + 0.05);
+
+      envelope.gain.setValueAtTime(0.0, now);
+      envelope.gain.linearRampToValueAtTime(0.15, now + 0.005);
+      envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
     } else {
       osc.type = "triangle";
       const freq = 70 + (charCode % 5) * 12;
       osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(now);
-      osc.stop(now + 0.08);
+
+      envelope.gain.setValueAtTime(0.0, now);
+      envelope.gain.linearRampToValueAtTime(0.35, now + 0.01);
+      envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
     }
+
+    osc.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.08);
   }
 
   public startMusic() {
@@ -4883,16 +4953,17 @@ class SoundSynth {
       const freq = baseFreq * octaveShift;
 
       const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const envelope = this.ctx.createGain();
 
       osc.type = "triangle";
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
 
-      gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + stepTime - 0.02);
+      envelope.gain.setValueAtTime(0.0, this.ctx.currentTime);
+      envelope.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime + 0.01);
+      envelope.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + stepTime - 0.02);
 
-      osc.connect(gain);
-      gain.connect(this.musicGain);
+      osc.connect(envelope);
+      envelope.connect(this.musicGain);
 
       osc.start();
       osc.stop(this.ctx.currentTime + stepTime);
@@ -4911,7 +4982,6 @@ class SoundSynth {
 }
 
 export const soundSynth = new SoundSynth();
-
 
 
 ● ./src/entities/BaseEntity.ts
@@ -6727,6 +6797,123 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+
+
+● ./src/store/useGameStore.ts
+────────────────────────────────────────────────────
+import { create } from "zustand";
+
+export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
+export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
+
+interface GameState {
+  currentScreen: ScreenState;
+  menuIndex: number;
+  playerHP: number;
+  bossHP: number;
+  healingCharges: number;
+  determination: number;
+  gameResult: GameResultState;
+  retryCount: number;
+  isGlitching: boolean;
+  bossDeathCoordinates: { x: number; y: number } | null;
+
+  navTo: (screen: ScreenState) => void;
+  setMenuIndex: (index: number) => void;
+  setPlayerHP: (hp: number) => void;
+  setBossHP: (hp: number) => void;
+  setHealingCharges: (charges: number) => void;
+  setDetermination: (determination: number) => void;
+  setGameResult: (result: GameResultState) => void;
+  triggerGlitch: (duration?: number) => void;
+  triggerBossDefeat: (x: number, y: number) => void;
+  resetGameSession: () => void;
+}
+
+export const useGameStore = create<GameState>((set, get) => ({
+  currentScreen: "TITLE",
+  menuIndex: 0,
+  playerHP: 5,
+  bossHP: 30,
+  healingCharges: 0,
+  determination: 0,
+  gameResult: "PLAYING",
+  retryCount: 0,
+  isGlitching: false,
+  bossDeathCoordinates: null,
+
+  navTo: (screen) => {
+    set((state) => ({
+      currentScreen: screen,
+      menuIndex: 0,
+      isGlitching: false,
+      bossDeathCoordinates: null,
+      retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
+    }));
+  },
+
+  setMenuIndex: (index) => set({ menuIndex: index }),
+
+  setPlayerHP: (hp) => {
+    const current = get().playerHP;
+    if (hp !== current) {
+      set({ playerHP: hp });
+      if (hp < current && get().currentScreen === "PLAYING") {
+        get().triggerGlitch(150);
+      }
+    }
+  },
+
+  setBossHP: (hp) => {
+    if (hp !== get().bossHP) {
+      set({ bossHP: hp });
+    }
+  },
+
+  setHealingCharges: (charges) => {
+    if (charges !== get().healingCharges) {
+      set({ healingCharges: charges });
+    }
+  },
+
+  setDetermination: (determination) => {
+    if (determination !== get().determination) {
+      set({ determination });
+    }
+  },
+
+  setGameResult: (result) => {
+    if (result !== get().gameResult) {
+      set({ gameResult: result });
+    }
+  },
+
+  triggerGlitch: (duration = 150) => {
+    set({ isGlitching: true });
+    setTimeout(() => {
+      set({ isGlitching: false });
+    }, duration);
+  },
+
+  triggerBossDefeat: (x, y) => {
+    set({
+      bossDeathCoordinates: { x, y }
+    });
+  },
+
+  resetGameSession: () => {
+    set({
+      playerHP: 5,
+      bossHP: 30,
+      healingCharges: 0,
+      determination: 0,
+      gameResult: "PLAYING",
+      isGlitching: false,
+      bossDeathCoordinates: null,
+    });
+  },
+}));
 
 
 

@@ -1,0 +1,47 @@
+export type GameEventMap = {
+  PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
+  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number };
+  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number };
+  PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
+  PLAYER_JUMPED: void;
+  PLAYER_DASHED: { direction: number };
+  PLAYER_POGOED: void;
+  PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
+  PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
+  DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
+  CAMERA_SHAKE: { amplitude: number; duration: number };
+  HIT_STOP: { duration: number };
+  BOSS_DEFEATED: { x: number; y: number };
+  GAME_OVER: void;
+  VICTORY: void;
+};
+
+export type EventCallback<T> = (payload: T) => void;
+
+class EventBroker {
+  private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
+
+  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = new Set();
+    }
+    const set = this.listeners[event]!;
+    set.add(callback);
+    return () => {
+      this.listeners[event]?.delete(callback);
+    };
+  }
+
+  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void {
+    const set = this.listeners[event];
+    if (set) {
+      set.forEach((cb) => cb(payload));
+    }
+  }
+
+  public clear(): void {
+    this.listeners = {};
+  }
+}
+
+export const eventBroker = new EventBroker();
