@@ -3,39 +3,136 @@
   AI Terminal Execution & Development Guidelines
 ===========================================================================
 
-1. TERMINAL EXECUTION & HEREDOC PROTOCOLS (CRITICAL)
-----------------------------------------------------
-To prevent Zsh parsing failures, environment errors, variable corruption, or script truncation on macOS systems, strictly adhere to the following execution protocols:
+1. WORKFLOW RULES (CRITICAL)
+----------------------------
+1.1  Terminal Only
+     Do not ask the user to manually create or modify files. Provide full 
+     terminal commands using `cat << 'EOF' > path/to/file` to create or 
+     overwrite files. Organize terminal commands into logical, clean batches.
 
-1.1 Quoted Starting Delimiters (Shell Protection)
-    - Always wrap the starting heredoc delimiter in single quotes (e.g., cat << 'EOF' > path/to/file or cat << 'ENDOFSCRIPT').
-    - Unquoted delimiters allow the terminal shell (Zsh/Bash) to perform immediate variable expansion ($variable) and backtick execution (`` ` ``) *before* writing the text to the file. This process strips or corrupts raw JavaScript, TypeScript, and CSS rules.
+1.2  No Placeholders
+     Write complete, fully functional, compilation-safe code. Avoid using 
+     comments like "// ... rest of code" or placeholder stubs.
 
-1.2 Zero Shell Comments
-    - Never include hash symbols (#) inside any active terminal or shell code blocks.
-    - Copy-pasting shell commands containing hash lines directly into macOS interactive Zsh terminals triggers parsing errors or partial executions. Keep shell blocks strictly functional and describe operations in the accompanying markdown text instead.
+1.3  Step-by-Step Phase-Based Workflow
+     Before making changes, outline the phases of work. Provide the files and 
+     patches sequentially in distinct, logical steps rather than all at once.
 
-1.3 Delimiter Syntax and Formatting
-    - The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its own line with zero leading or trailing whitespace.
-    - If any space, tab, or comment character is placed on the delimiter line, the shell will fail to recognize the boundary and keep appending input, causing truncation or terminal lockup.
+1.4  Verification Checklist
+     After providing code, list specific, actionable manual tests or compile 
+     checks for the user to run to verify the change has succeeded.
 
-1.4 Temporary Script ESM Standard
-    - Since this project operates with "type": "module", all temporary Node.js scripts must use ES Module syntax (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
+1.5  Atomic Commits
+     When requested, output Git commit command sequences. Format as:
+       git add . && git commit -m "title" -m "description" && git push
+     Do not present commit commands until explicitly requested. Always use the 
+     period (.) for `git add` to capture all staged modifications.
 
-1.5 Script Execution and Automatic Cleanup
-    - All file patches using temporary Node.js scripts must always append the self-delete command on the exact same execution line (e.g., "node ./patch.js && rm ./patch.js") to prevent cluttering the repository.
+1.6  Lean Ship
+     Keep external runtime dependencies low. Generate game assets, procedural 
+     waveforms, and canvas graphics programmatically rather than relying on 
+     static binaries or heavy external loaders.
 
-1.6 Zsh Compatibility & Special Characters
-    - Do not use unescaped exclamation marks (!) inside shell string variables. Zsh treats them as history expansion operators and will fail to execute the command. 
+1.7  WAIT (Communication Checkpoint)
+     Do not output extensive code blocks for a proposed plan until the user 
+     confirms the outline. Articulate the approach clearly first, then wait 
+     for the confirmation signal.
 
-1.7 Surgical Patches vs. Overwrites
-    - For small-to-medium files, perform full overwrites (cat << 'EOF' > file).
-    - For large files, write a temporary Node.js script using fs.readFileSync and regex/string replacement (as defined in 1.4 and 1.5) to avoid file truncation during large output generation.
+1.8  Local Testing
+     All verification must be supported by running the local Vite server 
+     development commands (`npm run dev`) and verifying build stability 
+     (`npm run build`).
 
-2. BUILD & TESTING VERIFICATION
--------------------------------
-- Build Verification: Validate all TypeScript compilation updates by running "npm run build" before concluding.
-- Procedural Assets: Keep codebase dependencies light. Generate retro game assets and audio procedurally rather than using static imports.
-- Atomic Commits: When requested, output: git add . && git commit -m "title" -m "description" && git push
-  Do not present commit strings until requested. Always use the period (.) for git add.
 
+2. CODE STANDARDS & TERMINAL PROTOCOLS
+--------------------------------------
+2.1  Node Scripts Must Be ESM
+     Since this project operates with "type": "module" in package.json, all 
+     temporary or auxiliary Node.js scripts must use ES Module syntax 
+     (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
+
+2.2  Surgical Patch Scripts
+     When modifying large source files, prefer writing temporary Node.js 
+     scripts (utilizing `fs.readFileSync` and `.replace()`) over full file 
+     overwrites to prevent command truncation or buffer loss.
+     CRITICAL: Always append the cleanup command (e.g., "&& rm ./patch.js") 
+     on the exact same execution line to keep the repository untracked space clean.
+
+2.3  Zsh Compatibility & Escaping
+     The development environment is on macOS running Zsh. Never use raw, unescaped 
+     exclamation marks (!) inside shell string variables, as Zsh parses them 
+     as history expansion operators and will fail execution. 
+
+2.4  Zero Bash Comments
+     Never include hash symbols (#) inside any active terminal or shell code 
+     blocks. Copy-pasting shell commands containing hash lines directly into 
+     macOS interactive Zsh terminals triggers immediate parsing errors or partial 
+     execution. Keep shell blocks strictly functional and describe operations 
+     in the accompanying markdown text instead.
+
+2.5  Strict Structured File Patching
+     When modifying CSS, JSON, or complex TypeScript layouts with nested brackets, 
+     do not use lazy regex matching (e.g. "[\s\S]*?") to replace large blocks, 
+     as it easily misaligns closing braces and corrupts files. Perform full 
+     overwrites for small-to-medium files or strict literal string matching 
+     for surgical updates.
+
+2.6  Unicode and Escapes in Bash
+     When writing inline scripts via terminal heredoc, never use raw unicode 
+     escapes (such as "\u00A0") if they risk being parsed by the terminal shell 
+     as literal invisible characters. Instead, use runtime code conversions 
+     like `String.fromCharCode(160)` to safely inject special characters.
+
+2.7  Quoted Starting Delimiters (Shell Protection)
+     Always wrap the starting heredoc delimiter in single quotes (e.g., 
+     `cat << 'EOF' > file` or `cat << 'ENDOFSCRIPT'`). Unquoted delimiters 
+     allow the shell to perform immediate variable expansion ($variable) and 
+     backtick execution before writing, stripping or corrupting raw JS, TS, 
+     and CSS structures.
+
+2.8  Delimiter Syntax and Formatting
+     The terminating delimiter (e.g., EOF or ENDOFSCRIPT) must sit alone on its 
+     own line with zero leading or trailing whitespace. Any leading spaces or 
+     tabs will prevent the terminal from recognizing the block boundary, 
+     causing terminal lockup or truncation.
+
+
+3. REMOTE INSPECTION & EDITING TECHNIQUES
+-----------------------------------------
+When debugging, analyzing, or modifying files, select the most efficient 
+protocol based on scope:
+
+3.1  Quick Inline Checks (node -e)
+     For single-purpose evaluations (verifying file contents, counting pattern 
+     instances, checking directory listings):
+       node -e "console.log(require('fs').readFileSync('src/App.tsx','utf8').includes('useGameStore'))"
+
+3.2  Multi-Line Analysis Scripts (Heredoc + Self-Delete)
+     For complex log analysis, directory traversal, or file verification:
+       cat << 'ENDOFSCRIPT' > ./analysis.js
+       import fs from 'fs';
+       import path from 'path';
+       // Analysis logic...
+       ENDOFSCRIPT
+       node ./analysis.js && rm ./analysis.js
+
+3.3  File Modification by Full Overwrite
+     For small to medium files, overwrite the target path directly:
+       cat << 'EOF' > src/components/ui/MyNewComponent.tsx
+       // Complete implementation...
+       EOF
+
+3.4  File Modification by Surgical Patch
+     For large files where only specific lines need adjustment:
+       cat << 'ENDOFSCRIPT' > ./patch.js
+       import fs from 'fs';
+       let content = fs.readFileSync('src/components/GameArena.tsx', 'utf8');
+       content = content.replace('old code block', 'new code block');
+       fs.writeFileSync('src/components/GameArena.tsx', content);
+       ENDOFSCRIPT
+       node ./patch.js && rm ./patch.js
+
+3.5  Build Verification
+     Validate all TypeScript compilations and bundler configurations after any 
+     file updates before concluding:
+       npm run build

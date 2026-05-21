@@ -10,56 +10,33 @@ import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
+import { useGameStore } from "@/store/useGameStore";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  playerHP: number;
-  bossHP: number;
-  gameResult: "PLAYING" | "GAMEOVER" | "VICTORY";
-  menuIndex: number;
-  setPlayerHP: (hp: number) => void;
-  setBossHP: (hp: number) => void;
-  setGameResult: (result: "PLAYING" | "GAMEOVER" | "VICTORY") => void;
   triggerDialogue: (speaker: "player" | "boss", text: string) => void;
-  navTo: (screen: any) => void;
   playHoverTick: () => void;
-  setMenuIndex: (index: number) => void;
-  setHealingCharges?: (charges: number) => void;
-  setDetermination?: (count: number) => void;
 }
 
 export function GameArena({
   canvasRef,
-  playerHP,
-  gameResult,
-  menuIndex,
-  setPlayerHP,
-  setBossHP,
-  setGameResult,
   triggerDialogue,
-  navTo,
   playHoverTick,
-  setMenuIndex,
-  setHealingCharges,
-  setDetermination,
 }: GameArenaProps) {
 
   const solids: Rectangle[] = [
-    // Outer Border Blocks
-    { x: 0, y: 1150, width: 400, height: 100 },  // Left Ground
-    { x: 850, y: 1150, width: 400, height: 100 }, // Right Ground
-    { x: 400, y: 1200, width: 450, height: 50 },  // Pit Floor
-    { x: 0, y: 0, width: 1250, height: 50 },      // Ceiling
-    { x: 0, y: 0, width: 50, height: 1250 },      // Left Wall
-    { x: 1200, y: 0, width: 50, height: 1250 },   // Right Wall
-
-    // Middle Floating solid block
+    { x: 0, y: 1150, width: 400, height: 100 },
+    { x: 850, y: 1150, width: 400, height: 100 },
+    { x: 400, y: 1200, width: 450, height: 50 },
+    { x: 0, y: 0, width: 1250, height: 50 },
+    { x: 0, y: 0, width: 50, height: 1250 },
+    { x: 1200, y: 0, width: 50, height: 1250 },
     { x: 425, y: 800, width: 400, height: 40 }
   ];
 
   const onewayPlatforms: Rectangle[] = [
-    { x: 50, y: 550, width: 300, height: 20 },   // Left middle perch
-    { x: 900, y: 550, width: 300, height: 20 }   // Right middle perch
+    { x: 50, y: 550, width: 300, height: 20 },
+    { x: 900, y: 550, width: 300, height: 20 }
   ];
 
   const hazards: Rectangle[] = [
@@ -70,6 +47,9 @@ export function GameArena({
   const hasTriggeredPhase2 = useRef<boolean>(false);
   const hasTriggeredPhase3 = useRef<boolean>(false);
   const isCinematicActive = useRef<boolean>(false);
+
+  const bossDeathTimer = useRef<number>(-1);
+  const bossDeathPos = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,6 +62,8 @@ export function GameArena({
     hasTriggeredPhase2.current = false;
     hasTriggeredPhase3.current = false;
     isCinematicActive.current = false;
+    bossDeathTimer.current = -1;
+    bossDeathPos.current = null;
 
     PhysicsComponent.setSolids(solids);
     PhysicsComponent.setHazards(hazards);
@@ -107,7 +89,9 @@ export function GameArena({
     Registry.boss = boss;
 
     Camera.reset();
-    setGameResult("PLAYING");
+    
+    const state = useGameStore.getState();
+    state.setGameResult("PLAYING");
 
     const handleUpdate = (dt: number) => {
       if (Camera.hitStopTimer > 0) {
@@ -116,6 +100,10 @@ export function GameArena({
       }
 
       Camera.update(dt);
+
+      if (bossDeathTimer.current >= 0) {
+        bossDeathTimer.current += dt;
+      }
 
       if (isCinematicActive.current) {
         player.velocity = { x: 0, y: 0 };
@@ -175,13 +163,16 @@ export function GameArena({
       const pHealth = player.getComponent(HealthComponent);
       const bHealth = boss.getComponent(HealthComponent);
 
-      if (pHealth) setPlayerHP(pHealth.currentHealth);
-      if (bHealth) setBossHP(bHealth.currentHealth);
+      if (pHealth) state.setPlayerHP(pHealth.currentHealth);
+      if (bHealth) state.setBossHP(bHealth.currentHealth);
 
-      if (setHealingCharges) setHealingCharges(player.healingCharges);
-      if (setDetermination) setDetermination(player.determinationCounter);
+      if (player.healingCharges !== state.healingCharges) {
+        state.setHealingCharges(player.healingCharges);
+      }
+      if (player.determinationCounter !== state.determination) {
+        state.setDetermination(player.determinationCounter);
+      }
 
-      // Plain Dialogue prompts
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
         triggerDialogue("player", "I found you. This battle ends now!");
@@ -197,34 +188,26 @@ export function GameArena({
         triggerDialogue("boss", "This is my final stand! Prepare yourself!");
       }
 
-      // Final defeat sequence triggers
       if (player.isDead) {
         isCinematicActive.current = true;
-        triggerDialogue("player", "No... I can't go on...");
-        triggerDialogue("boss", "You fought well... but I am victorious.");
-
         setTimeout(() => {
-          setGameResult("GAMEOVER");
+          state.setGameResult("GAMEOVER");
           loop.stop();
+          triggerDialogue("player", "No... I can't go on...");
+          triggerDialogue("boss", "You fought well... but I am victorious.");
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
+        bossDeathTimer.current = 0;
+        bossDeathPos.current = { x: boss.position.x, y: boss.position.y };
 
-        const parentEl = canvas.parentElement;
-        if (parentEl) {
-          const xPercent = (boss.position.x / 1250) * 100;
-          const yPercent = (boss.position.y / 1250) * 100;
-
-          const customEvent = new CustomEvent("boss-shockwave", { detail: { x: xPercent, y: yPercent } });
-          window.dispatchEvent(customEvent);
-        }
-
-        triggerDialogue("boss", "No... How could I lose this fight...");
-        triggerDialogue("player", "It is over. The area is secure.");
+        Camera.shake(30, 1.8);
 
         setTimeout(() => {
-          setGameResult("VICTORY");
+          state.setGameResult("VICTORY");
           loop.stop();
+          triggerDialogue("boss", "No... How could I lose this fight...");
+          triggerDialogue("player", "It is over. The area is secure.");
         }, 3500);
       }
 
@@ -278,6 +261,68 @@ export function GameArena({
         proj.draw(ctx);
       }
 
+      if (bossDeathTimer.current >= 0 && bossDeathPos.current) {
+        const t = bossDeathTimer.current;
+        const px = bossDeathPos.current.x;
+        const py = bossDeathPos.current.y;
+
+        if (t < 0.25) {
+          const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
+          ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        const ringCount = 3;
+        const speed = 750;
+        for (let i = 0; i < ringCount; i++) {
+          const delay = i * 0.15;
+          const ringTime = t - delay;
+          if (ringTime > 0 && ringTime < 1.2) {
+            const radius = ringTime * speed;
+            const opacity = Math.max(0, 1 - ringTime / 1.2);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
+            ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
+            ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+            ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+            ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        const particleCount = 24;
+        const particleSpeed = 550;
+        const particleLife = 1.0;
+        if (t < particleLife) {
+          const opacity = Math.max(0, 1 - t / particleLife);
+          ctx.save();
+          ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+          ctx.shadowBlur = 15;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
+            const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
+            const x = px + Math.cos(angle) * distance;
+            const y = py + Math.sin(angle) * distance;
+
+            ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
+            ctx.fillRect(x - 4, y - 4, 8, 8);
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.fillRect(x - 2, y - 2, 4, 4);
+          }
+          ctx.restore();
+        }
+      }
+
       ctx.restore();
     };
 
@@ -300,6 +345,13 @@ export function GameArena({
       Registry.minions = [];
     };
   }, []);
+
+  const gameResult = useGameStore((state) => state.gameResult);
+  const menuIndex = useGameStore((state) => state.menuIndex);
+  const navTo = useGameStore((state) => state.navTo);
+  const resetGameSession = useGameStore((state) => state.resetGameSession);
+  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
+  const playerHP = useGameStore((state) => state.playerHP);
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -333,32 +385,35 @@ export function GameArena({
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
                   You defeated the boss!
-                </p>
-              </div>
-            )}
+                  </p>
+                </div>
+              )}
 
-            <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
-              <button
-                onClick={() => navTo("PLAYING")}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-                RETRY
-                {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
-              </button>
-              <button
-                onClick={() => navTo("TITLE")}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-                MENU
-                {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
-              </button>
+              <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
+                <button
+                  onClick={() => {
+                    resetGameSession();
+                    navTo("PLAYING");
+                  }}
+                  onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+                  className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                >
+                  {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
+                  RETRY
+                  {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
+                </button>
+                <button
+                  onClick={() => navTo("TITLE")}
+                  onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+                  className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                >
+                  {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
+                  MENU
+                  {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );

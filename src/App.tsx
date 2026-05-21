@@ -5,8 +5,8 @@ import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
+import { useGameStore } from "@/store/useGameStore";
 
-// Standalone Screens
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
 import { SettingsScreen } from "@/components/menus/SettingsScreen";
@@ -17,19 +17,23 @@ import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
 
-type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
-
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [currentScreen, setCurrentScreen] = useState<ScreenState>("TITLE");
-  const [menuIndex, setMenuIndex] = useState<number>(0);
+  const currentScreen = useGameStore((state) => state.currentScreen);
+  const menuIndex = useGameStore((state) => state.menuIndex);
+  const playerHP = useGameStore((state) => state.playerHP);
+  const bossHP = useGameStore((state) => state.bossHP);
+  const gameResult = useGameStore((state) => state.gameResult);
+  const retryCount = useGameStore((state) => state.retryCount);
+  const isGlitching = useGameStore((state) => state.isGlitching);
+  const healingCharges = useGameStore((state) => state.healingCharges);
+  const determination = useGameStore((state) => state.determination);
 
-  const [playerHP, setPlayerHP] = useState(5);
-  const [bossHP, setBossHP] = useState(30);
-  const [gameResult, setGameResult] = useState<"PLAYING" | "GAMEOVER" | "VICTORY">("PLAYING");
+  const navTo = useGameStore((state) => state.navTo);
+  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
+  const resetGameSession = useGameStore((state) => state.resetGameSession);
 
-  // Save Matrix stats
   const {
     slots,
     copySourceIndex,
@@ -46,41 +50,10 @@ export default function App() {
   const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [isGlitching, setIsGlitching] = useState<boolean>(false);
-
-  // Dynamic HUD registers for healing
-  const [healingCharges, setHealingCharges] = useState<number>(0);
-  const [determination, setDetermination] = useState<number>(0);
-
-  const triggerGlitch = () => {
-    setIsGlitching(true);
-    setTimeout(() => {
-      setIsGlitching(false);
-    }, 150);
-  };
-
-  const navTo = (screen: ScreenState) => {
-    soundSynth.playSelectTick();
-    if (screen === "PLAYING") {
-      setRetryCount((prev) => prev + 1);
-    }
-    setCurrentScreen(screen);
-    setMenuIndex(0);
-    resetActions();
-    resetDialogues();
-  };
 
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };
-
-  // Trigger chromatic glitch on damage
-  useEffect(() => {
-    if (playerHP < 5 && currentScreen === "PLAYING") {
-      triggerGlitch();
-    }
-  }, [playerHP]);
 
   useEffect(() => {
     soundSynth.startMusic();
@@ -90,7 +63,6 @@ export default function App() {
     };
   }, []);
 
-  // Centralized Menu Navigation Listeners
   useEffect(() => {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
 
@@ -110,11 +82,11 @@ export default function App() {
       if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev + 1) % (maxIndex + 1));
+        setMenuIndex((menuIndex + 1) % (maxIndex + 1));
       } else if (e.key === "ArrowUp" || e.key === "KeyW" || (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"))) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((prev) => (prev - 1 + (maxIndex + 1)) % (maxIndex + 1));
+        setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
         e.preventDefault();
         triggerMenuSelection();
@@ -142,6 +114,7 @@ export default function App() {
     const triggerMenuSelection = () => {
       if (currentScreen === "PLAYING" && gameResult !== "PLAYING") {
         if (menuIndex === 0) {
+          resetGameSession();
           navTo("PLAYING");
         } else {
           navTo("TITLE");
@@ -150,45 +123,41 @@ export default function App() {
       } else if (currentScreen === "TITLE") {
         if (menuIndex === 0) {
           reloadSaveSlots();
-          setCurrentScreen("SAVE_SELECT");
-          setMenuIndex(0);
+          navTo("SAVE_SELECT");
         } else if (menuIndex === 1) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
+          navTo("OPTIONS");
         } else if (menuIndex === 2) {
-          setCurrentScreen("CREDITS");
-          setMenuIndex(0);
+          navTo("CREDITS");
         }
         soundSynth.playHitConfirm();
       } else if (currentScreen === "SAVE_SELECT") {
         if (menuIndex >= 0 && menuIndex <= 2) {
-          handleSlotAction(menuIndex, () => navTo("PLAYING"));
+          handleSlotAction(menuIndex, () => {
+            resetGameSession();
+            navTo("PLAYING");
+          });
         } else if (menuIndex === 3) {
           toggleCopyMode();
         } else if (menuIndex === 4) {
           toggleEraseMode();
         } else if (menuIndex === 5) {
           resetActions();
-          setCurrentScreen("TITLE");
-          setMenuIndex(0);
+          navTo("TITLE");
           soundSynth.playErrorTick();
         }
       } else if (currentScreen === "OPTIONS") {
         if (menuIndex === 0) {
-          setCurrentScreen("SOUND");
-          setMenuIndex(0);
+          navTo("SOUND");
         } else if (menuIndex === 1) {
-          setCurrentScreen("CONTROLS");
-          setMenuIndex(0);
+          navTo("CONTROLS");
         } else if (menuIndex === 2) {
-          setCurrentScreen("TITLE");
+          navTo("TITLE");
           setMenuIndex(1);
         }
         soundSynth.playHitConfirm();
       } else if (currentScreen === "SOUND") {
         if (menuIndex === 3) {
-          setCurrentScreen("OPTIONS");
-          setMenuIndex(0);
+          navTo("OPTIONS");
           soundSynth.playErrorTick();
         } else {
           if (menuIndex === 0) handleVolumeChange("masterMuted", !audio.masterMuted);
@@ -198,7 +167,7 @@ export default function App() {
         }
       } else if (currentScreen === "CONTROLS") {
         if (menuIndex === 7) {
-          setCurrentScreen("OPTIONS");
+          navTo("OPTIONS");
           setMenuIndex(1);
           soundSynth.playErrorTick();
         } else {
@@ -207,8 +176,7 @@ export default function App() {
           setRebindTarget({ action, index: 0 });
         }
       } else if (currentScreen === "CREDITS") {
-        setCurrentScreen("TITLE");
-        setMenuIndex(2);
+        navTo("TITLE");
         soundSynth.playErrorTick();
       }
     };
@@ -217,11 +185,9 @@ export default function App() {
       soundSynth.playErrorTick();
       if (currentScreen === "SAVE_SELECT" || currentScreen === "OPTIONS" || currentScreen === "CREDITS") {
         resetActions();
-        setCurrentScreen("TITLE");
-        setMenuIndex(0);
+        navTo("TITLE");
       } else if (currentScreen === "SOUND" || currentScreen === "CONTROLS") {
-        setCurrentScreen("OPTIONS");
-        setMenuIndex(0);
+        navTo("OPTIONS");
       }
     };
 
@@ -235,7 +201,6 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        {/* Status Panel (Health HUD) situated above gameplay arena */}
         <div className="cabinet-status-panel neo-pressed">
           <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
@@ -249,7 +214,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Healing Charges & Determination visual indicators */}
             {currentScreen === "PLAYING" && (
               <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
                 <div className="flex-row" style={{ gap: "4px" }}>
@@ -297,26 +261,18 @@ export default function App() {
           </div>
         </div>
 
-        {/* Dynamic Viewport Container */}
         <div className={`game-viewport-container ${isGlitching ? "filter-chromatic" : ""}`}>
           {currentScreen === "PLAYING" ? (
-            <GameArena
-              key={retryCount}
-              canvasRef={canvasRef}
-              playerHP={playerHP}
-              bossHP={bossHP}
-              gameResult={gameResult}
-              menuIndex={menuIndex}
-              setPlayerHP={setPlayerHP}
-              setBossHP={setBossHP}
-              setGameResult={setGameResult}
-              triggerDialogue={triggerDialogue}
-              navTo={navTo}
-              playHoverTick={playHoverTick}
-              setMenuIndex={setMenuIndex}
-              setHealingCharges={setHealingCharges}
-              setDetermination={setDetermination}
-            />
+            <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
+                <GameArena
+                  key={retryCount}
+                  canvasRef={canvasRef}
+                  triggerDialogue={triggerDialogue}
+                  playHoverTick={playHoverTick}
+                />
+              </div>
+            </div>
           ) : (
             <div className="screen-inner">
               {currentScreen === "TITLE" && (
@@ -324,16 +280,13 @@ export default function App() {
                   menuIndex={menuIndex}
                   onPlay={() => {
                     reloadSaveSlots();
-                    setCurrentScreen("SAVE_SELECT");
-                    setMenuIndex(0);
+                    navTo("SAVE_SELECT");
                   }}
                   onSettings={() => {
-                    setCurrentScreen("OPTIONS");
-                    setMenuIndex(0);
+                    navTo("OPTIONS");
                   }}
                   onCredits={() => {
-                    setCurrentScreen("CREDITS");
-                    setMenuIndex(0);
+                    navTo("CREDITS");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -352,8 +305,7 @@ export default function App() {
                   toggleEraseMode={toggleEraseMode}
                   onBack={() => {
                     resetActions();
-                    setCurrentScreen("TITLE");
-                    setMenuIndex(0);
+                    navTo("TITLE");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -364,15 +316,13 @@ export default function App() {
                 <SettingsScreen
                   menuIndex={menuIndex}
                   onAudio={() => {
-                    setCurrentScreen("SOUND");
-                    setMenuIndex(0);
+                    navTo("SOUND");
                   }}
                   onControls={() => {
-                    setCurrentScreen("CONTROLS");
-                    setMenuIndex(0);
+                    navTo("CONTROLS");
                   }}
                   onBack={() => {
-                    setCurrentScreen("TITLE");
+                    navTo("TITLE");
                     setMenuIndex(1);
                   }}
                   playHoverTick={playHoverTick}
@@ -386,8 +336,7 @@ export default function App() {
                   menuIndex={menuIndex}
                   handleVolumeChange={handleVolumeChange}
                   onBack={() => {
-                    setCurrentScreen("OPTIONS");
-                    setMenuIndex(0);
+                    navTo("OPTIONS");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -399,7 +348,7 @@ export default function App() {
                   menuIndex={menuIndex}
                   rebindTarget={rebindTarget}
                   onBack={() => {
-                    setCurrentScreen("OPTIONS");
+                    navTo("OPTIONS");
                     setMenuIndex(1);
                   }}
                   playHoverTick={playHoverTick}
@@ -412,7 +361,7 @@ export default function App() {
               {currentScreen === "CREDITS" && (
                 <CreditsScreen
                   onBack={() => {
-                    setCurrentScreen("TITLE");
+                    navTo("TITLE");
                     setMenuIndex(2);
                   }}
                 />
@@ -421,10 +370,8 @@ export default function App() {
           )}
         </div>
 
-        {/* Dialogue Console (Sits completely outside/below playing arena) */}
         {currentScreen === "PLAYING" && (
           <div className="dialogue-console">
-            {/* Player Dialogue Box (Left) */}
             <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
               <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
               <div className="dialogue-text-container">
@@ -433,7 +380,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Boss Dialogue Box (Right) */}
             <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
               <div className="dialogue-text-container" style={{ textAlign: "right" }}>
                 <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
@@ -446,7 +392,6 @@ export default function App() {
 
       </div>
 
-      {/* Hardware-accelerated split-channel Chromatic Aberration filter */}
       <svg style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}>
         <defs>
           <filter id="chromatic-aberration">
