@@ -418,81 +418,67 @@ export class Player extends BaseEntity {
     ctx.lineCap = "round";
 
     /* Swipe & Smear calculations: Compute elapsed progress of the active sword slash */
-    const progress = 1.0 - (this.meleeComponent.attackActiveTimer / 0.12);
-    const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.12);
+    const progress = 1.0 - (this.meleeComponent.attackActiveTimer / 0.09);
+    const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.09);
 
     if (this.attackDirection === "side") {
       const offset = facing * 35;
-
-      /* Compute full vertical 180 degree angles (top to bottom) */
       const baseStart = -Math.PI / 2;
       const angleLength = Math.PI;
-
       const currentSweepAngle = angleLength * progress;
 
-      /* Layer 1: Outer Fading Green Arc (Max Damage Reach - 90px) */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.50})`;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
-      ctx.shadowBlur = 10 * opacity;
-      ctx.lineWidth = 7;
+      const cx = this.position.x + offset;
+      const cy = this.position.y;
+
+      /* Render unified, solid radial gradient swipe path (No Concentric Gaps) */
+      const gradient = ctx.createRadialGradient(cx, cy, 30, cx, cy, 95);
+      gradient.addColorStop(0.0, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.35, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.80, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, `rgba(34, 197, 94, 0)`);
+
+      ctx.save();
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+      ctx.shadowBlur = 15 * opacity;
+      
       ctx.beginPath();
+      /* Draw Outer Boundary Wedge edge (95px reach) */
       ctx.arc(
-        this.position.x + offset,
-        this.position.y,
-        90,
+        cx,
+        cy,
+        95,
         facing > 0 ? baseStart : Math.PI - baseStart,
         facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
         facing < 0
       );
-      ctx.stroke();
+      /* Draw Inner Boundary Edge (30px reach) backward to close path cleanly */
+      ctx.arc(
+        cx,
+        cy,
+        30,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
 
-      /* Layer 2: Middle Lime Transition Arc (70px) */
-      ctx.strokeStyle = `rgba(132, 239, 158, ${opacity * 0.65})`;
-      ctx.lineWidth = 11;
+      /* Render motion ghost blur trail layer */
+      const trailAngle = currentSweepAngle * 0.80;
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.35})`;
+      ctx.lineWidth = 35;
       ctx.beginPath();
       ctx.arc(
-        this.position.x + offset,
-        this.position.y,
-        70,
+        cx,
+        cy,
+        65,
         facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle * 0.95 : Math.PI - (baseStart + currentSweepAngle * 0.95),
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
         facing < 0
       );
       ctx.stroke();
-
-      /* Layer 3: Inner Solid White Core (Critical Zone - 50px) */
-      ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
-      ctx.shadowColor = "rgba(255, 255, 255, 0.85)";
-      ctx.shadowBlur = 14 * opacity;
-      ctx.lineWidth = 14;
-      ctx.beginPath();
-      ctx.arc(
-        this.position.x + offset,
-        this.position.y,
-        50,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle * 0.90 : Math.PI - (baseStart + currentSweepAngle * 0.90),
-        facing < 0
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      /* Layer 4: Chronological Ghosting: Faded trails represent past frames of the sweep */
-      const ghostOpacity = Math.max(0, opacity - 0.35);
-      if (ghostOpacity > 0) {
-        ctx.strokeStyle = `rgba(34, 197, 94, ${ghostOpacity * 0.30})`;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(
-          this.position.x + offset,
-          this.position.y,
-          90,
-          facing > 0 ? baseStart : Math.PI - baseStart,
-          facing > 0 ? baseStart + currentSweepAngle * 0.70 : Math.PI - (baseStart + currentSweepAngle * 0.70),
-          facing < 0
-        );
-        ctx.stroke();
-      }
     }
     else if (this.attackDirection === "up") {
       /* Dynamic Up-Slash Sweep */

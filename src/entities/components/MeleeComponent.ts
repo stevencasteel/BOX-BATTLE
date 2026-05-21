@@ -2,7 +2,7 @@ import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle } from "@/core/Interfaces";
+
 
 export class MeleeComponent implements EntityComponent {
   public owner!: BaseEntity;
@@ -39,7 +39,7 @@ export class MeleeComponent implements EntityComponent {
 
   public triggerAttack(direction: "side" | "up" | "down"): void {
     this.attackActive = true;
-    this.attackActiveTimer = 0.12;
+    this.attackActiveTimer = 0.09;
     this.attackCooldownTimer = 0.15;
     this.hasHitEnemyThisSwing = false;
     this.attackDirection = direction;
@@ -58,44 +58,47 @@ export class MeleeComponent implements EntityComponent {
       }
     }
 
-    let attackHitbox: Rectangle;
     const facing = (this.owner as any).facingDirection ?? 1;
 
-    if (this.attackDirection === "up") {
-      attackHitbox = {
-        x: this.owner.position.x - 30,
-        y: this.owner.position.y - 77.5,
-        width: 60,
-        height: 75
-      };
-    } else {
-      const offset = facing * 40;
-      attackHitbox = {
-        x: this.owner.position.x + offset - 50,
-        y: this.owner.position.y - 40,
-        width: 100,
-        height: 80
-      };
-    }
-
     for (const target of targets) {
-      const halfW = target.size.width / 2;
-      const halfH = target.size.height / 2;
+      let isHit = false;
+      let distance = 0;
 
-      const isHit = (
-        attackHitbox.x + attackHitbox.width > target.position.x - halfW &&
-        attackHitbox.x < target.position.x + halfW &&
-        attackHitbox.y + attackHitbox.height > target.position.y - halfH &&
-        attackHitbox.y < target.position.y + halfH
-      );
+      if (this.attackDirection === "side") {
+        /* Side Slash Sweep (Circular radial segment check matching visual arc) */
+        const cx = this.owner.position.x + (facing * 35);
+        const cy = this.owner.position.y;
+        
+        const dx = target.position.x - cx;
+        const dy = target.position.y - cy;
+        distance = Math.sqrt(dx * dx + dy * dy);
+
+        const withinReach = distance <= 95 + (target.size.width / 2);
+        const withinDirection = (facing > 0 && target.position.x >= cx - 25) || (facing < 0 && target.position.x <= cx + 25);
+
+        if (withinReach && withinDirection) {
+          isHit = true;
+        }
+      } else if (this.attackDirection === "up") {
+        /* Up Slash Sweep (Circular radial segment check matching visual arc) */
+        const cx = this.owner.position.x;
+        const cy = this.owner.position.y - 35;
+
+        const dx = target.position.x - cx;
+        const dy = target.position.y - cy;
+        distance = Math.sqrt(dx * dx + dy * dy);
+
+        const withinReach = distance <= 95 + (target.size.height / 2);
+        const withinDirection = target.position.y <= cy + 25;
+
+        if (withinReach && withinDirection) {
+          isHit = true;
+        }
+      }
 
       if (isHit) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          const dx = target.position.x - this.owner.position.x;
-          const dy = target.position.y - this.owner.position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
           const isCloseRange = distance <= 75;
           const damage = isCloseRange ? 5 : 1;
 
@@ -105,10 +108,8 @@ export class MeleeComponent implements EntityComponent {
             (this.owner as any).registerDamageDealt?.();
 
             if (isCloseRange) {
-              /* Shake heavily on close-range critical hits */
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
-            /* Spawn Melee Impact Sparks flying in the direction of the swing */
             eventBroker.publish("SPAWN_SPARKS" as any, {
               x: target.position.x,
               y: target.position.y,
@@ -123,15 +124,35 @@ export class MeleeComponent implements EntityComponent {
     const activeProjectiles = this.owner.world.getProjectiles();
     for (const proj of activeProjectiles) {
       if (proj.isActive && proj.ownerId === "boss") {
-        const pW = proj.size.width / 2;
-        const pH = proj.size.height / 2;
+        let isHit = false;
 
-        const isHit = (
-          attackHitbox.x + attackHitbox.width > proj.position.x - pW &&
-          attackHitbox.x < proj.position.x + pW &&
-          attackHitbox.y + attackHitbox.height > proj.position.y - pH &&
-          attackHitbox.y < proj.position.y + pH
-        );
+        if (this.attackDirection === "side") {
+          const cx = this.owner.position.x + (facing * 35);
+          const cy = this.owner.position.y;
+          const dx = proj.position.x - cx;
+          const dy = proj.position.y - cy;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const withinReach = distance <= 95 + (proj.size.width / 2);
+          const withinDirection = (facing > 0 && proj.position.x >= cx - 25) || (facing < 0 && proj.position.x <= cx + 25);
+
+          if (withinReach && withinDirection) {
+            isHit = true;
+          }
+        } else if (this.attackDirection === "up") {
+          const cx = this.owner.position.x;
+          const cy = this.owner.position.y - 35;
+          const dx = proj.position.x - cx;
+          const dy = proj.position.y - cy;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const withinReach = distance <= 95 + (proj.size.height / 2);
+          const withinDirection = proj.position.y <= cy + 25;
+
+          if (withinReach && withinDirection) {
+            isHit = true;
+          }
+        }
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
