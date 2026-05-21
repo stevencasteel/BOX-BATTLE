@@ -95,6 +95,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 1.22, y: 0.78 };
         /* Spawn Landing Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("PLAYER_LANDED", undefined);
       }
       this.airtimeDuration = 0;
     }
@@ -234,6 +235,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Jump Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
@@ -244,12 +246,14 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Wall Slide Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
         /* Visual Squash and Stretch: Stretch vertically on double jump */
         this.visualScale = { x: 0.82, y: 1.18 };
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       }
     }
 

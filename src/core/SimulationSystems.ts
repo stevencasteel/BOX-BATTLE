@@ -65,12 +65,13 @@ export class SimulationSystems {
       })
     );
 
+    // Bespoke Fireball Launcher Hook
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
         if (level === 2) {
-          soundSynth.playDash();
+          soundSynth.playFireballLvl2();
         } else {
-          soundSynth.playJump();
+          soundSynth.playFireballLvl1();
         }
       })
     );
@@ -91,6 +92,13 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
         soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
+      })
+    );
+
+    // Dynamic Landing Thump Hook
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_LANDED", () => {
+        soundSynth.playLanding();
       })
     );
   }

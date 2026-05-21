@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 5:06:41 PM
+ [SYSTEM] Generated: 5/21/2026, 5:12:44 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -87,6 +87,7 @@
 ├── package.json
 ├── patch_phase2.js
 ├── patch_phase3.js
+├── patch_player_jumps.js
 ├── README.md
 ├── TODO.txt
 ├── tsconfig.app.json
@@ -628,6 +629,93 @@ replaceInFile(
 );
 
 console.log("All Phase 3 high-fidelity casting cleanups applied successfully.");
+
+
+
+● ./patch_player_jumps.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+const filepath = 'src/entities/Player.ts';
+let content = fs.readFileSync(filepath, 'utf8');
+
+// 1. Coyote Ground Jump Patch
+const coyoteTarget = `      else if (this.coyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.coyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on ground jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Jump Dust Puff */
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+      }`;
+
+const coyoteReplacement = `      else if (this.coyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.coyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on ground jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Jump Dust Puff */
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("PLAYER_JUMPED", undefined);
+      }`;
+
+// 2. Wall Coyote Jump Patch
+const wallTarget = `      else if (this.wallCoyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.velocity.x = this.lastWallNormal * 1650;
+        this.wallCoyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        this.dashComponent.resetDashCharge();
+        /* Visual Squash and Stretch: Stretch vertically on wall jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Wall Slide Dust Puff */
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+      }`;
+
+const wallReplacement = `      else if (this.wallCoyoteTimer > 0) {
+        this.velocity.y = -this.jumpForce;
+        this.velocity.x = this.lastWallNormal * 1650;
+        this.wallCoyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        this.dashComponent.resetDashCharge();
+        /* Visual Squash and Stretch: Stretch vertically on wall jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Wall Slide Dust Puff */
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("PLAYER_JUMPED", undefined);
+      }`;
+
+// 3. Double Jump Patch
+const doubleTarget = `      } else if (this.hasDoubleJump) {
+        this.velocity.y = -this.jumpForce;
+        this.hasDoubleJump = false;
+        this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on double jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+      }`;
+
+const doubleReplacement = `      } else if (this.hasDoubleJump) {
+        this.velocity.y = -this.jumpForce;
+        this.hasDoubleJump = false;
+        this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on double jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        eventBroker.publish("PLAYER_JUMPED", undefined);
+      }`;
+
+if (!content.includes(coyoteTarget) || !content.includes(wallTarget) || !content.includes(doubleTarget)) {
+  console.error("ERROR: One or more jump block targets were not found in Player.ts.");
+  process.exit(1);
+}
+
+content = content.replace(coyoteTarget, coyoteReplacement);
+content = content.replace(wallTarget, wallReplacement);
+content = content.replace(doubleTarget, doubleReplacement);
+
+fs.writeFileSync(filepath, content, 'utf8');
+console.log("Successfully patched Player.ts with all jump event publishers.");
 
 
 
@@ -4751,12 +4839,13 @@ export class SimulationSystems {
       })
     );
 
+    // Bespoke Fireball Launcher Hook
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
         if (level === 2) {
-          soundSynth.playDash();
+          soundSynth.playFireballLvl2();
         } else {
-          soundSynth.playJump();
+          soundSynth.playFireballLvl1();
         }
       })
     );
@@ -4777,6 +4866,13 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
         soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
+      })
+    );
+
+    // Dynamic Landing Thump Hook
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_LANDED", () => {
+        soundSynth.playLanding();
       })
     );
   }
@@ -4927,7 +5023,6 @@ class SoundSynth {
 
     let voice = this.activeSlides.get(id);
 
-    // Self-Healing Creation: Spawn node instantly if it is missing or was previously blocked
     if (!voice) {
       const buffer = this.getNoiseBuffer();
       if (!buffer) return;
@@ -4957,7 +5052,6 @@ class SoundSynth {
       this.activeSlides.set(id, voice);
     }
 
-    // Direct value assignment bypassing exponential scheduling layout delays
     const maxSpeed = 450;
     const ratio = Math.min(1.0, speed / maxSpeed);
     const targetGain = ratio * 0.15;
@@ -4998,6 +5092,134 @@ class SoundSynth {
     }
   }
 
+  public playLanding() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+
+    // 1. Sub-bass and mid-bass triangle thump (Raised starting pitch to be audible on standard speakers)
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const envelope = this.ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(65, now + 0.11);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(320, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.42, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+    osc.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.14);
+
+    // 2. High-frequency dust puff layer (White noise burst to cut through standard speaker drivers)
+    const noiseBuffer = this.getNoiseBuffer();
+    if (noiseBuffer) {
+      const noiseNode = this.ctx.createBufferSource();
+      noiseNode.buffer = noiseBuffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.setValueAtTime(1100, now);
+      noiseFilter.Q.setValueAtTime(2.0, now);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      noiseNode.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain);
+
+      noiseNode.start(now);
+      noiseNode.stop(now + 0.09);
+    }
+  }
+
+  public playFireballLvl1() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const envelope = this.ctx.createGain();
+
+    // Small Fireball: High-pitched cohesive counterpart using identical dual analog shapes (sawtooth + triangle)
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(440, now);
+    osc1.frequency.exponentialRampToValueAtTime(160, now + 0.15);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(220, now);
+    osc2.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(650, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.38, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.17);
+    osc2.stop(now + 0.17);
+  }
+
+  public playFireballLvl2() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const envelope = this.ctx.createGain();
+
+    // Large Fireball: Deep, heavy analog-warm dual-oscillator sweep
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(220, now);
+    osc1.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(110, now);
+    osc2.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(400, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.65, now + 0.02);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.29);
+    osc2.stop(now + 0.29);
+  }
+
   public playJump() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -5011,15 +5233,15 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(480, now + 0.12);
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
 
-    filter.frequency.setValueAtTime(1200, now);
-    filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(900, now + 0.12);
     filter.Q.setValueAtTime(4.0, now);
 
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02);
+    envelope.gain.linearRampToValueAtTime(0.55, now + 0.02);
     envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08);
     envelope.gain.setValueAtTime(0.1, now + 0.12);
     envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
@@ -5428,6 +5650,7 @@ export type GameEventMap = {
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
   ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean };
+  PLAYER_LANDED: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -6860,6 +7083,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 1.22, y: 0.78 };
         /* Spawn Landing Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("PLAYER_LANDED", undefined);
       }
       this.airtimeDuration = 0;
     }
@@ -6999,6 +7223,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Jump Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
@@ -7009,12 +7234,14 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.visualScale = { x: 0.82, y: 1.18 };
         /* Spawn Wall Slide Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
         /* Visual Squash and Stretch: Stretch vertically on double jump */
         this.visualScale = { x: 0.82, y: 1.18 };
+            eventBroker.publish("PLAYER_JUMPED", undefined);
       }
     }
 

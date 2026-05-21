@@ -133,7 +133,6 @@ class SoundSynth {
 
     let voice = this.activeSlides.get(id);
 
-    // Self-Healing Creation: Spawn node instantly if it is missing or was previously blocked
     if (!voice) {
       const buffer = this.getNoiseBuffer();
       if (!buffer) return;
@@ -163,7 +162,6 @@ class SoundSynth {
       this.activeSlides.set(id, voice);
     }
 
-    // Direct value assignment bypassing exponential scheduling layout delays
     const maxSpeed = 450;
     const ratio = Math.min(1.0, speed / maxSpeed);
     const targetGain = ratio * 0.15;
@@ -204,6 +202,134 @@ class SoundSynth {
     }
   }
 
+  public playLanding() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+
+    // 1. Sub-bass and mid-bass triangle thump (Raised starting pitch to be audible on standard speakers)
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const envelope = this.ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(65, now + 0.11);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(320, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.42, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+    osc.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.14);
+
+    // 2. High-frequency dust puff layer (White noise burst to cut through standard speaker drivers)
+    const noiseBuffer = this.getNoiseBuffer();
+    if (noiseBuffer) {
+      const noiseNode = this.ctx.createBufferSource();
+      noiseNode.buffer = noiseBuffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.setValueAtTime(1100, now);
+      noiseFilter.Q.setValueAtTime(2.0, now);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      noiseNode.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain);
+
+      noiseNode.start(now);
+      noiseNode.stop(now + 0.09);
+    }
+  }
+
+  public playFireballLvl1() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const envelope = this.ctx.createGain();
+
+    // Small Fireball: High-pitched cohesive counterpart using identical dual analog shapes (sawtooth + triangle)
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(440, now);
+    osc1.frequency.exponentialRampToValueAtTime(160, now + 0.15);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(220, now);
+    osc2.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(650, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.38, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.17);
+    osc2.stop(now + 0.17);
+  }
+
+  public playFireballLvl2() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const envelope = this.ctx.createGain();
+
+    // Large Fireball: Deep, heavy analog-warm dual-oscillator sweep
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(220, now);
+    osc1.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(110, now);
+    osc2.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(400, now);
+
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(0.65, now + 0.02);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(envelope);
+    envelope.connect(this.sfxGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.29);
+    osc2.stop(now + 0.29);
+  }
+
   public playJump() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -217,15 +343,15 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(480, now + 0.12);
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
 
-    filter.frequency.setValueAtTime(1200, now);
-    filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+    filter.frequency.setValueAtTime(1400, now);
+    filter.frequency.exponentialRampToValueAtTime(900, now + 0.12);
     filter.Q.setValueAtTime(4.0, now);
 
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02);
+    envelope.gain.linearRampToValueAtTime(0.55, now + 0.02);
     envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08);
     envelope.gain.setValueAtTime(0.1, now + 0.12);
     envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
