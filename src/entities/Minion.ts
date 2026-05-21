@@ -79,8 +79,7 @@ export class Minion extends BaseEntity {
     if (!pool) return;
 
     const dx = player.position.x - this.position.x;
-    const dy = player.position.y - minionClamp(this.position.y);
-    function minionClamp(val: number) { return val; }
+    const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 

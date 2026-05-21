@@ -106,7 +106,7 @@ export class MeleeComponent implements EntityComponent {
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            (this.owner as unknown as IDamageRecorder).registerDamageDealt();
+            (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
@@ -122,7 +122,7 @@ export class MeleeComponent implements EntityComponent {
       }
     }
 
-    const activeProjectiles = this.owner.world.getProjectiles();
+    const activeProjectiles = [...this.owner.world.getProjectiles()];
     for (const proj of activeProjectiles) {
       if (proj.isActive && proj.ownerId === "boss") {
         let isHit = false;
@@ -158,7 +158,7 @@ export class MeleeComponent implements EntityComponent {
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
@@ -198,7 +198,7 @@ export class MeleeComponent implements EntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
         }
 
         this.owner.velocity.y = -this.pogoForce;
@@ -232,7 +232,7 @@ export class MeleeComponent implements EntityComponent {
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
-          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt?.();
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;

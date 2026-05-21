@@ -300,7 +300,7 @@ class SoundSynth {
 
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.ctx || !this.sfxGain || !char) return;
 
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();

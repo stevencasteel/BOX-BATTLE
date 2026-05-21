@@ -101,10 +101,10 @@ export class Projectile extends BaseEntity implements Poolable {
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
 
-    const activeProjectiles = this.world.getProjectiles();
+    const activeProjectiles = [...this.world.getProjectiles()];
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const other = activeProjectiles[i];
-      if (other.isActive && other.ownerId === "boss") {
+      if (other && other.isActive && other.ownerId === "boss") {
         const oW = other.size.width / 2;
         const oH = other.size.height / 2;
 
