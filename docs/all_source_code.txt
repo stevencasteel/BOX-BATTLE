@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 3:57:56 PM
+ [SYSTEM] Generated: 5/21/2026, 4:07:44 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -98,9 +98,11 @@
 
 ● ./README.md
 ────────────────────────────────────────────────────
-# Box Battle
+# BOX BATTLE
 
-A retro action game built inside a neomorphic web arcade cabinet. Featuring responsive HTML5 Canvas rendering, custom 60Hz physics simulations, and procedural Web Audio synthesizer loops.
+Mega Man / Hollow Knight battle arena prototype.
+
+Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand
 
 Play the live build here:
 👉 **[Live Demo](https://stevencasteel.github.io/BOX-BATTLE/)**
@@ -139,7 +141,7 @@ Play the live build here:
 ---
 
 ## Creator
-Built by **[Steven Casteel](https://www.stevencasteel.com)**
+Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.5.
 
 
 
@@ -6991,7 +6993,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       return;
     }
 
-    if (this.checkSolidCollisions()) {
+    if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
       this.selfRelease();
       return;
     }
@@ -7021,6 +7023,30 @@ export class Projectile extends BaseEntity implements IPoolable {
 
       if (isHit) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  private checkOnewayCollisions(): boolean {
+    if (this.velocity.y < 0) return false;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+    const prevY = this.position.y - this.velocity.y * 0.016;
+
+    for (const platform of this.world.physicsWorld.onewayPlatforms) {
+      const isHit = (
+        this.position.x + halfW > platform.x &&
+        this.position.x - halfW < platform.x + platform.width &&
+        this.position.y + halfH > platform.y &&
+        this.position.y - halfH < platform.y + platform.height
+      );
+
+      if (isHit) {
+        if (prevY + halfH - 4 <= platform.y) {
+          return true;
+        }
       }
     }
     return false;
