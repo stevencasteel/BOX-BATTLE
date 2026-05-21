@@ -1,11 +1,11 @@
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
-import { HealthComponent } from "@/components/HealthComponent";
-import { InputReceiverComponent } from "@/components/InputReceiverComponent";
-import { DashComponent } from "@/components/DashComponent";
-import { MeleeComponent } from "@/components/MeleeComponent";
-import { FireballComponent } from "@/components/FireballComponent";
-import { HealComponent } from "@/components/HealComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
+import { DashComponent } from "@/entities/components/DashComponent";
+import { MeleeComponent } from "@/entities/components/MeleeComponent";
+import { FireballComponent } from "@/entities/components/FireballComponent";
+import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/EventBroker";
 

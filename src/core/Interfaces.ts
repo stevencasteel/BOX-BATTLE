@@ -1,4 +1,4 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 
 export interface Rectangle {
   x: number;
@@ -17,12 +17,18 @@ export interface IEntity {
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D): void;
   teardown(): void;
-  addComponent<T extends Component>(
+  addComponent<T extends EntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
     dependencies?: Record<string, any>
   ): T;
-  getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | null;
+  getComponent<T extends EntityComponent>(componentClass: new (...args: any[]) => T): T | null;
+}
+
+export interface IProjectile extends IEntity {
+  isActive: boolean;
+  ownerId: "player" | "boss";
+  damage: number;
 }
 
 export interface IDamageable {
@@ -52,6 +58,6 @@ export interface IWorld {
   boss: IEntity | null;
   minions: IEntity[];
   physicsWorld: IPhysicsWorld;
-  getProjectiles(): any[];
-  releaseProjectile(proj: any): void;
+  getProjectiles(): IProjectile[];
+  releaseProjectile(proj: IProjectile): void;
 }

@@ -1,6 +1,6 @@
 import { BaseEntity } from "./BaseEntity";
 import { Poolable } from "@/core/ObjectPool";
-import { HealthComponent } from "@/components/HealthComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 
 export class Projectile extends BaseEntity implements Poolable {

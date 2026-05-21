@@ -1,6 +1,6 @@
 import { IState } from "@/core/StateMachine";
 import { Boss } from "./Boss";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 
 export abstract class BossState implements IState {
   protected owner: Boss;

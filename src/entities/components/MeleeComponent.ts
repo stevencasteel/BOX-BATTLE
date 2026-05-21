@@ -1,10 +1,10 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { HealthComponent } from "@/components/HealthComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/EventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
-export class MeleeComponent implements Component {
+export class MeleeComponent implements EntityComponent {
   public owner!: BaseEntity;
   
   public attackCooldownTimer: number = 0;

@@ -1,4 +1,4 @@
-import { Component } from "./Component";
+import { EntityComponent } from "./EntityComponent";
 import { IEntity, IWorld } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
@@ -9,14 +9,14 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
-  private components = new Map<any, Component>();
+  private components = new Map<any, EntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
     this.world = world;
   }
 
-  public addComponent<T extends Component>(
+  public addComponent<T extends EntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
     dependencies?: Record<string, any>
@@ -26,7 +26,7 @@ export class BaseEntity implements IEntity {
     return component;
   }
 
-  public getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | null {
+  public getComponent<T extends EntityComponent>(componentClass: new (...args: any[]) => T): T | null {
     const component = this.components.get(componentClass);
     return (component as T) || null;
   }

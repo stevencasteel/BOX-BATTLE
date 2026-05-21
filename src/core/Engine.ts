@@ -2,7 +2,7 @@ import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { Registry } from "@/core/Registry";
-import { HealthComponent } from "@/components/HealthComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";

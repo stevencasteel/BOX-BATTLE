@@ -1,4 +1,4 @@
-import { IWorld, IEntity, IPhysicsWorld } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -14,14 +14,14 @@ export class World implements IWorld {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
-  public getProjectiles(): any[] {
+  public getProjectiles(): IProjectile[] {
     if (!this.projectilePool) return [];
-    return this.projectilePool.getActive() as any[];
+    return this.projectilePool.getActive() as any[] as IProjectile[];
   }
 
-  public releaseProjectile(proj: any): void {
+  public releaseProjectile(proj: IProjectile): void {
     if (this.projectilePool) {
-      this.projectilePool.release(proj);
+      this.projectilePool.release(proj as any);
     }
   }
 }

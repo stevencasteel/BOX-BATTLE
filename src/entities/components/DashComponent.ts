@@ -1,4 +1,4 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/EventBroker";
 
@@ -8,7 +8,7 @@ export interface GhostFrame {
   opacity: number;
 }
 
-export class DashComponent implements Component {
+export class DashComponent implements EntityComponent {
   public owner!: BaseEntity;
   
   public isDashing: boolean = false;

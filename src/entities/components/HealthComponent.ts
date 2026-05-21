@@ -1,8 +1,8 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/EventBroker";
 
-export class HealthComponent implements Component {
+export class HealthComponent implements EntityComponent {
   public owner!: BaseEntity;
   public maxHealth: number = 5;
   public currentHealth: number = 5;

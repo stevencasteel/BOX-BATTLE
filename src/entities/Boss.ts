@@ -1,6 +1,6 @@
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
-import { HealthComponent } from "@/components/HealthComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { 

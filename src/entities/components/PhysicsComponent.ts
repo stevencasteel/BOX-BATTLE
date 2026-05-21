@@ -1,8 +1,8 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 
-export class PhysicsComponent implements Component {
+export class PhysicsComponent implements EntityComponent {
   public owner!: BaseEntity;
   public gravity: number = 1200;
   public isGrounded: boolean = false;

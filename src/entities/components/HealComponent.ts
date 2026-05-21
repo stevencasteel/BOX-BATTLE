@@ -1,9 +1,9 @@
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { HealthComponent } from "@/components/HealthComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/EventBroker";
 
-export class HealComponent implements Component {
+export class HealComponent implements EntityComponent {
   public owner!: BaseEntity;
   
   public isHealing: boolean = false;
