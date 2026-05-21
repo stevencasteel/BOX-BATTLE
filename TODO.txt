@@ -2,12 +2,4 @@
   BOX BATTLE ENGINE WEB // PRODUCT BACKLOG
 ===========================================================================
 
-1. Screen-Space Shockwave Shader Migration
-------------------------------------------
-- Goal: Implement an expanding refractive ripple distortion centered on the final coordinates of the Boss upon defeat.
-- Godot Implementation:
-  - Inside Godot, this was resolved using a viewport-to-screen coordinate mapping post-process shader ("shockwave.gdshader" and "post_process_manager.gd").
-  - The script captured the final Global Position of the Boss, converted it to screen UV coordinates relative to the viewport container size (Main Resolution: 2560x1440), and passed the "center" vector to a CanvasItem shader material on a full-bleed overlay Rect.
-  - The shader used Sin waves and a smoothstep mask to distort underlying pixels based on distance from the center.
-- Web Implementation Roadmap:
-  - To prevent layout overhead, the Shockwave can be implemented in the future using an inline WebGL shader canvas overlay, or an SVG displacement map using "<feDisplacementMap>" and "<feTurbulence>" triggered programmatically upon the "boss.isDead" condition.
+All pending core, presentation-level, and optimization tasks completed and fully integrated.

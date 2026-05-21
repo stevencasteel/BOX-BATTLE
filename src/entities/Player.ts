@@ -95,6 +95,8 @@ export class Player extends BaseEntity {
       if (this.healTimer <= 0) {
         this.isHealing = false;
         this.healingCharges = Math.max(0, this.healingCharges - 1);
+        eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
+
         this.health.currentHealth = Math.min(this.health.maxHealth, this.health.currentHealth + 1);
         eventBroker.publish("PLAYER_HEALED", {
           amount: 1,
@@ -295,7 +297,9 @@ export class Player extends BaseEntity {
     if (this.determinationCounter >= 5) {
       this.determinationCounter = 0;
       this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
+      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
     }
+    eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
   }
 
   private checkHazardContact() {

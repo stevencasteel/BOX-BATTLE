@@ -8,6 +8,8 @@ export type GameEventMap = {
   PLAYER_POGOED: void;
   PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
   PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
+  HEALING_CHARGES_CHANGED: { charges: number };
+  DETERMINATION_CHANGED: { determination: number };
   DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
   CAMERA_SHAKE: { amplitude: number; duration: number };
   HIT_STOP: { duration: number };

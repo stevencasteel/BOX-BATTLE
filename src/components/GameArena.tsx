@@ -100,20 +100,27 @@ export function GameArena({
     const state = useGameStore.getState();
     state.setGameResult("PLAYING");
 
+    const pHealth = player.getComponent(HealthComponent);
+    const bHealth = boss.getComponent(HealthComponent);
+    if (pHealth) state.setPlayerHP(pHealth.currentHealth);
+    if (bHealth) state.setBossHP(bHealth.currentHealth);
+    state.setHealingCharges(player.healingCharges);
+    state.setDetermination(player.determinationCounter);
+
     const unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
       triggerDialogue(speaker, text);
     });
 
-    const handleUpdate = (dt: number) => {
+    const handleUpdate = () => {
       if (Camera.hitStopTimer > 0) {
-        Camera.update(dt);
+        Camera.update(0.016);
         return;
       }
 
-      Camera.update(dt);
+      Camera.update(0.016);
 
       if (bossDeathTimer.current >= 0) {
-        bossDeathTimer.current += dt;
+        bossDeathTimer.current += 0.016;
       }
 
       if (isCinematicActive.current) {
@@ -122,22 +129,22 @@ export function GameArena({
 
         const activeProjectiles = [...pool.getActive()];
         for (const proj of activeProjectiles) {
-          proj.update(dt);
+          proj.update(0.016);
         }
         inputProvider.postUpdate();
         return;
       }
 
-      player.update(dt);
-      boss.update(dt);
+      player.update(0.016);
+      boss.update(0.016);
 
       for (const spawner of activeSpawners) {
-        spawner.update(dt);
+        spawner.update(0.016);
       }
 
       const activeMinions = [...world.minions];
       for (const minion of activeMinions) {
-        minion.update(dt);
+        minion.update(0.016);
 
         if (!player.isDead && !minion.isDead) {
           const pW = player.size.width / 2;
@@ -168,20 +175,7 @@ export function GameArena({
 
       const activeProjectiles = [...pool.getActive()];
       for (const proj of activeProjectiles) {
-        proj.update(dt);
-      }
-
-      const pHealth = player.getComponent(HealthComponent);
-      const bHealth = boss.getComponent(HealthComponent);
-
-      if (pHealth) state.setPlayerHP(pHealth.currentHealth);
-      if (bHealth) state.setBossHP(bHealth.currentHealth);
-
-      if (player.healingCharges !== state.healingCharges) {
-        state.setHealingCharges(player.healingCharges);
-      }
-      if (player.determinationCounter !== state.determination) {
-        state.setDetermination(player.determinationCounter);
+        proj.update(0.016);
       }
 
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {

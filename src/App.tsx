@@ -6,6 +6,7 @@ import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { useGameStore } from "@/store/useGameStore";
+import { eventBroker } from "@/core/EventBroker";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
@@ -58,8 +59,28 @@ export default function App() {
   useEffect(() => {
     soundSynth.startMusic();
     reloadSaveSlots();
+
+    const unsubs = [
+      eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
+        useGameStore.getState().setPlayerHP(currentHealth);
+      }),
+      eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
+        useGameStore.getState().setPlayerHP(currentHealth);
+      }),
+      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+        useGameStore.getState().setBossHP(currentHealth);
+      }),
+      eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
+        useGameStore.getState().setHealingCharges(charges);
+      }),
+      eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: dValue }) => {
+        useGameStore.getState().setDetermination(dValue);
+      })
+    ];
+
     return () => {
       soundSynth.stopMusic();
+      unsubs.forEach((unsub) => unsub());
     };
   }, []);
 
