@@ -1,7 +1,7 @@
 import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements EntityComponent {
   public owner!: BaseEntity;

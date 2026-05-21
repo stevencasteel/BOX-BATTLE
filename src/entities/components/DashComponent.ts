@@ -1,6 +1,6 @@
 import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 
 export interface GhostFrame {
   x: number;

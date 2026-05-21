@@ -7,7 +7,7 @@ import { MeleeComponent } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;

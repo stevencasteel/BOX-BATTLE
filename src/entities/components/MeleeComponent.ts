@@ -1,7 +1,7 @@
 import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
 export class MeleeComponent implements EntityComponent {
@@ -28,23 +28,23 @@ export class MeleeComponent implements EntityComponent {
       this.attackDirection = null;
     }
 
-    if (this.attackActive && !this.hasHitEnemyThisSwing && this.attackDirection !== "down") {
-      this.checkMeleeAttackContact();
+    if (this.attackActive && !this.hasHitEnemyThisSwing) {
+      if (this.attackDirection === "down") {
+        this.checkPogoAttack();
+      } else {
+        this.checkMeleeAttackContact();
+      }
     }
   }
 
   public triggerAttack(direction: "side" | "up" | "down"): void {
     this.attackActive = true;
-    this.attackActiveTimer = 0.1;
+    this.attackActiveTimer = 0.12;
     this.attackCooldownTimer = 0.15;
     this.hasHitEnemyThisSwing = false;
     this.attackDirection = direction;
 
-    if (direction === "down") {
-      this.checkPogoAttack();
-    } else {
-      eventBroker.publish("PLAYER_ATTACKED", { direction });
-    }
+    eventBroker.publish("PLAYER_ATTACKED", { direction });
   }
 
   private checkMeleeAttackContact() {
@@ -173,6 +173,8 @@ export class MeleeComponent implements EntityComponent {
 
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
+        this.hasHitEnemyThisSwing = true;
+        this.hasHitEnemyThisSwing = true;
         
         const player = this.owner as any;
         player.hasDoubleJump = true;
@@ -204,6 +206,7 @@ export class MeleeComponent implements EntityComponent {
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;
+          this.hasHitEnemyThisSwing = true;
           
           const player = this.owner as any;
           player.hasDoubleJump = true;

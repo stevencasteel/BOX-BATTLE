@@ -1,5 +1,10 @@
 import { EntityComponent } from "@/entities/EntityComponent";
 
+export interface Vector2D {
+  x: number;
+  y: number;
+}
+
 export interface Rectangle {
   x: number;
   y: number;
@@ -9,8 +14,8 @@ export interface Rectangle {
 
 export interface IEntity {
   id: string;
-  position: { x: number; y: number };
-  velocity: { x: number; y: number };
+  position: Vector2D;
+  velocity: Vector2D;
   size: { width: number; height: number };
   isDead: boolean;
   world: IWorld;

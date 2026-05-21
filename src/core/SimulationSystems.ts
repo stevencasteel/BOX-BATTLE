@@ -1,4 +1,4 @@
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { Camera } from "@/core/Camera";
 import { soundSynth } from "@/core/SoundSynth";
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {

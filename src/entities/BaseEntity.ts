@@ -1,9 +1,9 @@
 import { EntityComponent } from "./EntityComponent";
-import { IEntity, IWorld } from "@/core/Interfaces";
+import { IEntity, IWorld, Vector2D } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
-  public position = { x: 0, y: 0 };
-  public velocity = { x: 0, y: 0 };
+  public position: Vector2D = { x: 0, y: 0 };
+  public velocity: Vector2D = { x: 0, y: 0 };
   public size = { width: 50, height: 50 };
   public id: string;
   public isDead: boolean = false;

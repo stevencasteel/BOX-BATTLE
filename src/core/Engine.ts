@@ -11,7 +11,7 @@ import { inputProvider } from "@/core/InputProvider";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
 export class Engine {

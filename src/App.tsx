@@ -6,8 +6,8 @@ import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
 import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
-import { eventBroker } from "@/core/EventBroker";
-import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
+import { eventBroker } from "@/core/eventBroker";
+import { screenConfigs, MenuContext } from "@/core/screenRoutes";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
