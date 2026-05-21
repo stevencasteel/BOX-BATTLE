@@ -14,6 +14,7 @@ import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
 import { Rectangle } from "@/core/Interfaces";
+import { defaultLevelConfig } from "@/core/levelData";
 
 interface Particle {
   x: number;
@@ -63,24 +64,9 @@ export class Engine {
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
-  private readonly solids: Rectangle[] = [
-    { x: 0, y: 1150, width: 400, height: 100 },
-    { x: 850, y: 1150, width: 400, height: 100 },
-    { x: 400, y: 1200, width: 450, height: 50 },
-    { x: 0, y: 0, width: 1250, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1250 },
-    { x: 1200, y: 0, width: 50, height: 1250 },
-    { x: 425, y: 800, width: 400, height: 40 }
-  ];
-
-  private readonly onewayPlatforms: Rectangle[] = [
-    { x: 50, y: 550, width: 300, height: 20 },
-    { x: 900, y: 550, width: 300, height: 20 }
-  ];
-
-  private readonly hazards: Rectangle[] = [
-    { x: 400, y: 1150, width: 450, height: 100 }
-  ];
+  private readonly solids: Rectangle[] = defaultLevelConfig.solids;
+  private readonly onewayPlatforms: Rectangle[] = defaultLevelConfig.onewayPlatforms;
+  private readonly hazards: Rectangle[] = defaultLevelConfig.hazards;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -107,22 +93,19 @@ export class Engine {
     Registry.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
-    this.player.position = { x: 150, y: 1000 };
+    this.player.position = { ...defaultLevelConfig.playerStart };
 
     this.boss = new Boss("boss-01", this.world);
-    this.boss.position = { x: 1050, y: 1000 };
+    this.boss.position = { ...defaultLevelConfig.bossStart };
 
     this.world.player = this.player;
     this.world.boss = this.boss;
     Registry.player = this.player;
     Registry.boss = this.boss;
 
-    this.activeSpawners = [
-      new Spawner("TURRET", 175, 490, this.world),
-      new Spawner("TURRET", 1075, 490, this.world),
-      new Spawner("LANCER", 625, 740, this.world),
-      new Spawner("FLYER", 625, 400, this.world)
-    ];
+    this.activeSpawners = defaultLevelConfig.spawners.map(
+      (s) => new Spawner(s.type, s.x, s.y, this.world)
+    );
 
     Camera.reset();
 
