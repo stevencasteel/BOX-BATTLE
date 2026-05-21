@@ -143,10 +143,10 @@ export class Minion extends BaseEntity {
       }
     }
 
-    if (this.minionType === "LANCER" && this.attackState === "TELEGRAPH") {
+    if (this.attackState === "TELEGRAPH") {
       ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
+      ctx.shadowBlur = 14;
     }
 
     ctx.fillRect(
