@@ -15,6 +15,18 @@ import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  shape: "spark" | "dust" | "ring";
+}
+
 export class Engine {
   private ctx: CanvasRenderingContext2D;
   private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
@@ -34,10 +46,10 @@ export class Engine {
 
   private bossDeathTimer: number = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
-  private deathTimeoutId: any = null;
-  private dialogueTimeoutId: any = null;
-  private dialogueStaggerTimeoutId: any = null;
-  private dialogueClearTimeoutId: any = null;
+  private deathTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private dialogueTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private dialogueStaggerTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private dialogueClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   /* Pause Diagnostics */
   public isPaused: boolean = false;
@@ -45,7 +57,7 @@ export class Engine {
   private unsubDialogue!: () => void;
 
   /* Particles Database */
-  private particles: any[] = [];
+  private particles: Particle[] = [];
   private unsubEvents: (() => void)[] = [];
 
   private accumulator: number = 0;

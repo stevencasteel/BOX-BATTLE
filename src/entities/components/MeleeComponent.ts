@@ -2,6 +2,7 @@ import { EntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
+import { IDamageRecorder } from "@/core/Interfaces";
 
 
 export class MeleeComponent implements EntityComponent {
@@ -105,7 +106,7 @@ export class MeleeComponent implements EntityComponent {
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            (this.owner as any).registerDamageDealt?.();
+            (this.owner as unknown as IDamageRecorder).registerDamageDealt();
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
@@ -157,7 +158,7 @@ export class MeleeComponent implements EntityComponent {
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          (this.owner as any).registerDamageDealt?.();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
@@ -197,7 +198,7 @@ export class MeleeComponent implements EntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          (this.owner as any).registerDamageDealt?.();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
         }
 
         this.owner.velocity.y = -this.pogoForce;
@@ -231,7 +232,7 @@ export class MeleeComponent implements EntityComponent {
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
-          (this.owner as any).registerDamageDealt?.();
+          (this.owner as unknown as IDamageRecorder).registerDamageDealt();
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;

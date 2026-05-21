@@ -66,3 +66,7 @@ export interface IWorld {
   getProjectiles(): IProjectile[];
   releaseProjectile(proj: IProjectile): void;
 }
+
+export interface IDamageRecorder {
+  registerDamageDealt(): void;
+}

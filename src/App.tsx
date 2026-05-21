@@ -39,6 +39,11 @@ export default function App() {
   const healingCharges = useGameplayStore((state) => state.healingCharges);
   const determination = useGameplayStore((state) => state.determination);
 
+  const setPlayerHP = useGameplayStore((state) => state.setPlayerHP);
+  const setBossHP = useGameplayStore((state) => state.setBossHP);
+  const setHealingCharges = useGameplayStore((state) => state.setHealingCharges);
+  const setDetermination = useGameplayStore((state) => state.setDetermination);
+
   const {
     slots,
     copySourceIndex,
@@ -87,6 +92,21 @@ export default function App() {
     });
 
     const unsubs = [
+      eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
+        setPlayerHP(currentHealth);
+      }),
+      eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
+        setPlayerHP(currentHealth);
+      }),
+      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+        setBossHP(currentHealth);
+      }),
+      eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
+        setHealingCharges(charges);
+      }),
+      eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: detValue }) => {
+        setDetermination(detValue);
+      }),
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         triggerDialogue(speaker, text);
       }),
@@ -99,7 +119,14 @@ export default function App() {
       unsubGameplay();
       unsubs.forEach((unsub) => unsub());
     };
-  }, [triggerDialogue, resetDialogues]);
+  }, [
+    triggerDialogue, 
+    resetDialogues, 
+    setPlayerHP, 
+    setBossHP, 
+    setHealingCharges, 
+    setDetermination
+  ]);
 
   useEffect(() => {
     if (gameResult !== "PLAYING") {
