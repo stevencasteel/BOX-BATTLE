@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 4:17:56 PM
+ [SYSTEM] Generated: 5/21/2026, 4:20:53 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -44,7 +44,6 @@
 │   │   ├── levelData.ts
 │   │   ├── ObjectPool.ts
 │   │   ├── PhysicsWorld.ts
-│   │   ├── Registry.ts
 │   │   ├── SaveManager.ts
 │   │   ├── schemas.ts
 │   │   ├── screenRoutes.ts
@@ -86,6 +85,7 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
+├── patch_phase2.js
 ├── README.md
 ├── TODO.txt
 ├── tsconfig.app.json
@@ -201,6 +201,12 @@ All pending core, presentation-level, and optimization tasks completed and fully
      All verification must be supported by running the local Vite server 
      development commands (`npm run dev`) and verifying build stability 
      (`npm run build`).
+
+1.9  Line Diagnostics for Debugging
+     When debugging or analyzing an error/crash stack trace where the exact 
+     line contents of a file are uncertain, always run a quick temporary 
+     diagnostic script (or evaluation command) to inspect and output the 
+     relevant lines before designing a patch or overwrite.
 
 
 2. CODE STANDARDS & TERMINAL PROTOCOLS
@@ -384,6 +390,85 @@ export default defineConfig([
     "@types/react-syntax-highlighter": "^15.5.13"
   }
 }
+
+
+● ./patch_phase2.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+function replaceInFile(filepath, target, replacement) {
+  const content = fs.readFileSync(filepath, 'utf8');
+  if (!content.includes(target)) {
+    console.error(`ERROR: Target string not found in ${filepath}`);
+    process.exit(1);
+  }
+  fs.writeFileSync(filepath, content.split(target).join(replacement));
+  console.log(`Successfully patched: ${filepath}`);
+}
+
+// Remove Registry imports and setup statements inside Engine.ts
+replaceInFile(
+  'src/core/Engine.ts',
+  "import { Registry } from \"@/core/Registry\";\n",
+  ""
+);
+
+replaceInFile(
+  'src/core/Engine.ts',
+  `    this.pool = new ObjectPool(() => new Projectile(), 60);
+    this.world.projectilePool = this.pool;
+    Registry.projectilePool = this.pool;`,
+  `    this.pool = new ObjectPool(() => new Projectile(), 60);
+    this.world.projectilePool = this.pool;`
+);
+
+replaceInFile(
+  'src/core/Engine.ts',
+  `    this.world.player = this.player;
+    this.world.boss = this.boss;
+    Registry.player = this.player;
+    Registry.boss = this.boss;`,
+  `    this.world.player = this.player;
+    this.world.boss = this.boss;`
+);
+
+replaceInFile(
+  'src/core/Engine.ts',
+  `    Registry.player = null;
+    Registry.boss = null;
+    Registry.projectilePool = null;
+    Camera.reset();
+    this.systems.teardown();
+    this.unsubDialogue();
+    this.unsubEvents.forEach((unsub) => unsub());
+    this.unsubEvents = [];
+    this.particles = [];
+    window.removeEventListener("keydown", this.handlePauseKey);
+    Registry.player = null;
+    Registry.boss = null;
+    Registry.projectilePool = null;
+
+    for (const spawner of this.activeSpawners) {
+      spawner.cleanup();
+    }
+    this.world.minions = [];
+    Registry.minions = [];`,
+  `    Camera.reset();
+    this.systems.teardown();
+    this.unsubDialogue();
+    this.unsubEvents.forEach((unsub) => unsub());
+    this.unsubEvents = [];
+    this.particles = [];
+    window.removeEventListener("keydown", this.handlePauseKey);
+
+    for (const spawner of this.activeSpawners) {
+      spawner.cleanup();
+    }
+    this.world.minions = [];`
+);
+
+console.log("All Registry coupling references inside Engine.ts successfully removed.");
+
 
 
 ● ./src/App.css
@@ -3194,7 +3279,6 @@ export class CanvasResizer {
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { Registry } from "@/core/Registry";
 import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
@@ -3283,7 +3367,6 @@ export class Engine {
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
-    Registry.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
     this.player.position = { ...defaultLevelConfig.playerStart };
@@ -3293,8 +3376,6 @@ export class Engine {
 
     this.world.player = this.player;
     this.world.boss = this.boss;
-    Registry.player = this.player;
-    Registry.boss = this.boss;
 
     this.activeSpawners = defaultLevelConfig.spawners.map(
       (s) => new Spawner(s.type, s.x, s.y, this.world)
@@ -3757,15 +3838,11 @@ export class Engine {
     this.unsubEvents = [];
     this.particles = [];
     window.removeEventListener("keydown", this.handlePauseKey);
-    Registry.player = null;
-    Registry.boss = null;
-    Registry.projectilePool = null;
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
     }
     this.world.minions = [];
-    Registry.minions = [];
   }
 }
 
@@ -4025,7 +4102,7 @@ export interface IEntity {
   addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: Record<string, any>
+    dependencies?: any
   ): T;
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
 }
@@ -4186,21 +4263,6 @@ export class PhysicsWorld implements IPhysicsWorld {
     }
     return false;
   }
-}
-
-
-
-● ./src/core/Registry.ts
-────────────────────────────────────────────────────
-import { ObjectPool } from "@/core/ObjectPool";
-import { Projectile } from "@/entities/Projectile";
-import { IEntity } from "@/core/Interfaces";
-
-export class Registry {
-  public static player: IEntity | null = null;
-  public static boss: IEntity | null = null;
-  public static projectilePool: ObjectPool<Projectile> | null = null;
-  public static minions: IEntity[] = [];
 }
 
 
@@ -5438,7 +5500,7 @@ export class BaseEntity implements IEntity {
   public addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: Record<string, any>
+    dependencies?: any
   ): T {
     component.setup(this, dependencies);
     this.components.set(componentClass, component);
@@ -5966,7 +6028,7 @@ export class BossDeadState extends BossState {
 import { BaseEntity } from "./BaseEntity";
 
 export interface IEntityComponent {
-  setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
+  setup(owner: BaseEntity, dependencies?: any): void;
   update?(dt: number): void;
   teardown?(): void;
 }
@@ -7483,6 +7545,11 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 
+export interface HealthComponentOptions {
+  maxHealth?: number;
+  invincibilityDuration?: number;
+}
+
 export class HealthComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public maxHealth: number = 5;
@@ -7494,7 +7561,7 @@ export class HealthComponent implements IEntityComponent {
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+  public setup(owner: BaseEntity, dependencies?: HealthComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
       if (dependencies.maxHealth !== undefined) {
@@ -7907,6 +7974,10 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 
+export interface PhysicsComponentOptions {
+  gravity?: number;
+}
+
 export class PhysicsComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public gravity: number = 1200;
@@ -7916,7 +7987,7 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+  public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
       if (dependencies.gravity !== undefined) {

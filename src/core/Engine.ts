@@ -1,7 +1,6 @@
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { Registry } from "@/core/Registry";
 import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
@@ -90,7 +89,6 @@ export class Engine {
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
-    Registry.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
     this.player.position = { ...defaultLevelConfig.playerStart };
@@ -100,8 +98,6 @@ export class Engine {
 
     this.world.player = this.player;
     this.world.boss = this.boss;
-    Registry.player = this.player;
-    Registry.boss = this.boss;
 
     this.activeSpawners = defaultLevelConfig.spawners.map(
       (s) => new Spawner(s.type, s.x, s.y, this.world)
@@ -564,14 +560,10 @@ export class Engine {
     this.unsubEvents = [];
     this.particles = [];
     window.removeEventListener("keydown", this.handlePauseKey);
-    Registry.player = null;
-    Registry.boss = null;
-    Registry.projectilePool = null;
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
     }
     this.world.minions = [];
-    Registry.minions = [];
   }
 }

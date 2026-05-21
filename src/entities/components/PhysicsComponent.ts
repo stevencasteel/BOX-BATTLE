@@ -2,6 +2,10 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 
+export interface PhysicsComponentOptions {
+  gravity?: number;
+}
+
 export class PhysicsComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public gravity: number = 1200;
@@ -11,7 +15,7 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+  public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
       if (dependencies.gravity !== undefined) {

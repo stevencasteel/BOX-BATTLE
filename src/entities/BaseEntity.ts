@@ -23,7 +23,7 @@ export class BaseEntity implements IEntity {
   public addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: Record<string, any>
+    dependencies?: any
   ): T {
     component.setup(this, dependencies);
     this.components.set(componentClass, component);

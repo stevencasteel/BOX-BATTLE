@@ -33,7 +33,7 @@ export interface IEntity {
   addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: Record<string, any>
+    dependencies?: any
   ): T;
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
 }

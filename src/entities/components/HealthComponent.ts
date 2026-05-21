@@ -2,6 +2,11 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 
+export interface HealthComponentOptions {
+  maxHealth?: number;
+  invincibilityDuration?: number;
+}
+
 export class HealthComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public maxHealth: number = 5;
@@ -13,7 +18,7 @@ export class HealthComponent implements IEntityComponent {
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+  public setup(owner: BaseEntity, dependencies?: HealthComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
       if (dependencies.maxHealth !== undefined) {
