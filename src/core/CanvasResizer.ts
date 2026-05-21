@@ -23,7 +23,7 @@ export class CanvasResizer {
     this.lastWidth = containerWidth;
     this.lastHeight = containerHeight;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const scale = Math.min(containerWidth / this.internalWidth, containerHeight / this.internalHeight);
 
     const displayWidth = this.internalWidth * scale;
@@ -32,8 +32,8 @@ export class CanvasResizer {
     this.canvas.style.width = `${displayWidth}px`;
     this.canvas.style.height = `${displayHeight}px`;
 
-    this.canvas.width = displayWidth * dpr;
-    this.canvas.height = displayHeight * dpr;
+    this.canvas.width = Math.floor(displayWidth * dpr);
+    this.canvas.height = Math.floor(displayHeight * dpr);
 
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.scale(dpr * scale, dpr * scale);

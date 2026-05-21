@@ -106,6 +106,10 @@ body {
 /* CRT Filters - gameplay canvas only */
 .crt-scanlines {
   position: relative;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .crt-scanlines::after {
@@ -413,6 +417,7 @@ body {
   overflow: hidden;
   background: var(--void-bg);
   position: relative;
+  contain: layout style paint;
 }
 
 .gameover-overlay {

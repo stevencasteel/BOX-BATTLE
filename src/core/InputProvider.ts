@@ -47,6 +47,7 @@ class InputProvider {
     if (typeof window !== "undefined") {
       window.addEventListener("keydown", this.handleKeyDown);
       window.addEventListener("keyup", this.handleKeyUp);
+      window.addEventListener("blur", this.handleBlur);
     }
   }
 
@@ -92,6 +93,16 @@ class InputProvider {
     }
   };
 
+  private handleBlur = () => {
+    for (const key in this.pressed) {
+      const action = key as Action;
+      this.pressed[action] = false;
+      this.justPressed[action] = false;
+      this.justReleased[action] = false;
+      this.pressTimestamps[action] = 0;
+    }
+  };
+
   public isPressed(action: Action): boolean {
     return this.pressed[action];
   }
@@ -123,6 +134,7 @@ class InputProvider {
     if (typeof window !== "undefined") {
       window.removeEventListener("keydown", this.handleKeyDown);
       window.removeEventListener("keyup", this.handleKeyUp);
+      window.removeEventListener("blur", this.handleBlur);
     }
   }
 }

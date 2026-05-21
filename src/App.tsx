@@ -4,6 +4,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
+import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
 import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
 import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
@@ -19,6 +20,7 @@ import { GameArena } from "@/components/GameArena";
 import "./App.css";
 
 export default function App() {
+  const bootStage = useBootSequence();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const statusPanelRef = useRef<HTMLDivElement>(null);
   const dialogueConsoleRef = useRef<HTMLDivElement>(null);
@@ -354,6 +356,16 @@ export default function App() {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
   }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);
+
+  if (bootStage === BootStage.NONE) {
+    return (
+      <div className="app-wrapper">
+        <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-wrapper">
