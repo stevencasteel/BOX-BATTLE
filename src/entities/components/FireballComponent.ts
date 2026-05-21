@@ -1,8 +1,8 @@
-import { EntityComponent } from "@/entities/EntityComponent";
+import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 
-export class FireballComponent implements EntityComponent {
+export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
   
   public isCharging: boolean = false;

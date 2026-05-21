@@ -1,10 +1,10 @@
 import { Minion } from "./Minion";
 
-export interface MinionBehavior {
+export interface IMinionBehavior {
   update(minion: Minion, dt: number): void;
 }
 
-export class TurretBehavior implements MinionBehavior {
+export class TurretBehavior implements IMinionBehavior {
   public update(minion: Minion, _dt: number): void {
     minion.velocity = { x: 0, y: 0 };
     const player = minion.world.player;
@@ -33,7 +33,7 @@ export class TurretBehavior implements MinionBehavior {
   }
 }
 
-export class LancerBehavior implements MinionBehavior {
+export class LancerBehavior implements IMinionBehavior {
   public update(minion: Minion, _dt: number): void {
     const player = minion.world.player;
     const playerValid = player && !player.isDead;
@@ -81,7 +81,7 @@ export class LancerBehavior implements MinionBehavior {
   }
 }
 
-export class FlyerBehavior implements MinionBehavior {
+export class FlyerBehavior implements IMinionBehavior {
   public update(minion: Minion, dt: number): void {
     const player = minion.world.player;
     const playerValid = player && !player.isDead;

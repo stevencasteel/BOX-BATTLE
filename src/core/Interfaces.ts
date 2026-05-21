@@ -1,4 +1,4 @@
-import { EntityComponent } from "@/entities/EntityComponent";
+import { IEntityComponent } from "@/entities/EntityComponent";
 
 export interface Vector2D {
   x: number;
@@ -22,12 +22,12 @@ export interface IEntity {
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D): void;
   teardown(): void;
-  addComponent<T extends EntityComponent>(
+  addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
     dependencies?: Record<string, any>
   ): T;
-  getComponent<T extends EntityComponent>(componentClass: new (...args: any[]) => T): T | null;
+  getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
 }
 
 export interface IProjectile extends IEntity {

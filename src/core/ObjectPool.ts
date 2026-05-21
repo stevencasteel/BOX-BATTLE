@@ -1,10 +1,10 @@
-export interface Poolable {
+export interface IPoolable {
   isActive: boolean;
   activate(...args: any[]): void;
   deactivate(): void;
 }
 
-export class ObjectPool<T extends Poolable> {
+export class ObjectPool<T extends IPoolable> {
   private inactivePool: T[] = [];
   private activePool: T[] = [];
   private factory: () => T;

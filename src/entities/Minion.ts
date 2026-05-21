@@ -2,7 +2,7 @@ import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
-import { MinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
+import { IMinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
 import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
@@ -11,7 +11,7 @@ export class Minion extends BaseEntity {
   public minionType: MinionType;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
-  private behavior: MinionBehavior;
+  private behavior: IMinionBehavior;
 
   public patrolSpeed: number = 100;
   public facingDirection: number = 1;

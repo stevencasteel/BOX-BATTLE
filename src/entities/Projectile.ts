@@ -1,10 +1,10 @@
 import { BaseEntity } from "./BaseEntity";
-import { Poolable } from "@/core/ObjectPool";
+import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
-export class Projectile extends BaseEntity implements Poolable {
+export class Projectile extends BaseEntity implements IPoolable {
   public isActive: boolean = false;
   public ownerId: "player" | "boss" = "player";
   public damage: number = 1;

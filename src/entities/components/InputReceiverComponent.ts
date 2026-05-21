@@ -1,8 +1,8 @@
-import { EntityComponent } from "@/entities/EntityComponent";
+import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { inputProvider, Action } from "@/core/InputProvider";
 
-export class InputReceiverComponent implements EntityComponent {
+export class InputReceiverComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
   public setup(owner: BaseEntity): void {
