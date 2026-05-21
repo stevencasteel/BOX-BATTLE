@@ -49,6 +49,10 @@ export default function App() {
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
+  useEffect(() => {
+    soundSynth.setCabinetMuffle(currentScreen !== "PLAYING");
+  }, [currentScreen]);
+
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };

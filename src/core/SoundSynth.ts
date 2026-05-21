@@ -5,6 +5,8 @@ class SoundSynth {
   private masterGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
+  private masterFilter: BiquadFilterNode | null = null;
+  private masterCompressor: DynamicsCompressorNode | null = null;
 
   private musicInterval: ReturnType<typeof setInterval> | null = null;
   private musicTickIndex: number = 0;
@@ -19,10 +21,28 @@ class SoundSynth {
     this.masterGain = this.ctx.createGain();
     this.sfxGain = this.ctx.createGain();
     this.musicGain = this.ctx.createGain();
+    this.masterFilter = this.ctx.createBiquadFilter();
+    this.masterCompressor = this.ctx.createDynamicsCompressor();
 
-    this.masterGain.connect(this.ctx.destination);
-    this.sfxGain.connect(this.masterGain);
-    this.musicGain.connect(this.masterGain);
+    // 1. Configure the retro lowpass filter
+    this.masterFilter.type = "lowpass";
+    this.masterFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
+
+    // 2. Configure the Dynamics Compressor to avoid digital clipping
+    this.masterCompressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
+    this.masterCompressor.knee.setValueAtTime(30, this.ctx.currentTime);
+    this.masterCompressor.ratio.setValueAtTime(12, this.ctx.currentTime);
+    this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+    this.masterCompressor.release.setValueAtTime(0.08, this.ctx.currentTime);
+
+    // 3. Connect routing channels:
+    // Sources -> [SFX / Music Gain] -> Master Lowpass Filter -> Master Gain -> Master Compressor -> Destination
+    this.masterGain.connect(this.masterCompressor);
+    this.masterCompressor.connect(this.ctx.destination);
+
+    this.sfxGain.connect(this.masterFilter);
+    this.musicGain.connect(this.masterFilter);
+    this.masterFilter.connect(this.masterGain);
 
     this.updateVolumes();
   }
@@ -34,15 +54,26 @@ class SoundSynth {
     const config = settingsManager.getAudio();
     const now = this.ctx.currentTime;
 
-    // Standardized mixing levels modeled after professional audio channels
     const master = config.masterMuted ? 0 : config.masterVolume * 0.35;
     const sfx = config.sfxMuted ? 0 : config.sfxVolume * 0.85;
     const music = config.musicMuted ? 0 : config.musicVolume * 0.30;
 
-    // Apply linear ramps to prevent audio clicks on slider adjustment
     this.masterGain.gain.linearRampToValueAtTime(master, now + 0.05);
     this.sfxGain.gain.linearRampToValueAtTime(sfx, now + 0.05);
     this.musicGain.gain.linearRampToValueAtTime(music, now + 0.05);
+  }
+
+  public setCabinetMuffle(active: boolean) {
+    this.init();
+    if (!this.ctx || !this.masterFilter) return;
+
+    const now = this.ctx.currentTime;
+    const targetFreq = active ? 600 : 20000;
+
+    this.masterFilter.frequency.cancelScheduledValues(now);
+    const currentVal = Math.max(0.1, this.masterFilter.frequency.value);
+    this.masterFilter.frequency.setValueAtTime(currentVal, now);
+    this.masterFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.35);
   }
 
   private resumeContext() {
@@ -52,9 +83,6 @@ class SoundSynth {
     }
   }
 
-  /**
-   * Generates a procedural pitch bend with an ADSR envelope
-   */
   public playJump() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -68,21 +96,18 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    // Pitch envelope
     osc.frequency.setValueAtTime(160, now);
     osc.frequency.exponentialRampToValueAtTime(480, now + 0.12);
 
-    // Resonant filter envelope
     filter.frequency.setValueAtTime(1200, now);
     filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
     filter.Q.setValueAtTime(4.0, now);
 
-    // Amplitude envelope (ADSR)
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02); // Attack
-    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08); // Decay
-    envelope.gain.setValueAtTime(0.1, now + 0.12); // Sustain
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15); // Release
+    envelope.gain.linearRampToValueAtTime(0.6, now + 0.02);
+    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08);
+    envelope.gain.setValueAtTime(0.1, now + 0.12);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
 
     osc.connect(filter);
     filter.connect(envelope);
@@ -92,9 +117,6 @@ class SoundSynth {
     osc.stop(now + 0.16);
   }
 
-  /**
-   * Generates custom filtered white noise
-   */
   public playDash() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -120,8 +142,8 @@ class SoundSynth {
 
     const envelope = this.ctx.createGain();
     envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01); // Snappy Attack
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
+    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01);
+    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
     noiseNode.connect(filter);
     filter.connect(envelope);
