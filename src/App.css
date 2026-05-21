@@ -958,3 +958,12 @@ body {
   border-color: var(--signal-green);
   transform: scale(1.08);
 }
+
+/* Firefox native progress track fills */
+.custom-range-slider::-moz-range-progress {
+  background: var(--signal-green);
+  height: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-right: none;
+}

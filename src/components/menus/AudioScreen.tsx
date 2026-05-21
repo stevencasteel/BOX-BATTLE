@@ -45,7 +45,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("masterVolume", parseFloat(e.target.value))}
               disabled={audio.masterMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 0 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 0 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.masterVolume * 100}%, var(--surface-bg) ${audio.masterVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
@@ -70,7 +73,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("sfxVolume", parseFloat(e.target.value))}
               disabled={audio.sfxMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 1 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 1 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.sfxVolume * 100}%, var(--surface-bg) ${audio.sfxVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
@@ -95,7 +101,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("musicVolume", parseFloat(e.target.value))}
               disabled={audio.musicMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 2 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 2 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.musicVolume * 100}%, var(--surface-bg) ${audio.musicVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
