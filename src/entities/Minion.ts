@@ -203,6 +203,7 @@ export class Minion extends BaseEntity {
       );
 
       if (isHit) {
+        eventBroker.publish("PLAYER_SPIKED", undefined);
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           if (this.minionType !== "TURRET" && !this.isDying) {

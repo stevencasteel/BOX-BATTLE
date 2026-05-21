@@ -3,6 +3,7 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
+import { eventBroker } from "@/core/eventBroker";
 import { 
   BossCooldownState, 
   BossPatrolState, 
@@ -196,6 +197,7 @@ export class Boss extends BaseEntity {
       );
 
       if (isHit) {
+        eventBroker.publish("PLAYER_SPIKED", undefined);
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
