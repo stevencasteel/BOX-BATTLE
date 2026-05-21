@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { soundSynth } from "@/core/SoundSynth";
 
 export interface DialogueState {
@@ -64,18 +64,18 @@ export function useGameDialogue() {
     return () => clearInterval(interval);
   }, [bossDialogue.text, bossDialogue.active]);
 
-  const triggerDialogue = (speaker: "player" | "boss", text: string) => {
+  const triggerDialogue = useCallback((speaker: "player" | "boss", text: string) => {
     if (speaker === "player") {
       setPlayerDialogue({ text, displayed: "", active: true, isTyping: true });
     } else {
       setBossDialogue({ text, displayed: "", active: true, isTyping: true });
     }
-  };
+  }, []);
 
-  const resetDialogues = () => {
+  const resetDialogues = useCallback(() => {
     setPlayerDialogue({ text: "", displayed: "", active: false, isTyping: false });
     setBossDialogue({ text: "", displayed: "", active: false, isTyping: false });
-  };
+  }, []);
 
   return {
     playerDialogue,

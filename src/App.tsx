@@ -6,6 +6,7 @@ import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
 import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
+import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { eventBroker } from "@/core/eventBroker";
 import { screenConfigs, MenuContext } from "@/core/screenRoutes";
 
@@ -22,42 +23,7 @@ import "./App.css";
 export default function App() {
   const bootStage = useBootSequence();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const statusPanelRef = useRef<HTMLDivElement>(null);
-  const dialogueConsoleRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
-
-  const clearAllDialogues = () => {
-    if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
-    if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
-    if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
-    if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
-
-    const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
-    const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
-    const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
-    const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
-    const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
-    const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
-
-    if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
-    if (pText) pText.textContent = "[ NO SIGNAL ]";
-    if (pPortrait) {
-      pPortrait.className = "portrait-square led-green";
-      pPortrait.style.background = "#07080b";
-    }
-
-    if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
-    if (bText) bText.textContent = "[ NO SIGNAL ]";
-    if (bPortrait) {
-      bPortrait.className = "portrait-square led-red";
-      bPortrait.style.background = "#07080b";
-    }
-  };
-
-  const playerDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const playerDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const bossDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const bossDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -67,6 +33,11 @@ export default function App() {
   const navTo = useSessionStore((state) => state.navTo);
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
+
+  const playerHP = useGameplayStore((state) => state.playerHP);
+  const bossHP = useGameplayStore((state) => state.bossHP);
+  const healingCharges = useGameplayStore((state) => state.healingCharges);
+  const determination = useGameplayStore((state) => state.determination);
 
   const {
     slots,
@@ -81,6 +52,7 @@ export default function App() {
   } = useSaveSlots();
 
   const { audio, handleVolumeChange } = useAudioSettings();
+  const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
@@ -92,150 +64,17 @@ export default function App() {
     soundSynth.playSelectTick();
   };
 
+  // Dedicated Mount Block: This will run only once
   useEffect(() => {
     soundSynth.startMusic();
     reloadSaveSlots();
-
-    const updatePlayerHP = (hp: number) => {
-      const dots = statusPanelRef.current?.querySelectorAll("[data-hp-dot]");
-      if (!dots) return;
-      dots.forEach((dot, i) => {
-        const elem = dot as HTMLElement;
-        if (i < hp) {
-          elem.className = "led-dot led-green";
-          elem.style.background = "";
-        } else {
-          elem.className = "led-dot";
-          elem.style.background = "#07080b";
-        }
-      });
+    return () => {
+      soundSynth.stopMusic();
     };
+  }, []);
 
-    const updateHealCharges = (charges: number) => {
-      const dots = statusPanelRef.current?.querySelectorAll("[data-heal-dot]");
-      if (!dots) return;
-      dots.forEach((dot, i) => {
-        const elem = dot as HTMLElement;
-        if (i < charges) {
-          elem.className = "led-dot led-yellow";
-          elem.style.background = "";
-        } else {
-          elem.className = "led-dot";
-          elem.style.background = "#07080b";
-        }
-      });
-    };
-
-    const updateDetermination = (det: number) => {
-      const dots = statusPanelRef.current?.querySelectorAll("[data-det-dot]");
-      if (!dots) return;
-      dots.forEach((dot, i) => {
-        const elem = dot as HTMLElement;
-        if (i < det) {
-          elem.className = "led-dot";
-          elem.style.background = "hsl(280, 80%, 65%)";
-          elem.style.boxShadow = "0 0 6px rgba(168, 85, 247, 0.8)";
-        } else {
-          elem.className = "led-dot";
-          elem.style.background = "#07080b";
-          elem.style.boxShadow = "none";
-        }
-      });
-    };
-
-    const updateBossHP = (hp: number) => {
-      const bar = statusPanelRef.current?.querySelector("[data-boss-bar]") as HTMLElement | null;
-      if (!bar) return;
-      const pct = (hp / 30) * 100;
-      bar.className = "led-red";
-      bar.style.width = pct + "%";
-      bar.style.background = "";
-    };
-
-    const updateGameStatus = (status: string) => {
-      const label = statusPanelRef.current?.querySelector("[data-game-status]") as HTMLElement | null;
-      if (!label) return;
-      label.textContent = status;
-      label.style.color = status === "PLAYING" ? "var(--signal-green)" : "#4a5568";
-      label.style.textShadow = status === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "";
-    };
-
-
-
-    const animateDialogue = (speaker: "player" | "boss", text: string) => {
-      const box = dialogueConsoleRef.current?.querySelector(
-        speaker === "player" ? "[data-player-dialogue]" : "[data-boss-dialogue]"
-      ) as HTMLElement | null;
-      const textElem = dialogueConsoleRef.current?.querySelector(
-        speaker === "player" ? "[data-player-text]" : "[data-boss-text]"
-      ) as HTMLElement | null;
-      const portrait = dialogueConsoleRef.current?.querySelector(
-        speaker === "player" ? "[data-player-portrait]" : "[data-boss-portrait]"
-      ) as HTMLElement | null;
-
-      if (!box || !textElem || !portrait) return;
-
-      if (speaker === "player") {
-        if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
-        if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
-      } else {
-        if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
-        if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
-      }
-
-      box.className =
-        speaker === "player"
-          ? "dialogue-box-left neo-pressed dialogue-active-green"
-          : "dialogue-box-right neo-pressed dialogue-active-red";
-      portrait.className =
-        speaker === "player"
-          ? "portrait-square led-green portrait-rumble"
-          : "portrait-square led-red portrait-rumble";
-      portrait.style.background = "";
-
-      let idx = 0;
-      textElem.textContent = "";
-
-      const intervalTime = speaker === "player" ? 45 : 55;
-      const timer = setInterval(() => {
-        if (idx < text.length) {
-          const char = text[idx];
-          textElem.textContent += char;
-          soundSynth.playDialogueTick(speaker, char);
-          idx++;
-        } else {
-          clearInterval(timer);
-          portrait.className =
-            speaker === "player" ? "portrait-square led-green" : "portrait-square led-red";
-
-          /* Context-Aware Dialogue Lifespans: Retrieve real-time gameResult from the store to prevent stale React closures */
-          const currentResult = useSessionStore.getState().gameResult;
-          if (currentResult === "PLAYING") {
-            const cleanupTimer = setTimeout(() => {
-              box.className =
-                speaker === "player"
-                  ? "dialogue-box-left neo-pressed dialogue-inactive"
-                  : "dialogue-box-right neo-pressed dialogue-inactive";
-              portrait.style.background = "#07080b";
-              textElem.textContent = "[ NO SIGNAL ]";
-            }, 2000);
-
-            if (speaker === "player") {
-              playerDialogueCleanupRef.current = cleanupTimer;
-            } else {
-              bossDialogueCleanupRef.current = cleanupTimer;
-            }
-          }
-        }
-      }, intervalTime);
-
-      if (speaker === "player") {
-        playerDialogueTimeoutRef.current = timer;
-      } else {
-        bossDialogueTimeoutRef.current = timer;
-      }
-    };
-
+  // Event Broker Subscriptions Block
+  useEffect(() => {
     const unsubGameplay = useGameplayStore.subscribe((state) => {
       const viewport = viewportRef.current;
       if (viewport) {
@@ -248,82 +87,25 @@ export default function App() {
     });
 
     const unsubs = [
-      eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
-        updatePlayerHP(currentHealth);
-      }),
-      eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
-        updatePlayerHP(currentHealth);
-      }),
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        updateBossHP(currentHealth);
-      }),
-      eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
-        updateHealCharges(charges);
-      }),
-      eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: dValue }) => {
-        updateDetermination(dValue);
-      }),
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
-        animateDialogue(speaker, text);
+        triggerDialogue(speaker, text);
       }),
       eventBroker.subscribe("CLEAR_DIALOGUES" as any, () => {
-        clearAllDialogues();
+        resetDialogues();
       })
     ];
 
-    if (currentScreen === "PLAYING") {
-      const initialGameplay = useGameplayStore.getState();
-      updatePlayerHP(initialGameplay.playerHP);
-      updateBossHP(initialGameplay.bossHP);
-      updateHealCharges(initialGameplay.healingCharges);
-      updateDetermination(initialGameplay.determination);
-      updateGameStatus("PLAYING");
-    } else {
-      updatePlayerHP(0);
-      updateBossHP(0);
-      updateHealCharges(0);
-      updateDetermination(0);
-      updateGameStatus("READY");
-    }
-
     return () => {
-      soundSynth.stopMusic();
       unsubGameplay();
       unsubs.forEach((unsub) => unsub());
-      if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
-      if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
-      if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
-      if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
-
-      // Thorough dialogue console element release
-      const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
-      const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
-      const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
-      const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
-      const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
-      const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
-
-      if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
-      if (pText) pText.textContent = "[ NO SIGNAL ]";
-      if (pPortrait) {
-        pPortrait.className = "portrait-square led-green";
-        pPortrait.style.background = "#07080b";
-      }
-
-      if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
-      if (bText) bText.textContent = "[ NO SIGNAL ]";
-      if (bPortrait) {
-        bPortrait.className = "portrait-square led-red";
-        bPortrait.style.background = "#07080b";
-      }
     };
-  }, [currentScreen]);
+  }, [triggerDialogue, resetDialogues]);
 
   useEffect(() => {
     if (gameResult !== "PLAYING") {
-      clearAllDialogues();
+      resetDialogues();
     }
-  }, [gameResult]);
+  }, [gameResult, resetDialogues]);
 
   useEffect(() => {
     if (!rebindTarget) return;
@@ -414,16 +196,18 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        <div className="cabinet-status-panel neo-pressed" ref={statusPanelRef}>
+        <div className="cabinet-status-panel neo-pressed">
           <div className="hud-panel-block" style={{ gap: "4px" }}>
             <span className="hud-panel-title">PLAYER HP</span>
             <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
-                  data-hp-dot={i}
-                  className="led-dot"
-                  style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)" }}
+                  className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
+                  style={{
+                    background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b",
+                    border: "1px solid rgba(0,0,0,0.5)"
+                  }}
                 />
               ))}
             </div>
@@ -433,9 +217,13 @@ export default function App() {
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
-                    data-heal-dot={i}
-                    className="led-dot"
-                    style={{ background: "#07080b", border: "1px solid rgba(0,0,0,0.5)", width: "6px", height: "6px" }}
+                    className={`led-dot ${currentScreen === "PLAYING" && i < healingCharges ? "led-yellow" : ""}`}
+                    style={{
+                      background: currentScreen === "PLAYING" && i < healingCharges ? "" : "#07080b",
+                      border: "1px solid rgba(0,0,0,0.5)",
+                      width: "6px",
+                      height: "6px"
+                    }}
                   />
                 ))}
               </div>
@@ -443,10 +231,10 @@ export default function App() {
                 {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    data-det-dot={i}
                     className="led-dot"
                     style={{
-                      background: "#07080b",
+                      background: currentScreen === "PLAYING" && i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
+                      boxShadow: currentScreen === "PLAYING" && i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
                       width: "4px",
                       height: "4px"
                     }}
@@ -458,8 +246,13 @@ export default function App() {
 
           <div className="hud-panel-block" style={{ alignItems: "center" }}>
             <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
-            <span data-game-status style={{ fontSize: "9px", color: "#4a5568", fontWeight: "bold" }}>
-              READY
+            <span style={{
+              fontSize: "9px",
+              color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568",
+              fontWeight: "bold",
+              textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "none"
+            }}>
+              {currentScreen === "PLAYING" ? "SIMULATION ACTIVE" : "READY"}
             </span>
           </div>
 
@@ -467,8 +260,14 @@ export default function App() {
             <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
             <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
               <div
-                data-boss-bar
-                style={{ height: "100%", borderRadius: "2px", width: "0%", transition: "all 0.15s ease", background: "#07080b" }}
+                className={currentScreen === "PLAYING" ? "led-red" : ""}
+                style={{
+                  height: "100%",
+                  borderRadius: "2px",
+                  width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%",
+                  transition: "all 0.15s ease",
+                  background: currentScreen === "PLAYING" ? "" : "#07080b"
+                }}
               />
             </div>
           </div>
@@ -583,21 +382,21 @@ export default function App() {
           )}
         </div>
 
-        <div className="dialogue-console" ref={dialogueConsoleRef}>
-          <div data-player-dialogue className="dialogue-box-left neo-pressed dialogue-inactive">
-            <div data-player-portrait className="portrait-square led-green" style={{ background: "#07080b" }} />
+        <div className="dialogue-console">
+          <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
+            <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
             <div className="dialogue-text-container">
               <div className="dialogue-speaker-label">PLAYER</div>
-              <div data-player-text className="dialogue-body-text">[ NO SIGNAL ]</div>
+              <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
             </div>
           </div>
 
-          <div data-boss-dialogue className="dialogue-box-right neo-pressed dialogue-inactive">
+          <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
             <div className="dialogue-text-container" style={{ textAlign: "right" }}>
               <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-              <div data-boss-text className="dialogue-body-text">[ NO SIGNAL ]</div>
+              <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
             </div>
-            <div data-boss-portrait className="portrait-square led-red" style={{ background: "#07080b" }} />
+            <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
           </div>
         </div>
 

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 12:01:52 PM
+ [SYSTEM] Generated: 5/21/2026, 1:50:06 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -29,19 +29,12 @@
 │   │   │   ├── SaveSelectScreen.tsx
 │   │   │   ├── SettingsScreen.tsx
 │   │   │   └── TitleScreen.tsx
-│   │   ├── DashComponent.ts
-│   │   ├── FireballComponent.ts
-│   │   ├── GameArena.tsx
-│   │   ├── HealComponent.ts
-│   │   ├── HealthComponent.ts
-│   │   ├── InputReceiverComponent.ts
-│   │   ├── MeleeComponent.ts
-│   │   └── PhysicsComponent.ts
+│   │   └── GameArena.tsx
 │   ├── core/
 │   │   ├── Camera.ts
 │   │   ├── CanvasResizer.ts
 │   │   ├── Engine.ts
-│   │   ├── EventBroker.ts
+│   │   ├── eventBroker.ts
 │   │   ├── GameLoop.ts
 │   │   ├── InputProvider.ts
 │   │   ├── Interfaces.ts
@@ -50,17 +43,25 @@
 │   │   ├── Registry.ts
 │   │   ├── SaveManager.ts
 │   │   ├── schemas.ts
-│   │   ├── ScreenRoutes.ts
+│   │   ├── screenRoutes.ts
 │   │   ├── SettingsManager.ts
 │   │   ├── SimulationSystems.ts
 │   │   ├── SoundSynth.ts
 │   │   ├── StateMachine.ts
 │   │   └── World.ts
 │   ├── entities/
+│   │   ├── components/
+│   │   │   ├── DashComponent.ts
+│   │   │   ├── FireballComponent.ts
+│   │   │   ├── HealComponent.ts
+│   │   │   ├── HealthComponent.ts
+│   │   │   ├── InputReceiverComponent.ts
+│   │   │   ├── MeleeComponent.ts
+│   │   │   └── PhysicsComponent.ts
 │   │   ├── BaseEntity.ts
 │   │   ├── Boss.ts
 │   │   ├── BossStates.ts
-│   │   ├── Component.ts
+│   │   ├── EntityComponent.ts
 │   │   ├── Minion.ts
 │   │   ├── MinionBehaviors.ts
 │   │   ├── Player.ts
@@ -68,6 +69,7 @@
 │   │   └── Spawner.ts
 │   ├── hooks/
 │   │   ├── useAudioSettings.ts
+│   │   ├── useBootSequence.ts
 │   │   ├── useGameDialogue.ts
 │   │   └── useSaveSlots.ts
 │   ├── store/
@@ -1670,6 +1672,10 @@ body {
 /* CRT Filters - gameplay canvas only */
 .crt-scanlines {
   position: relative;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .crt-scanlines::after {
@@ -1882,6 +1888,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%; /* Force full width expansion */
 }
 
 .mixer-header {
@@ -1897,31 +1904,33 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
+  width: 100%; /* Force full width expansion */
+  box-sizing: border-box;
 }
 
 /* Rebinding board */
 .binding-board {
   width: 100%;
   max-width: 640px;
-  padding: 28px;
-  border-radius: 28px;
+  padding: 16px 20px;
+  border-radius: 24px;
   margin: auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dual Column Layout */
+  gap: 10px 20px;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 40vh;
-  /* Reduced slightly to prevent vertical layout compression */
+  max-height: 38vh;
 }
 
 .binding-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 12px 6px;
+  padding: 6px 4px;
+  box-sizing: border-box;
 }
 
 .binding-action-label {
@@ -1977,6 +1986,7 @@ body {
   overflow: hidden;
   background: var(--void-bg);
   position: relative;
+  contain: layout style paint;
 }
 
 .gameover-overlay {
@@ -1991,6 +2001,22 @@ body {
   z-index: 99;
   padding: 24px;
   box-sizing: border-box;
+
+  /* Graceful Fade-In Transition: Animate overlay opacity and backdrop blur smoothly */
+  animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  opacity: 0;
+  will-change: opacity;
+}
+
+@keyframes overlay-fade-in {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
 }
 
 .credits-block {
@@ -2042,24 +2068,34 @@ body {
   align-items: center;
   gap: 14px;
   box-sizing: border-box;
-  transition: all 0.25s ease;
   overflow: hidden;
+
+  /* Smooth cubic-bezier transitions for high-fidelity dismissals */
+  transition: 
+    opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+    border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+    box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: scale(0.97);
 }
 
 .dialogue-active-green {
   opacity: 1;
   border-color: rgba(34, 197, 94, 0.25);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(34, 197, 94, 0.08);
+  transform: scale(1.0);
 }
 
 .dialogue-active-red {
   opacity: 1;
   border-color: rgba(239, 68, 68, 0.25);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(239, 68, 68, 0.08);
+  transform: scale(1.0);
 }
 
 .dialogue-inactive {
-  opacity: 0.15;
+  opacity: 0.12;
+  transform: scale(0.97);
 }
 
 .portrait-square {
@@ -2427,6 +2463,142 @@ body {
   font-weight: bold;
 }
 
+/* =========================================================================
+   OVERHAULED RETRO HARDWARE VOLUME SLIDERS
+   ========================================================================= */
+
+.custom-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px; /* Thick track */
+  border-radius: 6px;
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
+  outline: none;
+  margin: 10px 0;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Chrome, Safari, Edge and Opera thumbs */
+.custom-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px; /* Hardware mixer physical fader dimensions */
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 
+    -2px -2px 6px rgba(255, 255, 255, 0.01),
+    4px 4px 10px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.custom-range-slider:focus::-webkit-slider-thumb,
+.custom-range-slider::-webkit-slider-thumb:hover {
+  border-color: var(--signal-green);
+  transform: scale(1.08);
+}
+
+/* Firefox thumbs */
+.custom-range-slider::-moz-range-thumb {
+  width: 24px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 
+    -2px -2px 6px rgba(255, 255, 255, 0.01),
+    4px 4px 10px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.custom-range-slider:focus::-moz-range-thumb,
+.custom-range-slider::-moz-range-thumb:hover {
+  border-color: var(--signal-green);
+  transform: scale(1.08);
+}
+
+/* Firefox native progress track fills */
+.custom-range-slider::-moz-range-progress {
+  background: var(--signal-green);
+  height: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-right: none;
+}
+
+/* =========================================================================
+   GLOWING RETRO CABINET SCROLLBARS
+   ========================================================================= */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-bg);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--signal-green);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--signal-green-glow);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4ade80;
+}
+
+/* =========================================================================
+   OVERHAULED TECHNICAL SPECS CREDITS GRID
+   ========================================================================= */
+
+.credits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.credits-item {
+  background: var(--surface-bg);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
+}
+
+.credits-tech-title {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--signal-green);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 6px var(--signal-green-glow);
+}
+
+.credits-tech-desc {
+  font-size: 9px;
+  color: #a0aec0;
+  line-height: 1.45;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 
 ● ./src/App.tsx
 ────────────────────────────────────────────────────
@@ -2436,9 +2608,10 @@ import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
+import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
 import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
-import { eventBroker } from "@/core/EventBroker";
-import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
+import { eventBroker } from "@/core/eventBroker";
+import { screenConfigs, MenuContext } from "@/core/screenRoutes";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
@@ -2451,10 +2624,44 @@ import { GameArena } from "@/components/GameArena";
 import "./App.css";
 
 export default function App() {
+  const bootStage = useBootSequence();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const statusPanelRef = useRef<HTMLDivElement>(null);
   const dialogueConsoleRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const clearAllDialogues = () => {
+    if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+    if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
+    if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+    if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
+
+    const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
+    const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
+    const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
+    const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
+    const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
+    const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
+
+    if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
+    if (pText) pText.textContent = "[ NO SIGNAL ]";
+    if (pPortrait) {
+      pPortrait.className = "portrait-square led-green";
+      pPortrait.style.background = "#07080b";
+    }
+
+    if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
+    if (bText) bText.textContent = "[ NO SIGNAL ]";
+    if (bPortrait) {
+      bPortrait.className = "portrait-square led-red";
+      bPortrait.style.background = "#07080b";
+    }
+  };
+
+  const playerDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playerDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bossDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bossDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -2557,10 +2764,7 @@ export default function App() {
       label.style.textShadow = status === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "";
     };
 
-    let playerDialogueTimeout: ReturnType<typeof setInterval> | null = null;
-    let playerDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
-    let bossDialogueTimeout: ReturnType<typeof setInterval> | null = null;
-    let bossDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+
 
     const animateDialogue = (speaker: "player" | "boss", text: string) => {
       const box = dialogueConsoleRef.current?.querySelector(
@@ -2576,11 +2780,11 @@ export default function App() {
       if (!box || !textElem || !portrait) return;
 
       if (speaker === "player") {
-        if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
-        if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+        if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+        if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
       } else {
-        if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
-        if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+        if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+        if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
       }
 
       box.className =
@@ -2608,27 +2812,31 @@ export default function App() {
           portrait.className =
             speaker === "player" ? "portrait-square led-green" : "portrait-square led-red";
 
-          const cleanupTimer = setTimeout(() => {
-            box.className =
-              speaker === "player"
-                ? "dialogue-box-left neo-pressed dialogue-inactive"
-                : "dialogue-box-right neo-pressed dialogue-inactive";
-            portrait.style.background = "#07080b";
-            textElem.textContent = "[ NO SIGNAL ]";
-          }, 3000);
+          /* Context-Aware Dialogue Lifespans: Retrieve real-time gameResult from the store to prevent stale React closures */
+          const currentResult = useSessionStore.getState().gameResult;
+          if (currentResult === "PLAYING") {
+            const cleanupTimer = setTimeout(() => {
+              box.className =
+                speaker === "player"
+                  ? "dialogue-box-left neo-pressed dialogue-inactive"
+                  : "dialogue-box-right neo-pressed dialogue-inactive";
+              portrait.style.background = "#07080b";
+              textElem.textContent = "[ NO SIGNAL ]";
+            }, 2000);
 
-          if (speaker === "player") {
-            playerDialogueCleanupTimeout = cleanupTimer;
-          } else {
-            bossDialogueCleanupTimeout = cleanupTimer;
+            if (speaker === "player") {
+              playerDialogueCleanupRef.current = cleanupTimer;
+            } else {
+              bossDialogueCleanupRef.current = cleanupTimer;
+            }
           }
         }
       }, intervalTime);
 
       if (speaker === "player") {
-        playerDialogueTimeout = timer;
+        playerDialogueTimeoutRef.current = timer;
       } else {
-        bossDialogueTimeout = timer;
+        bossDialogueTimeoutRef.current = timer;
       }
     };
 
@@ -2661,6 +2869,9 @@ export default function App() {
       }),
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         animateDialogue(speaker, text);
+      }),
+      eventBroker.subscribe("CLEAR_DIALOGUES" as any, () => {
+        clearAllDialogues();
       })
     ];
 
@@ -2683,10 +2894,10 @@ export default function App() {
       soundSynth.stopMusic();
       unsubGameplay();
       unsubs.forEach((unsub) => unsub());
-      if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
-      if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
-      if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
-      if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+      if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+      if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
+      if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+      if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
 
       // Thorough dialogue console element release
       const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
@@ -2711,6 +2922,12 @@ export default function App() {
       }
     };
   }, [currentScreen]);
+
+  useEffect(() => {
+    if (gameResult !== "PLAYING") {
+      clearAllDialogues();
+    }
+  }, [gameResult]);
 
   useEffect(() => {
     if (!rebindTarget) return;
@@ -2786,6 +3003,16 @@ export default function App() {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
   }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);
+
+  if (bootStage === BootStage.NONE) {
+    return (
+      <div className="app-wrapper">
+        <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-wrapper">
@@ -2999,176 +3226,12 @@ export default function App() {
 }
 
 
-● ./src/components/DashComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/EventBroker";
-
-export interface GhostFrame {
-  x: number;
-  y: number;
-  opacity: number;
-}
-
-export class DashComponent implements Component {
-  public owner!: BaseEntity;
-  
-  public isDashing: boolean = false;
-  public dashTimer: number = 0;
-  public dashCooldown: number = 0;
-  public canDash: boolean = true;
-  public dashDirectionX: number = 1;
-  public dashDirectionY: number = 0;
-  public ghosts: GhostFrame[] = [];
-  public ghostSpawnTimer: number = 0;
-
-  private readonly dashSpeed: number = 1400;
-
-  public setup(owner: BaseEntity): void {
-    this.owner = owner;
-  }
-
-  public update(dt: number): void {
-    if (this.dashCooldown > 0) {
-      this.dashCooldown -= dt;
-    }
-
-    for (const ghost of this.ghosts) {
-      ghost.opacity -= dt * 5.0;
-    }
-    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
-
-    if (this.isDashing) {
-      this.dashTimer -= dt;
-      this.owner.velocity.x = this.dashDirectionX * this.dashSpeed;
-      this.owner.velocity.y = this.dashDirectionY * this.dashSpeed;
-
-      this.ghostSpawnTimer -= dt;
-      if (this.ghostSpawnTimer <= 0) {
-        this.ghosts.push({
-          x: this.owner.position.x,
-          y: this.owner.position.y,
-          opacity: 0.6
-        });
-        this.ghostSpawnTimer = 0.025;
-      }
-
-      if (this.dashTimer <= 0) {
-        this.isDashing = false;
-        if (this.dashDirectionX !== 0) this.owner.velocity.x *= 0.5;
-        if (this.dashDirectionY !== 0) this.owner.velocity.y = 0;
-      }
-    }
-  }
-
-  public triggerDash(directionX: number, directionY: number): void {
-    this.isDashing = true;
-    this.dashTimer = 0.15;
-    this.dashCooldown = 0.5;
-    this.canDash = false;
-    this.dashDirectionX = directionX;
-    this.dashDirectionY = directionY;
-    this.ghostSpawnTimer = 0;
-    eventBroker.publish("PLAYER_DASHED", { direction: directionX });
-  }
-
-  public resetDashCharge(): void {
-    this.canDash = true;
-  }
-}
-
-
-
-● ./src/components/FireballComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/EventBroker";
-
-export class FireballComponent implements Component {
-  public owner!: BaseEntity;
-  
-  public isCharging: boolean = false;
-  public chargeTimer: number = 0;
-
-  public setup(owner: BaseEntity): void {
-    this.owner = owner;
-  }
-
-  public update(dt: number): void {
-    if (this.isCharging) {
-      this.chargeTimer += dt;
-    }
-  }
-
-  public startCharging(): void {
-    this.isCharging = true;
-    this.chargeTimer = 0;
-  }
-
-  public releaseCharge(dirX: number, dirY: number, facingDirection: number): void {
-    if (!this.isCharging) return;
-    this.isCharging = false;
-
-    if (this.chargeTimer >= 0.35) {
-      this.fire(dirX, dirY, facingDirection);
-    }
-  }
-
-  private fire(dirX: number, dirY: number, facingDirection: number): void {
-    let finalDirX = dirX;
-    let finalDirY = dirY;
-
-    if (finalDirX === 0 && finalDirY === 0) {
-      finalDirX = facingDirection;
-    }
-
-    const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
-    const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
-
-    const isLvl2 = this.chargeTimer >= 1.12;
-    const damage = isLvl2 ? 3 : 1;
-    const speed = isLvl2 ? 900 : 800;
-    const lifespan = isLvl2 ? 3.0 : 2.0;
-
-    const spawnX = this.owner.position.x + normalizedDir.x * 30;
-    const spawnY = this.owner.position.y + normalizedDir.y * 30;
-
-    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
-
-    const pool = (this.owner.world as any).projectilePool;
-    if (pool) {
-      const proj = pool.get(
-        spawnX,
-        spawnY,
-        normalizedDir.x,
-        normalizedDir.y,
-        "player",
-        damage,
-        speed,
-        lifespan,
-        (p: any) => this.owner.world.releaseProjectile(p),
-        this.owner.world
-      );
-
-      if (isLvl2) {
-        proj.size = { width: 28, height: 28 };
-      } else {
-        proj.size = { width: 14, height: 14 };
-      }
-    }
-  }
-}
-
-
-
 ● ./src/components/GameArena.tsx
 ────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {
@@ -3326,553 +3389,6 @@ export function GameArena({
 
 
 
-● ./src/components/HealComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { HealthComponent } from "@/components/HealthComponent";
-import { eventBroker } from "@/core/EventBroker";
-
-export class HealComponent implements Component {
-  public owner!: BaseEntity;
-  
-  public isHealing: boolean = false;
-  public healTimer: number = 0;
-  
-  private readonly healDuration: number = 2.0;
-
-  public setup(owner: BaseEntity): void {
-    this.owner = owner;
-  }
-
-  public update(dt: number): void {
-    if (this.isHealing) {
-      this.owner.velocity.x = 0;
-      this.healTimer -= dt;
-
-      if (this.healTimer <= 0) {
-        this.completeHealing();
-      }
-    }
-  }
-
-  public startHealing(): void {
-    this.isHealing = true;
-    this.healTimer = this.healDuration;
-  }
-
-  public cancelHealing(): void {
-    this.isHealing = false;
-  }
-
-  private completeHealing(): void {
-    const player = this.owner as any;
-    this.isHealing = false;
-    player.healingCharges = Math.max(0, player.healingCharges - 1);
-    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: player.healingCharges });
-
-    const health = this.owner.getComponent(HealthComponent);
-    if (health) {
-      health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 1);
-      eventBroker.publish("PLAYER_HEALED", {
-        amount: 1,
-        currentHealth: health.currentHealth,
-        maxHealth: health.maxHealth
-      });
-    }
-    eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
-  }
-}
-
-
-
-● ./src/components/HealthComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/EventBroker";
-
-export class HealthComponent implements Component {
-  public owner!: BaseEntity;
-  public maxHealth: number = 5;
-  public currentHealth: number = 5;
-  
-  public invincibilityDuration: number = 0.15;
-  private invincibilityTimer: number = 0;
-  
-  public hitFlashTimer: number = 0;
-  public hitFlashDuration: number = 0.12;
-
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
-    this.owner = owner;
-    if (dependencies) {
-      if (dependencies.maxHealth !== undefined) {
-        this.maxHealth = dependencies.maxHealth;
-        this.currentHealth = dependencies.maxHealth;
-      }
-      if (dependencies.invincibilityDuration !== undefined) {
-        this.invincibilityDuration = dependencies.invincibilityDuration;
-      }
-    }
-  }
-
-  public update(dt: number): void {
-    if (this.invincibilityTimer > 0) this.invincibilityTimer -= dt;
-    if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
-  }
-
-  public takeDamage(amount: number): boolean {
-    if (this.invincibilityTimer > 0 || this.owner.isDead) {
-      return false;
-    }
-
-    this.currentHealth = Math.max(0, this.currentHealth - amount);
-    this.invincibilityTimer = this.invincibilityDuration;
-    this.hitFlashTimer = this.hitFlashDuration;
-
-    if (this.owner.id === "player-01") {
-      eventBroker.publish("PLAYER_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
-      });
-    } else if (this.owner.id === "boss-01") {
-      eventBroker.publish("BOSS_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
-      });
-    } else if (this.owner.id.startsWith("minion-")) {
-      eventBroker.publish("MINION_HURT", {
-        id: this.owner.id,
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
-      });
-    }
-
-    if (this.currentHealth <= 0) {
-      this.owner.isDead = true;
-    }
-
-    return true;
-  }
-
-  public isInvincible(): boolean {
-    return this.invincibilityTimer > 0;
-  }
-
-  public isFlashing(): boolean {
-    return this.hitFlashTimer > 0;
-  }
-}
-
-
-
-● ./src/components/InputReceiverComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { inputProvider, Action } from "@/core/InputProvider";
-
-export class InputReceiverComponent implements Component {
-  public owner!: BaseEntity;
-
-  public setup(owner: BaseEntity): void {
-    this.owner = owner;
-  }
-
-  public isPressed(action: Action): boolean {
-    return inputProvider.isPressed(action);
-  }
-
-  public isJustPressed(action: Action): boolean {
-    return inputProvider.isJustPressed(action);
-  }
-
-  public isJustReleased(action: Action): boolean {
-    return inputProvider.isJustReleased(action);
-  }
-
-  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
-    return inputProvider.consumeBufferedAction(action, windowMs);
-  }
-
-  public getAxis(negative: Action, positive: Action): number {
-    return inputProvider.getAxis(negative, positive);
-  }
-}
-
-
-
-● ./src/components/MeleeComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { HealthComponent } from "@/components/HealthComponent";
-import { eventBroker } from "@/core/EventBroker";
-import { Rectangle } from "@/core/Interfaces";
-
-export class MeleeComponent implements Component {
-  public owner!: BaseEntity;
-  
-  public attackCooldownTimer: number = 0;
-  public attackActiveTimer: number = 0;
-  public attackActive: boolean = false;
-  public attackDirection: "side" | "up" | "down" | null = null;
-  public hasHitEnemyThisSwing: boolean = false;
-
-  private readonly pogoForce: number = 450;
-
-  public setup(owner: BaseEntity): void {
-    this.owner = owner;
-  }
-
-  public update(dt: number): void {
-    if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= dt;
-    if (this.attackActiveTimer > 0) this.attackActiveTimer -= dt;
-
-    if (this.attackActive && this.attackActiveTimer <= 0) {
-      this.attackActive = false;
-      this.attackDirection = null;
-    }
-
-    if (this.attackActive && !this.hasHitEnemyThisSwing && this.attackDirection !== "down") {
-      this.checkMeleeAttackContact();
-    }
-  }
-
-  public triggerAttack(direction: "side" | "up" | "down"): void {
-    this.attackActive = true;
-    this.attackActiveTimer = 0.1;
-    this.attackCooldownTimer = 0.15;
-    this.hasHitEnemyThisSwing = false;
-    this.attackDirection = direction;
-
-    if (direction === "down") {
-      this.checkPogoAttack();
-    } else {
-      eventBroker.publish("PLAYER_ATTACKED", { direction });
-    }
-  }
-
-  private checkMeleeAttackContact() {
-    const targets: BaseEntity[] = [];
-    if (this.owner.world.boss && !this.owner.world.boss.isDead) {
-      targets.push(this.owner.world.boss as BaseEntity);
-    }
-    for (const minion of this.owner.world.minions) {
-      if (minion && !minion.isDead) {
-        targets.push(minion as BaseEntity);
-      }
-    }
-
-    let attackHitbox: Rectangle;
-    const facing = (this.owner as any).facingDirection ?? 1;
-
-    if (this.attackDirection === "up") {
-      attackHitbox = {
-        x: this.owner.position.x - 30,
-        y: this.owner.position.y - 77.5,
-        width: 60,
-        height: 75
-      };
-    } else {
-      const offset = facing * 40;
-      attackHitbox = {
-        x: this.owner.position.x + offset - 50,
-        y: this.owner.position.y - 40,
-        width: 100,
-        height: 80
-      };
-    }
-
-    for (const target of targets) {
-      const halfW = target.size.width / 2;
-      const halfH = target.size.height / 2;
-
-      const isHit = (
-        attackHitbox.x + attackHitbox.width > target.position.x - halfW &&
-        attackHitbox.x < target.position.x + halfW &&
-        attackHitbox.y + attackHitbox.height > target.position.y - halfH &&
-        attackHitbox.y < target.position.y + halfH
-      );
-
-      if (isHit) {
-        const health = target.getComponent(HealthComponent);
-        if (health) {
-          const dx = target.position.x - this.owner.position.x;
-          const dy = target.position.y - this.owner.position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          const isCloseRange = distance <= 90;
-          const damage = isCloseRange ? 5 : 1;
-
-          const damaged = health.takeDamage(damage);
-          if (damaged) {
-            this.hasHitEnemyThisSwing = true;
-            (this.owner as any).registerDamageDealt?.();
-
-            if (isCloseRange) {
-              eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.12 });
-            }
-          }
-        }
-      }
-    }
-
-    const activeProjectiles = this.owner.world.getProjectiles();
-    for (const proj of activeProjectiles) {
-      if (proj.isActive && proj.ownerId === "boss") {
-        const pW = proj.size.width / 2;
-        const pH = proj.size.height / 2;
-
-        const isHit = (
-          attackHitbox.x + attackHitbox.width > proj.position.x - pW &&
-          attackHitbox.x < proj.position.x + pW &&
-          attackHitbox.y + attackHitbox.height > proj.position.y - pH &&
-          attackHitbox.y < proj.position.y + pH
-        );
-
-        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          this.hasHitEnemyThisSwing = true;
-          (this.owner as any).registerDamageDealt?.();
-          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
-        }
-      }
-    }
-  }
-
-  public checkPogoAttack() {
-    const pogoHitbox = {
-      x: this.owner.position.x - 45,
-      y: this.owner.position.y + 40,
-      width: 90,
-      height: 44.5
-    };
-
-    const targets: BaseEntity[] = [];
-    if (this.owner.world.boss && !this.owner.world.boss.isDead) {
-      targets.push(this.owner.world.boss as BaseEntity);
-    }
-    for (const minion of this.owner.world.minions) {
-      if (minion && !minion.isDead) {
-        targets.push(minion as BaseEntity);
-      }
-    }
-
-    for (const target of targets) {
-      const halfW = target.size.width / 2;
-      const halfH = target.size.height / 2;
-
-      const isHit = (
-        pogoHitbox.x + pogoHitbox.width > target.position.x - halfW &&
-        pogoHitbox.x < target.position.x + halfW &&
-        pogoHitbox.y + pogoHitbox.height > target.position.y - halfH &&
-        pogoHitbox.y < target.position.y + halfH
-      );
-
-      if (isHit) {
-        const health = target.getComponent(HealthComponent);
-        if (health) {
-          health.takeDamage(1);
-          (this.owner as any).registerDamageDealt?.();
-        }
-
-        this.owner.velocity.y = -this.pogoForce;
-        this.owner.position.y -= 2;
-        
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }
-        
-        eventBroker.publish("PLAYER_POGOED", undefined);
-        return;
-      }
-    }
-
-    const activeProjectiles = this.owner.world.getProjectiles();
-    for (const proj of activeProjectiles) {
-      if (proj.isActive && proj.ownerId === "boss") {
-        const pW = proj.size.width / 2;
-        const pH = proj.size.height / 2;
-
-        const isHit = (
-          pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
-          pogoHitbox.x < proj.position.x + pW &&
-          pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
-          pogoHitbox.y < proj.position.y + pH
-        );
-
-        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          (this.owner as any).registerDamageDealt?.();
-
-          this.owner.velocity.y = -this.pogoForce;
-          this.owner.position.y -= 2;
-          
-          const player = this.owner as any;
-          player.hasDoubleJump = true;
-          if (player.dashComponent) {
-            player.dashComponent.resetDashCharge();
-          }
-          
-          eventBroker.publish("PLAYER_POGOED", undefined);
-          return;
-        }
-      }
-    }
-
-    const surfaces = [
-      ...this.owner.world.physicsWorld.solids, 
-      ...this.owner.world.physicsWorld.onewayPlatforms,
-      ...this.owner.world.physicsWorld.hazards
-    ];
-    
-    for (const solid of surfaces) {
-      const isHit = (
-        pogoHitbox.x + pogoHitbox.width > solid.x &&
-        pogoHitbox.x < solid.x + solid.width &&
-        pogoHitbox.y + pogoHitbox.height > solid.y &&
-        pogoHitbox.y < solid.y + solid.height
-      );
-
-      if (isHit) {
-        this.owner.velocity.y = -this.pogoForce;
-        this.owner.position.y -= 2;
-        
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }
-        
-        eventBroker.publish("PLAYER_POGOED", undefined);
-        break;
-      }
-    }
-  }
-}
-
-
-
-● ./src/components/PhysicsComponent.ts
-────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
-import { BaseEntity } from "@/entities/BaseEntity";
-import { Rectangle } from "@/core/Interfaces";
-
-export class PhysicsComponent implements Component {
-  public owner!: BaseEntity;
-  public gravity: number = 1200;
-  public isGrounded: boolean = false;
-  public isOnWallLeft: boolean = false;
-  public isOnWallRight: boolean = false;
-
-  public disablePlatformCollisionTimer: number = 0;
-
-  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
-    this.owner = owner;
-    if (dependencies) {
-      if (dependencies.gravity !== undefined) {
-        this.gravity = dependencies.gravity;
-      }
-    }
-  }
-
-  public update(dt: number): void {
-    if (this.disablePlatformCollisionTimer > 0) {
-      this.disablePlatformCollisionTimer -= dt;
-    }
-
-    if (!this.isGrounded) {
-      this.owner.velocity.y += this.gravity * dt;
-    }
-
-    this.isOnWallLeft = false;
-    this.isOnWallRight = false;
-
-    this.owner.position.x += this.owner.velocity.x * dt;
-    this.resolveCollisionsX();
-
-    this.isGrounded = false;
-    this.owner.position.y += this.owner.velocity.y * dt;
-    this.resolveCollisionsY();
-  }
-
-  private resolveCollisionsX() {
-    const ownerHalfW = this.owner.size.width / 2;
-    const physicsWorld = this.owner.world.physicsWorld;
-
-    for (const solid of physicsWorld.solids) {
-      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-        if (this.owner.velocity.x > 0) {
-          this.owner.position.x = solid.x - ownerHalfW;
-          this.isOnWallRight = true;
-        } else if (this.owner.velocity.x < 0) {
-          this.owner.position.x = solid.x + solid.width + ownerHalfW;
-          this.isOnWallLeft = true;
-        }
-        this.owner.velocity.x = 0;
-      }
-    }
-  }
-
-  private resolveCollisionsY() {
-    const ownerHalfH = this.owner.size.height / 2;
-    const physicsWorld = this.owner.world.physicsWorld;
-
-    for (const solid of physicsWorld.solids) {
-      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-        if (this.owner.velocity.y > 0) {
-          this.owner.position.y = solid.y - ownerHalfH;
-          this.owner.velocity.y = 0;
-          this.isGrounded = true;
-        } else if (this.owner.velocity.y < 0) {
-          this.owner.position.y = solid.y + solid.height + ownerHalfH;
-          this.owner.velocity.y = 0;
-        }
-      }
-    }
-
-    if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
-      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016;
-
-      for (const platform of physicsWorld.onewayPlatforms) {
-        if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
-          if (prevY + ownerHalfH - 4 <= platform.y) {
-            this.owner.position.y = platform.y - ownerHalfH;
-            this.owner.velocity.y = 0;
-            this.isGrounded = true;
-          }
-        }
-      }
-    }
-  }
-
-  private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
-    const halfW = this.owner.size.width / 2;
-    const halfH = this.owner.size.height / 2;
-
-    const left = x - halfW;
-    const right = x + halfW;
-    const top = y - halfH;
-    const bottom = y + halfH;
-
-    return (
-      right > rect.x &&
-      left < rect.x + rect.width &&
-      bottom > rect.y &&
-      top < rect.y + rect.height
-    );
-  }
-}
-
-
-
 ● ./src/components/menus/AudioScreen.tsx
 ────────────────────────────────────────────────────
 import { AudioSettings } from "@/core/SettingsManager";
@@ -3922,7 +3438,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("masterVolume", parseFloat(e.target.value))}
               disabled={audio.masterMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 0 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 0 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.masterVolume * 100}%, var(--surface-bg) ${audio.masterVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
@@ -3947,7 +3466,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("sfxVolume", parseFloat(e.target.value))}
               disabled={audio.sfxMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 1 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 1 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.sfxVolume * 100}%, var(--surface-bg) ${audio.sfxVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
@@ -3972,7 +3494,10 @@ export function AudioScreen({
               onChange={(e) => handleVolumeChange("musicVolume", parseFloat(e.target.value))}
               disabled={audio.musicMuted}
               className="custom-range-slider"
-              style={{ filter: menuIndex === 2 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "" }}
+              style={{ 
+                filter: menuIndex === 2 ? "drop-shadow(0 0 2px rgba(34,197,94,0.4))" : "",
+                background: `linear-gradient(to right, var(--signal-green) 0%, var(--signal-green) ${audio.musicVolume * 100}%, var(--surface-bg) ${audio.musicVolume * 100}%, var(--surface-bg) 100%)`
+              }}
             />
           </div>
         </div>
@@ -4007,6 +3532,24 @@ interface ControlsScreenProps {
   setMenuIndex: (index: number) => void;
   setRebindTarget: (target: { action: Action; index: number } | null) => void;
   reloadSaveSlots: () => void;
+}
+
+function formatKeyDisplayName(code: string): string {
+  if (!code) return "[ EMPTY ]";
+  
+  const upper = code.trim();
+  if (upper === "Space") return "SPACE";
+  if (upper === "ArrowLeft") return "LEFT ARROW";
+  if (upper === "ArrowRight") return "RIGHT ARROW";
+  if (upper === "ArrowUp") return "UP ARROW";
+  if (upper === "ArrowDown") return "DOWN ARROW";
+  if (upper === "Period") return ".";
+  if (upper === "Comma") return ",";
+  if (upper === "Slash") return "/";
+  if (upper === "Backspace") return "BACKSPACE";
+  if (upper === "Escape") return "ESC";
+  
+  return upper.replace(/^Key/, ""); /* Strips "Key" prefix (e.g. "KeyA" -> "A") */
 }
 
 export function ControlsScreen({
@@ -4100,7 +3643,7 @@ export function ControlsScreen({
                 >
                   {rebindTarget?.action === action && rebindTarget?.index === 0
                     ? "PRESS ANY KEY..."
-                    : keys[0] || "[ EMPTY ]"}
+                    : formatKeyDisplayName(keys[0])}
                 </button>
               </div>
             </div>
@@ -4132,25 +3675,54 @@ interface CreditsScreenProps {
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CREDITS</h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Game Developers and Tools</p>
+      <div className="title-banner" style={{ marginTop: "15px" }}>
+        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SYSTEM CREDITS</h2>
+        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>Engine Architecture & Technologies</p>
       </div>
 
-      <div className="credits-block neo-pressed flex-col" style={{ gap: "16px", textAlign: "center" }}>
-        <p style={{ fontSize: "11px", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Created by Steven Casteel</p>
-        <p style={{ fontSize: "10px", color: "#4a5568", margin: 0 }}>WWW.STEVENCASTEEL.COM</p>
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "10px", textAlign: "left", fontSize: "10px", color: "#a0aec0", lineHeight: "1.5" }}>
-          <p style={{ margin: 0 }}>• Built using modern web technologies and HTML5 Canvas.</p>
-          <p style={{ margin: 0 }}>• Sounds generated dynamically using the Web Audio API.</p>
-          <p style={{ margin: 0 }}>• Game progress is saved automatically on your browser.</p>
+      <div className="credits-block neo-pressed flex-col" style={{ width: "100%", maxWidth: "680px", padding: "18px 24px", borderRadius: "24px", boxSizing: "border-box" }}>
+        <div style={{ textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "12px", marginBottom: "12px" }}>
+          <p style={{ fontSize: "12px", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Built by Steven Casteel</p>
+          <p style={{ fontSize: "9px", color: "#4ade80", margin: "6px 0 0", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "bold", textShadow: "0 0 6px rgba(74, 222, 128, 0.2)" }}>AI Co-Pilots: Gemini 2.5 Pro, Gemini 3.5 Flash</p>
+          <a 
+          href="https://www.stevencasteel.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ display: "inline-block", fontSize: "8px", color: "#4a5568", margin: "6px 0 0", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
+        >
+          WWW.STEVENCASTEEL.COM
+        </a>
+        </div>
+
+        <div className="credits-grid">
+          <div className="credits-item">
+            <span className="credits-tech-title">PRESENTATION LAYOUT</span>
+            <span className="credits-tech-desc">React 19, TypeScript 6.0, and Vite 8.0 bundle chunk splitting for low loading latencies.</span>
+          </div>
+
+          <div className="credits-item">
+            <span className="credits-tech-title">PHYSICS ENGINE</span>
+            <span className="credits-tech-desc">Custom 60Hz Semi-Implicit Euler accumulator loops, dynamic circular sweep checks, and ceiling corner nudging.</span>
+          </div>
+
+          <div className="credits-item">
+            <span className="credits-tech-title">AUDIO SYNTHESIS</span>
+            <span className="credits-tech-desc">Dynamic procedural sound wave generation using native Web Audio API oscillators, gain, and muffle lowpass filters.</span>
+          </div>
+
+          <div className="credits-item">
+            <span className="credits-tech-title">DATA MANAGEMENT</span>
+            <span className="credits-tech-desc">Zustand 5.0 reactive state managers and persistent browser registers secured with schema input checkers.</span>
+          </div>
         </div>
       </div>
 
       <button
         onClick={onBack}
         className="neo-btn neo-btn-focused"
-        style={{ width: "100%", maxWidth: "240px" }}
+        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
       >
         <span className="cursor-arrow">▶</span>
         Back
@@ -4159,6 +3731,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
     </div>
   );
 }
+
 
 
 ● ./src/components/menus/SaveSelectScreen.tsx
@@ -4512,7 +4085,7 @@ export class CanvasResizer {
     this.lastWidth = containerWidth;
     this.lastHeight = containerHeight;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const scale = Math.min(containerWidth / this.internalWidth, containerHeight / this.internalHeight);
 
     const displayWidth = this.internalWidth * scale;
@@ -4521,8 +4094,8 @@ export class CanvasResizer {
     this.canvas.style.width = `${displayWidth}px`;
     this.canvas.style.height = `${displayHeight}px`;
 
-    this.canvas.width = displayWidth * dpr;
-    this.canvas.height = displayHeight * dpr;
+    this.canvas.width = Math.floor(displayWidth * dpr);
+    this.canvas.height = Math.floor(displayHeight * dpr);
 
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.scale(dpr * scale, dpr * scale);
@@ -4540,7 +4113,8 @@ import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { Registry } from "@/core/Registry";
-import { HealthComponent } from "@/components/HealthComponent";
+import { soundSynth } from "@/core/SoundSynth";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
@@ -4549,7 +4123,7 @@ import { inputProvider } from "@/core/InputProvider";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
 export class Engine {
@@ -4572,8 +4146,21 @@ export class Engine {
   private bossDeathTimer: number = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
   private deathTimeoutId: any = null;
+  private dialogueTimeoutId: any = null;
+  private dialogueStaggerTimeoutId: any = null;
+  private dialogueClearTimeoutId: any = null;
+
+  /* Pause Diagnostics */
+  public isPaused: boolean = false;
 
   private unsubDialogue!: () => void;
+
+  /* Particles Database */
+  private particles: any[] = [];
+  private unsubEvents: (() => void)[] = [];
+
+  private accumulator: number = 0;
+  private readonly fixedTimeStep: number = 1 / 60;
 
   private readonly solids: Rectangle[] = [
     { x: 0, y: 1150, width: 400, height: 100 },
@@ -4653,6 +4240,72 @@ export class Engine {
       this.triggerDialogue(speaker, text);
     });
 
+    window.addEventListener("keydown", this.handlePauseKey);
+
+    this.particles = [];
+
+    // Spark Particles Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_SPARKS" as any, ({ x, y, angle, color }) => {
+        const count = 12;
+        for (let i = 0; i < count; i++) {
+          const pAngle = angle + (Math.random() * 0.9 - 0.45);
+          const pSpeed = 160 + Math.random() * 280;
+          this.particles.push({
+            x,
+            y,
+            vx: Math.cos(pAngle) * pSpeed,
+            vy: Math.sin(pAngle) * pSpeed,
+            color: color || "hsl(142, 71%, 58%)",
+            size: 2.5 + Math.random() * 3.5,
+            life: 0.22,
+            maxLife: 0.22,
+            shape: "spark"
+          });
+        }
+      })
+    );
+
+    // Friction Dust Puff Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_DUST" as any, ({ x, y }) => {
+        const count = 10;
+        for (let i = 0; i < count; i++) {
+          const dir = i % 2 === 0 ? 1 : -1;
+          const pSpeedX = dir * (50 + Math.random() * 110);
+          const pSpeedY = -8 - Math.random() * 30;
+          this.particles.push({
+            x,
+            y,
+            vx: pSpeedX,
+            vy: pSpeedY,
+            color: "rgba(255, 255, 255, 0.40)",
+            size: 3 + Math.random() * 3,
+            life: 0.24,
+            maxLife: 0.24,
+            shape: "dust"
+          });
+        }
+      })
+    );
+
+    // Shockwave Blast Ring Listener
+    this.unsubEvents.push(
+      eventBroker.subscribe("SPAWN_BLAST" as any, ({ x, y, color }) => {
+        this.particles.push({
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+          color,
+          size: 8,
+          life: 0.16,
+          maxLife: 0.16,
+          shape: "ring"
+        });
+      })
+    );
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
@@ -4667,7 +4320,33 @@ export class Engine {
     this.loop.stop();
   }
 
+      private handlePauseKey = (e: KeyboardEvent) => {
+    if (e.code === "KeyP") {
+      this.isPaused = !this.isPaused;
+      if (this.isPaused) {
+        soundSynth.playErrorTick();
+      } else {
+        soundSynth.playHitConfirm();
+      }
+    }
+  };
+
   private update(dt: number) {
+    if (this.isPaused) {
+      return;
+    }
+    this.accumulator += dt;
+    if (this.accumulator > 0.25) {
+      this.accumulator = 0.25;
+    }
+
+    while (this.accumulator >= this.fixedTimeStep) {
+      this.fixedUpdate(this.fixedTimeStep);
+      this.accumulator -= this.fixedTimeStep;
+    }
+  }
+
+  private fixedUpdate(dt: number) {
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;
@@ -4683,12 +4362,24 @@ export class Engine {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
 
-      const activeProjectiles = [...this.pool.getActive()];
-      for (const proj of activeProjectiles) {
-        proj.update(dt);
+      const activeProjectiles = this.pool.getActive();
+      for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+        activeProjectiles[i].update(dt);
       }
       inputProvider.postUpdate();
       return;
+    }
+
+    /* Update Particle Coordinates and age Lifespans */
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+        continue;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
     }
 
     this.player.update(dt);
@@ -4698,8 +4389,8 @@ export class Engine {
       spawner.update(dt);
     }
 
-    const activeMinions = [...this.world.minions];
-    for (const minion of activeMinions) {
+    for (let i = this.world.minions.length - 1; i >= 0; i--) {
+      const minion = this.world.minions[i];
       minion.update(dt);
 
       if (!this.player.isDead && !minion.isDead) {
@@ -4729,9 +4420,9 @@ export class Engine {
       }
     }
 
-    const activeProjectiles = [...this.pool.getActive()];
-    for (const proj of activeProjectiles) {
-      proj.update(dt);
+    const activeProjectiles = this.pool.getActive();
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      activeProjectiles[i].update(dt);
     }
 
     const bHealth = this.boss.getComponent(HealthComponent);
@@ -4761,9 +4452,16 @@ export class Engine {
       this.deathTimeoutId = setTimeout(() => {
         sessionState.setGameResult("GAMEOVER");
         this.stop();
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
-      }, 3500);
+        this.dialogueTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+        }, 500);
+        this.dialogueStaggerTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
+        }, 1800);
+        this.dialogueClearTimeoutId = setTimeout(() => {
+          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+        }, 5200);
+      }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       this.bossDeathTimer = 0;
@@ -4774,9 +4472,16 @@ export class Engine {
       this.deathTimeoutId = setTimeout(() => {
         sessionState.setGameResult("VICTORY");
         this.stop();
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
-      }, 3500);
+        this.dialogueTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
+        }, 500);
+        this.dialogueStaggerTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+        }, 2800);
+        this.dialogueClearTimeoutId = setTimeout(() => {
+          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+        }, 5200);
+      }, 2000);
     }
 
     inputProvider.postUpdate();
@@ -4817,6 +4522,54 @@ export class Engine {
     }
 
     this.boss.draw(this.ctx);
+
+    /* Render Active Particles */
+    for (const p of this.particles) {
+      const pct = p.life / p.maxLife;
+      this.ctx.save();
+      
+      if (p.shape === "spark") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 8;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      } 
+      else if (p.shape === "dust") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+      } 
+      else if (p.shape === "ring") {
+        const radius = p.size + (1.0 - pct) * 44;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 10 * pct;
+        this.ctx.stroke();
+      }
+      
+      if (this.isPaused) {
+      /* Draw semi-transparent overlay */
+      this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
+      this.ctx.fillRect(0, 0, 1250, 1250);
+
+      /* Draw paused diagnostic text */
+      this.ctx.fillStyle = "#ffffff";
+      this.ctx.font = "bold 44px monospace";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
+
+      this.ctx.font = "bold 18px monospace";
+      this.ctx.fillStyle = "var(--signal-green)";
+      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
+    }
+
+    this.ctx.restore();
+    }
     this.player.draw(this.ctx);
 
     const activeMinionsToDraw = this.world.minions;
@@ -4899,6 +4652,18 @@ export class Engine {
       clearTimeout(this.deathTimeoutId);
       this.deathTimeoutId = null;
     }
+    if (this.dialogueTimeoutId !== null) {
+      clearTimeout(this.dialogueTimeoutId);
+      this.dialogueTimeoutId = null;
+    }
+    if (this.dialogueStaggerTimeoutId !== null) {
+      clearTimeout(this.dialogueStaggerTimeoutId);
+      this.dialogueStaggerTimeoutId = null;
+    }
+    if (this.dialogueClearTimeoutId !== null) {
+      clearTimeout(this.dialogueClearTimeoutId);
+      this.dialogueClearTimeoutId = null;
+    }
     this.loop.cleanup();
     this.player.teardown();
     this.boss.teardown();
@@ -4906,6 +4671,10 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.unsubDialogue();
+    this.unsubEvents.forEach((unsub) => unsub());
+    this.unsubEvents = [];
+    this.particles = [];
+    window.removeEventListener("keydown", this.handlePauseKey);
     Registry.player = null;
     Registry.boss = null;
     Registry.projectilePool = null;
@@ -4917,60 +4686,6 @@ export class Engine {
     Registry.minions = [];
   }
 }
-
-
-
-● ./src/core/EventBroker.ts
-────────────────────────────────────────────────────
-export type GameEventMap = {
-  PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number };
-  PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
-  PLAYER_JUMPED: void;
-  PLAYER_DASHED: { direction: number };
-  PLAYER_POGOED: void;
-  PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
-  PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
-  HEALING_CHARGES_CHANGED: { charges: number };
-  DETERMINATION_CHANGED: { determination: number };
-  DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
-  CAMERA_SHAKE: { amplitude: number; duration: number };
-  HIT_STOP: { duration: number };
-  BOSS_DEFEATED: { x: number; y: number };
-  GAME_OVER: void;
-  VICTORY: void;
-};
-
-export type EventCallback<T> = (payload: T) => void;
-
-class EventBroker {
-  private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
-
-  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
-    if (!this.listeners[event]) {
-      this.listeners[event] = new Set();
-    }
-    const set = this.listeners[event]!;
-    set.add(callback);
-    return () => {
-      this.listeners[event]?.delete(callback);
-    };
-  }
-
-  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void {
-    const set = this.listeners[event];
-    if (set) {
-      set.forEach((cb) => cb(payload));
-    }
-  }
-
-  public clear(): void {
-    this.listeners = {};
-  }
-}
-
-export const eventBroker = new EventBroker();
 
 
 
@@ -5095,6 +4810,7 @@ class InputProvider {
     if (typeof window !== "undefined") {
       window.addEventListener("keydown", this.handleKeyDown);
       window.addEventListener("keyup", this.handleKeyUp);
+      window.addEventListener("blur", this.handleBlur);
     }
   }
 
@@ -5140,6 +4856,16 @@ class InputProvider {
     }
   };
 
+  private handleBlur = () => {
+    for (const key in this.pressed) {
+      const action = key as Action;
+      this.pressed[action] = false;
+      this.justPressed[action] = false;
+      this.justReleased[action] = false;
+      this.pressTimestamps[action] = 0;
+    }
+  };
+
   public isPressed(action: Action): boolean {
     return this.pressed[action];
   }
@@ -5171,6 +4897,7 @@ class InputProvider {
     if (typeof window !== "undefined") {
       window.removeEventListener("keydown", this.handleKeyDown);
       window.removeEventListener("keyup", this.handleKeyUp);
+      window.removeEventListener("blur", this.handleBlur);
     }
   }
 }
@@ -5181,7 +4908,12 @@ export const inputProvider = new InputProvider();
 
 ● ./src/core/Interfaces.ts
 ────────────────────────────────────────────────────
-import { Component } from "@/entities/Component";
+import { EntityComponent } from "@/entities/EntityComponent";
+
+export interface Vector2D {
+  x: number;
+  y: number;
+}
 
 export interface Rectangle {
   x: number;
@@ -5192,20 +4924,26 @@ export interface Rectangle {
 
 export interface IEntity {
   id: string;
-  position: { x: number; y: number };
-  velocity: { x: number; y: number };
+  position: Vector2D;
+  velocity: Vector2D;
   size: { width: number; height: number };
   isDead: boolean;
   world: IWorld;
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D): void;
   teardown(): void;
-  addComponent<T extends Component>(
+  addComponent<T extends EntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
     dependencies?: Record<string, any>
   ): T;
-  getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | null;
+  getComponent<T extends EntityComponent>(componentClass: new (...args: any[]) => T): T | null;
+}
+
+export interface IProjectile extends IEntity {
+  isActive: boolean;
+  ownerId: "player" | "boss";
+  damage: number;
 }
 
 export interface IDamageable {
@@ -5235,8 +4973,8 @@ export interface IWorld {
   boss: IEntity | null;
   minions: IEntity[];
   physicsWorld: IPhysicsWorld;
-  getProjectiles(): any[];
-  releaseProjectile(proj: any): void;
+  getProjectiles(): IProjectile[];
+  releaseProjectile(proj: IProjectile): void;
 }
 
 
@@ -5480,162 +5218,6 @@ export const saveManager = new SaveManager();
 
 
 
-● ./src/core/ScreenRoutes.ts
-────────────────────────────────────────────────────
-import { ScreenState } from "@/store/useGameStore";
-import { Action } from "@/core/InputProvider";
-import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager, AudioSettings } from "@/core/SettingsManager";
-
-export interface MenuContext {
-  navTo: (screen: ScreenState) => void;
-  menuIndex: number;
-  setMenuIndex: (index: number) => void;
-  reloadSaveSlots: () => void;
-  resetGameSession: () => void;
-  handleSlotAction: (index: number, onPlay: () => void) => void;
-  toggleCopyMode: () => void;
-  toggleEraseMode: () => void;
-  resetActions: () => void;
-  audio: AudioSettings;
-  handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
-  setRebindTarget: (target: { action: Action; index: number } | null) => void;
-  gameResult: string;
-}
-
-export interface ScreenConfig {
-  getMaxIndex(context: MenuContext): number;
-  onSelect(context: MenuContext): void;
-  onBack?(context: MenuContext): void;
-  onHorizontal?(direction: number, context: MenuContext): void;
-}
-
-export const screenConfigs: Record<string, ScreenConfig> = {
-  TITLE: {
-    getMaxIndex: () => 2,
-    onSelect: ({ menuIndex, navTo, reloadSaveSlots }) => {
-      if (menuIndex === 0) {
-        reloadSaveSlots();
-        navTo("SAVE_SELECT");
-      } else if (menuIndex === 1) {
-        navTo("OPTIONS");
-      } else if (menuIndex === 2) {
-        navTo("CREDITS");
-      }
-      soundSynth.playHitConfirm();
-    }
-  },
-  PLAYING: {
-    getMaxIndex: ({ gameResult }) => (gameResult !== "PLAYING" ? 1 : 0),
-    onSelect: ({ menuIndex, gameResult, resetGameSession, navTo }) => {
-      if (gameResult !== "PLAYING") {
-        if (menuIndex === 0) {
-          resetGameSession();
-          navTo("PLAYING");
-        } else {
-          navTo("TITLE");
-        }
-        soundSynth.playHitConfirm();
-      }
-    }
-  },
-  SAVE_SELECT: {
-    getMaxIndex: () => 5,
-    onSelect: ({ menuIndex, handleSlotAction, navTo, resetGameSession, toggleCopyMode, toggleEraseMode, resetActions }) => {
-      if (menuIndex >= 0 && menuIndex <= 2) {
-        handleSlotAction(menuIndex, () => {
-          resetGameSession();
-          navTo("PLAYING");
-        });
-      } else if (menuIndex === 3) {
-        toggleCopyMode();
-      } else if (menuIndex === 4) {
-        toggleEraseMode();
-      } else if (menuIndex === 5) {
-        resetActions();
-        navTo("TITLE");
-        soundSynth.playErrorTick();
-      }
-    },
-    onBack: ({ resetActions, navTo }) => {
-      resetActions();
-      navTo("TITLE");
-    }
-  },
-  OPTIONS: {
-    getMaxIndex: () => 2,
-    onSelect: ({ menuIndex, navTo, setMenuIndex }) => {
-      if (menuIndex === 0) {
-        navTo("SOUND");
-      } else if (menuIndex === 1) {
-        navTo("CONTROLS");
-      } else if (menuIndex === 2) {
-        navTo("TITLE");
-        setMenuIndex(1);
-      }
-      soundSynth.playHitConfirm();
-    },
-    onBack: ({ resetActions, navTo }) => {
-      resetActions();
-      navTo("TITLE");
-    }
-  },
-  SOUND: {
-    getMaxIndex: () => 3,
-    onSelect: ({ menuIndex, navTo }) => {
-      if (menuIndex === 3) {
-        navTo("OPTIONS");
-        soundSynth.playErrorTick();
-      }
-    },
-    onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
-      const delta = direction * 0.05;
-      if (menuIndex === 0 && !audio.masterMuted) {
-        handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + delta)));
-        soundSynth.playSelectTick();
-      } else if (menuIndex === 1 && !audio.sfxMuted) {
-        handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + delta)));
-        soundSynth.playSelectTick();
-      } else if (menuIndex === 2 && !audio.musicMuted) {
-        handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + delta)));
-        soundSynth.playSelectTick();
-      }
-    },
-    onBack: ({ navTo }) => {
-      navTo("OPTIONS");
-    }
-  },
-  CONTROLS: {
-    getMaxIndex: () => 7,
-    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget }) => {
-      if (menuIndex === 7) {
-        navTo("OPTIONS");
-        setMenuIndex(1);
-        soundSynth.playErrorTick();
-      } else {
-        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
-        soundSynth.playHitConfirm();
-        setRebindTarget({ action, index: 0 });
-      }
-    },
-    onBack: ({ navTo }) => {
-      navTo("OPTIONS");
-    }
-  },
-  CREDITS: {
-    getMaxIndex: () => 0,
-    onSelect: ({ navTo }) => {
-      navTo("TITLE");
-      soundSynth.playErrorTick();
-    },
-    onBack: ({ navTo }) => {
-      navTo("TITLE");
-    }
-  }
-};
-
-
-
 ● ./src/core/SettingsManager.ts
 ────────────────────────────────────────────────────
 import type { Action } from "@/core/InputProvider";
@@ -5771,7 +5353,7 @@ export const settingsManager = new SettingsManager();
 
 ● ./src/core/SimulationSystems.ts
 ────────────────────────────────────────────────────
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 import { Camera } from "@/core/Camera";
 import { soundSynth } from "@/core/SoundSynth";
 
@@ -5822,6 +5404,8 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash();
+        /* Dash Hit-Stop (Impact Freeze Frames): Apply a micro freeze-frame beat to emphasize active dash impact power */
+        Camera.triggerHitStop(0.035);
       })
     );
 
@@ -6299,7 +5883,7 @@ export class StateMachine {
 
 ● ./src/core/World.ts
 ────────────────────────────────────────────────────
-import { IWorld, IEntity, IPhysicsWorld } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -6315,17 +5899,71 @@ export class World implements IWorld {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
-  public getProjectiles(): any[] {
+  public getProjectiles(): IProjectile[] {
     if (!this.projectilePool) return [];
-    return [...this.projectilePool.getActive()];
+    return this.projectilePool.getActive() as any[] as IProjectile[];
   }
 
-  public releaseProjectile(proj: any): void {
+  public releaseProjectile(proj: IProjectile): void {
     if (this.projectilePool) {
-      this.projectilePool.release(proj);
+      this.projectilePool.release(proj as any);
     }
   }
 }
+
+
+
+● ./src/core/eventBroker.ts
+────────────────────────────────────────────────────
+export type GameEventMap = {
+  PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
+  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number };
+  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number };
+  PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
+  PLAYER_JUMPED: void;
+  PLAYER_DASHED: { direction: number };
+  PLAYER_POGOED: void;
+  PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
+  PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
+  HEALING_CHARGES_CHANGED: { charges: number };
+  DETERMINATION_CHANGED: { determination: number };
+  DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
+  CAMERA_SHAKE: { amplitude: number; duration: number };
+  HIT_STOP: { duration: number };
+  BOSS_DEFEATED: { x: number; y: number };
+  GAME_OVER: void;
+  VICTORY: void;
+};
+
+export type EventCallback<T> = (payload: T) => void;
+
+class EventBroker {
+  private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
+
+  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = new Set();
+    }
+    const set = this.listeners[event]!;
+    set.add(callback);
+    return () => {
+      this.listeners[event]?.delete(callback);
+    };
+  }
+
+  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void {
+    const set = this.listeners[event];
+    if (set) {
+      set.forEach((cb) => cb(payload));
+    }
+  }
+
+  public clear(): void {
+    this.listeners = {};
+  }
+}
+
+export const eventBroker = new EventBroker();
 
 
 
@@ -6369,52 +6007,57 @@ export class ConfigurationValidator {
     "DASH"
   ];
 
-  public static validateSaveSlot(data: any): ValidatedSaveSlot {
+  public static validateSaveSlot(data: unknown): ValidatedSaveSlot {
     if (!data || typeof data !== "object") {
       return { wins: 0, losses: 0, empty: true };
     }
 
+    const obj = data as Record<string, unknown>;
+
     return {
-      wins: typeof data.wins === "number" && data.wins >= 0 ? data.wins : 0,
-      losses: typeof data.losses === "number" && data.losses >= 0 ? data.losses : 0,
-      empty: typeof data.empty === "boolean" ? data.empty : true
+      wins: typeof obj.wins === "number" && obj.wins >= 0 ? obj.wins : 0,
+      losses: typeof obj.losses === "number" && obj.losses >= 0 ? obj.losses : 0,
+      empty: typeof obj.empty === "boolean" ? obj.empty : true
     };
   }
 
-  public static validateAudioSettings(data: any, fallback: ValidatedAudioSettings): ValidatedAudioSettings {
+  public static validateAudioSettings(data: unknown, fallback: ValidatedAudioSettings): ValidatedAudioSettings {
     if (!data || typeof data !== "object") {
       return fallback;
     }
 
-    const checkVolume = (val: any, def: number) => {
+    const obj = data as Record<string, unknown>;
+
+    const checkVolume = (val: unknown, def: number) => {
       return typeof val === "number" && val >= 0 && val <= 1 ? val : def;
     };
 
-    const checkMute = (val: any, def: boolean) => {
+    const checkMute = (val: unknown, def: boolean) => {
       return typeof val === "boolean" ? val : def;
     };
 
     return {
-      masterVolume: checkVolume(data.masterVolume, fallback.masterVolume),
-      sfxVolume: checkVolume(data.sfxVolume, fallback.sfxVolume),
-      musicVolume: checkVolume(data.musicVolume, fallback.musicVolume),
-      masterMuted: checkMute(data.masterMuted, fallback.masterMuted),
-      sfxMuted: checkMute(data.sfxMuted, fallback.sfxMuted),
-      musicMuted: checkMute(data.musicMuted, fallback.musicMuted)
+      masterVolume: checkVolume(obj.masterVolume, fallback.masterVolume),
+      sfxVolume: checkVolume(obj.sfxVolume, fallback.sfxVolume),
+      musicVolume: checkVolume(obj.musicVolume, fallback.musicVolume),
+      masterMuted: checkMute(obj.masterMuted, fallback.masterMuted),
+      sfxMuted: checkMute(obj.sfxMuted, fallback.sfxMuted),
+      musicMuted: checkMute(obj.musicMuted, fallback.musicMuted)
     };
   }
 
-  public static validateKeyMap(data: any, fallback: ValidatedKeyMap): ValidatedKeyMap {
+  public static validateKeyMap(data: unknown, fallback: ValidatedKeyMap): ValidatedKeyMap {
     if (!data || typeof data !== "object") {
       return fallback;
     }
 
+    const obj = data as Record<string, unknown>;
     const validatedMap = {} as ValidatedKeyMap;
 
     for (const action of this.REQUIRED_ACTIONS) {
-      const keys = data[action];
+      const keys = obj[action];
       if (Array.isArray(keys) && keys.length > 0 && keys.every(k => typeof k === "string")) {
-        validatedMap[action] = [...keys];
+        validatedMap[action] = [...keys] as string[];
       } else {
         validatedMap[action] = [...fallback[action]];
       }
@@ -6426,27 +6069,183 @@ export class ConfigurationValidator {
 
 
 
+● ./src/core/screenRoutes.ts
+────────────────────────────────────────────────────
+import { ScreenState } from "@/store/useGameStore";
+import { Action } from "@/core/InputProvider";
+import { soundSynth } from "@/core/SoundSynth";
+import { settingsManager, AudioSettings } from "@/core/SettingsManager";
+
+export interface MenuContext {
+  navTo: (screen: ScreenState) => void;
+  menuIndex: number;
+  setMenuIndex: (index: number) => void;
+  reloadSaveSlots: () => void;
+  resetGameSession: () => void;
+  handleSlotAction: (index: number, onPlay: () => void) => void;
+  toggleCopyMode: () => void;
+  toggleEraseMode: () => void;
+  resetActions: () => void;
+  audio: AudioSettings;
+  handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  setRebindTarget: (target: { action: Action; index: number } | null) => void;
+  gameResult: string;
+}
+
+export interface ScreenConfig {
+  getMaxIndex(context: MenuContext): number;
+  onSelect(context: MenuContext): void;
+  onBack?(context: MenuContext): void;
+  onHorizontal?(direction: number, context: MenuContext): void;
+}
+
+export const screenConfigs: Record<string, ScreenConfig> = {
+  TITLE: {
+    getMaxIndex: () => 2,
+    onSelect: ({ menuIndex, navTo, reloadSaveSlots }) => {
+      if (menuIndex === 0) {
+        reloadSaveSlots();
+        navTo("SAVE_SELECT");
+      } else if (menuIndex === 1) {
+        navTo("OPTIONS");
+      } else if (menuIndex === 2) {
+        navTo("CREDITS");
+      }
+      soundSynth.playHitConfirm();
+    }
+  },
+  PLAYING: {
+    getMaxIndex: ({ gameResult }) => (gameResult !== "PLAYING" ? 1 : 0),
+    onSelect: ({ menuIndex, gameResult, resetGameSession, navTo }) => {
+      if (gameResult !== "PLAYING") {
+        if (menuIndex === 0) {
+          resetGameSession();
+          navTo("PLAYING");
+        } else {
+          navTo("TITLE");
+        }
+        soundSynth.playHitConfirm();
+      }
+    }
+  },
+  SAVE_SELECT: {
+    getMaxIndex: () => 5,
+    onSelect: ({ menuIndex, handleSlotAction, navTo, resetGameSession, toggleCopyMode, toggleEraseMode, resetActions }) => {
+      if (menuIndex >= 0 && menuIndex <= 2) {
+        handleSlotAction(menuIndex, () => {
+          resetGameSession();
+          navTo("PLAYING");
+        });
+      } else if (menuIndex === 3) {
+        toggleCopyMode();
+      } else if (menuIndex === 4) {
+        toggleEraseMode();
+      } else if (menuIndex === 5) {
+        resetActions();
+        navTo("TITLE");
+        soundSynth.playErrorTick();
+      }
+    },
+    onBack: ({ resetActions, navTo }) => {
+      resetActions();
+      navTo("TITLE");
+    }
+  },
+  OPTIONS: {
+    getMaxIndex: () => 2,
+    onSelect: ({ menuIndex, navTo, setMenuIndex }) => {
+      if (menuIndex === 0) {
+        navTo("SOUND");
+      } else if (menuIndex === 1) {
+        navTo("CONTROLS");
+      } else if (menuIndex === 2) {
+        navTo("TITLE");
+        setMenuIndex(1);
+      }
+      soundSynth.playHitConfirm();
+    },
+    onBack: ({ resetActions, navTo }) => {
+      resetActions();
+      navTo("TITLE");
+    }
+  },
+  SOUND: {
+    getMaxIndex: () => 3,
+    onSelect: ({ menuIndex, navTo }) => {
+      if (menuIndex === 3) {
+        navTo("OPTIONS");
+        soundSynth.playErrorTick();
+      }
+    },
+    onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
+      const delta = direction * 0.05;
+      if (menuIndex === 0 && !audio.masterMuted) {
+        handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + delta)));
+        soundSynth.playSelectTick();
+      } else if (menuIndex === 1 && !audio.sfxMuted) {
+        handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + delta)));
+        soundSynth.playSelectTick();
+      } else if (menuIndex === 2 && !audio.musicMuted) {
+        handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + delta)));
+        soundSynth.playSelectTick();
+      }
+    },
+    onBack: ({ navTo }) => {
+      navTo("OPTIONS");
+    }
+  },
+  CONTROLS: {
+    getMaxIndex: () => 7,
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget }) => {
+      if (menuIndex === 7) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },
+    onBack: ({ navTo }) => {
+      navTo("OPTIONS");
+    }
+  },
+  CREDITS: {
+    getMaxIndex: () => 0,
+    onSelect: ({ navTo }) => {
+      navTo("TITLE");
+      soundSynth.playErrorTick();
+    },
+    onBack: ({ navTo }) => {
+      navTo("TITLE");
+    }
+  }
+};
+
+
+
 ● ./src/entities/BaseEntity.ts
 ────────────────────────────────────────────────────
-import { Component } from "./Component";
-import { IEntity, IWorld } from "@/core/Interfaces";
+import { EntityComponent } from "./EntityComponent";
+import { IEntity, IWorld, Vector2D } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
-  public position = { x: 0, y: 0 };
-  public velocity = { x: 0, y: 0 };
+  public position: Vector2D = { x: 0, y: 0 };
+  public velocity: Vector2D = { x: 0, y: 0 };
   public size = { width: 50, height: 50 };
   public id: string;
   public isDead: boolean = false;
   public world: IWorld;
 
-  private components = new Map<any, Component>();
+  private components = new Map<any, EntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
     this.world = world;
   }
 
-  public addComponent<T extends Component>(
+  public addComponent<T extends EntityComponent>(
     componentClass: new (...args: any[]) => T,
     component: T,
     dependencies?: Record<string, any>
@@ -6456,7 +6255,7 @@ export class BaseEntity implements IEntity {
     return component;
   }
 
-  public getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | null {
+  public getComponent<T extends EntityComponent>(componentClass: new (...args: any[]) => T): T | null {
     const component = this.components.get(componentClass);
     return (component as T) || null;
   }
@@ -6498,16 +6297,31 @@ export class BaseEntity implements IEntity {
 ● ./src/entities/Boss.ts
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
-import { HealthComponent } from "@/components/HealthComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
-import { BossCooldownState, BossDeadState } from "./BossStates";
+import { 
+  BossCooldownState, 
+  BossPatrolState, 
+  BossMeleeState, 
+  BossAttackState, 
+  BossTelegraphState, 
+  BossLungeState, 
+  BossDeadState 
+} from "./BossStates";
 
 export class Boss extends BaseEntity {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public stateMachine: StateMachine;
+  public cooldownState!: BossCooldownState;
+  public patrolState!: BossPatrolState;
+  public meleeState!: BossMeleeState;
+  public attackState!: BossAttackState;
+  public telegraphState!: BossTelegraphState;
+  public lungeState!: BossLungeState;
+  public deadState!: BossDeadState;
 
   public patrolSpeed: number = 200;
   public lungeSpeed: number = 1200;
@@ -6525,14 +6339,22 @@ export class Boss extends BaseEntity {
       invincibilityDuration: 0.25 
     });
 
+    this.cooldownState = new BossCooldownState(this);
+    this.patrolState = new BossPatrolState(this);
+    this.meleeState = new BossMeleeState(this);
+    this.attackState = new BossAttackState(this);
+    this.telegraphState = new BossTelegraphState(this);
+    this.lungeState = new BossLungeState(this);
+    this.deadState = new BossDeadState(this);
+
     this.stateMachine = new StateMachine();
-    this.stateMachine.changeState(new BossCooldownState(this));
+    this.stateMachine.changeState(this.cooldownState);
   }
 
   public update(dt: number) {
     if (this.isDead) {
       if (!(this.stateMachine.getCurrentState() instanceof BossDeadState)) {
-        this.stateMachine.changeState(new BossDeadState(this));
+        this.stateMachine.changeState(this.deadState);
       }
       super.update(dt);
       return;
@@ -6726,7 +6548,7 @@ export class Boss extends BaseEntity {
 ────────────────────────────────────────────────────
 import { IState } from "@/core/StateMachine";
 import { Boss } from "./Boss";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -6742,20 +6564,30 @@ export abstract class BossState implements IState {
 
 export class BossCooldownState extends BossState {
   private duration: number = 2.0;
+  private overrideDuration: number = -1;
 
-  constructor(owner: Boss, customDuration: number = -1) {
+  constructor(owner: Boss) {
     super(owner);
-    this.duration = customDuration > 0 ? customDuration : (owner.currentPhase === 3 ? 1.5 : 2.5);
+  }
+
+  public setDuration(customDuration: number) {
+    this.overrideDuration = customDuration;
   }
 
   public enter(): void {
     this.owner.velocity.x = 0;
+    if (this.overrideDuration > 0) {
+      this.duration = this.overrideDuration;
+      this.overrideDuration = -1;
+    } else {
+      this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    }
   }
 
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossPatrolState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.patrolState);
     }
   }
 
@@ -6783,19 +6615,18 @@ export class BossPatrolState extends BossState {
       }
     }
 
-    // High-priority close-range check
     const player = this.owner.world.player;
     if (player && !player.isDead) {
       const distance = Math.abs(player.position.x - this.owner.position.x);
       const distanceY = Math.abs(player.position.y - this.owner.position.y);
       if (distance < 120 && distanceY < 60) {
-        this.owner.stateMachine.changeState(new BossMeleeState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.meleeState);
         return;
       }
     }
 
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossAttackState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.attackState);
     }
   }
 
@@ -6815,7 +6646,8 @@ export class BossMeleeState extends BossState {
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, 1.0));
+      this.owner.cooldownState.setDuration(1.0);
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
@@ -6843,7 +6675,7 @@ export class BossAttackState extends BossState {
         this.volleyTimer = 0;
         this.durationTimer = 1.0;
       } else {
-        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else {
       const r = Math.random();
@@ -6857,7 +6689,7 @@ export class BossAttackState extends BossState {
         this.owner.fireRadialOmniBurst();
         this.durationTimer = 0.8;
       } else {
-        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     }
   }
@@ -6879,7 +6711,8 @@ export class BossAttackState extends BossState {
       if (this.attackType === "VOLLEY") cooldown = 2.5;
       else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
 
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, cooldown));
+      this.owner.cooldownState.setDuration(cooldown);
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
@@ -6897,7 +6730,7 @@ export class BossTelegraphState extends BossState {
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossLungeState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.lungeState);
     }
   }
 
@@ -6925,7 +6758,7 @@ export class BossLungeState extends BossState {
     const hitWall = physics ? (physics.isOnWallLeft || physics.isOnWallRight) : false;
 
     if (this.duration <= 0 || hitWall) {
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
@@ -6946,11 +6779,11 @@ export class BossDeadState extends BossState {
 
 
 
-● ./src/entities/Component.ts
+● ./src/entities/EntityComponent.ts
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
 
-export interface Component {
+export interface EntityComponent {
   setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
   update?(dt: number): void;
   teardown?(): void;
@@ -6961,8 +6794,8 @@ export interface Component {
 ● ./src/entities/Minion.ts
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
-import { HealthComponent } from "@/components/HealthComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { MinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
 
@@ -7280,15 +7113,15 @@ export class FlyerBehavior implements MinionBehavior {
 ● ./src/entities/Player.ts
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
-import { HealthComponent } from "@/components/HealthComponent";
-import { InputReceiverComponent } from "@/components/InputReceiverComponent";
-import { DashComponent } from "@/components/DashComponent";
-import { MeleeComponent } from "@/components/MeleeComponent";
-import { FireballComponent } from "@/components/FireballComponent";
-import { HealComponent } from "@/components/HealComponent";
+import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
+import { DashComponent } from "@/entities/components/DashComponent";
+import { MeleeComponent } from "@/entities/components/MeleeComponent";
+import { FireballComponent } from "@/entities/components/FireballComponent";
+import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
-import { eventBroker } from "@/core/EventBroker";
+import { eventBroker } from "@/core/eventBroker";
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;
@@ -7303,13 +7136,20 @@ export class Player extends BaseEntity {
   private readonly jumpForce: number = 680;
   private readonly wallSlideSpeed: number = 120;
 
+  /* Coyote Time (Ledge Jump Grace Period): Grace window to register jump inputs after slipping off solid surfaces */
   private coyoteTimer: number = 0;
+  /* Jump Buffering (Pre-ground Landing Inputs): Buffer window to capture pre-landing jump hits */
   private jumpBufferTimer: number = 0;
   public hasDoubleJump: boolean = true;
   public facingDirection: number = 1;
 
+  /* Wall Coyote Time: Grace window to execute wall jumps after slipping off vertical walls */
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
+
+  /* Visual Squash and Stretch (Kinetic Weight): Visual scaling variables for compression on landing and extension on jumps */
+  public visualScale = { x: 1, y: 1 };
+  private airtimeDuration: number = 0;
 
   public determinationCounter: number = 0;
   public healingCharges: number = 0;
@@ -7356,10 +7196,38 @@ export class Player extends BaseEntity {
       return;
     }
 
+    /* Visual Squash and Stretch: Smoothly interpolate back to default 1.0 dimension ratios */
+    this.visualScale.x += (1 - this.visualScale.x) * 12 * dt;
+    this.visualScale.y += (1 - this.visualScale.y) * 12 * dt;
+
+    if (!this.physics.isGrounded) {
+      /* Track accumulated airtime to skip vertical squashes on micro-seams or subpixel jitters */
+      this.airtimeDuration += dt;
+    } else {
+      if (this.airtimeDuration > 0.08) {
+        /* Compress vertically upon hitting solid ground to represent landing compression */
+        this.visualScale = { x: 1.22, y: 0.78 };
+        /* Spawn Landing Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
+      }
+      this.airtimeDuration = 0;
+    }
+
     const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
-    if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+    const isPogoing = this.meleeComponent.attackActive && this.meleeComponent.attackDirection === "down";
+    const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
+
+    if (isPogoing) {
+      /* Active Pogo: Slightly dampen gravity to assist mid-air bounce adjustments */
+      this.physics.gravity = 1200 * 0.85;
+    } else if (isNearJumpApex) {
+      /* Apex Gravity Scaling (Jump Peak "Hang Time"): Scale down gravity at the peak of a jump for more air control */
+      this.physics.gravity = 1200 * 0.65;
+    } else if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+      /* Fast Fall: Increase downward pull when pressing down */
       this.physics.gravity = 1200 * 1.4;
     } else {
+      /* Standard Fall */
       this.physics.gravity = 1200;
     }
 
@@ -7448,6 +7316,8 @@ export class Player extends BaseEntity {
       const normY = dirY / len;
       
       this.dashComponent.triggerDash(normX, normY);
+      /* Visual Squash and Stretch: Flatten horizontally on dash impulse */
+      this.visualScale = { x: 1.25, y: 0.75 };
       super.update(dt);
       return;
     }
@@ -7474,16 +7344,26 @@ export class Player extends BaseEntity {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on ground jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Jump Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.dashComponent.resetDashCharge();
+        /* Visual Squash and Stretch: Stretch vertically on wall jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
+        /* Spawn Wall Slide Dust Puff */
+        eventBroker.publish("SPAWN_DUST" as any, { x: this.position.x, y: this.position.y + this.size.height / 2 });
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on double jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
       }
     }
 
@@ -7575,11 +7455,14 @@ export class Player extends BaseEntity {
 
     for (const ghost of this.dashComponent.ghosts) {
       ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+      const gWidth = this.size.width * this.visualScale.x;
+      const gHeight = this.size.height * this.visualScale.y;
+      const gFeetY = ghost.y + this.size.height / 2;
       ctx.fillRect(
-        ghost.x - this.size.width / 2,
-        ghost.y - this.size.height / 2,
-        this.size.width,
-        this.size.height
+        ghost.x - gWidth / 2,
+        gFeetY - gHeight,
+        gWidth,
+        gHeight
       );
     }
 
@@ -7592,11 +7475,16 @@ export class Player extends BaseEntity {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
+    /* Render visual squash and stretch calculations on base fill bounds anchored to the ground */
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+    const feetY = this.position.y + this.size.height / 2;
+
     ctx.fillRect(
-      this.position.x - this.size.width / 2,
-      this.position.y - this.size.height / 2,
-      this.size.width,
-      this.size.height
+      this.position.x - vWidth / 2,
+      feetY - vHeight,
+      vWidth,
+      vHeight
     );
 
     ctx.shadowBlur = 0;
@@ -7643,91 +7531,148 @@ export class Player extends BaseEntity {
     const facing = this.facingDirection;
     ctx.lineCap = "round";
 
+    /* Swipe & Smear calculations: Compute elapsed progress of the active sword slash */
+    const progress = 1.0 - (this.meleeComponent.attackActiveTimer / 0.09);
+    const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.09);
+
     if (this.attackDirection === "side") {
-      const offset = facing * 50;
+      const offset = facing * 35;
+      const baseStart = -Math.PI / 2;
+      const angleLength = Math.PI;
+      const currentSweepAngle = angleLength * progress;
 
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
+      const cx = this.position.x + offset;
+      const cy = this.position.y;
+
+      ctx.save();
+      /* Apply flat lineCap to cleanly terminate lines, eliminating any capsule-shaped endpoints poking out */
+      ctx.lineCap = "butt";
+
+      /* Layer 1: Dual Razor-Sharp Trailing Speedlines (Draws sleek, thin speed trails mimicking wind friction) */
+      const trailAngle = currentSweepAngle * 0.75;
+      
+      /* Outer Edge Speedline (Radius 88px, Width 4px) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(
-        this.position.x + offset / 2,
-        this.position.y,
+        cx,
+        cy,
+        88,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
+      );
+      ctx.stroke();
+
+      /* Mid-Blade Speedline (Radius 65px, Width 2px) */
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
         65,
-        facing > 0 ? -Math.PI / 3 : Math.PI - Math.PI / 3,
-        facing > 0 ? Math.PI / 3 : Math.PI + Math.PI / 3
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
       );
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffffff";
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      /* Layer 2: Unified, Single-Filled Radial Gradient Wedge (Fuses white-hot core and green blade into one seamless object) */
+      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");                               // Inner transparent hollow
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);                      // Intense white-hot core (39px radius)
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);               // Glowing neon-lime transition (60px radius)
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);                // Rich green blade edge (84px radius)
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");                                 // Soft outer fade-out (95px reach)
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+      
       ctx.beginPath();
+      /* Draw Outer boundary arc (95px reach) */
       ctx.arc(
-        this.position.x + offset / 3,
-        this.position.y,
-        32,
-        facing > 0 ? -Math.PI / 2.5 : Math.PI - Math.PI / 2.5,
-        facing > 0 ? Math.PI / 2.5 : Math.PI + Math.PI / 2.5
+        cx,
+        cy,
+        95,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing < 0
       );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      /* Draw Inner boundary arc (25px reach) backward to close path */
+      ctx.arc(
+        cx,
+        cy,
+        25,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
     else if (this.attackDirection === "up") {
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y - 35,
-        65,
-        -Math.PI * 0.8,
-        -Math.PI * 0.2
-      );
-      ctx.stroke();
+      /* Upward Splash: The 180-degree overhead canopy expands in radius rather than sweeping angles */
+      const cx = this.position.x;
+      const cy = this.position.y - 35;
 
-      ctx.strokeStyle = "#ffffff";
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
       ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y - 25,
-        32,
-        -Math.PI * 0.75,
-        -Math.PI * 0.25
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      /* Draw Outer expanding semi-circle pointing straight up (-PI to 0) */
+      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
+      /* Draw Inner boundary arc backward to close path */
+      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
     else if (this.attackDirection === "down") {
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y + 35,
-        65,
-        Math.PI * 0.2,
-        Math.PI * 0.8
-      );
-      ctx.stroke();
+      /* Downward Splash: The 180-degree pogo thruster expands rapidly downward */
+      const cx = this.position.x;
+      const cy = this.position.y + 35;
 
-      ctx.strokeStyle = "#ffffff";
-      ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 10;
+      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
       ctx.beginPath();
-      ctx.arc(
-        this.position.x,
-        this.position.y + 25,
-        32,
-        Math.PI * 0.25,
-        Math.PI * 0.75
-      );
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+      /* Draw Outer expanding semi-circle pointing straight down (0 to PI) */
+      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
+      /* Draw Inner boundary arc backward to close path */
+      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -7743,8 +7688,9 @@ export class Player extends BaseEntity {
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
 import { Poolable } from "@/core/ObjectPool";
-import { HealthComponent } from "@/components/HealthComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
+import { eventBroker } from "@/core/eventBroker";
 
 export class Projectile extends BaseEntity implements Poolable {
   public isActive: boolean = false;
@@ -7844,7 +7790,8 @@ export class Projectile extends BaseEntity implements Poolable {
     const pH = this.size.height / 2;
 
     const activeProjectiles = this.world.getProjectiles();
-    for (const other of activeProjectiles) {
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      const other = activeProjectiles[i];
       if (other.isActive && other.ownerId === "boss") {
         const oW = other.size.width / 2;
         const oH = other.size.height / 2;
@@ -7913,6 +7860,12 @@ export class Projectile extends BaseEntity implements Poolable {
   }
 
   private selfRelease() {
+    /* Spawn Radial Projectile Impact Ring */
+    eventBroker.publish("SPAWN_BLAST" as any, {
+      x: this.position.x,
+      y: this.position.y,
+      color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)"
+    });
     if (this.onRelease) {
       this.onRelease(this);
     }
@@ -7993,6 +7946,749 @@ export class Spawner {
 
 
 
+● ./src/entities/components/DashComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { eventBroker } from "@/core/eventBroker";
+
+export interface GhostFrame {
+  x: number;
+  y: number;
+  opacity: number;
+}
+
+export class DashComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  
+  public isDashing: boolean = false;
+  public dashTimer: number = 0;
+  public dashCooldown: number = 0;
+  public canDash: boolean = true;
+  public dashDirectionX: number = 1;
+  public dashDirectionY: number = 0;
+  public ghosts: GhostFrame[] = [];
+  public ghostSpawnTimer: number = 0;
+
+  private readonly dashSpeed: number = 1400;
+
+  public setup(owner: BaseEntity): void {
+    this.owner = owner;
+  }
+
+  public update(dt: number): void {
+    if (this.dashCooldown > 0) {
+      this.dashCooldown -= dt;
+    }
+
+    for (const ghost of this.ghosts) {
+      ghost.opacity -= dt * 5.0;
+    }
+    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
+
+    if (this.isDashing) {
+      this.dashTimer -= dt;
+      this.owner.velocity.x = this.dashDirectionX * this.dashSpeed;
+      this.owner.velocity.y = this.dashDirectionY * this.dashSpeed;
+
+      this.ghostSpawnTimer -= dt;
+      if (this.ghostSpawnTimer <= 0) {
+        this.ghosts.push({
+          x: this.owner.position.x,
+          y: this.owner.position.y,
+          opacity: 0.6
+        });
+        this.ghostSpawnTimer = 0.025;
+      }
+
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+        if (this.dashDirectionX !== 0) this.owner.velocity.x *= 0.5;
+        if (this.dashDirectionY !== 0) this.owner.velocity.y = 0;
+      }
+    }
+  }
+
+  public triggerDash(directionX: number, directionY: number): void {
+    this.isDashing = true;
+    this.dashTimer = 0.15;
+    this.dashCooldown = 0.5;
+    this.canDash = false;
+    this.dashDirectionX = directionX;
+    this.dashDirectionY = directionY;
+    this.ghostSpawnTimer = 0;
+    eventBroker.publish("PLAYER_DASHED", { direction: directionX });
+  }
+
+  public resetDashCharge(): void {
+    this.canDash = true;
+  }
+}
+
+
+
+● ./src/entities/components/FireballComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { eventBroker } from "@/core/eventBroker";
+
+export class FireballComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  
+  public isCharging: boolean = false;
+  public chargeTimer: number = 0;
+
+  public setup(owner: BaseEntity): void {
+    this.owner = owner;
+  }
+
+  public update(dt: number): void {
+    if (this.isCharging) {
+      this.chargeTimer += dt;
+    }
+  }
+
+  public startCharging(): void {
+    this.isCharging = true;
+    this.chargeTimer = 0;
+  }
+
+  public releaseCharge(dirX: number, dirY: number, facingDirection: number): void {
+    if (!this.isCharging) return;
+    this.isCharging = false;
+
+    if (this.chargeTimer >= 0.35) {
+      this.fire(dirX, dirY, facingDirection);
+    }
+  }
+
+  private fire(dirX: number, dirY: number, facingDirection: number): void {
+    let finalDirX = dirX;
+    let finalDirY = dirY;
+
+    if (finalDirX === 0 && finalDirY === 0) {
+      finalDirX = facingDirection;
+    }
+
+    const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
+    const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
+
+    const isLvl2 = this.chargeTimer >= 1.12;
+    const damage = isLvl2 ? 3 : 1;
+    const speed = isLvl2 ? 900 : 800;
+    const lifespan = isLvl2 ? 3.0 : 2.0;
+
+    const spawnX = this.owner.position.x + normalizedDir.x * 30;
+    const spawnY = this.owner.position.y + normalizedDir.y * 30;
+
+    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
+
+    const pool = (this.owner.world as any).projectilePool;
+    if (pool) {
+      const proj = pool.get(
+        spawnX,
+        spawnY,
+        normalizedDir.x,
+        normalizedDir.y,
+        "player",
+        damage,
+        speed,
+        lifespan,
+        (p: any) => this.owner.world.releaseProjectile(p),
+        this.owner.world
+      );
+
+      if (isLvl2) {
+        proj.size = { width: 28, height: 28 };
+      } else {
+        proj.size = { width: 14, height: 14 };
+      }
+    }
+  }
+}
+
+
+
+● ./src/entities/components/HealComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { eventBroker } from "@/core/eventBroker";
+
+export class HealComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  
+  public isHealing: boolean = false;
+  public healTimer: number = 0;
+  
+  private readonly healDuration: number = 2.0;
+
+  public setup(owner: BaseEntity): void {
+    this.owner = owner;
+  }
+
+  public update(dt: number): void {
+    if (this.isHealing) {
+      this.owner.velocity.x = 0;
+      this.healTimer -= dt;
+
+      if (this.healTimer <= 0) {
+        this.completeHealing();
+      }
+    }
+  }
+
+  public startHealing(): void {
+    this.isHealing = true;
+    this.healTimer = this.healDuration;
+  }
+
+  public cancelHealing(): void {
+    this.isHealing = false;
+  }
+
+  private completeHealing(): void {
+    const player = this.owner as any;
+    this.isHealing = false;
+    player.healingCharges = Math.max(0, player.healingCharges - 1);
+    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: player.healingCharges });
+
+    const health = this.owner.getComponent(HealthComponent);
+    if (health) {
+      health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 1);
+      eventBroker.publish("PLAYER_HEALED", {
+        amount: 1,
+        currentHealth: health.currentHealth,
+        maxHealth: health.maxHealth
+      });
+    }
+    eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+  }
+}
+
+
+
+● ./src/entities/components/HealthComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { eventBroker } from "@/core/eventBroker";
+
+export class HealthComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  public maxHealth: number = 5;
+  public currentHealth: number = 5;
+  
+  public invincibilityDuration: number = 0.15;
+  private invincibilityTimer: number = 0;
+  
+  public hitFlashTimer: number = 0;
+  public hitFlashDuration: number = 0.12;
+
+  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+    this.owner = owner;
+    if (dependencies) {
+      if (dependencies.maxHealth !== undefined) {
+        this.maxHealth = dependencies.maxHealth;
+        this.currentHealth = dependencies.maxHealth;
+      }
+      if (dependencies.invincibilityDuration !== undefined) {
+        this.invincibilityDuration = dependencies.invincibilityDuration;
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    if (this.invincibilityTimer > 0) this.invincibilityTimer -= dt;
+    if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
+  }
+
+  public takeDamage(amount: number): boolean {
+    if (this.invincibilityTimer > 0 || this.owner.isDead) {
+      return false;
+    }
+
+    this.currentHealth = Math.max(0, this.currentHealth - amount);
+    this.invincibilityTimer = this.invincibilityDuration;
+    this.hitFlashTimer = this.hitFlashDuration;
+
+    if (this.owner.id === "player-01") {
+      eventBroker.publish("PLAYER_HURT", {
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
+    } else if (this.owner.id === "boss-01") {
+      eventBroker.publish("BOSS_HURT", {
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
+    } else if (this.owner.id.startsWith("minion-")) {
+      eventBroker.publish("MINION_HURT", {
+        id: this.owner.id,
+        amount,
+        currentHealth: this.currentHealth,
+        maxHealth: this.maxHealth
+      });
+    }
+
+    if (this.currentHealth <= 0) {
+      this.owner.isDead = true;
+    }
+
+    return true;
+  }
+
+  public isInvincible(): boolean {
+    return this.invincibilityTimer > 0;
+  }
+
+  public isFlashing(): boolean {
+    return this.hitFlashTimer > 0;
+  }
+}
+
+
+
+● ./src/entities/components/InputReceiverComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { inputProvider, Action } from "@/core/InputProvider";
+
+export class InputReceiverComponent implements EntityComponent {
+  public owner!: BaseEntity;
+
+  public setup(owner: BaseEntity): void {
+    this.owner = owner;
+  }
+
+  public isPressed(action: Action): boolean {
+    return inputProvider.isPressed(action);
+  }
+
+  public isJustPressed(action: Action): boolean {
+    return inputProvider.isJustPressed(action);
+  }
+
+  public isJustReleased(action: Action): boolean {
+    return inputProvider.isJustReleased(action);
+  }
+
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    return inputProvider.consumeBufferedAction(action, windowMs);
+  }
+
+  public getAxis(negative: Action, positive: Action): number {
+    return inputProvider.getAxis(negative, positive);
+  }
+}
+
+
+
+● ./src/entities/components/MeleeComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { eventBroker } from "@/core/eventBroker";
+
+
+export class MeleeComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  
+  public attackCooldownTimer: number = 0;
+  public attackActiveTimer: number = 0;
+  public attackActive: boolean = false;
+  public attackDirection: "side" | "up" | "down" | null = null;
+  public hasHitEnemyThisSwing: boolean = false;
+
+  private readonly pogoForce: number = 450;
+
+  public setup(owner: BaseEntity): void {
+    this.owner = owner;
+  }
+
+  public update(dt: number): void {
+    if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= dt;
+    if (this.attackActiveTimer > 0) this.attackActiveTimer -= dt;
+
+    if (this.attackActive && this.attackActiveTimer <= 0) {
+      this.attackActive = false;
+      this.attackDirection = null;
+    }
+
+    if (this.attackActive && !this.hasHitEnemyThisSwing) {
+      if (this.attackDirection === "down") {
+        this.checkPogoAttack();
+      } else {
+        this.checkMeleeAttackContact();
+      }
+    }
+  }
+
+  public triggerAttack(direction: "side" | "up" | "down"): void {
+    this.attackActive = true;
+    this.attackActiveTimer = 0.09;
+    this.attackCooldownTimer = 0.15;
+    this.hasHitEnemyThisSwing = false;
+    this.attackDirection = direction;
+
+    eventBroker.publish("PLAYER_ATTACKED", { direction });
+  }
+
+  private checkMeleeAttackContact() {
+    const targets: BaseEntity[] = [];
+    if (this.owner.world.boss && !this.owner.world.boss.isDead) {
+      targets.push(this.owner.world.boss as BaseEntity);
+    }
+    for (const minion of this.owner.world.minions) {
+      if (minion && !minion.isDead) {
+        targets.push(minion as BaseEntity);
+      }
+    }
+
+    const facing = (this.owner as any).facingDirection ?? 1;
+
+    for (const target of targets) {
+      let isHit = false;
+      let distance = 0;
+
+      if (this.attackDirection === "side") {
+        /* Side Slash Sweep (Circular radial segment check matching visual arc) */
+        const cx = this.owner.position.x + (facing * 35);
+        const cy = this.owner.position.y;
+        
+        const dx = target.position.x - cx;
+        const dy = target.position.y - cy;
+        distance = Math.sqrt(dx * dx + dy * dy);
+
+        const withinReach = distance <= 95 + (target.size.width / 2);
+        const withinDirection = (facing > 0 && target.position.x >= cx - 25) || (facing < 0 && target.position.x <= cx + 25);
+
+        if (withinReach && withinDirection) {
+          isHit = true;
+        }
+      } else if (this.attackDirection === "up") {
+        /* Up Slash Sweep (Circular radial segment check matching visual arc) */
+        const cx = this.owner.position.x;
+        const cy = this.owner.position.y - 35;
+
+        const dx = target.position.x - cx;
+        const dy = target.position.y - cy;
+        distance = Math.sqrt(dx * dx + dy * dy);
+
+        const withinReach = distance <= 95 + (target.size.height / 2);
+        const withinDirection = target.position.y <= cy + 25;
+
+        if (withinReach && withinDirection) {
+          isHit = true;
+        }
+      }
+
+      if (isHit) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          const isCloseRange = distance <= 75;
+          const damage = isCloseRange ? 5 : 1;
+
+          const damaged = health.takeDamage(damage);
+          if (damaged) {
+            this.hasHitEnemyThisSwing = true;
+            (this.owner as any).registerDamageDealt?.();
+
+            if (isCloseRange) {
+              eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
+            }
+            eventBroker.publish("SPAWN_SPARKS" as any, {
+              x: target.position.x,
+              y: target.position.y,
+              angle: facing > 0 ? 0 : Math.PI,
+              color: "hsl(142, 71%, 58%)"
+            });
+          }
+        }
+      }
+    }
+
+    const activeProjectiles = this.owner.world.getProjectiles();
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        let isHit = false;
+
+        if (this.attackDirection === "side") {
+          const cx = this.owner.position.x + (facing * 35);
+          const cy = this.owner.position.y;
+          const dx = proj.position.x - cx;
+          const dy = proj.position.y - cy;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const withinReach = distance <= 95 + (proj.size.width / 2);
+          const withinDirection = (facing > 0 && proj.position.x >= cx - 25) || (facing < 0 && proj.position.x <= cx + 25);
+
+          if (withinReach && withinDirection) {
+            isHit = true;
+          }
+        } else if (this.attackDirection === "up") {
+          const cx = this.owner.position.x;
+          const cy = this.owner.position.y - 35;
+          const dx = proj.position.x - cx;
+          const dy = proj.position.y - cy;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const withinReach = distance <= 95 + (proj.size.height / 2);
+          const withinDirection = proj.position.y <= cy + 25;
+
+          if (withinReach && withinDirection) {
+            isHit = true;
+          }
+        }
+
+        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          this.hasHitEnemyThisSwing = true;
+          (this.owner as any).registerDamageDealt?.();
+          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+        }
+      }
+    }
+  }
+
+  public checkPogoAttack() {
+    const pogoHitbox = {
+      x: this.owner.position.x - 45,
+      y: this.owner.position.y + 40,
+      width: 90,
+      height: 44.5
+    };
+
+    const targets: BaseEntity[] = [];
+    if (this.owner.world.boss && !this.owner.world.boss.isDead) {
+      targets.push(this.owner.world.boss as BaseEntity);
+    }
+    for (const minion of this.owner.world.minions) {
+      if (minion && !minion.isDead) {
+        targets.push(minion as BaseEntity);
+      }
+    }
+
+    for (const target of targets) {
+      const halfW = target.size.width / 2;
+      const halfH = target.size.height / 2;
+
+      const isHit = (
+        pogoHitbox.x + pogoHitbox.width > target.position.x - halfW &&
+        pogoHitbox.x < target.position.x + halfW &&
+        pogoHitbox.y + pogoHitbox.height > target.position.y - halfH &&
+        pogoHitbox.y < target.position.y + halfH
+      );
+
+      if (isHit) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          health.takeDamage(1);
+          (this.owner as any).registerDamageDealt?.();
+        }
+
+        this.owner.velocity.y = -this.pogoForce;
+        this.owner.position.y -= 2;
+        this.hasHitEnemyThisSwing = true;
+        this.hasHitEnemyThisSwing = true;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
+        eventBroker.publish("PLAYER_POGOED", undefined);
+        return;
+      }
+    }
+
+    const activeProjectiles = this.owner.world.getProjectiles();
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        const pW = proj.size.width / 2;
+        const pH = proj.size.height / 2;
+
+        const isHit = (
+          pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
+          pogoHitbox.x < proj.position.x + pW &&
+          pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
+          pogoHitbox.y < proj.position.y + pH
+        );
+
+        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          (this.owner as any).registerDamageDealt?.();
+
+          this.owner.velocity.y = -this.pogoForce;
+          this.owner.position.y -= 2;
+          this.hasHitEnemyThisSwing = true;
+          
+          const player = this.owner as any;
+          player.hasDoubleJump = true;
+          if (player.dashComponent) {
+            player.dashComponent.resetDashCharge();
+          }
+          
+          eventBroker.publish("PLAYER_POGOED", undefined);
+          return;
+        }
+      }
+    }
+
+    const surfaces = [
+      ...this.owner.world.physicsWorld.solids, 
+      ...this.owner.world.physicsWorld.onewayPlatforms,
+      ...this.owner.world.physicsWorld.hazards
+    ];
+    
+    for (const solid of surfaces) {
+      const isHit = (
+        pogoHitbox.x + pogoHitbox.width > solid.x &&
+        pogoHitbox.x < solid.x + solid.width &&
+        pogoHitbox.y + pogoHitbox.height > solid.y &&
+        pogoHitbox.y < solid.y + solid.height
+      );
+
+      if (isHit) {
+        this.owner.velocity.y = -this.pogoForce;
+        this.owner.position.y -= 2;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
+        eventBroker.publish("PLAYER_POGOED", undefined);
+        break;
+      }
+    }
+  }
+}
+
+
+
+● ./src/entities/components/PhysicsComponent.ts
+────────────────────────────────────────────────────
+import { EntityComponent } from "@/entities/EntityComponent";
+import { BaseEntity } from "@/entities/BaseEntity";
+import { Rectangle } from "@/core/Interfaces";
+
+export class PhysicsComponent implements EntityComponent {
+  public owner!: BaseEntity;
+  public gravity: number = 1200;
+  public isGrounded: boolean = false;
+  public isOnWallLeft: boolean = false;
+  public isOnWallRight: boolean = false;
+
+  public disablePlatformCollisionTimer: number = 0;
+
+  public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
+    this.owner = owner;
+    if (dependencies) {
+      if (dependencies.gravity !== undefined) {
+        this.gravity = dependencies.gravity;
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    if (this.disablePlatformCollisionTimer > 0) {
+      this.disablePlatformCollisionTimer -= dt;
+    }
+
+    if (!this.isGrounded) {
+      this.owner.velocity.y += this.gravity * dt;
+    }
+
+    this.isOnWallLeft = false;
+    this.isOnWallRight = false;
+
+    this.owner.position.x += this.owner.velocity.x * dt;
+    this.resolveCollisionsX();
+
+    this.isGrounded = false;
+    this.owner.position.y += this.owner.velocity.y * dt;
+    this.resolveCollisionsY();
+  }
+
+  private resolveCollisionsX() {
+    const ownerHalfW = this.owner.size.width / 2;
+    const physicsWorld = this.owner.world.physicsWorld;
+
+    for (const solid of physicsWorld.solids) {
+      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+        if (this.owner.velocity.x > 0) {
+          this.owner.position.x = solid.x - ownerHalfW;
+          this.isOnWallRight = true;
+        } else if (this.owner.velocity.x < 0) {
+          this.owner.position.x = solid.x + solid.width + ownerHalfW;
+          this.isOnWallLeft = true;
+        }
+        this.owner.velocity.x = 0;
+      }
+    }
+  }
+
+  private resolveCollisionsY() {
+    const ownerHalfH = this.owner.size.height / 2;
+    const physicsWorld = this.owner.world.physicsWorld;
+
+    for (const solid of physicsWorld.solids) {
+      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+        if (this.owner.velocity.y > 0) {
+          this.owner.position.y = solid.y - ownerHalfH;
+          this.owner.velocity.y = 0;
+          this.isGrounded = true;
+        } else if (this.owner.velocity.y < 0) {
+          this.owner.position.y = solid.y + solid.height + ownerHalfH;
+          this.owner.velocity.y = 0;
+        }
+      }
+    }
+
+    if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
+      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016;
+
+      for (const platform of physicsWorld.onewayPlatforms) {
+        if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
+          if (prevY + ownerHalfH - 4 <= platform.y) {
+            this.owner.position.y = platform.y - ownerHalfH;
+            this.owner.velocity.y = 0;
+            this.isGrounded = true;
+          }
+        }
+      }
+    }
+  }
+
+  private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
+    const halfW = this.owner.size.width / 2;
+    const halfH = this.owner.size.height / 2;
+
+    const left = x - halfW;
+    const right = x + halfW;
+    const top = y - halfH;
+    const bottom = y + halfH;
+
+    return (
+      right > rect.x &&
+      left < rect.x + rect.width &&
+      bottom > rect.y &&
+      top < rect.y + rect.height
+    );
+  }
+}
+
+
+
 ● ./src/hooks/useAudioSettings.ts
 ────────────────────────────────────────────────────
 import { useState } from "react";
@@ -8013,6 +8709,55 @@ export function useAudioSettings() {
     audio,
     handleVolumeChange,
   };
+}
+
+
+
+● ./src/hooks/useBootSequence.ts
+────────────────────────────────────────────────────
+import { useState, useEffect, startTransition } from "react";
+
+export enum BootStage {
+  NONE = 0,
+  INITIALIZED = 1,
+  ASSETS_PRELOADED = 2,
+  ARENA_READY = 3,
+}
+
+export function useBootSequence() {
+  const [bootStage, setBootStage] = useState<BootStage>(BootStage.NONE);
+
+  useEffect(() => {
+    startTransition(() => {
+      setBootStage(BootStage.INITIALIZED);
+    });
+
+    const queuePreload = () => {
+      startTransition(() => {
+        setBootStage(BootStage.ASSETS_PRELOADED);
+      });
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(queuePreload, { timeout: 800 });
+    } else {
+      setTimeout(queuePreload, 150);
+    }
+
+    const queueFullSystem = () => {
+      startTransition(() => {
+        setBootStage(BootStage.ARENA_READY);
+      });
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(queueFullSystem, { timeout: 1500 });
+    } else {
+      setTimeout(queueFullSystem, 400);
+    }
+  }, []);
+
+  return bootStage;
 }
 
 
@@ -8429,6 +9174,29 @@ export default defineConfig({
     port: 6502,
     strictPort: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('react/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('zustand')) {
+              return 'vendor-zustand';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 800,
+  }
 })
 
 
