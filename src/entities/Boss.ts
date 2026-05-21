@@ -3,12 +3,27 @@ import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
-import { BossCooldownState, BossDeadState } from "./BossStates";
+import { 
+  BossCooldownState, 
+  BossPatrolState, 
+  BossMeleeState, 
+  BossAttackState, 
+  BossTelegraphState, 
+  BossLungeState, 
+  BossDeadState 
+} from "./BossStates";
 
 export class Boss extends BaseEntity {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public stateMachine: StateMachine;
+  public cooldownState!: BossCooldownState;
+  public patrolState!: BossPatrolState;
+  public meleeState!: BossMeleeState;
+  public attackState!: BossAttackState;
+  public telegraphState!: BossTelegraphState;
+  public lungeState!: BossLungeState;
+  public deadState!: BossDeadState;
 
   public patrolSpeed: number = 200;
   public lungeSpeed: number = 1200;
@@ -26,14 +41,22 @@ export class Boss extends BaseEntity {
       invincibilityDuration: 0.25 
     });
 
+    this.cooldownState = new BossCooldownState(this);
+    this.patrolState = new BossPatrolState(this);
+    this.meleeState = new BossMeleeState(this);
+    this.attackState = new BossAttackState(this);
+    this.telegraphState = new BossTelegraphState(this);
+    this.lungeState = new BossLungeState(this);
+    this.deadState = new BossDeadState(this);
+
     this.stateMachine = new StateMachine();
-    this.stateMachine.changeState(new BossCooldownState(this));
+    this.stateMachine.changeState(this.cooldownState);
   }
 
   public update(dt: number) {
     if (this.isDead) {
       if (!(this.stateMachine.getCurrentState() instanceof BossDeadState)) {
-        this.stateMachine.changeState(new BossDeadState(this));
+        this.stateMachine.changeState(this.deadState);
       }
       super.update(dt);
       return;

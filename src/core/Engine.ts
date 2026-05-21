@@ -37,6 +37,9 @@ export class Engine {
 
   private unsubDialogue!: () => void;
 
+  private accumulator: number = 0;
+  private readonly fixedTimeStep: number = 1 / 60;
+
   private readonly solids: Rectangle[] = [
     { x: 0, y: 1150, width: 400, height: 100 },
     { x: 850, y: 1150, width: 400, height: 100 },
@@ -129,7 +132,19 @@ export class Engine {
     this.loop.stop();
   }
 
-  private update(dt: number) {
+    private update(dt: number) {
+    this.accumulator += dt;
+    if (this.accumulator > 0.25) {
+      this.accumulator = 0.25;
+    }
+
+    while (this.accumulator >= this.fixedTimeStep) {
+      this.fixedUpdate(this.fixedTimeStep);
+      this.accumulator -= this.fixedTimeStep;
+    }
+  }
+
+  private fixedUpdate(dt: number) {
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;
@@ -145,9 +160,9 @@ export class Engine {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
 
-      const activeProjectiles = [...this.pool.getActive()];
-      for (const proj of activeProjectiles) {
-        proj.update(dt);
+      const activeProjectiles = this.pool.getActive();
+      for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+        activeProjectiles[i].update(dt);
       }
       inputProvider.postUpdate();
       return;
@@ -160,8 +175,8 @@ export class Engine {
       spawner.update(dt);
     }
 
-    const activeMinions = [...this.world.minions];
-    for (const minion of activeMinions) {
+    for (let i = this.world.minions.length - 1; i >= 0; i--) {
+      const minion = this.world.minions[i];
       minion.update(dt);
 
       if (!this.player.isDead && !minion.isDead) {
@@ -191,9 +206,9 @@ export class Engine {
       }
     }
 
-    const activeProjectiles = [...this.pool.getActive()];
-    for (const proj of activeProjectiles) {
-      proj.update(dt);
+    const activeProjectiles = this.pool.getActive();
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      activeProjectiles[i].update(dt);
     }
 
     const bHealth = this.boss.getComponent(HealthComponent);

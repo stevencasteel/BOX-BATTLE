@@ -16,7 +16,7 @@ export class World implements IWorld {
 
   public getProjectiles(): any[] {
     if (!this.projectilePool) return [];
-    return [...this.projectilePool.getActive()];
+    return this.projectilePool.getActive() as any[];
   }
 
   public releaseProjectile(proj: any): void {

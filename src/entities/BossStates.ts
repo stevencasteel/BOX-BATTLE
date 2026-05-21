@@ -16,20 +16,30 @@ export abstract class BossState implements IState {
 
 export class BossCooldownState extends BossState {
   private duration: number = 2.0;
+  private overrideDuration: number = -1;
 
-  constructor(owner: Boss, customDuration: number = -1) {
+  constructor(owner: Boss) {
     super(owner);
-    this.duration = customDuration > 0 ? customDuration : (owner.currentPhase === 3 ? 1.5 : 2.5);
+  }
+
+  public setDuration(customDuration: number) {
+    this.overrideDuration = customDuration;
   }
 
   public enter(): void {
     this.owner.velocity.x = 0;
+    if (this.overrideDuration > 0) {
+      this.duration = this.overrideDuration;
+      this.overrideDuration = -1;
+    } else {
+      this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    }
   }
 
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossPatrolState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.patrolState);
     }
   }
 
@@ -57,19 +67,18 @@ export class BossPatrolState extends BossState {
       }
     }
 
-    // High-priority close-range check
     const player = this.owner.world.player;
     if (player && !player.isDead) {
       const distance = Math.abs(player.position.x - this.owner.position.x);
       const distanceY = Math.abs(player.position.y - this.owner.position.y);
       if (distance < 120 && distanceY < 60) {
-        this.owner.stateMachine.changeState(new BossMeleeState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.meleeState);
         return;
       }
     }
 
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossAttackState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.attackState);
     }
   }
 
@@ -89,7 +98,8 @@ export class BossMeleeState extends BossState {
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, 1.0));
+      this.owner.cooldownState.setDuration(1.0);
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
@@ -117,7 +127,7 @@ export class BossAttackState extends BossState {
         this.volleyTimer = 0;
         this.durationTimer = 1.0;
       } else {
-        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else {
       const r = Math.random();
@@ -131,7 +141,7 @@ export class BossAttackState extends BossState {
         this.owner.fireRadialOmniBurst();
         this.durationTimer = 0.8;
       } else {
-        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     }
   }
@@ -153,7 +163,8 @@ export class BossAttackState extends BossState {
       if (this.attackType === "VOLLEY") cooldown = 2.5;
       else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
 
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, cooldown));
+      this.owner.cooldownState.setDuration(cooldown);
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
@@ -171,7 +182,7 @@ export class BossTelegraphState extends BossState {
   public update(dt: number): void {
     this.duration -= dt;
     if (this.duration <= 0) {
-      this.owner.stateMachine.changeState(new BossLungeState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.lungeState);
     }
   }
 
@@ -199,7 +210,7 @@ export class BossLungeState extends BossState {
     const hitWall = physics ? (physics.isOnWallLeft || physics.isOnWallRight) : false;
 
     if (this.duration <= 0 || hitWall) {
-      this.owner.stateMachine.changeState(new BossCooldownState(this.owner));
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
     }
   }
 
