@@ -31,6 +31,12 @@ export default defineConfig({
             if (id.includes('lucide-react')) {
               return 'vendor-icons';
             }
+            if (id.includes('tone')) {
+              return 'vendor-tone';
+            }
+            if (id.includes('react-syntax-highlighter') || id.includes('prismjs')) {
+              return 'vendor-highlighter';
+            }
           }
         }
       }

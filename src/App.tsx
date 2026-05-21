@@ -65,7 +65,12 @@ export default function App() {
   const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
 
   useEffect(() => {
-    soundSynth.setCabinetMuffle(currentScreen !== "PLAYING");
+    if (currentScreen === "PLAYING") {
+      soundSynth.stopMusic();
+    } else {
+      soundSynth.setCabinetMuffle(true);
+      soundSynth.startMusic();
+    }
   }, [currentScreen]);
 
   const playHoverTick = () => {

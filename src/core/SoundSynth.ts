@@ -1,49 +1,71 @@
+import * as Tone from "tone";
 import { settingsManager } from "@/core/SettingsManager";
 
 interface FrictionVoice {
-  source: AudioBufferSourceNode;
-  filter: BiquadFilterNode;
-  gain: GainNode;
+  source: Tone.Noise;
+  filter: Tone.Filter;
+  gain: Tone.Gain;
 }
 
 interface DroneVoice {
-  osc: OscillatorNode;
-  filter: BiquadFilterNode;
-  gain: GainNode;
+  osc: Tone.Oscillator;
+  filter: Tone.Filter;
+  gain: Tone.Gain;
 }
 
 class SoundSynth {
-  private ctx: AudioContext | null = null;
-  private masterGain: GainNode | null = null;
-  private sfxGain: GainNode | null = null;
-  private musicGain: GainNode | null = null;
-  private cabinetFilter: BiquadFilterNode | null = null;
-  private limiter: DynamicsCompressorNode | null = null;
+  private hasUserGestured: boolean = false;
+  private initialized: boolean = false;
 
-  private musicInterval: ReturnType<typeof setInterval> | null = null;
-  private musicTickIndex: number = 0;
-  private isMusicPlaying: boolean = false;
+  // High-precision trigger timestamps for deduplication & throttling
+  private lastTriggerTimes: Record<string, number> = {};
 
-  private noiseBuffer: AudioBuffer | null = null;
+  // Master Output Bus Routing
+  private masterVolume!: Tone.Volume;
+  private sfxGain!: Tone.Volume;
+  private musicGain!: Tone.Volume;
+  private cabinetFilter!: Tone.Filter;
+  private limiter!: Tone.Limiter;
+
+  // Synthesizer Plucks, Sweeps, and Noises
+  private jumpSynth!: Tone.Synth;
+  private dashNoise!: Tone.Noise;
+  private dashFilter!: Tone.Filter;
+  private dashEnv!: Tone.AmplitudeEnvelope;
+  private slashSynth!: Tone.Synth;
+  private hitSynth!: Tone.MetalSynth;
+  private pogoSynth!: Tone.Synth;
+  private hurtSynth!: Tone.MonoSynth;
+  private spikeSynth!: Tone.Synth;
+  private dialogueSynthPlayer!: Tone.Synth;
+  private dialogueSynthBoss!: Tone.Synth;
+  private teleportSynth!: Tone.Synth;
+
+  // Music Synthesizers & Space Effects
+  private musicBassSynth!: Tone.MonoSynth;
+  private musicArpSynth!: Tone.PolySynth;
+  private bassSeq!: Tone.Sequence<string>;
+  private arpSeq!: Tone.Sequence<string>;
+
+  // Dynamic Real-time Voice Maps
   private activeSlides: Map<string, FrictionVoice> = new Map();
   private healDrone: DroneVoice | null = null;
   private chargeDrone: {
-    osc: OscillatorNode;
-    lfo: OscillatorNode;
-    lfoGain: GainNode;
-    filter: BiquadFilterNode;
-    gain: GainNode;
+    osc: Tone.Oscillator;
+    filter: Tone.Filter;
+    lfo: Tone.LFO;
+    gain: Tone.Gain;
   } | null = null;
-  private currentChargeLevel: number = 0;
 
-  private hasUserGestured: boolean = false;
+  private currentChargeLevel: number = 0;
+  private isMusicPlaying: boolean = false;
 
   constructor() {
     if (typeof window !== "undefined") {
       const resumeOnGesture = () => {
         this.hasUserGestured = true;
         this.resumeContext();
-        
+
         window.removeEventListener("click", resumeOnGesture);
         window.removeEventListener("keydown", resumeOnGesture);
         window.removeEventListener("touchstart", resumeOnGesture);
@@ -57,84 +79,194 @@ class SoundSynth {
   }
 
   private init() {
-    if (this.ctx) return;
+    if (this.initialized) return;
     if (!this.hasUserGestured) return;
 
-    const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    this.ctx = new AudioContextClass();
+    // Guard immediately against infinite re-entrant loops during creation
+    this.initialized = true;
 
-    this.masterGain = this.ctx.createGain();
-    this.sfxGain = this.ctx.createGain();
-    this.musicGain = this.ctx.createGain();
-    this.cabinetFilter = this.ctx.createBiquadFilter();
-    this.limiter = this.ctx.createDynamicsCompressor();
+    // 1. Initialize Global Outputs & Limiters in Silent Mode (-120 dB)
+    this.masterVolume = new Tone.Volume(-120).toDestination();
+    this.limiter = new Tone.Limiter(-12);
 
-    this.cabinetFilter.type = "lowpass";
-    this.cabinetFilter.frequency.setValueAtTime(20000, this.ctx.currentTime);
-    this.cabinetFilter.Q.setValueAtTime(1.0, this.ctx.currentTime);
+    this.cabinetFilter = new Tone.Filter({
+      frequency: 20000,
+      type: "lowpass",
+      Q: 1.0
+    });
 
-    this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
-    this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
-    this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
-    this.limiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
-    this.limiter.release.setValueAtTime(0.08, this.ctx.currentTime);
+    this.sfxGain = new Tone.Volume(-120);
+    this.musicGain = new Tone.Volume(-120);
 
-    this.sfxGain.connect(this.cabinetFilter);
-    this.musicGain.connect(this.cabinetFilter);
-    this.cabinetFilter.connect(this.limiter);
-    this.limiter.connect(this.masterGain);
-    this.masterGain.connect(this.ctx.destination);
+    // Wire outputs: [Channel] -> [Cabinet Lowpass Filter] -> [Limiter] -> [Master Out]
+    this.sfxGain.chain(this.cabinetFilter, this.limiter, this.masterVolume);
+    this.musicGain.chain(this.cabinetFilter, this.limiter, this.masterVolume);
 
+    // 2. Initialize SFX Synthesizers
+    this.jumpSynth = new Tone.Synth({
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+    }).connect(this.sfxGain);
+
+    this.slashSynth = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+    }).connect(this.sfxGain);
+
+    this.pogoSynth = new Tone.Synth({
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+    }).connect(this.sfxGain);
+
+    this.dashNoise = new Tone.Noise("white");
+    this.dashFilter = new Tone.Filter({ frequency: 1400, type: "bandpass", Q: 2.5 });
+    this.dashEnv = new Tone.AmplitudeEnvelope({
+      attack: 0.01,
+      decay: 0.18,
+      sustain: 0,
+      release: 0.18
+    });
+    this.dashNoise.chain(this.dashFilter, this.dashEnv, this.sfxGain);
+    this.dashNoise.start();
+
+    this.hitSynth = new Tone.MetalSynth({
+      envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
+      harmonicity: 5.1,
+      resonance: 4000
+    }).connect(this.sfxGain);
+    this.hitSynth.frequency.value = 440;
+
+    this.hurtSynth = new Tone.MonoSynth({
+      oscillator: { type: "sawtooth" },
+      filter: { Q: 2.0, type: "lowpass", frequency: 280 },
+      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 },
+      filterEnvelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16, baseFrequency: 280, octaves: -2 }
+    }).connect(this.sfxGain);
+
+    this.spikeSynth = new Tone.Synth({
+      oscillator: { type: "square" },
+      envelope: { attack: 0.005, decay: 0.12, sustain: 0, release: 0.12 }
+    }).connect(this.sfxGain);
+
+    this.teleportSynth = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 }
+    }).connect(this.sfxGain);
+
+    this.dialogueSynthPlayer = new Tone.Synth({
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
+    }).connect(this.sfxGain);
+
+    this.dialogueSynthBoss = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 }
+    }).connect(this.sfxGain);
+
+    // 3. Initialize Music Sequencer and Synthesizers
+    this.musicBassSynth = new Tone.MonoSynth({
+      oscillator: { type: "sawtooth" },
+      filter: { type: "lowpass", frequency: 350, Q: 1.0 },
+      envelope: { attack: 0.02, decay: 0.12, sustain: 0.4, release: 0.15 },
+      filterEnvelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.15, baseFrequency: 350, octaves: 1.5 }
+    }).connect(this.musicGain);
+
+    this.musicArpSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.25 }
+    }).connect(this.musicGain);
+
+    const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(this.musicGain);
+    this.musicArpSynth.connect(delay);
+
+    this.setupMusicSequences();
     this.updateVolumes();
+
+    // Start music loop if it was scheduled to play during boot
+    if (this.isMusicPlaying) {
+      this.bassSeq.start(0);
+      this.arpSeq.start(0);
+      Tone.getTransport().start();
+      this.fadeInMusic(0.4); // Primed and snappy instant fade-in!
+    }
+  }
+
+  private setupMusicSequences() {
+    const bassNotes = ["C2", "C2", "D#2", "D#2", "F2", "F2", "A#1", "A#1"];
+    this.bassSeq = new Tone.Sequence<string>(
+      (time, note) => {
+        this.musicBassSynth.triggerAttackRelease(note, "8n", time);
+      },
+      bassNotes,
+      "4n"
+    );
+
+    const arpProgression = ["C4", "C4", "G3", "G3", "F3", "F3", "G#3", "A#3"];
+    this.arpSeq = new Tone.Sequence<string>(
+      (time, baseNote) => {
+        const chord = (baseNote === "G3" || baseNote === "A#3")
+          ? [baseNote, Tone.Frequency(baseNote).transpose(4).toNote(), Tone.Frequency(baseNote).transpose(7).toNote()]
+          : [baseNote, Tone.Frequency(baseNote).transpose(3).toNote(), Tone.Frequency(baseNote).transpose(7).toNote()];
+
+        chord.forEach((note, index) => {
+          this.musicArpSynth.triggerAttackRelease(note, "8n", time + index * 0.05);
+        });
+      },
+      arpProgression,
+      "2n"
+    );
+
+    Tone.getTransport().bpm.value = 135;
+  }
+
+  // Returns true if the sound is allowed to play; false if throttled
+  private checkThrottle(key: string, limitMs: number): boolean {
+    const now = performance.now();
+    const last = this.lastTriggerTimes[key] || 0;
+    if (now - last < limitMs) {
+      return false;
+    }
+    this.lastTriggerTimes[key] = now;
+    return true;
   }
 
   public updateVolumes() {
-    if (!this.ctx || !this.masterGain || !this.sfxGain || !this.musicGain) return;
+    if (!this.initialized) return;
 
     const config = settingsManager.getAudio();
-    const now = this.ctx.currentTime;
 
-    const master = config.masterMuted ? 0 : Math.pow(config.masterVolume, 2) * 0.35;
-    const sfx = config.sfxMuted ? 0 : Math.pow(config.sfxVolume, 2) * 0.85;
-    const music = config.musicMuted ? 0 : Math.pow(config.musicVolume, 2) * 0.30;
+    // Clamp silences strictly to -120 dB to guarantee finite numbers (Web Audio API constraint)
+    const masterDb = config.masterVolume <= 0 ? -120 : Tone.gainToDb(config.masterVolume * 0.35);
+    const sfxDb = config.sfxVolume <= 0 ? -120 : Tone.gainToDb(config.sfxVolume * 0.85);
+    const musicDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.30);
 
-    this.masterGain.gain.setTargetAtTime(master, now, 0.05);
-    this.sfxGain.gain.setTargetAtTime(sfx, now, 0.05);
-    this.musicGain.gain.setTargetAtTime(music, now, 0.05);
+    // Apply native mute states
+    this.masterVolume.mute = config.masterMuted || config.masterVolume <= 0;
+    this.sfxGain.mute = config.sfxMuted || config.sfxVolume <= 0;
+    this.musicGain.mute = config.musicMuted || config.musicVolume <= 0;
+
+    // Smoothly fade to the targets
+    this.masterVolume.volume.setTargetAtTime(masterDb, Tone.now(), 0.05);
+    this.sfxGain.volume.setTargetAtTime(sfxDb, Tone.now(), 0.05);
+    this.musicGain.volume.setTargetAtTime(musicDb, Tone.now(), 0.05);
   }
 
   public setCabinetMuffle(active: boolean) {
-    this.init();
-    if (!this.ctx || !this.cabinetFilter) return;
+    this.resumeContext();
+    if (!this.initialized || !this.cabinetFilter) return;
 
-    const now = this.ctx.currentTime;
     const targetFreq = active ? 600 : 20000;
-
-    this.cabinetFilter.frequency.cancelScheduledValues(now);
-    const currentVal = Math.max(0.1, this.cabinetFilter.frequency.value);
-    this.cabinetFilter.frequency.setValueAtTime(currentVal, now);
-    this.cabinetFilter.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.3);
+    this.cabinetFilter.frequency.rampTo(targetFreq, 0.3);
   }
 
   public resumeContext() {
-    this.init();
-    if (this.ctx && this.ctx.state === "suspended") {
-      this.ctx.resume();
+    if (this.hasUserGestured) {
+      Tone.start();
+      this.init();
+      if (Tone.getContext().state === "suspended") {
+        Tone.getContext().resume();
+      }
     }
-  }
-
-  private getNoiseBuffer(): AudioBuffer | null {
-    if (!this.ctx) return null;
-    if (this.noiseBuffer) return this.noiseBuffer;
-
-    const bufferSize = this.ctx.sampleRate * 2;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    this.noiseBuffer = buffer;
-    return buffer;
   }
 
   public handleEntitySlide(id: string, width: number, height: number, speed: number, shouldSlide: boolean) {
@@ -144,34 +276,22 @@ class SoundSynth {
     }
 
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
     let voice = this.activeSlides.get(id);
 
     if (!voice) {
-      const buffer = this.getNoiseBuffer();
-      if (!buffer) return;
-
+      // Scale lowpass cutoff frequency dynamically based on entity physical dimensions!
       const volume = width * height;
-      const baseFreq = Math.max(120, 1600 - (volume - 1000) * 0.45);
+      const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
+      const baseFreq = 800 * sizeFactor;
 
-      const source = this.ctx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
+      // Warm, tactile "sandpaper" brown noise
+      const source = new Tone.Noise("brown").start();
+      const filter = new Tone.Filter({ frequency: baseFreq, type: "lowpass" });
+      const gain = new Tone.Gain(0);
 
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.Q.setValueAtTime(2.0, this.ctx.currentTime);
-      filter.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0, this.ctx.currentTime);
-
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.sfxGain);
-
-      source.start(0);
+      source.chain(filter, gain, this.sfxGain);
 
       voice = { source, filter, gain };
       this.activeSlides.set(id, voice);
@@ -179,17 +299,25 @@ class SoundSynth {
 
     const maxSpeed = 450;
     const ratio = Math.min(1.0, speed / maxSpeed);
-    const targetGain = ratio * 0.15;
+    const targetGain = ratio * 0.35; // Robust, highly satisfying walking scuff
 
-    voice.gain.gain.setValueAtTime(targetGain, this.ctx.currentTime);
+    // Smoothly scale both gain and cutoff based on entity velocity
+    voice.gain.gain.rampTo(targetGain, 0.05);
+
+    // Scale current cutoff dynamically following speed ratio
+    const volume = width * height;
+    const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
+    const baseFreq = 800 * sizeFactor;
+    const targetCutoff = baseFreq * 0.5 + ratio * baseFreq * 0.75;
+
+    voice.filter.frequency.rampTo(targetCutoff, 0.05);
   }
 
   private stopFrictionSlide(id: string) {
-    if (!this.ctx) return;
     const voice = this.activeSlides.get(id);
     if (!voice) return;
 
-    const now = this.ctx.currentTime;
+    const now = Tone.now();
     voice.gain.gain.setValueAtTime(0, now);
 
     const source = voice.source;
@@ -202,8 +330,13 @@ class SoundSynth {
         source.disconnect();
         filter.disconnect();
         gain.disconnect();
+
+        // Release Web Audio context memory to prevent node accumulation crashes
+        source.dispose();
+        filter.dispose();
+        gain.dispose();
       } catch (err) {
-        // Safe disconnection handling
+        // Safe disposal
       }
     }, 80);
 
@@ -219,377 +352,127 @@ class SoundSynth {
 
   public playBossTelegraph() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("boss_telegraph", 150)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    // High-pitched warning alarm sweep representing weapon charging sequence
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(680, now + 0.35);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(800, now);
-    filter.frequency.exponentialRampToValueAtTime(1600, now + 0.35);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.42, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.36);
+    const now = Tone.now();
+    this.jumpSynth.triggerAttackRelease(320, "8n", now);
+    this.jumpSynth.frequency.rampTo(680, 0.35);
   }
 
   public playBossLunge() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("boss_lunge", 200)) return;
 
-    const now = this.ctx.currentTime;
-    const duration = 0.45;
-
-    const noiseBuffer = this.getNoiseBuffer();
-    if (!noiseBuffer) return;
-
-    const source = this.ctx.createBufferSource();
-    source.buffer = noiseBuffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(1100, now);
-    filter.frequency.exponentialRampToValueAtTime(180, now + duration);
-    filter.Q.setValueAtTime(3.5, now);
-
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.72, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    source.start(now);
-    source.stop(now + duration + 0.01);
+    const now = Tone.now();
+    this.hurtSynth.triggerAttackRelease(120, "2n", now);
+    this.hurtSynth.frequency.rampTo(40, 0.45);
   }
 
   public playDashRecharge() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("dash_recharge", 150)) return;
 
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(880, now);
-    osc1.frequency.setValueAtTime(1174.66, now + 0.04);
-
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(1320, now);
-    osc2.frequency.setValueAtTime(1760, now + 0.04);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.12, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.13);
-    osc2.stop(now + 0.13);
+    const now = Tone.now();
+    this.jumpSynth.triggerAttackRelease("A5", "16n", now);
+    this.jumpSynth.triggerAttackRelease("E6", "16n", now + 0.04);
   }
 
   public playBossSwipe() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("boss_swipe", 150)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.22);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(450, now);
-    filter.frequency.exponentialRampToValueAtTime(120, now + 0.22);
-    filter.Q.setValueAtTime(3.0, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.50, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.23);
+    this.hurtSynth.triggerAttackRelease(180, "8n");
+    this.hurtSynth.frequency.rampTo(50, 0.22);
   }
 
   public playMinionSpawning() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    // Deduplicate simultaneous spawns to clean up overlapping sound blasts
+    if (!this.checkThrottle("minion_spawn", 100)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(720, now + 0.3);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(600, now);
-    filter.frequency.exponentialRampToValueAtTime(1800, now + 0.3);
-    filter.Q.setValueAtTime(3.0, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.40, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.31);
+    this.teleportSynth.triggerAttackRelease(180, "4n");
+    this.teleportSynth.frequency.rampTo(720, 0.3);
   }
 
   public playMinionDeconstruct() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    // Deduplicate simultaneous deconstructions
+    if (!this.checkThrottle("minion_deconstruct", 100)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(280, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(800, now);
-    filter.frequency.exponentialRampToValueAtTime(80, now + 0.28);
-    filter.Q.setValueAtTime(3.0, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.45, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.29);
+    this.hurtSynth.triggerAttackRelease(280, "4n");
+    this.hurtSynth.frequency.rampTo(60, 0.28);
   }
 
   public playBossPhaseShift() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(80, now);
-    osc.frequency.exponentialRampToValueAtTime(320, now + 0.8);
-
-    const lfo = this.ctx.createOscillator();
-    const lfoGain = this.ctx.createGain();
-    lfo.frequency.setValueAtTime(15, now);
-    lfoGain.gain.setValueAtTime(30, now);
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(350, now);
-    filter.frequency.exponentialRampToValueAtTime(1200, now + 0.8);
-    filter.Q.setValueAtTime(4.0, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.55, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    lfo.start(now);
-    osc.start(now);
-
-    lfo.stop(now + 0.82);
-    osc.stop(now + 0.82);
+    this.hurtSynth.triggerAttackRelease(80, "2n");
+    this.hurtSynth.frequency.rampTo(320, 0.8);
   }
 
   public playBossExplosion() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-
+    const now = Tone.now();
     for (let i = 0; i < 3; i++) {
       const delay = i * 0.25;
-      const ringNow = now + delay;
-
-      const osc = this.ctx.createOscillator();
-      const filter = this.ctx.createBiquadFilter();
-      const gain = this.ctx.createGain();
-
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(140 - i * 20, ringNow);
-      osc.frequency.exponentialRampToValueAtTime(40, ringNow + 0.35);
-
-      filter.type = "lowpass";
-      filter.frequency.setValueAtTime(600, ringNow);
-      filter.frequency.exponentialRampToValueAtTime(150, ringNow + 0.35);
-
-      gain.gain.setValueAtTime(0, ringNow);
-      gain.gain.linearRampToValueAtTime(0.45, ringNow + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ringNow + 0.35);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.sfxGain);
-
-      osc.start(ringNow);
-      osc.stop(ringNow + 0.36);
-
-      const noise = this.getNoiseBuffer();
-      if (noise) {
-        const src = this.ctx.createBufferSource();
-        src.buffer = noise;
-        const nGain = this.ctx.createGain();
-        const nFilter = this.ctx.createBiquadFilter();
-
-        nFilter.type = "lowpass";
-        nFilter.frequency.setValueAtTime(400, ringNow);
-
-        nGain.gain.setValueAtTime(0, ringNow);
-        nGain.gain.linearRampToValueAtTime(0.25, ringNow + 0.01);
-        nGain.gain.exponentialRampToValueAtTime(0.001, ringNow + 0.2);
-
-        src.connect(nFilter);
-        nFilter.connect(nGain);
-        nGain.connect(this.sfxGain);
-
-        src.start(ringNow);
-        src.stop(ringNow + 0.21);
-      }
+      this.hurtSynth.triggerAttackRelease(140 - i * 20, "4n", now + delay);
+      this.hurtSynth.frequency.rampTo(40, 0.35);
     }
-
-    const finalNow = now + 0.85;
-    const finalOsc = this.ctx.createOscillator();
-    const finalGain = this.ctx.createGain();
-
-    finalOsc.type = "triangle";
-    finalOsc.frequency.setValueAtTime(90, finalNow);
-    finalOsc.frequency.exponentialRampToValueAtTime(25, finalNow + 0.6);
-
-    finalGain.gain.setValueAtTime(0, finalNow);
-    finalGain.gain.linearRampToValueAtTime(0.70, finalNow + 0.05);
-    finalGain.gain.exponentialRampToValueAtTime(0.001, finalNow + 0.6);
-
-    finalOsc.connect(finalGain);
-    finalGain.connect(this.sfxGain);
-
-    finalOsc.start(finalNow);
-    finalOsc.stop(finalNow + 0.61);
   }
 
   public playPlayerExplosion() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.linearRampToValueAtTime(40, now + 0.8);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(400, now);
-    filter.frequency.linearRampToValueAtTime(60, now + 0.8);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.60, now + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.81);
+    this.hurtSynth.triggerAttackRelease(220, "2n");
+    this.hurtSynth.frequency.rampTo(40, 0.8);
   }
 
   public playHealStart() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
     this.stopHealDrone();
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
+    const osc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
+    const filter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
+    const gain = new Tone.Gain(0);
 
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(660, now + 2.0);
+    osc.chain(filter, gain, this.sfxGain);
 
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(440, now);
-    filter.frequency.exponentialRampToValueAtTime(1320, now + 2.0);
-    filter.Q.setValueAtTime(3.0, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.25, now + 0.1);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
+    osc.frequency.rampTo(660, 2.0);
+    filter.frequency.rampTo(1320, 2.0);
+    gain.gain.rampTo(0.25, 0.15);
 
     this.healDrone = { osc, filter, gain };
   }
 
   public stopHealDrone() {
-    if (!this.ctx || !this.healDrone) return;
-    const now = this.ctx.currentTime;
+    if (!this.healDrone) return;
     const { osc, filter, gain } = this.healDrone;
+    const now = Tone.now();
 
-    gain.gain.setTargetAtTime(0, now, 0.05);
+    gain.gain.setValueAtTime(0, now);
     setTimeout(() => {
       try {
         osc.stop();
         osc.disconnect();
         filter.disconnect();
         gain.disconnect();
+
+        osc.dispose();
+        filter.dispose();
+        gain.dispose();
       } catch (e) {
-        // Safe cleanup
+        // Safe disposal
       }
     }, 150);
 
@@ -598,55 +481,36 @@ class SoundSynth {
 
   public playChargeStart() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
     this.stopChargeDrone();
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
+    // Restored exact wobbly LFO-modulated Filter logic from custom synth
+    const osc = new Tone.Oscillator({ type: "sawtooth", frequency: 220 }).start();
+    const filter = new Tone.Filter({ frequency: 450, type: "lowpass", Q: 4.0 });
+    const lfo = new Tone.LFO({ frequency: 5.5, min: -360, max: 360, type: "sine" }).start();
+    const gain = new Tone.Gain(0.18); // Highly robust charging start gain!
 
-    const lfo = this.ctx.createOscillator();
-    const lfoGain = this.ctx.createGain();
+    lfo.connect(filter.frequency);
+    lfo.amplitude.setValueAtTime(110 / 360, Tone.now());
 
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(220, now);
+    osc.chain(filter, gain, this.sfxGain);
 
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(450, now);
-    filter.Q.setValueAtTime(4.0, now);
-
-    lfo.frequency.setValueAtTime(5.5, now);
-    lfoGain.gain.setValueAtTime(110, now);
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-
-    gain.gain.setValueAtTime(0.02, now);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    lfo.start(now);
-    osc.start(now);
-
-    this.chargeDrone = { osc, lfo, lfoGain, filter, gain };
+    this.chargeDrone = { osc, filter, lfo, gain };
     this.currentChargeLevel = 0;
   }
 
   public updateChargeTimer(timer: number) {
-    if (!this.ctx || !this.chargeDrone) return;
-    const now = this.ctx.currentTime;
-    const { osc, lfo, lfoGain, filter, gain } = this.chargeDrone;
+    if (!this.initialized || !this.chargeDrone) return;
+    const { osc, filter, lfo, gain } = this.chargeDrone;
+    const now = Tone.now();
 
     if (timer < 0.25) {
       const progress = timer / 0.25;
       osc.frequency.setTargetAtTime(220 + progress * 100, now, 0.05);
       filter.frequency.setTargetAtTime(450 + progress * 150, now, 0.05);
       lfo.frequency.setTargetAtTime(6.0, now, 0.05);
-      lfoGain.gain.setTargetAtTime(120, now, 0.05);
-      gain.gain.setTargetAtTime(0.03, now, 0.05);
+      lfo.amplitude.setTargetAtTime(120 / 360, now, 0.05);
+      gain.gain.setTargetAtTime(0.25, now, 0.05); // Enhanced Stage 1 charging volume!
     } 
     else if (timer >= 0.25 && timer < 1.12) {
       this.currentChargeLevel = 1;
@@ -655,59 +519,49 @@ class SoundSynth {
       osc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
       filter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
       lfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
-      lfoGain.gain.setTargetAtTime(120 + range * 120, now, 0.06);
-      gain.gain.setTargetAtTime(0.065, now, 0.05);
+      lfo.amplitude.setTargetAtTime((120 + range * 120) / 360, now, 0.06);
+      gain.gain.setTargetAtTime(0.45, now, 0.05); // Enhanced Stage 2 charging volume!
     } 
     else if (timer >= 1.12) {
       if (this.currentChargeLevel < 2) {
         this.currentChargeLevel = 2;
         this.playChargeCompleteDing();
       }
-      osc.frequency.setTargetAtTime(660 + Math.sin(now * 30) * 8, now, 0.08);
+      const vibration = Math.sin(now * 30) * 8;
+      osc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
       filter.frequency.setTargetAtTime(1500, now, 0.08);
       lfo.frequency.setTargetAtTime(15.0, now, 0.08);
-      lfoGain.gain.setTargetAtTime(360, now, 0.08);
-      gain.gain.setTargetAtTime(0.055, now, 0.05);
+      lfo.amplitude.setTargetAtTime(1.0, now, 0.08);
+      gain.gain.setTargetAtTime(0.35, now, 0.05); // Enhanced fully charged volume!
     }
   }
 
   private playChargeCompleteDing() {
-    if (!this.ctx || !this.sfxGain) return;
-    const now = this.ctx.currentTime;
-    const dingOsc = this.ctx.createOscillator();
-    const dingGain = this.ctx.createGain();
-
-    dingOsc.type = "sine";
-    dingOsc.frequency.setValueAtTime(1567.98, now); // G6 Sparkle chime
-
-    dingGain.gain.setValueAtTime(0, now);
-    dingGain.gain.linearRampToValueAtTime(0.15, now + 0.01);
-    dingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-    dingOsc.connect(dingGain);
-    dingGain.connect(this.sfxGain);
-
-    dingOsc.start(now);
-    dingOsc.stop(now + 0.31);
+    if (!this.initialized) return;
+    this.musicArpSynth.triggerAttackRelease("G6", "4n");
   }
 
   public stopChargeDrone() {
-    if (!this.ctx || !this.chargeDrone) return;
-    const now = this.ctx.currentTime;
-    const { osc, lfo, lfoGain, filter, gain } = this.chargeDrone;
+    if (!this.chargeDrone) return;
+    const { osc, filter, lfo, gain } = this.chargeDrone;
+    const now = Tone.now();
 
-    gain.gain.setTargetAtTime(0, now, 0.04);
+    gain.gain.setValueAtTime(0, now);
     setTimeout(() => {
       try {
         osc.stop();
         lfo.stop();
         osc.disconnect();
         lfo.disconnect();
-        lfoGain.disconnect();
         filter.disconnect();
         gain.disconnect();
+
+        osc.dispose();
+        lfo.dispose();
+        filter.dispose();
+        gain.dispose();
       } catch (e) {
-        // Safe disconnection handling
+        // Safe disposal
       }
     }, 80);
 
@@ -718,470 +572,244 @@ class SoundSynth {
   public playHealComplete() {
     this.stopHealDrone();
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const notes = [440, 554.37, 659.25, 880];
-    notes.forEach((freq, idx) => {
-      const osc = this.ctx!.createOscillator();
-      const gain = this.ctx!.createGain();
+    const chimeNotes = ["C5", "E5", "G5", "C6"];
+    const now = Tone.now();
 
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + idx * 0.04);
-
-      gain.gain.setValueAtTime(0, now + idx * 0.04);
-      gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.04 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.25);
-
-      osc.connect(gain);
-      gain.connect(this.sfxGain!);
-
-      osc.start(now + idx * 0.04);
-      osc.stop(now + idx * 0.04 + 0.28);
+    chimeNotes.forEach((note, idx) => {
+      this.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
     });
   }
 
   public playHealCancel() {
     this.stopHealDrone();
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(330, now);
-    osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(300, now);
-    filter.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.16);
+    this.hurtSynth.triggerAttackRelease(180, "8n");
   }
 
   public playSpikeStrike() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("spike_strike", 80)) return;
 
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc1.type = "square";
-    osc1.frequency.setValueAtTime(1400, now);
-    osc1.frequency.exponentialRampToValueAtTime(700, now + 0.12);
-
-    osc2.type = "triangle";
-    osc2.frequency.setValueAtTime(850, now);
-    osc2.frequency.exponentialRampToValueAtTime(300, now + 0.12);
-
-    filter.type = "highpass";
-    filter.frequency.setValueAtTime(900, now);
-
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.3, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.sfxGain);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.16);
-    osc2.stop(now + 0.16);
+    this.spikeSynth.triggerAttackRelease(1400, "16n");
+    this.spikeSynth.frequency.rampTo(700, 0.12);
   }
 
   public playLanding() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("landing", 100)) return;
 
-    const now = this.ctx.currentTime;
+    this.pogoSynth.triggerAttackRelease(160, "8n");
+    this.pogoSynth.frequency.rampTo(65, 0.11);
 
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const envelope = this.ctx.createGain();
+    const noise = new Tone.Noise("white").start();
+    const filter = new Tone.Filter({ frequency: 1100, type: "bandpass", Q: 2.0 });
+    const env = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.08, sustain: 0, release: 0.08 });
+    
+    noise.chain(filter, env, this.sfxGain);
+    env.triggerAttackRelease(0.08);
 
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(65, now + 0.11);
+    setTimeout(() => {
+      try {
+        noise.stop();
+        noise.disconnect();
+        filter.disconnect();
+        env.disconnect();
 
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(320, now);
-
-    envelope.gain.setValueAtTime(0, now);
-    envelope.gain.linearRampToValueAtTime(0.42, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
-
-    osc.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.14);
-
-    const noiseBuffer = this.getNoiseBuffer();
-    if (noiseBuffer) {
-      const noiseNode = this.ctx.createBufferSource();
-      noiseNode.buffer = noiseBuffer;
-
-      const noiseFilter = this.ctx.createBiquadFilter();
-      noiseFilter.type = "bandpass";
-      noiseFilter.frequency.setValueAtTime(1100, now);
-      noiseFilter.Q.setValueAtTime(2.0, now);
-
-      const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(0, now);
-      noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.01);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-      noiseNode.connect(noiseFilter);
-      noiseFilter.connect(noiseGain);
-      noiseGain.connect(this.sfxGain);
-
-      noiseNode.start(now);
-      noiseNode.stop(now + 0.09);
-    }
+        noise.dispose();
+        filter.dispose();
+        env.dispose();
+      } catch (err) {
+        // Safe disposal
+      }
+    }, 150);
   }
 
   public playFireballLvl1() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc1.type = "sawtooth";
-    osc1.frequency.setValueAtTime(440, now);
-    osc1.frequency.exponentialRampToValueAtTime(160, now + 0.15);
-
-    osc2.type = "triangle";
-    osc2.frequency.setValueAtTime(220, now);
-    osc2.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(650, now);
-
-    envelope.gain.setValueAtTime(0, now);
-    envelope.gain.linearRampToValueAtTime(0.38, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.17);
-    osc2.stop(now + 0.17);
+    this.slashSynth.triggerAttackRelease(440, "8n");
+    this.slashSynth.frequency.rampTo(160, 0.15);
   }
 
   public playFireballLvl2() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc1.type = "sawtooth";
-    osc1.frequency.setValueAtTime(220, now);
-    osc1.frequency.exponentialRampToValueAtTime(80, now + 0.25);
-
-    osc2.type = "triangle";
-    osc2.frequency.setValueAtTime(110, now);
-    osc2.frequency.exponentialRampToValueAtTime(40, now + 0.25);
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(400, now);
-
-    envelope.gain.setValueAtTime(0, now);
-    envelope.gain.linearRampToValueAtTime(0.65, now + 0.02);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.29);
-    osc2.stop(now + 0.29);
+    this.hurtSynth.triggerAttackRelease(220, "4n");
+    this.hurtSynth.frequency.rampTo(80, 0.25);
   }
 
   public playJump() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("jump", 100)) return;
 
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    osc.type = "triangle";
-    filter.type = "lowpass";
-
-    const now = this.ctx.currentTime;
-
-    osc.frequency.setValueAtTime(240, now);
-    osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
-
-    filter.frequency.setValueAtTime(1400, now);
-    filter.frequency.exponentialRampToValueAtTime(900, now + 0.12);
-    filter.Q.setValueAtTime(4.0, now);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.55, now + 0.02);
-    envelope.gain.exponentialRampToValueAtTime(0.1, now + 0.08);
-    envelope.gain.setValueAtTime(0.1, now + 0.12);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-    osc.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.16);
+    this.jumpSynth.triggerAttackRelease(240, "8n");
+    this.jumpSynth.frequency.rampTo(580, 0.12);
   }
 
   public playDash() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("dash", 100)) return;
 
-    const now = this.ctx.currentTime;
-    const duration = 0.18;
-
-    const bufferSize = this.ctx.sampleRate * duration;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const noiseNode = this.ctx.createBufferSource();
-    noiseNode.buffer = buffer;
-
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(1400, now);
-    filter.frequency.exponentialRampToValueAtTime(500, now + duration);
-    filter.Q.setValueAtTime(2.5, now);
-
-    const envelope = this.ctx.createGain();
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.4, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-    noiseNode.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    noiseNode.start(now);
-    noiseNode.stop(now + duration);
+    this.dashEnv.triggerAttackRelease(0.18);
+    this.dashFilter.frequency.setValueAtTime(1400, Tone.now());
+    this.dashFilter.frequency.rampTo(500, 0.18);
   }
 
-  public playSlash() {
+  public playSlash(direction: "side" | "up" | "down" = "side") {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
+    const now = Tone.now();
 
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+    if (direction === "side") {
+      if (!this.checkThrottle("slash_side", 80)) return;
 
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.45, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      // Pure, high-fidelity non-tonal airy blade swish (no triangle synth pitches)
+      const noise = new Tone.Noise("white").start();
+      const filter = new Tone.Filter({ frequency: 2200, type: "highpass" });
+      const filter2 = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
+      const env = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: 0.15, sustain: 0, release: 0.15 });
 
-    osc.connect(envelope);
-    envelope.connect(this.sfxGain);
+      noise.chain(filter, filter2, env, this.sfxGain);
+      
+      // Sweep highpass down to mimic speed deceleration
+      filter.frequency.rampTo(1000, 0.14);
+      env.triggerAttackRelease(0.15, now);
 
-    osc.start(now);
-    osc.stop(now + 0.13);
+      setTimeout(() => {
+        try {
+          noise.stop();
+          noise.disconnect();
+          filter.disconnect();
+          filter2.disconnect();
+          env.disconnect();
+
+          noise.dispose();
+          filter.dispose();
+          filter2.dispose();
+          env.dispose();
+        } catch (e) {
+          // Safe disposal
+        }
+      }, 300);
+    } else {
+      // Overhead or Downward strike: pneumatic "puff" sound
+      if (!this.checkThrottle("slash_puff", 100)) return;
+
+      // 1. Lower pitch-drop sweep
+      this.pogoSynth.triggerAttackRelease(220, "8n", now);
+      this.pogoSynth.frequency.rampTo(90, 0.15);
+
+      // 2. Soft, breathy pink noise pneumatic puff of air
+      const noise = new Tone.Noise("pink").start();
+      const filter = new Tone.Filter({ frequency: 650, type: "bandpass", Q: 1.2 });
+      const env = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.18, sustain: 0, release: 0.18 });
+
+      noise.chain(filter, env, this.sfxGain);
+      env.triggerAttackRelease(0.18, now);
+
+      setTimeout(() => {
+        try {
+          noise.stop();
+          noise.disconnect();
+          filter.disconnect();
+          env.disconnect();
+
+          noise.dispose();
+          filter.dispose();
+          env.dispose();
+        } catch (e) {
+          // Safe disposal
+        }
+      }, 300);
+    }
   }
 
   public playHitConfirm() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("hit_confirm", 40)) return;
 
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc1.type = "square";
-    osc1.frequency.setValueAtTime(800, now);
-    osc1.frequency.setValueAtTime(1200, now + 0.04);
-
-    osc2.type = "triangle";
-    osc2.frequency.setValueAtTime(400, now);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.28, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-
-    osc1.connect(envelope);
-    osc2.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.10);
-    osc2.stop(now + 0.10);
+    this.hitSynth.triggerAttackRelease("B5", "8n");
   }
 
   public playPogo() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("pogo", 80)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(140, now + 0.09);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.65, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
-
-    osc.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.12);
+    this.pogoSynth.triggerAttackRelease(320, "16n");
+    this.pogoSynth.frequency.rampTo(140, 0.09);
   }
 
   public playHurt() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("hurt", 120)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const envelope = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
-
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(280, now);
-    filter.Q.setValueAtTime(2.0, now);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.85, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-
-    osc.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.17);
+    this.hurtSynth.triggerAttackRelease(180, "8n");
+    this.hurtSynth.frequency.rampTo(45, 0.16);
   }
 
   public playSelectTick() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("select_tick", 30)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(620, now);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.15, now + 0.005);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-
-    osc.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.05);
+    this.dialogueSynthPlayer.triggerAttackRelease(620, "32n");
   }
 
   public playErrorTick() {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain) return;
+    if (!this.initialized) return;
+    if (!this.checkThrottle("error_tick", 30)) return;
 
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
-
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(105, now);
-
-    envelope.gain.setValueAtTime(0.0, now);
-    envelope.gain.linearRampToValueAtTime(0.32, now + 0.01);
-    envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-    osc.connect(envelope);
-    envelope.connect(this.sfxGain);
-
-    osc.start(now);
-    osc.stop(now + 0.13);
+    this.dialogueSynthBoss.triggerAttackRelease(105, "16n");
   }
 
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     this.resumeContext();
-    if (!this.ctx || !this.sfxGain || !char) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const envelope = this.ctx.createGain();
+    if (!this.initialized || !char) return;
+    if (!this.checkThrottle("dialogue_tick", 35)) return;
 
     const charCode = char.charCodeAt(0) || 65;
+    const now = Tone.now();
 
     if (speaker === "player") {
-      osc.type = "sine";
       const freq = 240 + (charCode % 6) * 35;
-      osc.frequency.setValueAtTime(freq, now);
-
-      envelope.gain.setValueAtTime(0.0, now);
-      envelope.gain.linearRampToValueAtTime(0.15, now + 0.005);
-      envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+      this.dialogueSynthPlayer.triggerAttackRelease(freq, "32n", now);
     } else {
-      osc.type = "triangle";
       const freq = 70 + (charCode % 5) * 12;
-      osc.frequency.setValueAtTime(freq, now);
-
-      envelope.gain.setValueAtTime(0.0, now);
-      envelope.gain.linearRampToValueAtTime(0.70, now + 0.01);
-      envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      this.dialogueSynthBoss.triggerAttackRelease(freq, "24n", now);
     }
+  }
 
-    osc.connect(envelope);
-    envelope.connect(this.sfxGain);
+  public fadeOutMusic(duration: number = 1.5) {
+    if (!this.initialized || !this.isMusicPlaying) return;
+    this.musicGain.volume.rampTo(-120, duration);
+    setTimeout(() => {
+      this.stopMusic();
+      this.updateVolumes();
+    }, duration * 1000 + 100);
+  }
 
-    osc.start(now);
-    osc.stop(now + 0.08);
+  public fadeInMusic(duration: number = 0.4) {
+    if (!this.initialized || !this.isMusicPlaying) return;
+    const config = settingsManager.getAudio();
+    const targetDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.30);
+    
+    this.musicGain.volume.setValueAtTime(-120, Tone.now());
+    this.musicGain.volume.rampTo(targetDb, duration);
   }
 
   public startMusic() {
@@ -1189,52 +817,19 @@ class SoundSynth {
     if (this.isMusicPlaying) return;
     this.isMusicPlaying = true;
 
-    const tempo = 135;
-    const stepTime = 60 / tempo / 2;
-
-    const basePitches = [
-      [110.00, 130.81, 164.81],
-      [98.00, 146.83, 196.00],
-      [87.31, 130.81, 174.61],
-      [82.41, 123.47, 164.81],
-    ];
-
-    this.musicInterval = setInterval(() => {
-      if (!this.ctx || !this.musicGain) return;
-
-      const chordIndex = Math.floor(this.musicTickIndex / 16) % basePitches.length;
-      const notes = basePitches[chordIndex];
-      const pattern = [0, 1, 2, 1, 0, 2, 1, 2];
-      const stepInPattern = this.musicTickIndex % pattern.length;
-      const baseFreq = notes[pattern[stepInPattern]];
-
-      const octaveShift = stepInPattern % 4 === 0 ? 0.5 : 1;
-      const freq = baseFreq * octaveShift;
-
-      const osc = this.ctx.createOscillator();
-      const envelope = this.ctx.createGain();
-
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
-      envelope.gain.setValueAtTime(0.0, this.ctx.currentTime);
-      envelope.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime + 0.01);
-      envelope.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + stepTime - 0.02);
-
-      osc.connect(envelope);
-      envelope.connect(this.musicGain);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + stepTime);
-
-      this.musicTickIndex++;
-    }, stepTime * 1000);
+    if (this.initialized) {
+      this.bassSeq.start(0);
+      this.arpSeq.start(0);
+      Tone.getTransport().start();
+      this.fadeInMusic(0.4); // Primed, snappy instant fade-in on click
+    }
   }
 
   public stopMusic() {
-    if (this.musicInterval) {
-      clearInterval(this.musicInterval);
-      this.musicInterval = null;
+    if (this.initialized) {
+      this.bassSeq.stop();
+      this.arpSeq.stop();
+      Tone.getTransport().stop();
     }
     this.isMusicPlaying = false;
   }

@@ -60,8 +60,8 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_ATTACKED", () => {
-        soundSynth.playSlash();
+      eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
+        soundSynth.playSlash(direction);
       })
     );
 
