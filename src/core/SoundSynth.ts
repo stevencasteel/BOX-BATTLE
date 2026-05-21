@@ -721,7 +721,7 @@ class SoundSynth {
       osc.frequency.setValueAtTime(freq, now);
 
       envelope.gain.setValueAtTime(0.0, now);
-      envelope.gain.linearRampToValueAtTime(0.35, now + 0.01);
+      envelope.gain.linearRampToValueAtTime(0.70, now + 0.01);
       envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
     }
 
