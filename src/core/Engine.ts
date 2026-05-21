@@ -248,7 +248,7 @@ export class Engine {
 
   private render() {
     this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, 1250, 1250);
 
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);

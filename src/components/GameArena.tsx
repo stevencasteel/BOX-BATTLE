@@ -52,6 +52,47 @@ export function GameArena({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const container = canvas.parentElement;
+      if (!container) return;
+
+      const internalW = 1250;
+      const internalH = 1250;
+
+      const containerW = container.clientWidth;
+      const containerH = container.clientHeight;
+
+      const scale = Math.min(containerW / internalW, containerH / internalH);
+      const displayW = internalW * scale;
+      const displayH = internalH * scale;
+
+      canvas.style.width = displayW + "px";
+      canvas.style.height = displayH + "px";
+
+      canvas.width = displayW * dpr;
+      canvas.height = displayH * dpr;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr * scale, dpr * scale);
+        ctx.imageSmoothingEnabled = false;
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [canvasRef]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const engine = new Engine(canvas, (speaker, text) => {
       triggerRef.current(speaker, text);
     });

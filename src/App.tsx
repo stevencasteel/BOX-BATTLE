@@ -232,12 +232,20 @@ export default function App() {
       })
     ];
 
-    const initialGameplay = useGameplayStore.getState();
-    updatePlayerHP(initialGameplay.playerHP);
-    updateBossHP(initialGameplay.bossHP);
-    updateHealCharges(initialGameplay.healingCharges);
-    updateDetermination(initialGameplay.determination);
-    updateGameStatus(currentScreen);
+    if (currentScreen === "PLAYING") {
+      const initialGameplay = useGameplayStore.getState();
+      updatePlayerHP(initialGameplay.playerHP);
+      updateBossHP(initialGameplay.bossHP);
+      updateHealCharges(initialGameplay.healingCharges);
+      updateDetermination(initialGameplay.determination);
+      updateGameStatus("PLAYING");
+    } else {
+      updatePlayerHP(0);
+      updateBossHP(0);
+      updateHealCharges(0);
+      updateDetermination(0);
+      updateGameStatus("READY");
+    }
 
     return () => {
       soundSynth.stopMusic();
@@ -247,6 +255,28 @@ export default function App() {
       if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
       if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
       if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+
+      // Thorough dialogue console element release
+      const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
+      const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
+      const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
+      const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
+      const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
+      const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
+
+      if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
+      if (pText) pText.textContent = "[ NO SIGNAL ]";
+      if (pPortrait) {
+        pPortrait.className = "portrait-square led-green";
+        pPortrait.style.background = "#07080b";
+      }
+
+      if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
+      if (bText) bText.textContent = "[ NO SIGNAL ]";
+      if (bPortrait) {
+        bPortrait.className = "portrait-square led-red";
+        bPortrait.style.background = "#07080b";
+      }
     };
   }, [currentScreen]);
 
