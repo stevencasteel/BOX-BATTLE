@@ -3,6 +3,7 @@ interface TitleScreenProps {
   onPlay: () => void;
   onSettings: () => void;
   onCredits: () => void;
+  onSource: () => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
 }
@@ -12,6 +13,7 @@ export function TitleScreen({
   onPlay,
   onSettings,
   onCredits,
+  onSource,
   playHoverTick,
   setMenuIndex,
 }: TitleScreenProps) {
@@ -71,6 +73,19 @@ export function TitleScreen({
               <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
             </div>
             {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+
+          <button
+            onClick={onSource}
+            onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
+            className={`neo-btn-large ${menuIndex === 3 ? "neo-btn-large-focused" : ""}`}
+          >
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label">SOURCE CODE</span>
+              <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
+            </div>
+            {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
           </button>
         </div>
       </div>

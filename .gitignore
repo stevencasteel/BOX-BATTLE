@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Compiled game source manifest
+public/source_code_manifest.json
+
+# Standard build outputs
+dist/
+node_modules/
+.tmp/
+.DS_Store

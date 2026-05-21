@@ -14,43 +14,16 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         <div style={{ textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "12px", marginBottom: "12px" }}>
           <p style={{ fontSize: "12px", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Built by Steven Casteel</p>
           <p style={{ fontSize: "9px", color: "#4ade80", margin: "6px 0 0", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "bold", textShadow: "0 0 6px rgba(74, 222, 128, 0.2)" }}>AI Co-Pilots: Gemini 2.5 Pro, Gemini 3.5 Flash</p>
-          
-          <div className="flex-row-center" style={{ gap: "16px", marginTop: "10px" }}>
-            <a 
-              href="https://www.stevencasteel.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{ fontSize: "9px", color: "#4a5568", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease", display: "flex", alignItems: "center" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
-            >
-              WWW.STEVENCASTEEL.COM
-            </a>
-            <span style={{ color: "#1a202c", fontSize: "9px" }}>•</span>
-            <a 
-              href="https://github.com/stevencasteel/BOX-BATTLE" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{ fontSize: "9px", color: "#4a5568", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease", display: "flex", alignItems: "center", gap: "6px" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
-            >
-              <svg 
-                viewBox="0 0 24 24" 
-                width="12" 
-                height="12" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                fill="none" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                style={{ display: "inline-block" }}
-              >
-                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-              </svg>
-              GITHUB REPOSITORY
-            </a>
-          </div>
+          <a 
+            href="https://www.stevencasteel.com" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ display: "inline-block", fontSize: "8px", color: "#4a5568", margin: "6px 0 0", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
+          >
+            WWW.STEVENCASTEEL.COM
+          </a>
         </div>
 
         <div className="credits-grid">

@@ -28,7 +28,7 @@ export interface ScreenConfig {
 
 export const screenConfigs: Record<string, ScreenConfig> = {
   TITLE: {
-    getMaxIndex: () => 2,
+    getMaxIndex: () => 3,
     onSelect: ({ menuIndex, navTo, reloadSaveSlots }) => {
       if (menuIndex === 0) {
         reloadSaveSlots();
@@ -37,6 +37,8 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         navTo("OPTIONS");
       } else if (menuIndex === 2) {
         navTo("CREDITS");
+      } else if (menuIndex === 3) {
+        navTo("SOURCE_VIEW");
       }
       soundSynth.playHitConfirm();
     }

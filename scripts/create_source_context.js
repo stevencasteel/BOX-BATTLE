@@ -15,7 +15,7 @@ const outputFile = path.join(docsDir, 'all_source_code.txt');
 function shouldInclude(filePath) {
   const relPath = path.relative(rootDir, filePath).split(path.sep).join('/');
   
-  if (path.basename(filePath) === 'all_source_code.txt') {
+  if (path.basename(filePath) === 'all_source_code.txt' || path.basename(filePath) === 'source_code_manifest.json') {
     return false;
   }
 
@@ -132,6 +132,8 @@ async function main() {
     }
 
     await fsp.writeFile(outputFile, content, 'utf8');
+    const publicOutputFile = path.join(rootDir, 'public', 'all_source_code.txt');
+    await fsp.writeFile(publicOutputFile, content, 'utf8');
     process.stdout.write('\r\x1b[K');
 
     const stats = await fsp.stat(outputFile);

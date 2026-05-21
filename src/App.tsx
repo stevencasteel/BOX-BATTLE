@@ -16,6 +16,7 @@ import { SettingsScreen } from "@/components/menus/SettingsScreen";
 import { AudioScreen } from "@/components/menus/AudioScreen";
 import { ControlsScreen } from "@/components/menus/ControlsScreen";
 import { CreditsScreen } from "@/components/menus/CreditsScreen";
+import { SourceViewScreen } from "@/components/menus/SourceViewScreen";
 import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
@@ -61,6 +62,8 @@ export default function App() {
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
+  const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
+
   useEffect(() => {
     soundSynth.setCabinetMuffle(currentScreen !== "PLAYING");
   }, [currentScreen]);
@@ -69,7 +72,6 @@ export default function App() {
     soundSynth.playSelectTick();
   };
 
-  // Dedicated Mount Block: This will run only once
   useEffect(() => {
     soundSynth.startMusic();
     reloadSaveSlots();
@@ -78,7 +80,6 @@ export default function App() {
     };
   }, []);
 
-  // Event Broker Subscriptions Block
   useEffect(() => {
     const unsubGameplay = useGameplayStore.subscribe((state) => {
       const viewport = viewportRef.current;
@@ -150,7 +151,7 @@ export default function App() {
   }, [rebindTarget]);
 
   useEffect(() => {
-    if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
+    if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
       const config = screenConfigs[currentScreen];
@@ -223,104 +224,108 @@ export default function App() {
     <div className="app-wrapper">
       <div className="cabinet-outer">
 
-        <div className="cabinet-status-panel neo-pressed">
-          <div className="hud-panel-block" style={{ gap: "4px" }}>
-            <span className="hud-panel-title">PLAYER HP</span>
-            <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
-                  style={{
-                    background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b",
-                    border: "1px solid rgba(0,0,0,0.5)"
-                  }}
-                />
-              ))}
-            </div>
-
-            <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
-              <div className="flex-row" style={{ gap: "4px" }}>
-                {[...Array(3)].map((_, i) => (
+        {/* 1. HUD Panel - hidden in full-height screens */}
+        {!isFullHeightScreen && (
+          <div className="cabinet-status-panel neo-pressed">
+            <div className="hud-panel-block" style={{ gap: "4px" }}>
+              <span className="hud-panel-title">PLAYER HP</span>
+              <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
+                {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className={`led-dot ${currentScreen === "PLAYING" && i < healingCharges ? "led-yellow" : ""}`}
+                    className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
                     style={{
-                      background: currentScreen === "PLAYING" && i < healingCharges ? "" : "#07080b",
-                      border: "1px solid rgba(0,0,0,0.5)",
-                      width: "6px",
-                      height: "6px"
+                      background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b",
+                      border: "1px solid rgba(0,0,0,0.5)"
                     }}
                   />
                 ))}
               </div>
-              <div className="neo-pressed" style={{
-                width: "54px",
-                height: "6px",
-                borderRadius: "3px",
-                padding: "1px",
-                boxSizing: "border-box",
-                overflow: "hidden",
-                background: "#07080b"
-              }}>
-                <div style={{
-                  height: "100%",
-                  borderRadius: "2px",
-                  width: currentScreen === "PLAYING" ? `${(determination / 5) * 100}%` : "0%",
-                  transition: "width 0.15s ease",
-                  background: "hsl(280, 80%, 65%)",
-                  boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
-                }} />
-              </div>
-            </div>
-          </div>
 
-          <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
-            {currentScreen === "PLAYING" ? (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.03)",
-                background: "rgba(7, 8, 11, 0.85)",
-                padding: "8px 22px",
-                borderRadius: "8px",
-                boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
-              }}>
-                <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
-                <span style={{
-                  fontSize: "16px",
-                  color: "rgba(34, 197, 94, 0.8)",
-                  fontWeight: 900,
-                  letterSpacing: "0.3em",
-                  textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
-                  textTransform: "uppercase",
-                  lineHeight: "1"
+              <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
+                <div className="flex-row" style={{ gap: "4px" }}>
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`led-dot ${currentScreen === "PLAYING" && i < healingCharges ? "led-yellow" : ""}`}
+                      style={{
+                        background: currentScreen === "PLAYING" && i < healingCharges ? "" : "#07080b",
+                        border: "1px solid rgba(0,0,0,0.5)",
+                        width: "6px",
+                        height: "6px"
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="neo-pressed" style={{
+                  width: "54px",
+                  height: "6px",
+                  borderRadius: "3px",
+                  padding: "1px",
+                  boxSizing: "border-box",
+                  overflow: "hidden",
+                  background: "#07080b"
                 }}>
-                  BOX BATTLE
-                </span>
-                <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                  <div style={{
+                    height: "100%",
+                    borderRadius: "2px",
+                    width: currentScreen === "PLAYING" ? `${(determination / 5) * 100}%` : "0%",
+                    transition: "width 0.15s ease",
+                    background: "hsl(280, 80%, 65%)",
+                    boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
+                  }} />
+                </div>
               </div>
-            ) : null}
-          </div>
+            </div>
 
-          <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-            <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
-            <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
-              <div
-                className={currentScreen === "PLAYING" ? "led-red" : ""}
-                style={{
-                  height: "100%",
-                  borderRadius: "2px",
-                  width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%",
-                  transition: "all 0.15s ease",
-                  background: currentScreen === "PLAYING" ? "" : "#07080b"
-                }}
-              />
+            <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
+              {currentScreen === "PLAYING" ? (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  border: "1px solid rgba(255, 255, 255, 0.03)",
+                  background: "rgba(7, 8, 11, 0.85)",
+                  padding: "8px 22px",
+                  borderRadius: "8px",
+                  boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
+                }}>
+                  <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                  <span style={{
+                    fontSize: "16px",
+                    color: "rgba(34, 197, 94, 0.8)",
+                    fontWeight: 900,
+                    letterSpacing: "0.3em",
+                    textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
+                    textTransform: "uppercase",
+                    lineHeight: "1"
+                  }}>
+                    BOX BATTLE
+                  </span>
+                  <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                </div>
+              ) : null}
+            </div>
+
+            <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
+              <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+              <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
+                <div
+                  className={currentScreen === "PLAYING" ? "led-red" : ""}
+                  style={{
+                    height: "100%",
+                    borderRadius: "2px",
+                    width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%",
+                    transition: "all 0.15s ease",
+                    background: currentScreen === "PLAYING" ? "" : "#07080b"
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
+        {/* 2. Main Viewport Container */}
         <div className="game-viewport-container" ref={viewportRef}>
           {currentScreen === "PLAYING" ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -347,6 +352,9 @@ export default function App() {
                   }}
                   onCredits={() => {
                     navTo("CREDITS");
+                  }}
+                  onSource={() => {
+                    navTo("SOURCE_VIEW");
                   }}
                   playHoverTick={playHoverTick}
                   setMenuIndex={setMenuIndex}
@@ -426,27 +434,39 @@ export default function App() {
                   }}
                 />
               )}
+
+              {currentScreen === "SOURCE_VIEW" && (
+                <SourceViewScreen
+                  onBack={() => {
+                    navTo("TITLE");
+                    setMenuIndex(3);
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
 
-        <div className="dialogue-console">
-          <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
-            <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
-            <div className="dialogue-text-container">
-              <div className="dialogue-speaker-label">PLAYER</div>
-              <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+        {/* 3. Dialogue Console - hidden in full-height screens */}
+        {!isFullHeightScreen && (
+          <div className="dialogue-console">
+            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
+              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
+              <div className="dialogue-text-container">
+                <div className="dialogue-speaker-label">PLAYER</div>
+                <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
-            <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-              <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-              <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
+              <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+                <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
+                <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+              </div>
+              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
             </div>
-            <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
           </div>
-        </div>
+        )}
 
       </div>
 

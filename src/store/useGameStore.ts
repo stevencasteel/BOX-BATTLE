@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "PLAYING";
+export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "SOURCE_VIEW" | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 
 interface SessionState {
