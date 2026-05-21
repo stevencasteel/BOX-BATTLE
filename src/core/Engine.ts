@@ -8,7 +8,7 @@ import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
-import { useGameStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/EventBroker";
@@ -102,15 +102,16 @@ export class Engine {
 
     Camera.reset();
 
-    const state = useGameStore.getState();
-    state.setGameResult("PLAYING");
+    const sessionState = useSessionStore.getState();
+    const gameplayState = useGameplayStore.getState();
+    sessionState.setGameResult("PLAYING");
 
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
-    if (pHealth) state.setPlayerHP(pHealth.currentHealth);
-    if (bHealth) state.setBossHP(bHealth.currentHealth);
-    state.setHealingCharges(this.player.healingCharges);
-    state.setDetermination(this.player.determinationCounter);
+    if (pHealth) gameplayState.setPlayerHP(pHealth.currentHealth);
+    if (bHealth) gameplayState.setBossHP(bHealth.currentHealth);
+    gameplayState.setHealingCharges(this.player.healingCharges);
+    gameplayState.setDetermination(this.player.determinationCounter);
 
     this.unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
       this.triggerDialogue(speaker, text);
@@ -213,7 +214,7 @@ export class Engine {
       eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
     }
 
-    const state = useGameStore.getState();
+    const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       this.bossDeathTimer = 0;
@@ -222,7 +223,7 @@ export class Engine {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
       this.deathTimeoutId = setTimeout(() => {
-        state.setGameResult("GAMEOVER");
+        sessionState.setGameResult("GAMEOVER");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
@@ -235,7 +236,7 @@ export class Engine {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
       this.deathTimeoutId = setTimeout(() => {
-        state.setGameResult("VICTORY");
+        sessionState.setGameResult("VICTORY");
         this.stop();
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });

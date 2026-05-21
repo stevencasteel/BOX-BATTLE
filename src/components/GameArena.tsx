@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
-import { useGameStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -36,12 +36,13 @@ export function GameArena({
     };
   }, [canvasRef]); // Restrict recreation strictly to canvas attachment/detachment
 
-  const gameResult = useGameStore((state) => state.gameResult);
-  const menuIndex = useGameStore((state) => state.menuIndex);
-  const navTo = useGameStore((state) => state.navTo);
-  const resetGameSession = useGameStore((state) => state.resetGameSession);
-  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
-  const playerHP = useGameStore((state) => state.playerHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const menuIndex = useSessionStore((state) => state.menuIndex);
+  const navTo = useSessionStore((state) => state.navTo);
+  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
+
+  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
+  const playerHP = useGameplayStore((state) => state.playerHP);
 
   return (
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>

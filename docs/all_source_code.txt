@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 10:40:23 AM
+ [SYSTEM] Generated: 5/21/2026, 10:51:25 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2434,6 +2434,7 @@ body {
 import { useEffect, useRef, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
+import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
@@ -2516,6 +2517,21 @@ export default function App() {
       unsubs.forEach((unsub) => unsub());
     };
   }, []);
+
+  useEffect(() => {
+    if (!rebindTarget) return;
+    const handleRebindCapture = (e: KeyboardEvent) => {
+      e.preventDefault();
+      soundSynth.playHitConfirm();
+      settingsManager.remapKey(rebindTarget.action, rebindTarget.index, e.code);
+      setRebindTarget(null);
+      reloadSaveSlots();
+    };
+    window.addEventListener("keydown", handleRebindCapture);
+    return () => {
+      window.removeEventListener("keydown", handleRebindCapture);
+    };
+  }, [rebindTarget]);
 
   useEffect(() => {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
@@ -3358,6 +3374,28 @@ export class MeleeComponent implements Component {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.12 });
             }
           }
+        }
+      }
+    }
+
+    const activeProjectiles = this.owner.world.getProjectiles();
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        const pW = proj.size.width / 2;
+        const pH = proj.size.height / 2;
+
+        const isHit = (
+          attackHitbox.x + attackHitbox.width > proj.position.x - pW &&
+          attackHitbox.x < proj.position.x + pW &&
+          attackHitbox.y + attackHitbox.height > proj.position.y - pH &&
+          attackHitbox.y < proj.position.y + pH
+        );
+
+        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          this.hasHitEnemyThisSwing = true;
+          (this.owner as any).registerDamageDealt?.();
+          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
     }
@@ -6842,6 +6880,13 @@ export class Player extends BaseEntity {
       return;
     }
 
+    const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
+    if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+      this.physics.gravity = 1200 * 1.4;
+    } else {
+      this.physics.gravity = 1200;
+    }
+
     if (this.hurtTimer > 0) {
       this.hurtTimer -= dt;
       // Let physics / gravity resolve
@@ -7334,8 +7379,12 @@ export class Projectile extends BaseEntity implements Poolable {
         );
 
         if (isColliding) {
+          const incomingDamage = other.damage || 1;
           this.world.releaseProjectile(other);
-          return true; 
+          this.damage -= incomingDamage;
+          if (this.damage <= 0) {
+            return true;
+          }
         }
       }
     }

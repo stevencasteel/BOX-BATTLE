@@ -5,7 +5,7 @@ import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
-import { useGameStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
 import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
 
@@ -22,19 +22,19 @@ import "./App.css";
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const currentScreen = useGameStore((state) => state.currentScreen);
-  const menuIndex = useGameStore((state) => state.menuIndex);
-  const playerHP = useGameStore((state) => state.playerHP);
-  const bossHP = useGameStore((state) => state.bossHP);
-  const gameResult = useGameStore((state) => state.gameResult);
-  const retryCount = useGameStore((state) => state.retryCount);
-  const isGlitching = useGameStore((state) => state.isGlitching);
-  const healingCharges = useGameStore((state) => state.healingCharges);
-  const determination = useGameStore((state) => state.determination);
+  const currentScreen = useSessionStore((state) => state.currentScreen);
+  const menuIndex = useSessionStore((state) => state.menuIndex);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const retryCount = useSessionStore((state) => state.retryCount);
+  const navTo = useSessionStore((state) => state.navTo);
+  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
 
-  const navTo = useGameStore((state) => state.navTo);
-  const setMenuIndex = useGameStore((state) => state.setMenuIndex);
-  const resetGameSession = useGameStore((state) => state.resetGameSession);
+  const playerHP = useGameplayStore((state) => state.playerHP);
+  const bossHP = useGameplayStore((state) => state.bossHP);
+  const isGlitching = useGameplayStore((state) => state.isGlitching);
+  const healingCharges = useGameplayStore((state) => state.healingCharges);
+  const determination = useGameplayStore((state) => state.determination);
+  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   const {
     slots,
@@ -63,19 +63,19 @@ export default function App() {
 
     const unsubs = [
       eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
-        useGameStore.getState().setPlayerHP(currentHealth);
+        useGameplayStore.getState().setPlayerHP(currentHealth);
       }),
       eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
-        useGameStore.getState().setPlayerHP(currentHealth);
+        useGameplayStore.getState().setPlayerHP(currentHealth);
       }),
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        useGameStore.getState().setBossHP(currentHealth);
+        useGameplayStore.getState().setBossHP(currentHealth);
       }),
       eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
-        useGameStore.getState().setHealingCharges(charges);
+        useGameplayStore.getState().setHealingCharges(charges);
       }),
       eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: dValue }) => {
-        useGameStore.getState().setDetermination(dValue);
+        useGameplayStore.getState().setDetermination(dValue);
       })
     ];
 
