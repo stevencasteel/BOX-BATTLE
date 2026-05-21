@@ -35,6 +35,7 @@ export class Engine {
   private bossDeathPos: { x: number; y: number } | null = null;
   private deathTimeoutId: any = null;
   private dialogueTimeoutId: any = null;
+  private dialogueStaggerTimeoutId: any = null;
 
   private unsubDialogue!: () => void;
 
@@ -241,8 +242,10 @@ export class Engine {
         this.stop();
         this.dialogueTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+        }, 500);
+        this.dialogueStaggerTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
-        }, 1000);
+        }, 1800);
       }, 3500);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
@@ -256,8 +259,10 @@ export class Engine {
         this.stop();
         this.dialogueTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
+        }, 500);
+        this.dialogueStaggerTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
-        }, 1000);
+        }, 2800);
       }, 3500);
     }
 
@@ -384,6 +389,10 @@ export class Engine {
     if (this.dialogueTimeoutId !== null) {
       clearTimeout(this.dialogueTimeoutId);
       this.dialogueTimeoutId = null;
+    }
+    if (this.dialogueStaggerTimeoutId !== null) {
+      clearTimeout(this.dialogueStaggerTimeoutId);
+      this.dialogueStaggerTimeoutId = null;
     }
     this.loop.cleanup();
     this.player.teardown();
