@@ -123,10 +123,23 @@ export class SimulationSystems {
       })
     );
 
-    // Boss threat level phase shift subscriber
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
         soundSynth.playBossPhaseShift();
+      })
+    );
+
+    // Minion Assembly Spawning Subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("MINION_SPAWNING", () => {
+        soundSynth.playMinionSpawning();
+      })
+    );
+
+    // Minion Dissolution Deconstruction Subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("MINION_DISSOLVING", () => {
+        soundSynth.playMinionDeconstruct();
       })
     );
   }

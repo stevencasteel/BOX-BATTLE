@@ -209,6 +209,68 @@ class SoundSynth {
     }
   }
 
+  public playMinionSpawning() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // Harmonic triangle wave through a resonant lowpass filter representing digital construction
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(720, now + 0.3);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(600, now);
+    filter.frequency.exponentialRampToValueAtTime(1800, now + 0.3);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.40, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.31);
+  }
+
+  public playMinionDeconstruct() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // High-prominence resonant sawtooth sweep representing system deconstruct breakdown
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(80, now + 0.28);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.29);
+  }
+
   public playBossPhaseShift() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -222,7 +284,6 @@ class SoundSynth {
     osc.frequency.setValueAtTime(80, now);
     osc.frequency.exponentialRampToValueAtTime(320, now + 0.8);
 
-    // FM LFO Vibrato mapping
     const lfo = this.ctx.createOscillator();
     const lfoGain = this.ctx.createGain();
     lfo.frequency.setValueAtTime(15, now);
@@ -257,7 +318,6 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    // Schedule 3 sequential expanding ring explosions
     for (let i = 0; i < 3; i++) {
       const delay = i * 0.25;
       const ringNow = now + delay;
@@ -308,7 +368,6 @@ class SoundSynth {
       }
     }
 
-    // Heavy final sub-bass collapse sweep representing core dissolution
     const finalNow = now + 0.85;
     const finalOsc = this.ctx.createOscillator();
     const finalGain = this.ctx.createGain();
@@ -337,7 +396,6 @@ class SoundSynth {
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
 
-    // Linear pitch slide representing mechanical system failure
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(220, now);
     osc.frequency.linearRampToValueAtTime(40, now + 0.8);

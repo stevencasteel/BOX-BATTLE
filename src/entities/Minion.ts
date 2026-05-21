@@ -73,9 +73,11 @@ export class Minion extends BaseEntity {
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
       this.behavior = new FlyerBehavior();
     }
+    eventBroker.publish("MINION_SPAWNING", undefined);
   }
 
   public startDeathSequence() {
+    eventBroker.publish("MINION_DISSOLVING", undefined);
     this.isDying = true;
     this.dissolveTimer = 0.5;
     this.velocity = { x: 0, y: 0 };

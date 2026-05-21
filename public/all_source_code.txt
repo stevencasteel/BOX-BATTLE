@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 5:22:43 PM
+ [SYSTEM] Generated: 5/21/2026, 5:30:12 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -85,6 +85,7 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
+├── patch_minion_spawns.js
 ├── patch_phase2.js
 ├── patch_phase3.js
 ├── patch_player_jumps.js
@@ -392,6 +393,50 @@ export default defineConfig([
     "@types/react-syntax-highlighter": "^15.5.13"
   }
 }
+
+
+● ./patch_minion_spawns.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+const filepath = 'src/entities/Minion.ts';
+let content = fs.readFileSync(filepath, 'utf8');
+
+// 1. Minion spawning trigger at end of constructor
+const constructorTarget = `    this.pointA = { ...startPos };
+    this.pointB = { x: startPos.x, y: startPos.y - 180 };
+    this.behavior = new FlyerBehavior();
+  }
+}`;
+
+const constructorReplacement = `    this.pointA = { ...startPos };
+    this.pointB = { x: startPos.x, y: startPos.y - 180 };
+    this.behavior = new FlyerBehavior();
+  }
+  eventBroker.publish("MINION_SPAWNING", undefined);
+}`;
+
+// 2. Minion dissolving trigger at start of death sequence
+const deathTarget = `public startDeathSequence() {
+  this.isDying = true;
+  this.dissolveTimer = 0.5;`;
+
+const deathReplacement = `public startDeathSequence() {
+  eventBroker.publish("MINION_DISSOLVING", undefined);
+  this.isDying = true;
+  this.dissolveTimer = 0.5;`;
+
+if (!content.includes(constructorTarget) || !content.includes(deathTarget)) {
+  console.error("ERROR: Constructor or startDeathSequence targets not found in Minion.ts.");
+  process.exit(1);
+}
+
+content = content.replace(constructorTarget, constructorReplacement);
+content = content.replace(deathTarget, deathReplacement);
+
+fs.writeFileSync(filepath, content, 'utf8');
+console.log("Successfully patched Minion.ts with assembly and deconstruction event emitters.");
+
 
 
 ● ./patch_phase2.js
@@ -4901,10 +4946,23 @@ export class SimulationSystems {
       })
     );
 
-    // Boss threat level phase shift subscriber
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
         soundSynth.playBossPhaseShift();
+      })
+    );
+
+    // Minion Assembly Spawning Subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("MINION_SPAWNING", () => {
+        soundSynth.playMinionSpawning();
+      })
+    );
+
+    // Minion Dissolution Deconstruction Subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("MINION_DISSOLVING", () => {
+        soundSynth.playMinionDeconstruct();
       })
     );
   }
@@ -5132,6 +5190,68 @@ class SoundSynth {
     }
   }
 
+  public playMinionSpawning() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // Harmonic triangle wave through a resonant lowpass filter representing digital construction
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(720, now + 0.3);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(600, now);
+    filter.frequency.exponentialRampToValueAtTime(1800, now + 0.3);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.40, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.31);
+  }
+
+  public playMinionDeconstruct() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    // High-prominence resonant sawtooth sweep representing system deconstruct breakdown
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(80, now + 0.28);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.29);
+  }
+
   public playBossPhaseShift() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -5145,7 +5265,6 @@ class SoundSynth {
     osc.frequency.setValueAtTime(80, now);
     osc.frequency.exponentialRampToValueAtTime(320, now + 0.8);
 
-    // FM LFO Vibrato mapping
     const lfo = this.ctx.createOscillator();
     const lfoGain = this.ctx.createGain();
     lfo.frequency.setValueAtTime(15, now);
@@ -5180,7 +5299,6 @@ class SoundSynth {
 
     const now = this.ctx.currentTime;
 
-    // Schedule 3 sequential expanding ring explosions
     for (let i = 0; i < 3; i++) {
       const delay = i * 0.25;
       const ringNow = now + delay;
@@ -5231,7 +5349,6 @@ class SoundSynth {
       }
     }
 
-    // Heavy final sub-bass collapse sweep representing core dissolution
     const finalNow = now + 0.85;
     const finalOsc = this.ctx.createOscillator();
     const finalGain = this.ctx.createGain();
@@ -5260,7 +5377,6 @@ class SoundSynth {
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
 
-    // Linear pitch slide representing mechanical system failure
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(220, now);
     osc.frequency.linearRampToValueAtTime(40, now + 0.8);
@@ -5983,6 +6099,8 @@ export type GameEventMap = {
   HEAL_COMPLETE: void;
   PLAYER_SPIKED: void;
   BOSS_PHASE_SHIFT: void;
+  MINION_SPAWNING: void;
+  MINION_DISSOLVING: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -6970,9 +7088,11 @@ export class Minion extends BaseEntity {
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
       this.behavior = new FlyerBehavior();
     }
+    eventBroker.publish("MINION_SPAWNING", undefined);
   }
 
   public startDeathSequence() {
+    eventBroker.publish("MINION_DISSOLVING", undefined);
     this.isDying = true;
     this.dissolveTimer = 0.5;
     this.velocity = { x: 0, y: 0 };
