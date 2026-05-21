@@ -3,6 +3,7 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { MinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
+import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
@@ -24,6 +25,12 @@ export class Minion extends BaseEntity {
   public attackState: "PATROL" | "TELEGRAPH" | "ATTACK" | "COOLDOWN" = "PATROL";
   public volleyCount: number = 0;
   public volleyTimer: number = 0;
+
+  // Spawning and Dissolving transition variables
+  public isSpawning: boolean = true;
+  public spawnTimer: number = 0.6; // 600ms entrance
+  public isDying: boolean = false;
+  public dissolveTimer: number = 0.5; // 500ms dissolution
 
   constructor(id: string, type: MinionType, startPos: { x: number; y: number }, world: IWorld) {
     super(id, world);
@@ -61,8 +68,66 @@ export class Minion extends BaseEntity {
     }
   }
 
+  public startDeathSequence() {
+    this.isDying = true;
+    this.dissolveTimer = 0.5;
+    this.velocity = { x: 0, y: 0 };
+    
+    // Publish initial sparkle explosion
+    eventBroker.publish("SPAWN_SPARKS", {
+      x: this.position.x,
+      y: this.position.y,
+      angle: Math.random() * Math.PI * 2,
+      color: this.minionType === "LANCER" ? "hsl(280, 60%, 55%)" : "hsl(200, 70%, 55%)"
+    });
+  }
+
   public update(dt: number) {
     if (this.isDead) return;
+
+    if (this.isSpawning) {
+      this.spawnTimer -= dt;
+      this.velocity = { x: 0, y: 0 };
+
+      // Spawn converging particles pulling into spawn coordinates
+      if (Math.random() < 0.35) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random() * 50;
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: this.position.x + Math.cos(angle) * dist,
+          y: this.position.y + Math.sin(angle) * dist,
+          angle: angle + Math.PI, // face inwards
+          color: "rgba(34, 197, 94, 0.85)"
+        });
+      }
+
+      if (this.spawnTimer <= 0) {
+        this.isSpawning = false;
+      }
+      super.update(dt);
+      return;
+    }
+
+    if (this.isDying) {
+      this.dissolveTimer -= dt;
+      this.velocity = { x: 0, y: 0 };
+
+      // Spawn ascending vapor dissolve particles
+      if (Math.random() < 0.4) {
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
+          y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
+          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2), // float up
+          color: this.minionType === "LANCER" ? "hsl(280, 60%, 55%)" : "hsl(200, 70%, 55%)"
+        });
+      }
+
+      if (this.dissolveTimer <= 0) {
+        this.isDead = true;
+      }
+      super.update(dt);
+      return;
+    }
 
     this.stateTimer -= dt;
     this.shootTimer -= dt;
@@ -101,7 +166,7 @@ export class Minion extends BaseEntity {
   }
 
   private checkHazardContact() {
-    if (this.health.isInvincible() || this.isDead) return;
+    if (this.health.isInvincible() || this.isDead || this.isSpawning || this.isDying) return;
 
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
@@ -117,7 +182,7 @@ export class Minion extends BaseEntity {
       if (isHit) {
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
-          if (this.minionType !== "TURRET") {
+          if (this.minionType !== "TURRET" && !this.isDying) {
             this.velocity.y = -550;
             this.physics.isGrounded = false;
           }
@@ -129,6 +194,23 @@ export class Minion extends BaseEntity {
 
   public draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead) return;
+
+    ctx.save();
+
+    if (this.isSpawning) {
+      const pct = 1.0 - (this.spawnTimer / 0.6);
+      ctx.globalAlpha = pct;
+      ctx.translate(this.position.x, this.position.y);
+      ctx.scale(pct, pct);
+      ctx.translate(-this.position.x, -this.position.y);
+    } 
+    else if (this.isDying) {
+      const pct = this.dissolveTimer / 0.5;
+      ctx.globalAlpha = pct;
+      ctx.translate(this.position.x, this.position.y);
+      ctx.scale(pct, pct);
+      ctx.translate(-this.position.x, -this.position.y);
+    }
 
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
@@ -142,7 +224,7 @@ export class Minion extends BaseEntity {
       }
     }
 
-    if (this.attackState === "TELEGRAPH") {
+    if (this.attackState === "TELEGRAPH" && !this.isDying) {
       ctx.fillStyle = "hsl(45, 100%, 50%)";
       ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
       ctx.shadowBlur = 14;
@@ -165,5 +247,7 @@ export class Minion extends BaseEntity {
       6,
       4
     );
+
+    ctx.restore();
   }
 }

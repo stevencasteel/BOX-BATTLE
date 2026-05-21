@@ -239,7 +239,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="flex-row" style={{ gap: "10px", marginTop: "4px", alignItems: "center" }}>
+            <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
               <div className="flex-row" style={{ gap: "4px" }}>
                 {[...Array(3)].map((_, i) => (
                   <div
@@ -254,33 +254,54 @@ export default function App() {
                   />
                 ))}
               </div>
-              <div className="flex-row" style={{ gap: "3px" }}>
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="led-dot"
-                    style={{
-                      background: currentScreen === "PLAYING" && i < determination ? "hsl(280, 80%, 65%)" : "#07080b",
-                      boxShadow: currentScreen === "PLAYING" && i < determination ? "0 0 6px rgba(168, 85, 247, 0.8)" : "none",
-                      width: "4px",
-                      height: "4px"
-                    }}
-                  />
-                ))}
+              <div className="neo-pressed" style={{
+                width: "54px",
+                height: "6px",
+                borderRadius: "3px",
+                padding: "1px",
+                boxSizing: "border-box",
+                overflow: "hidden",
+                background: "#07080b"
+              }}>
+                <div style={{
+                  height: "100%",
+                  borderRadius: "2px",
+                  width: currentScreen === "PLAYING" ? `${(determination / 5) * 100}%` : "0%",
+                  transition: "width 0.15s ease",
+                  background: "hsl(280, 80%, 65%)",
+                  boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
+                }} />
               </div>
             </div>
           </div>
 
-          <div className="hud-panel-block" style={{ alignItems: "center" }}>
-            <span className="hud-panel-title" style={{ color: "#718096" }}>GAME STATUS</span>
-            <span style={{
-              fontSize: "9px",
-              color: currentScreen === "PLAYING" ? "var(--signal-green)" : "#4a5568",
-              fontWeight: "bold",
-              textShadow: currentScreen === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "none"
-            }}>
-              {currentScreen === "PLAYING" ? "SIMULATION ACTIVE" : "READY"}
-            </span>
+          <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
+            {currentScreen === "PLAYING" ? (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.03)",
+                background: "rgba(7, 8, 11, 0.85)",
+                padding: "8px 22px",
+                borderRadius: "8px",
+                boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
+              }}>
+                <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                <span style={{
+                  fontSize: "16px",
+                  color: "rgba(34, 197, 94, 0.8)",
+                  fontWeight: 900,
+                  letterSpacing: "0.3em",
+                  textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
+                  textTransform: "uppercase",
+                  lineHeight: "1"
+                }}>
+                  BOX BATTLE
+                </span>
+                <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+              </div>
+            ) : null}
           </div>
 
           <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>

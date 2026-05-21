@@ -62,7 +62,11 @@ export class HealthComponent implements EntityComponent {
     }
 
     if (this.currentHealth <= 0) {
-      this.owner.isDead = true;
+      if ("startDeathSequence" in this.owner) {
+        (this.owner as any).startDeathSequence();
+      } else {
+        this.owner.isDead = true;
+      }
     }
 
     return true;
