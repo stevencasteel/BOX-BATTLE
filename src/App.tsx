@@ -26,6 +26,11 @@ export default function App() {
   const dialogueConsoleRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  const playerDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playerDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bossDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bossDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
@@ -127,10 +132,7 @@ export default function App() {
       label.style.textShadow = status === "PLAYING" ? "0 0 8px var(--signal-green-glow)" : "";
     };
 
-    let playerDialogueTimeout: ReturnType<typeof setInterval> | null = null;
-    let playerDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
-    let bossDialogueTimeout: ReturnType<typeof setInterval> | null = null;
-    let bossDialogueCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+
 
     const animateDialogue = (speaker: "player" | "boss", text: string) => {
       const box = dialogueConsoleRef.current?.querySelector(
@@ -146,11 +148,11 @@ export default function App() {
       if (!box || !textElem || !portrait) return;
 
       if (speaker === "player") {
-        if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
-        if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
+        if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+        if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
       } else {
-        if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
-        if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+        if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+        if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
       }
 
       box.className =
@@ -188,17 +190,17 @@ export default function App() {
           }, 3000);
 
           if (speaker === "player") {
-            playerDialogueCleanupTimeout = cleanupTimer;
+            playerDialogueCleanupRef.current = cleanupTimer;
           } else {
-            bossDialogueCleanupTimeout = cleanupTimer;
+            bossDialogueCleanupRef.current = cleanupTimer;
           }
         }
       }, intervalTime);
 
       if (speaker === "player") {
-        playerDialogueTimeout = timer;
+        playerDialogueTimeoutRef.current = timer;
       } else {
-        bossDialogueTimeout = timer;
+        bossDialogueTimeoutRef.current = timer;
       }
     };
 
@@ -253,10 +255,10 @@ export default function App() {
       soundSynth.stopMusic();
       unsubGameplay();
       unsubs.forEach((unsub) => unsub());
-      if (playerDialogueTimeout) clearInterval(playerDialogueTimeout);
-      if (playerDialogueCleanupTimeout) clearTimeout(playerDialogueCleanupTimeout);
-      if (bossDialogueTimeout) clearInterval(bossDialogueTimeout);
-      if (bossDialogueCleanupTimeout) clearTimeout(bossDialogueCleanupTimeout);
+      if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+      if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
+      if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+      if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
 
       // Thorough dialogue console element release
       const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
@@ -281,6 +283,36 @@ export default function App() {
       }
     };
   }, [currentScreen]);
+
+  useEffect(() => {
+    if (gameResult !== "PLAYING") {
+      if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+      if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
+      if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+      if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
+
+      const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
+      const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
+      const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
+      const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
+      const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
+      const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
+
+      if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
+      if (pText) pText.textContent = "[ NO SIGNAL ]";
+      if (pPortrait) {
+        pPortrait.className = "portrait-square led-green";
+        pPortrait.style.background = "#07080b";
+      }
+
+      if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
+      if (bText) bText.textContent = "[ NO SIGNAL ]";
+      if (bPortrait) {
+        bPortrait.className = "portrait-square led-red";
+        bPortrait.style.background = "#07080b";
+      }
+    }
+  }, [gameResult]);
 
   useEffect(() => {
     if (!rebindTarget) return;
