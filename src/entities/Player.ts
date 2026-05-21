@@ -35,7 +35,7 @@ export class Player extends BaseEntity {
 
   /* Visual Squash and Stretch (Kinetic Weight): Visual scaling variables for compression on landing and extension on jumps */
   public visualScale = { x: 1, y: 1 };
-  private wasGrounded: boolean = false;
+  private airtimeDuration: number = 0;
 
   public determinationCounter: number = 0;
   public healingCharges: number = 0;
@@ -86,11 +86,16 @@ export class Player extends BaseEntity {
     this.visualScale.x += (1 - this.visualScale.x) * 12 * dt;
     this.visualScale.y += (1 - this.visualScale.y) * 12 * dt;
 
-    if (this.physics.isGrounded && !this.wasGrounded) {
-      /* Compress vertically upon ground collision to emphasize landing impact force */
-      this.visualScale = { x: 1.22, y: 0.78 };
+    if (!this.physics.isGrounded) {
+      /* Track accumulated airtime to skip vertical squashes on micro-seams or subpixel jitters */
+      this.airtimeDuration += dt;
+    } else {
+      if (this.airtimeDuration > 0.08) {
+        /* Compress vertically upon hitting solid ground to represent landing compression */
+        this.visualScale = { x: 1.22, y: 0.78 };
+      }
+      this.airtimeDuration = 0;
     }
-    this.wasGrounded = this.physics.isGrounded;
 
     const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
     const isPogoing = this.meleeComponent.attackActive && this.meleeComponent.attackDirection === "down";
@@ -332,9 +337,10 @@ export class Player extends BaseEntity {
       ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
       const gWidth = this.size.width * this.visualScale.x;
       const gHeight = this.size.height * this.visualScale.y;
+      const gFeetY = ghost.y + this.size.height / 2;
       ctx.fillRect(
         ghost.x - gWidth / 2,
-        ghost.y - gHeight / 2,
+        gFeetY - gHeight,
         gWidth,
         gHeight
       );
@@ -349,13 +355,14 @@ export class Player extends BaseEntity {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
-    /* Render visual squash and stretch calculations on base fill bounds */
+    /* Render visual squash and stretch calculations on base fill bounds anchored to the ground */
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
+    const feetY = this.position.y + this.size.height / 2;
 
     ctx.fillRect(
       this.position.x - vWidth / 2,
-      this.position.y - vHeight / 2,
+      feetY - vHeight,
       vWidth,
       vHeight
     );
