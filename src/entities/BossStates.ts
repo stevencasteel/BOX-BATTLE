@@ -15,14 +15,20 @@ export abstract class BossState implements IState {
 }
 
 export class BossCooldownState extends BossState {
+  private duration: number = 2.0;
+
+  constructor(owner: Boss, customDuration: number = -1) {
+    super(owner);
+    this.duration = customDuration > 0 ? customDuration : (owner.currentPhase === 3 ? 1.5 : 2.5);
+  }
+
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
-    if (this.owner.stateTimer <= 0) {
+    this.duration -= dt;
+    if (this.duration <= 0) {
       this.owner.stateMachine.changeState(new BossPatrolState(this.owner));
     }
   }
@@ -31,12 +37,14 @@ export class BossCooldownState extends BossState {
 }
 
 export class BossPatrolState extends BossState {
+  private duration: number = 2.0;
+
   public enter(): void {
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
+    this.duration -= dt;
     const physics = this.owner.getComponent(PhysicsComponent);
     
     this.owner.velocity.x = this.owner.facingDirection * this.owner.patrolSpeed;
@@ -49,8 +57,19 @@ export class BossPatrolState extends BossState {
       }
     }
 
-    if (this.owner.stateTimer <= 0) {
-      this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+    // High-priority close-range check
+    const player = this.owner.world.player;
+    if (player && !player.isDead) {
+      const distance = Math.abs(player.position.x - this.owner.position.x);
+      const distanceY = Math.abs(player.position.y - this.owner.position.y);
+      if (distance < 120 && distanceY < 60) {
+        this.owner.stateMachine.changeState(new BossMeleeState(this.owner));
+        return;
+      }
+    }
+
+    if (this.duration <= 0) {
+      this.owner.stateMachine.changeState(new BossAttackState(this.owner));
     }
   }
 
@@ -59,15 +78,99 @@ export class BossPatrolState extends BossState {
   }
 }
 
-export class BossTelegraphState extends BossState {
+export class BossMeleeState extends BossState {
+  private duration: number = 0.5;
+
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.duration = 0.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
-    if (this.owner.stateTimer <= 0) {
+    this.duration -= dt;
+    if (this.duration <= 0) {
+      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, 1.0));
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class BossAttackState extends BossState {
+  private attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" = "SINGLE_SHOT";
+  private durationTimer: number = 0;
+  private volleyCount: number = 0;
+  private volleyTimer: number = 0;
+
+  public enter(): void {
+    const phase = this.owner.currentPhase;
+    this.owner.velocity.x = 0;
+
+    if (phase === 1) {
+      this.attackType = "SINGLE_SHOT";
+      this.durationTimer = 0.5;
+      this.owner.fireSingleShotAtPlayer();
+    } else if (phase === 2) {
+      if (Math.random() < 0.5) {
+        this.attackType = "VOLLEY";
+        this.volleyCount = 3;
+        this.volleyTimer = 0;
+        this.durationTimer = 1.0;
+      } else {
+        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+      }
+    } else {
+      const r = Math.random();
+      if (r < 0.33) {
+        this.attackType = "VOLLEY";
+        this.volleyCount = 5;
+        this.volleyTimer = 0;
+        this.durationTimer = 1.2;
+      } else if (r < 0.66) {
+        this.attackType = "OMNI_BURST";
+        this.owner.fireRadialOmniBurst();
+        this.durationTimer = 0.8;
+      } else {
+        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    this.durationTimer -= dt;
+
+    if (this.attackType === "VOLLEY" && this.volleyCount > 0) {
+      this.volleyTimer -= dt;
+      if (this.volleyTimer <= 0) {
+        this.owner.fireSingleShotAtPlayer();
+        this.volleyCount--;
+        this.volleyTimer = 0.2;
+      }
+    }
+
+    if (this.durationTimer <= 0) {
+      let cooldown = 1.5;
+      if (this.attackType === "VOLLEY") cooldown = 2.5;
+      else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
+
+      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, cooldown));
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class BossTelegraphState extends BossState {
+  private duration: number = 0.8;
+
+  public enter(): void {
+    this.owner.velocity.x = 0;
+    this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+  }
+
+  public update(dt: number): void {
+    this.duration -= dt;
+    if (this.duration <= 0) {
       this.owner.stateMachine.changeState(new BossLungeState(this.owner));
     }
   }
@@ -82,18 +185,20 @@ export class BossTelegraphState extends BossState {
 }
 
 export class BossLungeState extends BossState {
+  private duration: number = 0.5;
+
   public enter(): void {
-    this.owner.stateTimer = 0.5;
+    this.duration = 0.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
+    this.duration -= dt;
     this.owner.velocity.x = this.owner.facingDirection * this.owner.lungeSpeed;
 
     const physics = this.owner.getComponent(PhysicsComponent);
     const hitWall = physics ? (physics.isOnWallLeft || physics.isOnWallRight) : false;
 
-    if (this.owner.stateTimer <= 0 || hitWall) {
+    if (this.duration <= 0 || hitWall) {
       this.owner.stateMachine.changeState(new BossCooldownState(this.owner));
     }
   }

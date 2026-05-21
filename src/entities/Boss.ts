@@ -13,13 +13,8 @@ export class Boss extends BaseEntity {
   public patrolSpeed: number = 200;
   public lungeSpeed: number = 1200;
   
-  public stateTimer: number = 1.0;
   public facingDirection: number = -1;
   public currentPhase: number = 1;
-
-  public shootTimer: number = 0;
-  public volleyCount: number = 0;
-  public volleyTimer: number = 0;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
@@ -47,21 +42,6 @@ export class Boss extends BaseEntity {
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
-    this.shootTimer -= dt;
-
-    if (this.shootTimer <= 0) {
-      this.triggerRangedAttack();
-    }
-
-    if (this.volleyCount > 0) {
-      this.volleyTimer -= dt;
-      if (this.volleyTimer <= 0) {
-        this.fireSingleShotAtPlayer();
-        this.volleyCount--;
-        this.volleyTimer = 0.2; 
-      }
-    }
-
     this.stateMachine.update(dt);
 
     this.checkPlayerContact();
@@ -76,27 +56,7 @@ export class Boss extends BaseEntity {
     return active.constructor.name.replace("Boss", "").replace("State", "").toUpperCase();
   }
 
-  private triggerRangedAttack() {
-    const activeState = this.activeStateName;
-    if (activeState === "TELEGRAPH" || activeState === "LUNGE") {
-      this.shootTimer = 0.5; 
-      return;
-    }
-
-    if (this.currentPhase === 1) {
-      this.fireSingleShotAtPlayer();
-      this.shootTimer = 2.0;
-    } else if (this.currentPhase === 2) {
-      this.volleyCount = 3;
-      this.volleyTimer = 0;
-      this.shootTimer = 2.5;
-    } else if (this.currentPhase === 3) {
-      this.fireRadialOmniBurst();
-      this.shootTimer = 3.0;
-    }
-  }
-
-  private fireSingleShotAtPlayer() {
+  public fireSingleShotAtPlayer() {
     const player = this.world.player;
     const pool = (this.world as any).projectilePool;
     if (!player || !pool || player.isDead) return;
@@ -123,7 +83,7 @@ export class Boss extends BaseEntity {
     );
   }
 
-  private fireRadialOmniBurst() {
+  public fireRadialOmniBurst() {
     const pool = (this.world as any).projectilePool;
     if (!pool) return;
 
@@ -194,7 +154,7 @@ export class Boss extends BaseEntity {
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = activeState === "LUNGE" ? 2 : 1;
+        const damageAmount = (activeState === "LUNGE" || activeState === "MELEE") ? 2 : 1;
         const damaged = playerHealth.takeDamage(damageAmount);
         
         if (damaged) {
