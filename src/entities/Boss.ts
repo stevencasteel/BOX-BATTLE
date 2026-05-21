@@ -2,24 +2,24 @@ import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
-
-export type BossState = "COOLDOWN" | "PATROL" | "TELEGRAPH" | "LUNGE" | "DEAD";
+import { StateMachine } from "@/core/StateMachine";
+import { BossCooldownState, BossDeadState } from "./BossStates";
 
 export class Boss extends BaseEntity {
   public health!: HealthComponent;
-  private physics!: PhysicsComponent;
+  public physics!: PhysicsComponent;
+  public stateMachine: StateMachine;
 
-  private patrolSpeed: number = 200;
-  private lungeSpeed: number = 1200;
+  public patrolSpeed: number = 200;
+  public lungeSpeed: number = 1200;
   
-  public state: BossState = "COOLDOWN";
-  private stateTimer: number = 1.0;
-  private facingDirection: number = -1;
-  private currentPhase: number = 1;
+  public stateTimer: number = 1.0;
+  public facingDirection: number = -1;
+  public currentPhase: number = 1;
 
-  private shootTimer: number = 0;
-  private volleyCount: number = 0;
-  private volleyTimer: number = 0;
+  public shootTimer: number = 0;
+  public volleyCount: number = 0;
+  public volleyTimer: number = 0;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
@@ -30,12 +30,16 @@ export class Boss extends BaseEntity {
       maxHealth: 30,
       invincibilityDuration: 0.25 
     });
+
+    this.stateMachine = new StateMachine();
+    this.stateMachine.changeState(new BossCooldownState(this));
   }
 
   public update(dt: number) {
     if (this.isDead) {
-      this.state = "DEAD";
-      this.velocity.x = 0;
+      if (!(this.stateMachine.getCurrentState() instanceof BossDeadState)) {
+        this.stateMachine.changeState(new BossDeadState(this));
+      }
       super.update(dt);
       return;
     }
@@ -43,7 +47,6 @@ export class Boss extends BaseEntity {
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
-    this.stateTimer -= dt;
     this.shootTimer -= dt;
 
     if (this.shootTimer <= 0) {
@@ -59,54 +62,7 @@ export class Boss extends BaseEntity {
       }
     }
 
-    switch (this.state) {
-      case "COOLDOWN":
-        this.velocity.x = 0;
-        if (this.stateTimer <= 0) {
-          this.state = "PATROL";
-          this.stateTimer = this.currentPhase === 3 ? 1.5 : 2.5; 
-        }
-        break;
-
-      case "PATROL":
-        this.velocity.x = this.facingDirection * this.patrolSpeed;
-        
-        if (this.physics.isOnWallLeft) {
-          this.facingDirection = 1;
-        } else if (this.physics.isOnWallRight) {
-          this.facingDirection = -1;
-        }
-
-        if (this.stateTimer <= 0) {
-          this.state = "TELEGRAPH";
-          this.stateTimer = this.currentPhase === 3 ? 0.4 : 0.8; 
-          this.velocity.x = 0;
-        }
-        break;
-
-      case "TELEGRAPH":
-        this.velocity.x = 0;
-        if (this.stateTimer <= 0) {
-          this.state = "LUNGE";
-          this.stateTimer = 0.5; 
-          
-          const player = this.world.player;
-          if (player) {
-            const dir = Math.sign(player.position.x - this.position.x);
-            this.facingDirection = dir !== 0 ? dir : this.facingDirection;
-          }
-        }
-        break;
-
-      case "LUNGE":
-        this.velocity.x = this.facingDirection * this.lungeSpeed;
-        
-        if (this.stateTimer <= 0 || this.physics.isOnWallLeft || this.physics.isOnWallRight) {
-          this.state = "COOLDOWN";
-          this.stateTimer = this.currentPhase === 3 ? 0.5 : 1.2;
-        }
-        break;
-    }
+    this.stateMachine.update(dt);
 
     this.checkPlayerContact();
     this.checkHazardContact();
@@ -114,8 +70,15 @@ export class Boss extends BaseEntity {
     super.update(dt);
   }
 
+  public get activeStateName(): string {
+    const active = this.stateMachine.getCurrentState();
+    if (!active) return "UNKNOWN";
+    return active.constructor.name.replace("Boss", "").replace("State", "").toUpperCase();
+  }
+
   private triggerRangedAttack() {
-    if (this.state === "TELEGRAPH" || this.state === "LUNGE") {
+    const activeState = this.activeStateName;
+    if (activeState === "TELEGRAPH" || activeState === "LUNGE") {
       this.shootTimer = 0.5; 
       return;
     }
@@ -202,7 +165,8 @@ export class Boss extends BaseEntity {
 
   private trackPlayer() {
     const player = this.world.player;
-    if (player && this.state !== "LUNGE") {
+    const activeState = this.activeStateName;
+    if (player && activeState !== "LUNGE") {
       const dirToPlayer = Math.sign(player.position.x - this.position.x);
       if (dirToPlayer !== 0) {
         this.facingDirection = dirToPlayer;
@@ -212,6 +176,7 @@ export class Boss extends BaseEntity {
 
   private checkPlayerContact() {
     const player = this.world.player;
+    const activeState = this.activeStateName;
     if (!player || player.isDead) return;
 
     const playerHalfW = player.size.width / 2;
@@ -229,7 +194,7 @@ export class Boss extends BaseEntity {
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = this.state === "LUNGE" ? 2 : 1;
+        const damageAmount = activeState === "LUNGE" ? 2 : 1;
         const damaged = playerHealth.takeDamage(damageAmount);
         
         if (damaged) {
@@ -275,10 +240,11 @@ export class Boss extends BaseEntity {
       ctx.fillStyle = "hsl(350, 80%, 60%)"; 
     }
 
+    const activeState = this.activeStateName;
     if (this.currentPhase === 3) {
       ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
       ctx.shadowBlur = 25;
-    } else if (this.state === "TELEGRAPH") {
+    } else if (activeState === "TELEGRAPH") {
       ctx.fillStyle = "hsl(45, 100%, 50%)"; 
       ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
       ctx.shadowBlur = 15;
