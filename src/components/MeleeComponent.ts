@@ -111,6 +111,28 @@ export class MeleeComponent implements Component {
         }
       }
     }
+
+    const activeProjectiles = this.owner.world.getProjectiles();
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        const pW = proj.size.width / 2;
+        const pH = proj.size.height / 2;
+
+        const isHit = (
+          attackHitbox.x + attackHitbox.width > proj.position.x - pW &&
+          attackHitbox.x < proj.position.x + pW &&
+          attackHitbox.y + attackHitbox.height > proj.position.y - pH &&
+          attackHitbox.y < proj.position.y + pH
+        );
+
+        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          this.hasHitEnemyThisSwing = true;
+          (this.owner as any).registerDamageDealt?.();
+          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+        }
+      }
+    }
   }
 
   public checkPogoAttack() {

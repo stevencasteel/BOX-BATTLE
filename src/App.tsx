@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
+import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
@@ -83,6 +84,21 @@ export default function App() {
       unsubs.forEach((unsub) => unsub());
     };
   }, []);
+
+  useEffect(() => {
+    if (!rebindTarget) return;
+    const handleRebindCapture = (e: KeyboardEvent) => {
+      e.preventDefault();
+      soundSynth.playHitConfirm();
+      settingsManager.remapKey(rebindTarget.action, rebindTarget.index, e.code);
+      setRebindTarget(null);
+      reloadSaveSlots();
+    };
+    window.addEventListener("keydown", handleRebindCapture);
+    return () => {
+      window.removeEventListener("keydown", handleRebindCapture);
+    };
+  }, [rebindTarget]);
 
   useEffect(() => {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;

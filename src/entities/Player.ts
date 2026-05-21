@@ -75,6 +75,13 @@ export class Player extends BaseEntity {
       return;
     }
 
+    const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
+    if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+      this.physics.gravity = 1200 * 1.4;
+    } else {
+      this.physics.gravity = 1200;
+    }
+
     if (this.hurtTimer > 0) {
       this.hurtTimer -= dt;
       // Let physics / gravity resolve

@@ -114,8 +114,12 @@ export class Projectile extends BaseEntity implements Poolable {
         );
 
         if (isColliding) {
+          const incomingDamage = other.damage || 1;
           this.world.releaseProjectile(other);
-          return true; 
+          this.damage -= incomingDamage;
+          if (this.damage <= 0) {
+            return true;
+          }
         }
       }
     }

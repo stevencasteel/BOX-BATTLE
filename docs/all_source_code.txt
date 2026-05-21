@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 10:06:11 AM
+ [SYSTEM] Generated: 5/21/2026, 10:40:23 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -40,6 +40,7 @@
 │   │   └── PhysicsComponent.ts
 │   ├── core/
 │   │   ├── Camera.ts
+│   │   ├── Engine.ts
 │   │   ├── EventBroker.ts
 │   │   ├── GameLoop.ts
 │   │   ├── InputProvider.ts
@@ -48,6 +49,7 @@
 │   │   ├── PhysicsWorld.ts
 │   │   ├── Registry.ts
 │   │   ├── SaveManager.ts
+│   │   ├── ScreenRoutes.ts
 │   │   ├── SettingsManager.ts
 │   │   ├── SimulationSystems.ts
 │   │   ├── SoundSynth.ts
@@ -2432,12 +2434,12 @@ body {
 import { useEffect, useRef, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { useGameStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/EventBroker";
+import { screenConfigs, MenuContext } from "@/core/ScreenRoutes";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
@@ -2519,16 +2521,26 @@ export default function App() {
     if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || rebindTarget !== null) return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
-      let maxIndex = 0;
+      const config = screenConfigs[currentScreen];
+      if (!config) return;
 
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") maxIndex = 1;
-      else if (currentScreen === "TITLE") maxIndex = 2;
-      else if (currentScreen === "SAVE_SELECT") maxIndex = 5;
-      else if (currentScreen === "OPTIONS") maxIndex = 2;
-      else if (currentScreen === "SOUND") maxIndex = 3;
-      else if (currentScreen === "CONTROLS") maxIndex = 7;
-      else if (currentScreen === "CREDITS") maxIndex = 0;
+      const context: MenuContext = {
+        navTo,
+        menuIndex,
+        setMenuIndex,
+        reloadSaveSlots,
+        resetGameSession,
+        handleSlotAction,
+        toggleCopyMode,
+        toggleEraseMode,
+        resetActions,
+        audio,
+        handleVolumeChange,
+        setRebindTarget,
+        gameResult
+      };
 
+      const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
 
       if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
@@ -2541,105 +2553,21 @@ export default function App() {
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
         e.preventDefault();
-        triggerMenuSelection();
+        config.onSelect(context);
       } else if (e.key === "Escape" || e.key === "Backspace") {
         e.preventDefault();
-        triggerBackNavigation();
+        if (config.onBack) {
+          soundSynth.playErrorTick();
+          config.onBack(context);
+        }
       }
 
-      if (currentScreen === "SOUND" && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-        e.preventDefault();
-        const direction = e.key === "ArrowRight" ? 0.05 : -0.05;
-        if (menuIndex === 0 && !audio.masterMuted) {
-          handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 1 && !audio.sfxMuted) {
-          handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + direction)));
-          soundSynth.playSelectTick();
-        } else if (menuIndex === 2 && !audio.musicMuted) {
-          handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + direction)));
-          soundSynth.playSelectTick();
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (config.onHorizontal) {
+          e.preventDefault();
+          const direction = e.key === "ArrowRight" ? 1 : -1;
+          config.onHorizontal(direction, context);
         }
-      }
-    };
-
-    const triggerMenuSelection = () => {
-      if (currentScreen === "PLAYING" && gameResult !== "PLAYING") {
-        if (menuIndex === 0) {
-          resetGameSession();
-          navTo("PLAYING");
-        } else {
-          navTo("TITLE");
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "TITLE") {
-        if (menuIndex === 0) {
-          reloadSaveSlots();
-          navTo("SAVE_SELECT");
-        } else if (menuIndex === 1) {
-          navTo("OPTIONS");
-        } else if (menuIndex === 2) {
-          navTo("CREDITS");
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SAVE_SELECT") {
-        if (menuIndex >= 0 && menuIndex <= 2) {
-          handleSlotAction(menuIndex, () => {
-            resetGameSession();
-            navTo("PLAYING");
-          });
-        } else if (menuIndex === 3) {
-          toggleCopyMode();
-        } else if (menuIndex === 4) {
-          toggleEraseMode();
-        } else if (menuIndex === 5) {
-          resetActions();
-          navTo("TITLE");
-          soundSynth.playErrorTick();
-        }
-      } else if (currentScreen === "OPTIONS") {
-        if (menuIndex === 0) {
-          navTo("SOUND");
-        } else if (menuIndex === 1) {
-          navTo("CONTROLS");
-        } else if (menuIndex === 2) {
-          navTo("TITLE");
-          setMenuIndex(1);
-        }
-        soundSynth.playHitConfirm();
-      } else if (currentScreen === "SOUND") {
-        if (menuIndex === 3) {
-          navTo("OPTIONS");
-          soundSynth.playErrorTick();
-        } else {
-          if (menuIndex === 0) handleVolumeChange("masterMuted", !audio.masterMuted);
-          else if (menuIndex === 1) handleVolumeChange("sfxMuted", !audio.sfxMuted);
-          else if (menuIndex === 2) handleVolumeChange("musicMuted", !audio.musicMuted);
-          soundSynth.playHitConfirm();
-        }
-      } else if (currentScreen === "CONTROLS") {
-        if (menuIndex === 7) {
-          navTo("OPTIONS");
-          setMenuIndex(1);
-          soundSynth.playErrorTick();
-        } else {
-          const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
-          soundSynth.playHitConfirm();
-          setRebindTarget({ action, index: 0 });
-        }
-      } else if (currentScreen === "CREDITS") {
-        navTo("TITLE");
-        soundSynth.playErrorTick();
-      }
-    };
-
-    const triggerBackNavigation = () => {
-      soundSynth.playErrorTick();
-      if (currentScreen === "SAVE_SELECT" || currentScreen === "OPTIONS" || currentScreen === "CREDITS") {
-        resetActions();
-        navTo("TITLE");
-      } else if (currentScreen === "SOUND" || currentScreen === "CONTROLS") {
-        navTo("OPTIONS");
       }
     };
 
@@ -2883,7 +2811,8 @@ export class DashComponent implements Component {
   public dashTimer: number = 0;
   public dashCooldown: number = 0;
   public canDash: boolean = true;
-  public dashDirection: number = 1;
+  public dashDirectionX: number = 1;
+  public dashDirectionY: number = 0;
   public ghosts: GhostFrame[] = [];
   public ghostSpawnTimer: number = 0;
 
@@ -2905,8 +2834,8 @@ export class DashComponent implements Component {
 
     if (this.isDashing) {
       this.dashTimer -= dt;
-      this.owner.velocity.x = this.dashDirection * this.dashSpeed;
-      this.owner.velocity.y = 0;
+      this.owner.velocity.x = this.dashDirectionX * this.dashSpeed;
+      this.owner.velocity.y = this.dashDirectionY * this.dashSpeed;
 
       this.ghostSpawnTimer -= dt;
       if (this.ghostSpawnTimer <= 0) {
@@ -2920,20 +2849,21 @@ export class DashComponent implements Component {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        this.owner.velocity.x *= 0.5;
+        if (this.dashDirectionX !== 0) this.owner.velocity.x *= 0.5;
+        if (this.dashDirectionY !== 0) this.owner.velocity.y = 0;
       }
     }
   }
 
-  public triggerDash(direction: number): void {
+  public triggerDash(directionX: number, directionY: number): void {
     this.isDashing = true;
     this.dashTimer = 0.15;
     this.dashCooldown = 0.5;
     this.canDash = false;
-    this.dashDirection = direction;
-    this.owner.velocity.y = 0;
+    this.dashDirectionX = directionX;
+    this.dashDirectionY = directionY;
     this.ghostSpawnTimer = 0;
-    eventBroker.publish("PLAYER_DASHED", { direction });
+    eventBroker.publish("PLAYER_DASHED", { direction: directionX });
   }
 
   public resetDashCharge(): void {
@@ -3029,21 +2959,8 @@ export class FireballComponent implements Component {
 ● ./src/components/GameArena.tsx
 ────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
-import GameLoop from "@/core/GameLoop";
-import { Player } from "@/entities/Player";
-import { Boss } from "@/entities/Boss";
-import { Registry } from "@/core/Registry";
-import { HealthComponent } from "@/components/HealthComponent";
-import { ObjectPool } from "@/core/ObjectPool";
-import { Projectile } from "@/entities/Projectile";
-import { Camera } from "@/core/Camera";
-import { Spawner } from "@/entities/Spawner";
-import { inputProvider } from "@/core/InputProvider";
+import { Engine } from "@/core/Engine";
 import { useGameStore } from "@/store/useGameStore";
-import { World } from "@/core/World";
-import { SimulationSystems } from "@/core/SimulationSystems";
-import { eventBroker } from "@/core/EventBroker";
-import { Rectangle } from "@/core/Interfaces";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -3056,333 +2973,28 @@ export function GameArena({
   triggerDialogue,
   playHoverTick,
 }: GameArenaProps) {
-
-  const solids: Rectangle[] = [
-    { x: 0, y: 1150, width: 400, height: 100 },
-    { x: 850, y: 1150, width: 400, height: 100 },
-    { x: 400, y: 1200, width: 450, height: 50 },
-    { x: 0, y: 0, width: 1250, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1250 },
-    { x: 1200, y: 0, width: 50, height: 1250 },
-    { x: 425, y: 800, width: 400, height: 40 }
-  ];
-
-  const onewayPlatforms: Rectangle[] = [
-    { x: 50, y: 550, width: 300, height: 20 },
-    { x: 900, y: 550, width: 300, height: 20 }
-  ];
-
-  const hazards: Rectangle[] = [
-    { x: 400, y: 1150, width: 450, height: 100 }
-  ];
-
-  const hasTriggeredFirstHit = useRef<boolean>(false);
-  const hasTriggeredPhase2 = useRef<boolean>(false);
-  const hasTriggeredPhase3 = useRef<boolean>(false);
-  const isCinematicActive = useRef<boolean>(false);
-
-  const bossDeathTimer = useRef<number>(-1);
-  const bossDeathPos = useRef<{ x: number; y: number } | null>(null);
+  // Store the trigger callback in a mutable ref to prevent recreating 
+  // the Engine when the parent dialogue state updates.
+  const triggerRef = useRef(triggerDialogue);
+  
+  useEffect(() => {
+    triggerRef.current = triggerDialogue;
+  }, [triggerDialogue]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    hasTriggeredFirstHit.current = false;
-    hasTriggeredPhase2.current = false;
-    hasTriggeredPhase3.current = false;
-    isCinematicActive.current = false;
-    bossDeathTimer.current = -1;
-    bossDeathPos.current = null;
-
-    const systems = new SimulationSystems();
-    systems.setup();
-
-    const world = new World(solids, hazards, onewayPlatforms);
-
-    const pool = new ObjectPool(() => new Projectile(), 60);
-    world.projectilePool = pool;
-    Registry.projectilePool = pool;
-
-    const player = new Player("player-01", world);
-    player.position = { x: 150, y: 1000 };
-
-    const boss = new Boss("boss-01", world);
-    boss.position = { x: 1050, y: 1000 };
-
-    world.player = player;
-    world.boss = boss;
-    Registry.player = player;
-    Registry.boss = boss;
-
-    const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 175, 490, world),
-      new Spawner("TURRET", 1075, 490, world),
-      new Spawner("LANCER", 625, 740, world),
-      new Spawner("FLYER", 625, 400, world)
-    ];
-
-    Camera.reset();
-    
-    const state = useGameStore.getState();
-    state.setGameResult("PLAYING");
-
-    const pHealth = player.getComponent(HealthComponent);
-    const bHealth = boss.getComponent(HealthComponent);
-    if (pHealth) state.setPlayerHP(pHealth.currentHealth);
-    if (bHealth) state.setBossHP(bHealth.currentHealth);
-    state.setHealingCharges(player.healingCharges);
-    state.setDetermination(player.determinationCounter);
-
-    const unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
-      triggerDialogue(speaker, text);
+    // Pass a stable execution wrapper to the engine
+    const engine = new Engine(canvas, (speaker, text) => {
+      triggerRef.current(speaker, text);
     });
-
-    const handleUpdate = () => {
-      if (Camera.hitStopTimer > 0) {
-        Camera.update(0.016);
-        return;
-      }
-
-      Camera.update(0.016);
-
-      if (bossDeathTimer.current >= 0) {
-        bossDeathTimer.current += 0.016;
-      }
-
-      if (isCinematicActive.current) {
-        player.velocity = { x: 0, y: 0 };
-        boss.velocity = { x: 0, y: 0 };
-
-        const activeProjectiles = [...pool.getActive()];
-        for (const proj of activeProjectiles) {
-          proj.update(0.016);
-        }
-        inputProvider.postUpdate();
-        return;
-      }
-
-      player.update(0.016);
-      boss.update(0.016);
-
-      for (const spawner of activeSpawners) {
-        spawner.update(0.016);
-      }
-
-      const activeMinions = [...world.minions];
-      for (const minion of activeMinions) {
-        minion.update(0.016);
-
-        if (!player.isDead && !minion.isDead) {
-          const pW = player.size.width / 2;
-          const pH = player.size.height / 2;
-          const mW = minion.size.width / 2;
-          const mH = minion.size.height / 2;
-
-          const isColliding = (
-            player.position.x + pW > minion.position.x - mW &&
-            player.position.x - pW < minion.position.x + mW &&
-            player.position.y + pH > minion.position.y - mH &&
-            player.position.y - pH < minion.position.y + mH
-          );
-
-          if (isColliding) {
-            const playerHealth = player.getComponent(HealthComponent);
-            if (playerHealth) {
-              const damaged = playerHealth.takeDamage(1);
-              if (damaged) {
-                const knockbackDir = Math.sign(player.position.x - minion.position.x);
-                player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-                player.velocity.y = -350;
-              }
-            }
-          }
-        }
-      }
-
-      const activeProjectiles = [...pool.getActive()];
-      for (const proj of activeProjectiles) {
-        proj.update(0.016);
-      }
-
-      if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
-        hasTriggeredFirstHit.current = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
-      }
-
-      if (bHealth && bHealth.currentHealth <= 21 && !hasTriggeredPhase2.current) {
-        hasTriggeredPhase2.current = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
-      }
-
-      if (bHealth && bHealth.currentHealth <= 12 && !hasTriggeredPhase3.current) {
-        hasTriggeredPhase3.current = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
-      }
-
-      if (player.isDead) {
-        isCinematicActive.current = true;
-        setTimeout(() => {
-          state.setGameResult("GAMEOVER");
-          loop.stop();
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
-        }, 3500);
-      } else if (boss.isDead) {
-        isCinematicActive.current = true;
-        bossDeathTimer.current = 0;
-        bossDeathPos.current = { x: boss.position.x, y: boss.position.y };
-
-        eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
-
-        setTimeout(() => {
-          state.setGameResult("VICTORY");
-          loop.stop();
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
-        }, 3500);
-      }
-
-      inputProvider.postUpdate();
-    };
-
-    const handleRender = () => {
-      ctx.fillStyle = "#0c0d11";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.save();
-      ctx.translate(Camera.offsetX, Camera.offsetY);
-
-      ctx.fillStyle = "#1e1e24";
-      for (const solid of solids) {
-        ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-        ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
-      }
-
-      ctx.fillStyle = "#2c3e50";
-      for (const platform of onewayPlatforms) {
-        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
-      }
-
-      ctx.fillStyle = "hsl(350, 80%, 60%)";
-      for (const hazard of hazards) {
-        const spikeWidth = 25;
-        const spikeCount = Math.floor(hazard.width / spikeWidth);
-        for (let i = 0; i < spikeCount; i++) {
-          ctx.beginPath();
-          ctx.moveTo(hazard.x + i * spikeWidth, 1200);
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-          ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-          ctx.fill();
-        }
-      }
-
-      boss.draw(ctx);
-      player.draw(ctx);
-
-      const activeMinionsToDraw = world.minions;
-      for (const minion of activeMinionsToDraw) {
-        minion.draw(ctx);
-      }
-
-      const activeProjectiles = pool.getActive();
-      for (const proj of activeProjectiles) {
-        proj.draw(ctx);
-      }
-
-      if (bossDeathTimer.current >= 0 && bossDeathPos.current) {
-        const t = bossDeathTimer.current;
-        const px = bossDeathPos.current.x;
-        const py = bossDeathPos.current.y;
-
-        if (t < 0.25) {
-          const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
-          ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        const ringCount = 3;
-        const speed = 750;
-        for (let i = 0; i < ringCount; i++) {
-          const delay = i * 0.15;
-          const ringTime = t - delay;
-          if (ringTime > 0 && ringTime < 1.2) {
-            const radius = ringTime * speed;
-            const opacity = Math.max(0, 1 - ringTime / 1.2);
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(px, py, radius, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
-            ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
-            ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-            ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(px, py, radius, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
-            ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
-            ctx.shadowBlur = 0;
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-
-        const particleCount = 24;
-        const particleSpeed = 550;
-        const particleLife = 1.0;
-        if (t < particleLife) {
-          const opacity = Math.max(0, 1 - t / particleLife);
-          ctx.save();
-          ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-          ctx.shadowBlur = 15;
-          for (let i = 0; i < particleCount; i++) {
-            const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
-            const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
-            const x = px + Math.cos(angle) * distance;
-            const y = py + Math.sin(angle) * distance;
-
-            ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
-            ctx.fillRect(x - 4, y - 4, 8, 8);
-            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-            ctx.fillRect(x - 2, y - 2, 4, 4);
-          }
-          ctx.restore();
-        }
-      }
-
-      ctx.restore();
-    };
-
-    const loop = new GameLoop(handleUpdate, handleRender);
-    loop.start();
+    engine.start();
 
     return () => {
-      loop.cleanup();
-      player.teardown();
-      boss.teardown();
-      pool.clear();
-      Camera.reset();
-      systems.teardown();
-      unsubDialogue();
-      Registry.player = null;
-      Registry.boss = null;
-      Registry.projectilePool = null;
-
-      for (const spawner of activeSpawners) {
-        spawner.cleanup();
-      }
-      world.minions = [];
-      Registry.minions = [];
+      engine.cleanup();
     };
-  }, []);
+  }, [canvasRef]); // Restrict recreation strictly to canvas attachment/detachment
 
   const gameResult = useGameStore((state) => state.gameResult);
   const menuIndex = useGameStore((state) => state.menuIndex);
@@ -3423,35 +3035,35 @@ export function GameArena({
                 </h1>
                 <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
                   You defeated the boss!
-                  </p>
-                </div>
-              )}
-
-              <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
-                <button
-                  onClick={() => {
-                    resetGameSession();
-                    navTo("PLAYING");
-                  }}
-                  onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                  className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-                >
-                  {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-                  RETRY
-                  {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
-                </button>
-                <button
-                  onClick={() => navTo("TITLE")}
-                  onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                  className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-                >
-                  {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-                  MENU
-                  {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
-                </button>
+                </p>
               </div>
+            )}
+
+            <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
+              <button
+                onClick={() => {
+                  resetGameSession();
+                  navTo("PLAYING");
+                }}
+                onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+                className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+              >
+                {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
+                RETRY
+                {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
+              </button>
+              <button
+                onClick={() => navTo("TITLE")}
+                onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+                className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+              >
+                {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
+                MENU
+                {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
+              </button>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3789,8 +3401,13 @@ export class MeleeComponent implements Component {
 
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
-        (this.owner as any).hasDoubleJump = true;
-        (this.owner as any).canDash = true;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
         eventBroker.publish("PLAYER_POGOED", undefined);
         return;
       }
@@ -3815,15 +3432,25 @@ export class MeleeComponent implements Component {
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;
-          (this.owner as any).hasDoubleJump = true;
-          (this.owner as any).canDash = true;
+          
+          const player = this.owner as any;
+          player.hasDoubleJump = true;
+          if (player.dashComponent) {
+            player.dashComponent.resetDashCharge();
+          }
+          
           eventBroker.publish("PLAYER_POGOED", undefined);
           return;
         }
       }
     }
 
-    const surfaces = [...this.owner.world.physicsWorld.solids, ...this.owner.world.physicsWorld.onewayPlatforms];
+    const surfaces = [
+      ...this.owner.world.physicsWorld.solids, 
+      ...this.owner.world.physicsWorld.onewayPlatforms,
+      ...this.owner.world.physicsWorld.hazards
+    ];
+    
     for (const solid of surfaces) {
       const isHit = (
         pogoHitbox.x + pogoHitbox.width > solid.x &&
@@ -3835,8 +3462,13 @@ export class MeleeComponent implements Component {
       if (isHit) {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
-        (this.owner as any).hasDoubleJump = true;
-        (this.owner as any).canDash = true;
+        
+        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }
+        
         eventBroker.publish("PLAYER_POGOED", undefined);
         break;
       }
@@ -4572,6 +4204,393 @@ export class Camera {
 
 
 
+● ./src/core/Engine.ts
+────────────────────────────────────────────────────
+import GameLoop from "@/core/GameLoop";
+import { Player } from "@/entities/Player";
+import { Boss } from "@/entities/Boss";
+import { Registry } from "@/core/Registry";
+import { HealthComponent } from "@/components/HealthComponent";
+import { ObjectPool } from "@/core/ObjectPool";
+import { Projectile } from "@/entities/Projectile";
+import { Camera } from "@/core/Camera";
+import { Spawner } from "@/entities/Spawner";
+import { inputProvider } from "@/core/InputProvider";
+import { useGameStore } from "@/store/useGameStore";
+import { World } from "@/core/World";
+import { SimulationSystems } from "@/core/SimulationSystems";
+import { eventBroker } from "@/core/EventBroker";
+import { Rectangle } from "@/core/Interfaces";
+
+export class Engine {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
+
+  private loop!: GameLoop;
+  private systems!: SimulationSystems;
+  private world!: World;
+  private pool!: ObjectPool<Projectile>;
+  private player!: Player;
+  private boss!: Boss;
+  private activeSpawners: Spawner[] = [];
+
+  private hasTriggeredFirstHit: boolean = false;
+  private hasTriggeredPhase2: boolean = false;
+  private hasTriggeredPhase3: boolean = false;
+  private isCinematicActive: boolean = false;
+
+  private bossDeathTimer: number = -1;
+  private bossDeathPos: { x: number; y: number } | null = null;
+  private deathTimeoutId: any = null;
+
+  private unsubDialogue!: () => void;
+
+  private readonly solids: Rectangle[] = [
+    { x: 0, y: 1150, width: 400, height: 100 },
+    { x: 850, y: 1150, width: 400, height: 100 },
+    { x: 400, y: 1200, width: 450, height: 50 },
+    { x: 0, y: 0, width: 1250, height: 50 },
+    { x: 0, y: 0, width: 50, height: 1250 },
+    { x: 1200, y: 0, width: 50, height: 1250 },
+    { x: 425, y: 800, width: 400, height: 40 }
+  ];
+
+  private readonly onewayPlatforms: Rectangle[] = [
+    { x: 50, y: 550, width: 300, height: 20 },
+    { x: 900, y: 550, width: 300, height: 20 }
+  ];
+
+  private readonly hazards: Rectangle[] = [
+    { x: 400, y: 1150, width: 450, height: 100 }
+  ];
+
+  constructor(
+    canvas: HTMLCanvasElement,
+    triggerDialogue: (speaker: "player" | "boss", text: string) => void
+  ) {
+    this.canvas = canvas;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Could not construct 2D context.");
+    }
+    this.ctx = context;
+    this.triggerDialogue = triggerDialogue;
+
+    this.init();
+  }
+
+  private init() {
+    this.systems = new SimulationSystems();
+    this.systems.setup();
+
+    this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
+
+    this.pool = new ObjectPool(() => new Projectile(), 60);
+    this.world.projectilePool = this.pool;
+    Registry.projectilePool = this.pool;
+
+    this.player = new Player("player-01", this.world);
+    this.player.position = { x: 150, y: 1000 };
+
+    this.boss = new Boss("boss-01", this.world);
+    this.boss.position = { x: 1050, y: 1000 };
+
+    this.world.player = this.player;
+    this.world.boss = this.boss;
+    Registry.player = this.player;
+    Registry.boss = this.boss;
+
+    this.activeSpawners = [
+      new Spawner("TURRET", 175, 490, this.world),
+      new Spawner("TURRET", 1075, 490, this.world),
+      new Spawner("LANCER", 625, 740, this.world),
+      new Spawner("FLYER", 625, 400, this.world)
+    ];
+
+    Camera.reset();
+
+    const state = useGameStore.getState();
+    state.setGameResult("PLAYING");
+
+    const pHealth = this.player.getComponent(HealthComponent);
+    const bHealth = this.boss.getComponent(HealthComponent);
+    if (pHealth) state.setPlayerHP(pHealth.currentHealth);
+    if (bHealth) state.setBossHP(bHealth.currentHealth);
+    state.setHealingCharges(this.player.healingCharges);
+    state.setDetermination(this.player.determinationCounter);
+
+    this.unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
+      this.triggerDialogue(speaker, text);
+    });
+
+    this.loop = new GameLoop(
+      (dt) => this.update(dt),
+      () => this.render()
+    );
+  }
+
+  public start() {
+    this.loop.start();
+  }
+
+  public stop() {
+    this.loop.stop();
+  }
+
+  private update(dt: number) {
+    if (Camera.hitStopTimer > 0) {
+      Camera.update(dt);
+      return;
+    }
+
+    Camera.update(dt);
+
+    if (this.bossDeathTimer >= 0) {
+      this.bossDeathTimer += dt;
+    }
+
+    if (this.isCinematicActive) {
+      this.player.velocity = { x: 0, y: 0 };
+      this.boss.velocity = { x: 0, y: 0 };
+
+      const activeProjectiles = [...this.pool.getActive()];
+      for (const proj of activeProjectiles) {
+        proj.update(dt);
+      }
+      inputProvider.postUpdate();
+      return;
+    }
+
+    this.player.update(dt);
+    this.boss.update(dt);
+
+    for (const spawner of this.activeSpawners) {
+      spawner.update(dt);
+    }
+
+    const activeMinions = [...this.world.minions];
+    for (const minion of activeMinions) {
+      minion.update(dt);
+
+      if (!this.player.isDead && !minion.isDead) {
+        const pW = this.player.size.width / 2;
+        const pH = this.player.size.height / 2;
+        const mW = minion.size.width / 2;
+        const mH = minion.size.height / 2;
+
+        const isColliding = (
+          this.player.position.x + pW > minion.position.x - mW &&
+          this.player.position.x - pW < minion.position.x + mW &&
+          this.player.position.y + pH > minion.position.y - mH &&
+          this.player.position.y - pH < minion.position.y + mH
+        );
+
+        if (isColliding) {
+          const playerHealth = this.player.getComponent(HealthComponent);
+          if (playerHealth) {
+            const damaged = playerHealth.takeDamage(1);
+            if (damaged) {
+              const knockbackDir = Math.sign(this.player.position.x - minion.position.x);
+              this.player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+              this.player.velocity.y = -350;
+            }
+          }
+        }
+      }
+    }
+
+    const activeProjectiles = [...this.pool.getActive()];
+    for (const proj of activeProjectiles) {
+      proj.update(dt);
+    }
+
+    const bHealth = this.boss.getComponent(HealthComponent);
+    if (bHealth && bHealth.currentHealth < 30 && !this.hasTriggeredFirstHit) {
+      this.hasTriggeredFirstHit = true;
+      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
+    }
+
+    if (bHealth && bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
+      this.hasTriggeredPhase2 = true;
+      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
+    }
+
+    if (bHealth && bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
+      this.hasTriggeredPhase3 = true;
+      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
+    }
+
+    const state = useGameStore.getState();
+    if (this.player.isDead && !this.isCinematicActive) {
+      this.isCinematicActive = true;
+      this.bossDeathTimer = 0;
+      this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
+
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
+
+      this.deathTimeoutId = setTimeout(() => {
+        state.setGameResult("GAMEOVER");
+        this.stop();
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
+      }, 3500);
+    } else if (this.boss.isDead && !this.isCinematicActive) {
+      this.isCinematicActive = true;
+      this.bossDeathTimer = 0;
+      this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
+
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
+
+      this.deathTimeoutId = setTimeout(() => {
+        state.setGameResult("VICTORY");
+        this.stop();
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+      }, 3500);
+    }
+
+    inputProvider.postUpdate();
+  }
+
+  private render() {
+    this.ctx.fillStyle = "#0c0d11";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.save();
+    this.ctx.translate(Camera.offsetX, Camera.offsetY);
+
+    this.ctx.fillStyle = "#1e1e24";
+    for (const solid of this.solids) {
+      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    }
+
+    this.ctx.fillStyle = "#2c3e50";
+    for (const platform of this.onewayPlatforms) {
+      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+      this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+    }
+
+    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
+    for (const hazard of this.hazards) {
+      const spikeWidth = 25;
+      const spikeCount = Math.floor(hazard.width / spikeWidth);
+      for (let i = 0; i < spikeCount; i++) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
+        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+        this.ctx.fill();
+      }
+    }
+
+    this.boss.draw(this.ctx);
+    this.player.draw(this.ctx);
+
+    const activeMinionsToDraw = this.world.minions;
+    for (const minion of activeMinionsToDraw) {
+      minion.draw(this.ctx);
+    }
+
+    const activeProjectiles = this.pool.getActive();
+    for (const proj of activeProjectiles) {
+      proj.draw(this.ctx);
+    }
+
+    if (this.bossDeathTimer >= 0 && this.bossDeathPos) {
+      const t = this.bossDeathTimer;
+      const px = this.bossDeathPos.x;
+      const py = this.bossDeathPos.y;
+
+      if (t < 0.25) {
+        const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+
+      const ringCount = 3;
+      const speed = 750;
+      for (let i = 0; i < ringCount; i++) {
+        const delay = i * 0.15;
+        const ringTime = t - delay;
+        if (ringTime > 0 && ringTime < 1.2) {
+          const radius = ringTime * speed;
+          const opacity = Math.max(0, 1 - ringTime / 1.2);
+
+          this.ctx.save();
+          this.ctx.beginPath();
+          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
+          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
+          this.ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+          this.ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
+          this.ctx.stroke();
+
+          this.ctx.beginPath();
+          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
+          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+          this.ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
+          this.ctx.shadowBlur = 0;
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+
+      const particleCount = 24;
+      const particleSpeed = 550;
+      const particleLife = 1.0;
+      if (t < particleLife) {
+        const opacity = Math.max(0, 1 - t / particleLife);
+        this.ctx.save();
+        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+        this.ctx.shadowBlur = 15;
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
+          const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
+          const x = px + Math.cos(angle) * distance;
+          const y = py + Math.sin(angle) * distance;
+
+          this.ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
+          this.ctx.fillRect(x - 4, y - 4, 8, 8);
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          this.ctx.fillRect(x - 2, y - 2, 4, 4);
+        }
+        this.ctx.restore();
+      }
+    }
+
+    this.ctx.restore();
+  }
+
+  public cleanup() {
+    if (this.deathTimeoutId !== null) {
+      clearTimeout(this.deathTimeoutId);
+      this.deathTimeoutId = null;
+    }
+    this.loop.cleanup();
+    this.player.teardown();
+    this.boss.teardown();
+    this.pool.clear();
+    Camera.reset();
+    this.systems.teardown();
+    this.unsubDialogue();
+    Registry.player = null;
+    Registry.boss = null;
+    Registry.projectilePool = null;
+
+    for (const spawner of this.activeSpawners) {
+      spawner.cleanup();
+    }
+    this.world.minions = [];
+    Registry.minions = [];
+  }
+}
+
+
+
 ● ./src/core/EventBroker.ts
 ────────────────────────────────────────────────────
 export type GameEventMap = {
@@ -5098,6 +5117,162 @@ class SaveManager {
 }
 
 export const saveManager = new SaveManager();
+
+
+
+● ./src/core/ScreenRoutes.ts
+────────────────────────────────────────────────────
+import { ScreenState } from "@/store/useGameStore";
+import { Action } from "@/core/InputProvider";
+import { soundSynth } from "@/core/SoundSynth";
+import { settingsManager, AudioSettings } from "@/core/SettingsManager";
+
+export interface MenuContext {
+  navTo: (screen: ScreenState) => void;
+  menuIndex: number;
+  setMenuIndex: (index: number) => void;
+  reloadSaveSlots: () => void;
+  resetGameSession: () => void;
+  handleSlotAction: (index: number, onPlay: () => void) => void;
+  toggleCopyMode: () => void;
+  toggleEraseMode: () => void;
+  resetActions: () => void;
+  audio: AudioSettings;
+  handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  setRebindTarget: (target: { action: Action; index: number } | null) => void;
+  gameResult: string;
+}
+
+export interface ScreenConfig {
+  getMaxIndex(context: MenuContext): number;
+  onSelect(context: MenuContext): void;
+  onBack?(context: MenuContext): void;
+  onHorizontal?(direction: number, context: MenuContext): void;
+}
+
+export const screenConfigs: Record<string, ScreenConfig> = {
+  TITLE: {
+    getMaxIndex: () => 2,
+    onSelect: ({ menuIndex, navTo, reloadSaveSlots }) => {
+      if (menuIndex === 0) {
+        reloadSaveSlots();
+        navTo("SAVE_SELECT");
+      } else if (menuIndex === 1) {
+        navTo("OPTIONS");
+      } else if (menuIndex === 2) {
+        navTo("CREDITS");
+      }
+      soundSynth.playHitConfirm();
+    }
+  },
+  PLAYING: {
+    getMaxIndex: ({ gameResult }) => (gameResult !== "PLAYING" ? 1 : 0),
+    onSelect: ({ menuIndex, gameResult, resetGameSession, navTo }) => {
+      if (gameResult !== "PLAYING") {
+        if (menuIndex === 0) {
+          resetGameSession();
+          navTo("PLAYING");
+        } else {
+          navTo("TITLE");
+        }
+        soundSynth.playHitConfirm();
+      }
+    }
+  },
+  SAVE_SELECT: {
+    getMaxIndex: () => 5,
+    onSelect: ({ menuIndex, handleSlotAction, navTo, resetGameSession, toggleCopyMode, toggleEraseMode, resetActions }) => {
+      if (menuIndex >= 0 && menuIndex <= 2) {
+        handleSlotAction(menuIndex, () => {
+          resetGameSession();
+          navTo("PLAYING");
+        });
+      } else if (menuIndex === 3) {
+        toggleCopyMode();
+      } else if (menuIndex === 4) {
+        toggleEraseMode();
+      } else if (menuIndex === 5) {
+        resetActions();
+        navTo("TITLE");
+        soundSynth.playErrorTick();
+      }
+    },
+    onBack: ({ resetActions, navTo }) => {
+      resetActions();
+      navTo("TITLE");
+    }
+  },
+  OPTIONS: {
+    getMaxIndex: () => 2,
+    onSelect: ({ menuIndex, navTo, setMenuIndex }) => {
+      if (menuIndex === 0) {
+        navTo("SOUND");
+      } else if (menuIndex === 1) {
+        navTo("CONTROLS");
+      } else if (menuIndex === 2) {
+        navTo("TITLE");
+        setMenuIndex(1);
+      }
+      soundSynth.playHitConfirm();
+    },
+    onBack: ({ resetActions, navTo }) => {
+      resetActions();
+      navTo("TITLE");
+    }
+  },
+  SOUND: {
+    getMaxIndex: () => 3,
+    onSelect: ({ menuIndex, navTo }) => {
+      if (menuIndex === 3) {
+        navTo("OPTIONS");
+        soundSynth.playErrorTick();
+      }
+    },
+    onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
+      const delta = direction * 0.05;
+      if (menuIndex === 0 && !audio.masterMuted) {
+        handleVolumeChange("masterVolume", Math.max(0, Math.min(1, audio.masterVolume + delta)));
+        soundSynth.playSelectTick();
+      } else if (menuIndex === 1 && !audio.sfxMuted) {
+        handleVolumeChange("sfxVolume", Math.max(0, Math.min(1, audio.sfxVolume + delta)));
+        soundSynth.playSelectTick();
+      } else if (menuIndex === 2 && !audio.musicMuted) {
+        handleVolumeChange("musicVolume", Math.max(0, Math.min(1, audio.musicVolume + delta)));
+        soundSynth.playSelectTick();
+      }
+    },
+    onBack: ({ navTo }) => {
+      navTo("OPTIONS");
+    }
+  },
+  CONTROLS: {
+    getMaxIndex: () => 7,
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget }) => {
+      if (menuIndex === 7) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },
+    onBack: ({ navTo }) => {
+      navTo("OPTIONS");
+    }
+  },
+  CREDITS: {
+    getMaxIndex: () => 0,
+    onSelect: ({ navTo }) => {
+      navTo("TITLE");
+      soundSynth.playErrorTick();
+    },
+    onBack: ({ navTo }) => {
+      navTo("TITLE");
+    }
+  }
+};
 
 
 
@@ -5854,13 +6029,8 @@ export class Boss extends BaseEntity {
   public patrolSpeed: number = 200;
   public lungeSpeed: number = 1200;
   
-  public stateTimer: number = 1.0;
   public facingDirection: number = -1;
   public currentPhase: number = 1;
-
-  public shootTimer: number = 0;
-  public volleyCount: number = 0;
-  public volleyTimer: number = 0;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
@@ -5888,21 +6058,6 @@ export class Boss extends BaseEntity {
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
-    this.shootTimer -= dt;
-
-    if (this.shootTimer <= 0) {
-      this.triggerRangedAttack();
-    }
-
-    if (this.volleyCount > 0) {
-      this.volleyTimer -= dt;
-      if (this.volleyTimer <= 0) {
-        this.fireSingleShotAtPlayer();
-        this.volleyCount--;
-        this.volleyTimer = 0.2; 
-      }
-    }
-
     this.stateMachine.update(dt);
 
     this.checkPlayerContact();
@@ -5917,27 +6072,7 @@ export class Boss extends BaseEntity {
     return active.constructor.name.replace("Boss", "").replace("State", "").toUpperCase();
   }
 
-  private triggerRangedAttack() {
-    const activeState = this.activeStateName;
-    if (activeState === "TELEGRAPH" || activeState === "LUNGE") {
-      this.shootTimer = 0.5; 
-      return;
-    }
-
-    if (this.currentPhase === 1) {
-      this.fireSingleShotAtPlayer();
-      this.shootTimer = 2.0;
-    } else if (this.currentPhase === 2) {
-      this.volleyCount = 3;
-      this.volleyTimer = 0;
-      this.shootTimer = 2.5;
-    } else if (this.currentPhase === 3) {
-      this.fireRadialOmniBurst();
-      this.shootTimer = 3.0;
-    }
-  }
-
-  private fireSingleShotAtPlayer() {
+  public fireSingleShotAtPlayer() {
     const player = this.world.player;
     const pool = (this.world as any).projectilePool;
     if (!player || !pool || player.isDead) return;
@@ -5964,7 +6099,7 @@ export class Boss extends BaseEntity {
     );
   }
 
-  private fireRadialOmniBurst() {
+  public fireRadialOmniBurst() {
     const pool = (this.world as any).projectilePool;
     if (!pool) return;
 
@@ -6035,7 +6170,7 @@ export class Boss extends BaseEntity {
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = activeState === "LUNGE" ? 2 : 1;
+        const damageAmount = (activeState === "LUNGE" || activeState === "MELEE") ? 2 : 1;
         const damaged = playerHealth.takeDamage(damageAmount);
         
         if (damaged) {
@@ -6123,14 +6258,20 @@ export abstract class BossState implements IState {
 }
 
 export class BossCooldownState extends BossState {
+  private duration: number = 2.0;
+
+  constructor(owner: Boss, customDuration: number = -1) {
+    super(owner);
+    this.duration = customDuration > 0 ? customDuration : (owner.currentPhase === 3 ? 1.5 : 2.5);
+  }
+
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
-    if (this.owner.stateTimer <= 0) {
+    this.duration -= dt;
+    if (this.duration <= 0) {
       this.owner.stateMachine.changeState(new BossPatrolState(this.owner));
     }
   }
@@ -6139,12 +6280,14 @@ export class BossCooldownState extends BossState {
 }
 
 export class BossPatrolState extends BossState {
+  private duration: number = 2.0;
+
   public enter(): void {
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
+    this.duration -= dt;
     const physics = this.owner.getComponent(PhysicsComponent);
     
     this.owner.velocity.x = this.owner.facingDirection * this.owner.patrolSpeed;
@@ -6157,8 +6300,19 @@ export class BossPatrolState extends BossState {
       }
     }
 
-    if (this.owner.stateTimer <= 0) {
-      this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+    // High-priority close-range check
+    const player = this.owner.world.player;
+    if (player && !player.isDead) {
+      const distance = Math.abs(player.position.x - this.owner.position.x);
+      const distanceY = Math.abs(player.position.y - this.owner.position.y);
+      if (distance < 120 && distanceY < 60) {
+        this.owner.stateMachine.changeState(new BossMeleeState(this.owner));
+        return;
+      }
+    }
+
+    if (this.duration <= 0) {
+      this.owner.stateMachine.changeState(new BossAttackState(this.owner));
     }
   }
 
@@ -6167,15 +6321,99 @@ export class BossPatrolState extends BossState {
   }
 }
 
-export class BossTelegraphState extends BossState {
+export class BossMeleeState extends BossState {
+  private duration: number = 0.5;
+
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.owner.stateTimer = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.duration = 0.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
-    if (this.owner.stateTimer <= 0) {
+    this.duration -= dt;
+    if (this.duration <= 0) {
+      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, 1.0));
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class BossAttackState extends BossState {
+  private attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" = "SINGLE_SHOT";
+  private durationTimer: number = 0;
+  private volleyCount: number = 0;
+  private volleyTimer: number = 0;
+
+  public enter(): void {
+    const phase = this.owner.currentPhase;
+    this.owner.velocity.x = 0;
+
+    if (phase === 1) {
+      this.attackType = "SINGLE_SHOT";
+      this.durationTimer = 0.5;
+      this.owner.fireSingleShotAtPlayer();
+    } else if (phase === 2) {
+      if (Math.random() < 0.5) {
+        this.attackType = "VOLLEY";
+        this.volleyCount = 3;
+        this.volleyTimer = 0;
+        this.durationTimer = 1.0;
+      } else {
+        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+      }
+    } else {
+      const r = Math.random();
+      if (r < 0.33) {
+        this.attackType = "VOLLEY";
+        this.volleyCount = 5;
+        this.volleyTimer = 0;
+        this.durationTimer = 1.2;
+      } else if (r < 0.66) {
+        this.attackType = "OMNI_BURST";
+        this.owner.fireRadialOmniBurst();
+        this.durationTimer = 0.8;
+      } else {
+        this.owner.stateMachine.changeState(new BossTelegraphState(this.owner));
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    this.durationTimer -= dt;
+
+    if (this.attackType === "VOLLEY" && this.volleyCount > 0) {
+      this.volleyTimer -= dt;
+      if (this.volleyTimer <= 0) {
+        this.owner.fireSingleShotAtPlayer();
+        this.volleyCount--;
+        this.volleyTimer = 0.2;
+      }
+    }
+
+    if (this.durationTimer <= 0) {
+      let cooldown = 1.5;
+      if (this.attackType === "VOLLEY") cooldown = 2.5;
+      else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
+
+      this.owner.stateMachine.changeState(new BossCooldownState(this.owner, cooldown));
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class BossTelegraphState extends BossState {
+  private duration: number = 0.8;
+
+  public enter(): void {
+    this.owner.velocity.x = 0;
+    this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+  }
+
+  public update(dt: number): void {
+    this.duration -= dt;
+    if (this.duration <= 0) {
       this.owner.stateMachine.changeState(new BossLungeState(this.owner));
     }
   }
@@ -6190,18 +6428,20 @@ export class BossTelegraphState extends BossState {
 }
 
 export class BossLungeState extends BossState {
+  private duration: number = 0.5;
+
   public enter(): void {
-    this.owner.stateTimer = 0.5;
+    this.duration = 0.5;
   }
 
   public update(dt: number): void {
-    this.owner.stateTimer -= dt;
+    this.duration -= dt;
     this.owner.velocity.x = this.owner.facingDirection * this.owner.lungeSpeed;
 
     const physics = this.owner.getComponent(PhysicsComponent);
     const hitWall = physics ? (physics.isOnWallLeft || physics.isOnWallRight) : false;
 
-    if (this.owner.stateTimer <= 0 || hitWall) {
+    if (this.duration <= 0 || hitWall) {
       this.owner.stateMachine.changeState(new BossCooldownState(this.owner));
     }
   }
@@ -6534,6 +6774,7 @@ import { MeleeComponent } from "@/components/MeleeComponent";
 import { FireballComponent } from "@/components/FireballComponent";
 import { HealComponent } from "@/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
+import { eventBroker } from "@/core/EventBroker";
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;
@@ -6560,6 +6801,9 @@ export class Player extends BaseEntity {
   public healingCharges: number = 0;
   public readonly maxHealingCharges: number = 3;
 
+  public hurtTimer: number = 0;
+  private unsubHurt!: () => void;
+
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
@@ -6575,6 +6819,13 @@ export class Player extends BaseEntity {
     this.meleeComponent = this.addComponent(MeleeComponent, new MeleeComponent());
     this.fireballComponent = this.addComponent(FireballComponent, new FireballComponent());
     this.healComponent = this.addComponent(HealComponent, new HealComponent());
+
+    this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+      this.hurtTimer = 0.15; // Enable knockback input-stun window
+      if (this.healComponent.isHealing) {
+        this.healComponent.cancelHealing();
+      }
+    });
   }
 
   public get isDashing(): boolean { return this.dashComponent.isDashing; }
@@ -6589,6 +6840,18 @@ export class Player extends BaseEntity {
     if (this.isDead) {
       super.update(dt);
       return;
+    }
+
+    if (this.hurtTimer > 0) {
+      this.hurtTimer -= dt;
+      // Let physics / gravity resolve
+      this.velocity.y += this.physics.gravity * dt;
+      // High friction/drag on horizontal velocity during knockback
+      const knockbackFriction = 800.0;
+      this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
+      
+      super.update(dt);
+      return; // Stun active, cancel all key polling
     }
 
     super.update(dt);
@@ -6627,7 +6890,14 @@ export class Player extends BaseEntity {
     }
 
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-    this.velocity.x = moveAxis * this.moveSpeed;
+    
+    if (this.meleeComponent.attackActive) {
+      // Ground the player horizontally during melee slash
+      const friction = 2000.0;
+      this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
+    } else {
+      this.velocity.x = moveAxis * this.moveSpeed;
+    }
 
     if (moveAxis !== 0) {
       this.facingDirection = Math.sign(moveAxis);
@@ -6640,8 +6910,24 @@ export class Player extends BaseEntity {
     }
 
     if (this.inputReceiver.isJustPressed("DASH") && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
-      const finalDir = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
-      this.dashComponent.triggerDash(finalDir);
+      let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+      let dirY = 0;
+      if (this.inputReceiver.isPressed("MOVE_UP")) {
+        dirY = -1;
+      } else if (this.inputReceiver.isPressed("MOVE_DOWN")) {
+        dirY = 1;
+      }
+      
+      if (dirX === 0 && dirY === 0) {
+        dirX = this.facingDirection;
+      }
+      
+      const len = Math.sqrt(dirX * dirX + dirY * dirY);
+      const normX = dirX / len;
+      const normY = dirY / len;
+      
+      this.dashComponent.triggerDash(normX, normY);
+      super.update(dt);
       return;
     }
 
@@ -6727,13 +7013,9 @@ export class Player extends BaseEntity {
     if (this.determinationCounter >= 5) {
       this.determinationCounter = 0;
       this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
-      import("@/core/EventBroker").then(({ eventBroker }) => {
-        eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
-      });
+      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
     }
-    import("@/core/EventBroker").then(({ eventBroker }) => {
-      eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
-    });
+    eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
   }
 
   private checkHazardContact() {
@@ -6924,6 +7206,11 @@ export class Player extends BaseEntity {
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
+  }
+
+  public teardown() {
+    this.unsubHurt();
+    super.teardown();
   }
 }
 
