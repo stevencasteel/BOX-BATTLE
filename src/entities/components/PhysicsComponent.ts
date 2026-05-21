@@ -30,6 +30,25 @@ export class PhysicsComponent implements IEntityComponent {
       this.disablePlatformCollisionTimer -= dt;
     }
 
+    this.isGrounded = false;
+    const physicsWorld = this.owner.world.physicsWorld;
+    if (this.owner.velocity.y >= 0) {
+      for (const solid of physicsWorld.solids) {
+        if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, solid)) {
+          this.isGrounded = true;
+          break;
+        }
+      }
+      if (!this.isGrounded && this.disablePlatformCollisionTimer <= 0) {
+        for (const platform of physicsWorld.onewayPlatforms) {
+          if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, platform)) {
+            this.isGrounded = true;
+            break;
+          }
+        }
+      }
+    }
+
     if (!this.isGrounded) {
       this.owner.velocity.y += this.gravity * dt;
     }
@@ -40,7 +59,6 @@ export class PhysicsComponent implements IEntityComponent {
     this.owner.position.x += this.owner.velocity.x * dt;
     this.resolveCollisionsX();
 
-    this.isGrounded = false;
     this.owner.position.y += this.owner.velocity.y * dt;
     this.resolveCollisionsY();
 
@@ -48,6 +66,8 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   private updateFrictionSlideSound(): void {
+    if (this.owner.id !== "player-01") return;
+
     const speed = Math.abs(this.owner.velocity.x);
     const shouldSlide = this.isGrounded && speed > 15 && !this.owner.isDead;
 
@@ -84,7 +104,7 @@ export class PhysicsComponent implements IEntityComponent {
 
     for (const solid of physicsWorld.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-        if (this.owner.velocity.y > 0) {
+        if (this.owner.velocity.y >= 0) {
           this.owner.position.y = solid.y - ownerHalfH;
           this.owner.velocity.y = 0;
           this.isGrounded = true;
@@ -128,7 +148,6 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public teardown(): void {
-    // Graceful stop published directly upon entity deconstruction
     eventBroker.publish("ENTITY_SLIDE", {
       id: this.owner.id,
       width: this.owner.size.width,

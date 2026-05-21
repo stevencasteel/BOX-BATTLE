@@ -31,11 +31,15 @@ export class FrictionSlideManager {
       const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
       const baseFreq = 800 * sizeFactor;
 
-      const source = new Tone.Noise("brown").start();
+      const source = new Tone.Noise("brown");
       const filter = new Tone.Filter({ frequency: baseFreq, type: "lowpass" });
       const gain = new Tone.Gain(0);
 
-      source.chain(filter, gain, this.ctxManager.sfxGain);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctxManager.sfxGain);
+
+      source.start(Tone.now());
 
       voice = { source, filter, gain };
       this.activeSlides.set(id, voice);
@@ -43,14 +47,14 @@ export class FrictionSlideManager {
 
     const maxSpeed = 450;
     const ratio = Math.min(1.0, speed / maxSpeed);
-    const targetGain = ratio * 0.35;
+    const targetGain = ratio * 0.22;
 
     voice.gain.gain.rampTo(targetGain, 0.05);
 
     const volume = width * height;
     const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
     const baseFreq = 800 * sizeFactor;
-    const targetCutoff = baseFreq * 0.5 + ratio * baseFreq * 0.75;
+    const targetCutoff = baseFreq * 0.4 + ratio * baseFreq * 0.8;
 
     voice.filter.frequency.rampTo(targetCutoff, 0.05);
   }

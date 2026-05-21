@@ -12,7 +12,7 @@ export class SFXManager {
   private dashFilter!: Tone.Filter;
   private dashEnv!: Tone.AmplitudeEnvelope;
   private hitSynth!: Tone.MetalSynth;
-  private hurtSynth!: Tone.MonoSynth;
+  private hurtSynth!: Tone.Synth;
   private spikeSynth!: Tone.Synth;
   private teleportSynth!: Tone.Synth;
   private dialogueSynthPlayer!: Tone.Synth;
@@ -59,11 +59,9 @@ export class SFXManager {
     }).connect(sfxGain);
     this.hitSynth.frequency.value = 440;
 
-    this.hurtSynth = new Tone.MonoSynth({
+    this.hurtSynth = new Tone.Synth({
       oscillator: { type: "sawtooth" },
-      filter: { Q: 2.0, type: "lowpass", frequency: 280 },
-      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 },
-      filterEnvelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16, baseFrequency: 280, octaves: -2 }
+      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
     }).connect(sfxGain);
 
     this.spikeSynth = new Tone.Synth({
@@ -336,7 +334,9 @@ export class SFXManager {
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("hit_confirm", 40)) return;
 
-    this.hitSynth.triggerAttackRelease("B5", "8n");
+    const now = Tone.now();
+    this.hitSynth.triggerAttackRelease("C6", "16n", now);
+    this.dialogueSynthPlayer.triggerAttackRelease(880, "16n", now + 0.04);
   }
 
   public playPogo() {
@@ -362,7 +362,9 @@ export class SFXManager {
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("select_tick", 30)) return;
 
-    this.dialogueSynthPlayer.triggerAttackRelease(620, "32n");
+    const now = Tone.now();
+    this.dialogueSynthPlayer.triggerAttackRelease(950, "32n", now);
+    this.dialogueSynthPlayer.triggerAttackRelease(1400, "32n", now + 0.025);
   }
 
   public playErrorTick() {
@@ -370,7 +372,9 @@ export class SFXManager {
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("error_tick", 30)) return;
 
-    this.dialogueSynthBoss.triggerAttackRelease(105, "16n");
+    const now = Tone.now();
+    this.dialogueSynthBoss.triggerAttackRelease(260, "16n", now);
+    this.dialogueSynthBoss.triggerAttackRelease(160, "16n", now + 0.05);
   }
 
   public playDialogueTick(speaker: "player" | "boss", char: string) {

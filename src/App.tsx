@@ -181,6 +181,26 @@ export default function App() {
       const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
 
+      const keyMap = settingsManager.getKeyMap();
+      const jumpKeys = keyMap["JUMP"] || [];
+      const attackKeys = keyMap["ATTACK"] || [];
+      const dashKeys = keyMap["DASH"] || [];
+
+      const isConfirmKey =
+        e.key === "Enter" ||
+        e.key === " " ||
+        e.code === "Space" ||
+        jumpKeys.includes(e.code) ||
+        jumpKeys.includes(e.key);
+
+      const isBackKey =
+        e.key === "Escape" ||
+        e.key === "Backspace" ||
+        attackKeys.includes(e.code) ||
+        attackKeys.includes(e.key) ||
+        dashKeys.includes(e.code) ||
+        dashKeys.includes(e.key);
+
       if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
         e.preventDefault();
         soundSynth.playSelectTick();
@@ -189,10 +209,10 @@ export default function App() {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
+      } else if (isConfirmKey) {
         e.preventDefault();
         config.onSelect(context);
-      } else if (e.key === "Escape" || e.key === "Backspace") {
+      } else if (isBackKey) {
         e.preventDefault();
         if (config.onBack) {
           soundSynth.playErrorTick();
@@ -237,7 +257,6 @@ export default function App() {
         } : undefined}
       >
 
-        {/* 1. HUD Panel - hidden in full-height screens */}
         {!isFullHeightScreen && (
           <div className="cabinet-status-panel neo-pressed">
             <div className="hud-panel-block" style={{ gap: "4px" }}>
@@ -338,7 +357,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. Main Viewport Container */}
         <div className="game-viewport-container" ref={viewportRef}>
           {currentScreen === "PLAYING" ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
@@ -460,7 +478,6 @@ export default function App() {
           )}
         </div>
 
-        {/* 3. Dialogue Console - hidden in full-height screens */}
         {!isFullHeightScreen && (
           <div className="dialogue-console">
             <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
