@@ -37,6 +37,7 @@ export class Engine {
   private deathTimeoutId: any = null;
   private dialogueTimeoutId: any = null;
   private dialogueStaggerTimeoutId: any = null;
+  private dialogueClearTimeoutId: any = null;
 
   /* Pause Diagnostics */
   public isPaused: boolean = false;
@@ -346,7 +347,10 @@ export class Engine {
         this.dialogueStaggerTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
         }, 1800);
-      }, 3500);
+        this.dialogueClearTimeoutId = setTimeout(() => {
+          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+        }, 5200);
+      }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       this.bossDeathTimer = 0;
@@ -363,7 +367,10 @@ export class Engine {
         this.dialogueStaggerTimeoutId = setTimeout(() => {
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
         }, 2800);
-      }, 3500);
+        this.dialogueClearTimeoutId = setTimeout(() => {
+          eventBroker.publish("CLEAR_DIALOGUES" as any, undefined);
+        }, 5200);
+      }, 2000);
     }
 
     inputProvider.postUpdate();
@@ -541,6 +548,10 @@ export class Engine {
     if (this.dialogueStaggerTimeoutId !== null) {
       clearTimeout(this.dialogueStaggerTimeoutId);
       this.dialogueStaggerTimeoutId = null;
+    }
+    if (this.dialogueClearTimeoutId !== null) {
+      clearTimeout(this.dialogueClearTimeoutId);
+      this.dialogueClearTimeoutId = null;
     }
     this.loop.cleanup();
     this.player.teardown();

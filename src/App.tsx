@@ -26,6 +26,34 @@ export default function App() {
   const dialogueConsoleRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  const clearAllDialogues = () => {
+    if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
+    if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
+    if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
+    if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
+
+    const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
+    const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
+    const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
+    const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
+    const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
+    const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
+
+    if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
+    if (pText) pText.textContent = "[ NO SIGNAL ]";
+    if (pPortrait) {
+      pPortrait.className = "portrait-square led-green";
+      pPortrait.style.background = "#07080b";
+    }
+
+    if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
+    if (bText) bText.textContent = "[ NO SIGNAL ]";
+    if (bPortrait) {
+      bPortrait.className = "portrait-square led-red";
+      bPortrait.style.background = "#07080b";
+    }
+  };
+
   const playerDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playerDialogueCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bossDialogueTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -180,19 +208,23 @@ export default function App() {
           portrait.className =
             speaker === "player" ? "portrait-square led-green" : "portrait-square led-red";
 
-          const cleanupTimer = setTimeout(() => {
-            box.className =
-              speaker === "player"
-                ? "dialogue-box-left neo-pressed dialogue-inactive"
-                : "dialogue-box-right neo-pressed dialogue-inactive";
-            portrait.style.background = "#07080b";
-            textElem.textContent = "[ NO SIGNAL ]";
-          }, 3000);
+          /* Context-Aware Dialogue Lifespans: Retrieve real-time gameResult from the store to prevent stale React closures */
+          const currentResult = useSessionStore.getState().gameResult;
+          if (currentResult === "PLAYING") {
+            const cleanupTimer = setTimeout(() => {
+              box.className =
+                speaker === "player"
+                  ? "dialogue-box-left neo-pressed dialogue-inactive"
+                  : "dialogue-box-right neo-pressed dialogue-inactive";
+              portrait.style.background = "#07080b";
+              textElem.textContent = "[ NO SIGNAL ]";
+            }, 2000);
 
-          if (speaker === "player") {
-            playerDialogueCleanupRef.current = cleanupTimer;
-          } else {
-            bossDialogueCleanupRef.current = cleanupTimer;
+            if (speaker === "player") {
+              playerDialogueCleanupRef.current = cleanupTimer;
+            } else {
+              bossDialogueCleanupRef.current = cleanupTimer;
+            }
           }
         }
       }, intervalTime);
@@ -233,6 +265,9 @@ export default function App() {
       }),
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         animateDialogue(speaker, text);
+      }),
+      eventBroker.subscribe("CLEAR_DIALOGUES" as any, () => {
+        clearAllDialogues();
       })
     ];
 
@@ -286,31 +321,7 @@ export default function App() {
 
   useEffect(() => {
     if (gameResult !== "PLAYING") {
-      if (playerDialogueTimeoutRef.current) clearInterval(playerDialogueTimeoutRef.current);
-      if (playerDialogueCleanupRef.current) clearTimeout(playerDialogueCleanupRef.current);
-      if (bossDialogueTimeoutRef.current) clearInterval(bossDialogueTimeoutRef.current);
-      if (bossDialogueCleanupRef.current) clearTimeout(bossDialogueCleanupRef.current);
-
-      const pBox = dialogueConsoleRef.current?.querySelector("[data-player-dialogue]") as HTMLElement | null;
-      const pText = dialogueConsoleRef.current?.querySelector("[data-player-text]") as HTMLElement | null;
-      const pPortrait = dialogueConsoleRef.current?.querySelector("[data-player-portrait]") as HTMLElement | null;
-      const bBox = dialogueConsoleRef.current?.querySelector("[data-boss-dialogue]") as HTMLElement | null;
-      const bText = dialogueConsoleRef.current?.querySelector("[data-boss-text]") as HTMLElement | null;
-      const bPortrait = dialogueConsoleRef.current?.querySelector("[data-boss-portrait]") as HTMLElement | null;
-
-      if (pBox) pBox.className = "dialogue-box-left neo-pressed dialogue-inactive";
-      if (pText) pText.textContent = "[ NO SIGNAL ]";
-      if (pPortrait) {
-        pPortrait.className = "portrait-square led-green";
-        pPortrait.style.background = "#07080b";
-      }
-
-      if (bBox) bBox.className = "dialogue-box-right neo-pressed dialogue-inactive";
-      if (bText) bText.textContent = "[ NO SIGNAL ]";
-      if (bPortrait) {
-        bPortrait.className = "portrait-square led-red";
-        bPortrait.style.background = "#07080b";
-      }
+      clearAllDialogues();
     }
   }, [gameResult]);
 
