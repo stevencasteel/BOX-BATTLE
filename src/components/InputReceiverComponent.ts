@@ -21,6 +21,10 @@ export class InputReceiverComponent implements Component {
     return inputProvider.isJustReleased(action);
   }
 
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    return inputProvider.consumeBufferedAction(action, windowMs);
+  }
+
   public getAxis(negative: Action, positive: Action): number {
     return inputProvider.getAxis(negative, positive);
   }

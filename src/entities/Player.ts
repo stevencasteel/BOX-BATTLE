@@ -108,7 +108,7 @@ export class Player extends BaseEntity {
     }
 
     if (this.physics.isGrounded) {
-      this.coyoteTimer = 0.1;
+      this.coyoteTimer = 0.15;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
     } else {
@@ -116,12 +116,12 @@ export class Player extends BaseEntity {
     }
 
     if (this.physics.isOnWallLeft) {
-      this.wallCoyoteTimer = 0.05;
+      this.wallCoyoteTimer = 0.1;
       this.lastWallNormal = 1;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
     } else if (this.physics.isOnWallRight) {
-      this.wallCoyoteTimer = 0.05;
+      this.wallCoyoteTimer = 0.1;
       this.lastWallNormal = -1;
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
@@ -149,7 +149,7 @@ export class Player extends BaseEntity {
       }
     }
 
-    if (this.inputReceiver.isJustPressed("DASH") && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
+    if (this.inputReceiver.consumeBufferedAction("DASH", 100) && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
       let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
       let dirY = 0;
       if (this.inputReceiver.isPressed("MOVE_UP")) {
@@ -171,16 +171,17 @@ export class Player extends BaseEntity {
       return;
     }
 
-    if (this.inputReceiver.isJustPressed("JUMP")) {
+    if (this.inputReceiver.consumeBufferedAction("JUMP", 100)) {
       this.jumpBufferTimer = 0.1;
     } else {
       this.jumpBufferTimer -= dt;
     }
 
     if (this.jumpBufferTimer > 0) {
-      if (this.inputReceiver.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
+      if (this.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
         this.physics.disablePlatformCollisionTimer = 0.25;
         this.position.y += 12;
+        this.velocity.y = 180;
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
       }
@@ -209,7 +210,7 @@ export class Player extends BaseEntity {
       this.velocity.y *= 0.4;
     }
 
-    if (this.inputReceiver.isJustPressed("ATTACK")) {
+    if (this.inputReceiver.consumeBufferedAction("ATTACK", 100)) {
       this.fireballComponent.startCharging();
 
       if (this.meleeComponent.attackCooldownTimer <= 0) {
@@ -235,10 +236,11 @@ export class Player extends BaseEntity {
   private isStandingOnOneway(): boolean {
     const ownerHalfH = this.size.height / 2;
     const feetY = this.position.y + ownerHalfH;
+    const halfW = this.size.width / 2;
 
     for (const platform of this.world.physicsWorld.onewayPlatforms) {
-      if (this.position.x + 10 > platform.x && this.position.x - 10 < platform.x + platform.width) {
-        if (Math.abs(feetY - platform.y) <= 6) {
+      if (this.position.x + halfW > platform.x && this.position.x - halfW < platform.x + platform.width) {
+        if (Math.abs(feetY - platform.y) <= 12) {
           return true;
         }
       }

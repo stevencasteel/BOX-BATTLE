@@ -3,6 +3,16 @@ import { settingsManager } from "@/core/SettingsManager";
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
+  private pressTimestamps: Record<Action, number> = {
+    MOVE_LEFT: 0,
+    MOVE_RIGHT: 0,
+    MOVE_UP: 0,
+    MOVE_DOWN: 0,
+    JUMP: 0,
+    ATTACK: 0,
+    DASH: 0
+  };
+
   private pressed: Record<Action, boolean> = {
     MOVE_LEFT: false,
     MOVE_RIGHT: false,
@@ -57,9 +67,19 @@ class InputProvider {
       if (!this.pressed[action]) {
         this.justPressed[action] = true;
         this.pressed[action] = true;
+        this.pressTimestamps[action] = performance.now();
       }
     }
   };
+
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    const elapsed = performance.now() - this.pressTimestamps[action];
+    if (elapsed <= windowMs) {
+      this.pressTimestamps[action] = 0;
+      return true;
+    }
+    return false;
+  }
 
   private handleKeyUp = (e: KeyboardEvent) => {
     const action = this.getActionFromCode(e.code);
