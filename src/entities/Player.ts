@@ -7,6 +7,7 @@ import { MeleeComponent } from "@/components/MeleeComponent";
 import { FireballComponent } from "@/components/FireballComponent";
 import { HealComponent } from "@/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
+import { eventBroker } from "@/core/EventBroker";
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;
@@ -200,13 +201,9 @@ export class Player extends BaseEntity {
     if (this.determinationCounter >= 5) {
       this.determinationCounter = 0;
       this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
-      import("@/core/EventBroker").then(({ eventBroker }) => {
-        eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
-      });
+      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
     }
-    import("@/core/EventBroker").then(({ eventBroker }) => {
-      eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
-    });
+    eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
   }
 
   private checkHazardContact() {
