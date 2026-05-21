@@ -148,6 +148,8 @@ export class Minion extends BaseEntity {
       }
     }
 
+    this.checkHazardContact();
+
     super.update(dt);
   }
 
@@ -181,6 +183,33 @@ export class Minion extends BaseEntity {
       (p: any) => this.world.releaseProjectile(p),
       this.world
     );
+  }
+
+  private checkHazardContact() {
+    if (this.health.isInvincible() || this.isDead) return;
+
+    const halfW = this.size.width / 2;
+    const halfH = this.size.height / 2;
+
+    for (const hazard of this.world.physicsWorld.hazards) {
+      const isHit = (
+        this.position.x + halfW > hazard.x &&
+        this.position.x - halfW < hazard.x + hazard.width &&
+        this.position.y + halfH > hazard.y &&
+        this.position.y - halfH < hazard.y + hazard.height
+      );
+
+      if (isHit) {
+        const damaged = this.health.takeDamage(1);
+        if (damaged && !this.isDead) {
+          if (this.minionType !== "TURRET") {
+            this.velocity.y = -550;
+            this.physics.isGrounded = false;
+          }
+        }
+        break;
+      }
+    }
   }
 
   public draw(ctx: CanvasRenderingContext2D) {
