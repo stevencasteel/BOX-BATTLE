@@ -15,7 +15,6 @@ import { eventBroker } from "@/core/EventBroker";
 import { Rectangle } from "@/core/Interfaces";
 
 export class Engine {
-  private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
 
@@ -61,7 +60,6 @@ export class Engine {
     canvas: HTMLCanvasElement,
     triggerDialogue: (speaker: "player" | "boss", text: string) => void
   ) {
-    this.canvas = canvas;
     const context = canvas.getContext("2d");
     if (!context) {
       throw new Error("Could not construct 2D context.");
@@ -301,7 +299,7 @@ export class Engine {
       if (t < 0.25) {
         const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
         this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, 1250, 1250);
       }
 
       const ringCount = 3;
