@@ -211,20 +211,20 @@ export class Boss extends BaseEntity {
   public draw(ctx: CanvasRenderingContext2D) {
     if (this.isDead) return;
 
+    const activeState = this.activeStateName;
+
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
-    }
-
-    const activeState = this.activeStateName;
-    if (this.currentPhase === 3) {
-      ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
-      ctx.shadowBlur = 25;
     } else if (activeState === "TELEGRAPH") {
       ctx.fillStyle = "hsl(45, 100%, 50%)"; 
-      ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
-      ctx.shadowBlur = 15;
+      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
+      ctx.shadowBlur = 20;
+    } else {
+      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      if (this.currentPhase === 3) {
+        ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
+        ctx.shadowBlur = 25;
+      }
     }
 
     ctx.fillRect(

@@ -33,6 +33,9 @@ export type GameEventMap = {
   BOSS_SWIPED: void;
   BOSS_TELEGRAPH: void;
   BOSS_LUNGED: void;
+  CHARGE_START: void;
+  CHARGE_UPDATE: { timer: number };
+  CHARGE_STOP: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;

@@ -119,9 +119,13 @@ export class BossAttackState extends BossState {
     this.owner.velocity.x = 0;
 
     if (phase === 1) {
-      this.attackType = "SINGLE_SHOT";
-      this.durationTimer = 0.5;
-      this.owner.fireSingleShotAtPlayer();
+      if (Math.random() < 0.6) {
+        this.attackType = "SINGLE_SHOT";
+        this.durationTimer = 0.5;
+        this.owner.fireSingleShotAtPlayer();
+      } else {
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
+      }
     } else if (phase === 2) {
       if (Math.random() < 0.5) {
         this.attackType = "VOLLEY";

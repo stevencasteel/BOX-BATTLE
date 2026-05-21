@@ -333,6 +333,8 @@ export class Engine {
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       soundSynth.clearAllSlides();
+      soundSynth.stopChargeDrone();
+      soundSynth.stopHealDrone();
       soundSynth.playPlayerExplosion();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
@@ -355,6 +357,8 @@ export class Engine {
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       soundSynth.clearAllSlides();
+      soundSynth.stopChargeDrone();
+      soundSynth.stopHealDrone();
       soundSynth.playBossExplosion();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };

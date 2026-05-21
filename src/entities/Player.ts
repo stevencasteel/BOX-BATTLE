@@ -65,6 +65,9 @@ export class Player extends BaseEntity implements IDamageRecorder {
       if (this.healComponent.isHealing) {
         this.healComponent.cancelHealing();
       }
+      if (this.fireballComponent.isCharging) {
+        this.fireballComponent.cancelCharging();
+      }
     });
   }
 

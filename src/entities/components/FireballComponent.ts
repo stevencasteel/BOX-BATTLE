@@ -15,17 +15,28 @@ export class FireballComponent implements IEntityComponent {
   public update(dt: number): void {
     if (this.isCharging) {
       this.chargeTimer += dt;
+      eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
     }
   }
 
   public startCharging(): void {
     this.isCharging = true;
     this.chargeTimer = 0;
+    eventBroker.publish("CHARGE_START", undefined);
+  }
+
+  public cancelCharging(): void {
+    if (this.isCharging) {
+      this.isCharging = false;
+      this.chargeTimer = 0;
+      eventBroker.publish("CHARGE_STOP", undefined);
+    }
   }
 
   public releaseCharge(dirX: number, dirY: number, facingDirection: number): void {
     if (!this.isCharging) return;
     this.isCharging = false;
+    eventBroker.publish("CHARGE_STOP", undefined);
 
     if (this.chargeTimer >= 0.35) {
       this.fire(dirX, dirY, facingDirection);

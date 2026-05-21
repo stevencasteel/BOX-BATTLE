@@ -27,6 +27,14 @@ class SoundSynth {
   private noiseBuffer: AudioBuffer | null = null;
   private activeSlides: Map<string, FrictionVoice> = new Map();
   private healDrone: DroneVoice | null = null;
+  private chargeDrone: {
+    osc: OscillatorNode;
+    lfo: OscillatorNode;
+    lfoGain: GainNode;
+    filter: BiquadFilterNode;
+    gain: GainNode;
+  } | null = null;
+  private currentChargeLevel: number = 0;
 
   private hasUserGestured: boolean = false;
 
@@ -586,6 +594,125 @@ class SoundSynth {
     }, 150);
 
     this.healDrone = null;
+  }
+
+  public playChargeStart() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+    this.stopChargeDrone();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(220, now);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(450, now);
+    filter.Q.setValueAtTime(4.0, now);
+
+    lfo.frequency.setValueAtTime(5.5, now);
+    lfoGain.gain.setValueAtTime(110, now);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    gain.gain.setValueAtTime(0.02, now);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    lfo.start(now);
+    osc.start(now);
+
+    this.chargeDrone = { osc, lfo, lfoGain, filter, gain };
+    this.currentChargeLevel = 0;
+  }
+
+  public updateChargeTimer(timer: number) {
+    if (!this.ctx || !this.chargeDrone) return;
+    const now = this.ctx.currentTime;
+    const { osc, lfo, lfoGain, filter, gain } = this.chargeDrone;
+
+    if (timer < 0.25) {
+      const progress = timer / 0.25;
+      osc.frequency.setTargetAtTime(220 + progress * 100, now, 0.05);
+      filter.frequency.setTargetAtTime(450 + progress * 150, now, 0.05);
+      lfo.frequency.setTargetAtTime(6.0, now, 0.05);
+      lfoGain.gain.setTargetAtTime(120, now, 0.05);
+      gain.gain.setTargetAtTime(0.03, now, 0.05);
+    } 
+    else if (timer >= 0.25 && timer < 1.12) {
+      this.currentChargeLevel = 1;
+      const range = (timer - 0.25) / (1.12 - 0.25);
+      
+      osc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
+      filter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
+      lfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
+      lfoGain.gain.setTargetAtTime(120 + range * 120, now, 0.06);
+      gain.gain.setTargetAtTime(0.065, now, 0.05);
+    } 
+    else if (timer >= 1.12) {
+      if (this.currentChargeLevel < 2) {
+        this.currentChargeLevel = 2;
+        this.playChargeCompleteDing();
+      }
+      osc.frequency.setTargetAtTime(660 + Math.sin(now * 30) * 8, now, 0.08);
+      filter.frequency.setTargetAtTime(1500, now, 0.08);
+      lfo.frequency.setTargetAtTime(15.0, now, 0.08);
+      lfoGain.gain.setTargetAtTime(360, now, 0.08);
+      gain.gain.setTargetAtTime(0.055, now, 0.05);
+    }
+  }
+
+  private playChargeCompleteDing() {
+    if (!this.ctx || !this.sfxGain) return;
+    const now = this.ctx.currentTime;
+    const dingOsc = this.ctx.createOscillator();
+    const dingGain = this.ctx.createGain();
+
+    dingOsc.type = "sine";
+    dingOsc.frequency.setValueAtTime(1567.98, now); // G6 Sparkle chime
+
+    dingGain.gain.setValueAtTime(0, now);
+    dingGain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    dingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    dingOsc.connect(dingGain);
+    dingGain.connect(this.sfxGain);
+
+    dingOsc.start(now);
+    dingOsc.stop(now + 0.31);
+  }
+
+  public stopChargeDrone() {
+    if (!this.ctx || !this.chargeDrone) return;
+    const now = this.ctx.currentTime;
+    const { osc, lfo, lfoGain, filter, gain } = this.chargeDrone;
+
+    gain.gain.setTargetAtTime(0, now, 0.04);
+    setTimeout(() => {
+      try {
+        osc.stop();
+        lfo.stop();
+        osc.disconnect();
+        lfo.disconnect();
+        lfoGain.disconnect();
+        filter.disconnect();
+        gain.disconnect();
+      } catch (e) {
+        // Safe disconnection handling
+      }
+    }, 80);
+
+    this.chargeDrone = null;
+    this.currentChargeLevel = 0;
   }
 
   public playHealComplete() {

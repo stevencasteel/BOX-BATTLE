@@ -153,6 +153,36 @@ export class SimulationSystems {
         soundSynth.playBossSwipe();
       })
     );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("BOSS_TELEGRAPH", () => {
+        soundSynth.playBossTelegraph();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("BOSS_LUNGED", () => {
+        soundSynth.playBossLunge();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("CHARGE_START", () => {
+        soundSynth.playChargeStart();
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+        soundSynth.updateChargeTimer(timer);
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("CHARGE_STOP", () => {
+        soundSynth.stopChargeDrone();
+      })
+    );
   }
 
   public teardown(): void {
@@ -160,5 +190,6 @@ export class SimulationSystems {
     this.unsubscribes = [];
     soundSynth.clearAllSlides();
     soundSynth.stopHealDrone();
+    soundSynth.stopChargeDrone();
   }
 }
