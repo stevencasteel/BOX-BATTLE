@@ -9,6 +9,9 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
+  public startDeathSequence?(): void;
+  public registerDamageDealt?(): void;
+
   private components = new Map<any, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {

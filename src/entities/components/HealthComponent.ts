@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { EntityStatus } from "@/core/Interfaces";
 
 export interface HealthComponentOptions {
   maxHealth?: number;
@@ -37,8 +38,8 @@ export class HealthComponent implements IEntityComponent {
   }
 
   public takeDamage(amount: number): boolean {
-    const isDying = "isDying" in this.owner && (this.owner as any).isDying;
-    const isSpawning = "isSpawning" in this.owner && (this.owner as any).isSpawning;
+    const isDying = this.owner.status === EntityStatus.DYING;
+    const isSpawning = this.owner.status === EntityStatus.SPAWNING;
     if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
       return false;
     }
@@ -69,8 +70,8 @@ export class HealthComponent implements IEntityComponent {
     }
 
     if (this.currentHealth <= 0) {
-      if ("startDeathSequence" in this.owner) {
-        (this.owner as any).startDeathSequence();
+      if (this.owner.startDeathSequence) {
+        this.owner.startDeathSequence();
       } else {
         this.owner.isDead = true;
       }

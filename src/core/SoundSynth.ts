@@ -15,7 +15,7 @@ class SoundSynth {
   private init() {
     if (this.ctx) return;
 
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     this.ctx = new AudioContextClass();
 
     this.masterGain = this.ctx.createGain();

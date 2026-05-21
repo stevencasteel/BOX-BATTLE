@@ -2,7 +2,8 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";
+import { EntityStatus } from "@/core/Interfaces";
+import { Player } from "@/entities/Player";
 
 
 export class MeleeComponent implements IEntityComponent {
@@ -59,7 +60,7 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const facing = (this.owner as any).facingDirection ?? 1;
+    const facing = (this.owner as Player).facingDirection ?? 1;
 
     for (const target of targets) {
       let isHit = false;
@@ -106,15 +107,12 @@ export class MeleeComponent implements IEntityComponent {
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            const recorder = this.owner as unknown as IDamageRecorder;
-            if (recorder.registerDamageDealt) {
-              recorder.registerDamageDealt();
-            }
+            this.owner.registerDamageDealt?.();
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
-            eventBroker.publish("SPAWN_SPARKS" as any, {
+            eventBroker.publish("SPAWN_SPARKS", {
               x: target.position.x,
               y: target.position.y,
               angle: facing > 0 ? 0 : Math.PI,
@@ -161,10 +159,7 @@ export class MeleeComponent implements IEntityComponent {
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
@@ -204,10 +199,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
         }
 
         this.owner.velocity.y = -this.pogoForce;
@@ -241,10 +233,7 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;

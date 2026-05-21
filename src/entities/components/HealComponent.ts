@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
+import { Player } from "@/entities/Player";
 import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements IEntityComponent {
@@ -36,7 +37,7 @@ export class HealComponent implements IEntityComponent {
   }
 
   private completeHealing(): void {
-    const player = this.owner as any;
+    const player = this.owner as Player;
     this.isHealing = false;
     player.healingCharges = Math.max(0, player.healingCharges - 1);
     eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: player.healingCharges });

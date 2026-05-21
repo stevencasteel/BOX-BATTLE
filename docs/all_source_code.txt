@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 4:20:53 PM
+ [SYSTEM] Generated: 5/21/2026, 4:25:43 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -86,6 +86,7 @@
 ├── package-lock.json
 ├── package.json
 ├── patch_phase2.js
+├── patch_phase3.js
 ├── README.md
 ├── TODO.txt
 ├── tsconfig.app.json
@@ -468,6 +469,165 @@ replaceInFile(
 );
 
 console.log("All Registry coupling references inside Engine.ts successfully removed.");
+
+
+
+● ./patch_phase3.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+function replaceInFile(filepath, target, replacement) {
+  const content = fs.readFileSync(filepath, 'utf8');
+  if (!content.includes(target)) {
+    console.error(`ERROR: Target string not found in ${filepath}`);
+    process.exit(1);
+  }
+  fs.writeFileSync(filepath, content.split(target).join(replacement));
+  console.log(`Successfully patched: ${filepath}`);
+}
+
+// 1. Safe cast window in SoundSynth.ts instead of utilizing 'any'
+replaceInFile(
+  'src/core/SoundSynth.ts',
+  'const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;',
+  'const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;'
+);
+
+// 2. MeleeComponent imports and cleanups
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  'import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";',
+  'import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";\nimport { Player } from "@/entities/Player";'
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  'const facing = (this.owner as any).facingDirection ?? 1;',
+  'const facing = (this.owner as Player).facingDirection ?? 1;'
+);
+
+// Clean up IDamageRecorder casting and cleanly reference the optional core action
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `            const recorder = this.owner as unknown as IDamageRecorder;
+            if (recorder.registerDamageDealt) {
+              recorder.registerDamageDealt();
+            }`,
+  `            this.owner.registerDamageDealt?.();`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }`,
+  `          this.owner.registerDamageDealt?.();`
+);
+
+// Clean up SPAWN_SPARKS cast bypass
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  'eventBroker.publish("SPAWN_SPARKS" as any, {',
+  'eventBroker.publish("SPAWN_SPARKS", {'
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
+          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+        }`,
+  `        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          this.owner.registerDamageDealt?.();
+          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+        }`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `      if (isHit) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          health.takeDamage(1);
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
+        }`,
+  `      if (isHit) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          health.takeDamage(1);
+          this.owner.registerDamageDealt?.();
+        }`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          const recorder = this.owner as unknown as IDamageRecorder;
+          if (recorder.registerDamageDealt) {
+            recorder.registerDamageDealt();
+          }
+
+          this.owner.velocity.y = -this.pogoForce;`,
+  `        if (isHit) {
+          this.owner.world.releaseProjectile(proj);
+          this.owner.registerDamageDealt?.();
+
+          this.owner.velocity.y = -this.pogoForce;`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`,
+  `        const player = this.owner as Player;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`,
+  `        const player = this.owner as Player;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`
+);
+
+replaceInFile(
+  'src/entities/components/MeleeComponent.ts',
+  `        const player = this.owner as any;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`,
+  `        const player = this.owner as Player;
+        player.hasDoubleJump = true;
+        if (player.dashComponent) {
+          player.dashComponent.resetDashCharge();
+        }`
+);
+
+console.log("All Phase 3 high-fidelity casting cleanups applied successfully.");
 
 
 
@@ -4105,6 +4265,8 @@ export interface IEntity {
     dependencies?: any
   ): T;
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
+  startDeathSequence?(): void;
+  registerDamageDealt?(): void;
 }
 
 export interface IProjectile extends IEntity {
@@ -4637,7 +4799,7 @@ class SoundSynth {
   private init() {
     if (this.ctx) return;
 
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     this.ctx = new AudioContextClass();
 
     this.masterGain = this.ctx.createGain();
@@ -5485,6 +5647,9 @@ export class BaseEntity implements IEntity {
   public id: string;
   public isDead: boolean = false;
   public world: IWorld;
+
+  public startDeathSequence?(): void;
+  public registerDamageDealt?(): void;
 
   private components = new Map<any, IEntityComponent>();
 
@@ -7484,6 +7649,7 @@ export class FireballComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
+import { Player } from "@/entities/Player";
 import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements IEntityComponent {
@@ -7519,7 +7685,7 @@ export class HealComponent implements IEntityComponent {
   }
 
   private completeHealing(): void {
-    const player = this.owner as any;
+    const player = this.owner as Player;
     this.isHealing = false;
     player.healingCharges = Math.max(0, player.healingCharges - 1);
     eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: player.healingCharges });
@@ -7544,6 +7710,7 @@ export class HealComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { EntityStatus } from "@/core/Interfaces";
 
 export interface HealthComponentOptions {
   maxHealth?: number;
@@ -7580,8 +7747,8 @@ export class HealthComponent implements IEntityComponent {
   }
 
   public takeDamage(amount: number): boolean {
-    const isDying = "isDying" in this.owner && (this.owner as any).isDying;
-    const isSpawning = "isSpawning" in this.owner && (this.owner as any).isSpawning;
+    const isDying = this.owner.status === EntityStatus.DYING;
+    const isSpawning = this.owner.status === EntityStatus.SPAWNING;
     if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
       return false;
     }
@@ -7612,8 +7779,8 @@ export class HealthComponent implements IEntityComponent {
     }
 
     if (this.currentHealth <= 0) {
-      if ("startDeathSequence" in this.owner) {
-        (this.owner as any).startDeathSequence();
+      if (this.owner.startDeathSequence) {
+        this.owner.startDeathSequence();
       } else {
         this.owner.isDead = true;
       }
@@ -7675,7 +7842,8 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";
+import { EntityStatus } from "@/core/Interfaces";
+import { Player } from "@/entities/Player";
 
 
 export class MeleeComponent implements IEntityComponent {
@@ -7732,7 +7900,7 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const facing = (this.owner as any).facingDirection ?? 1;
+    const facing = (this.owner as Player).facingDirection ?? 1;
 
     for (const target of targets) {
       let isHit = false;
@@ -7779,15 +7947,12 @@ export class MeleeComponent implements IEntityComponent {
           const damaged = health.takeDamage(damage);
           if (damaged) {
             this.hasHitEnemyThisSwing = true;
-            const recorder = this.owner as unknown as IDamageRecorder;
-            if (recorder.registerDamageDealt) {
-              recorder.registerDamageDealt();
-            }
+            this.owner.registerDamageDealt?.();
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
-            eventBroker.publish("SPAWN_SPARKS" as any, {
+            eventBroker.publish("SPAWN_SPARKS", {
               x: target.position.x,
               y: target.position.y,
               angle: facing > 0 ? 0 : Math.PI,
@@ -7834,10 +7999,7 @@ export class MeleeComponent implements IEntityComponent {
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
@@ -7877,10 +8039,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(1);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
         }
 
         this.owner.velocity.y = -this.pogoForce;
@@ -7914,10 +8073,7 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isHit) {
           this.owner.world.releaseProjectile(proj);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
+          this.owner.registerDamageDealt?.();
 
           this.owner.velocity.y = -this.pogoForce;
           this.owner.position.y -= 2;

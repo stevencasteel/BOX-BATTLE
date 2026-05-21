@@ -36,6 +36,8 @@ export interface IEntity {
     dependencies?: any
   ): T;
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
+  startDeathSequence?(): void;
+  registerDamageDealt?(): void;
 }
 
 export interface IProjectile extends IEntity {
