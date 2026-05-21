@@ -346,25 +346,25 @@ body {
 .binding-board {
   width: 100%;
   max-width: 640px;
-  padding: 28px;
-  border-radius: 28px;
+  padding: 16px 20px;
+  border-radius: 24px;
   margin: auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dual Column Layout */
+  gap: 10px 20px;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 40vh;
-  /* Reduced slightly to prevent vertical layout compression */
+  max-height: 38vh;
 }
 
 .binding-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 12px 6px;
+  padding: 6px 4px;
+  box-sizing: border-box;
 }
 
 .binding-action-label {
@@ -966,4 +966,28 @@ body {
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-right: none;
+}
+
+/* =========================================================================
+   GLOWING RETRO CABINET SCROLLBARS
+   ========================================================================= */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-bg);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--signal-green);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--signal-green-glow);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4ade80;
 }

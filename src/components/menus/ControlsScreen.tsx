@@ -12,6 +12,24 @@ interface ControlsScreenProps {
   reloadSaveSlots: () => void;
 }
 
+function formatKeyDisplayName(code: string): string {
+  if (!code) return "[ EMPTY ]";
+  
+  const upper = code.trim();
+  if (upper === "Space") return "SPACE";
+  if (upper === "ArrowLeft") return "LEFT ARROW";
+  if (upper === "ArrowRight") return "RIGHT ARROW";
+  if (upper === "ArrowUp") return "UP ARROW";
+  if (upper === "ArrowDown") return "DOWN ARROW";
+  if (upper === "Period") return ".";
+  if (upper === "Comma") return ",";
+  if (upper === "Slash") return "/";
+  if (upper === "Backspace") return "BACKSPACE";
+  if (upper === "Escape") return "ESC";
+  
+  return upper.replace(/^Key/, ""); /* Strips "Key" prefix (e.g. "KeyA" -> "A") */
+}
+
 export function ControlsScreen({
   menuIndex,
   rebindTarget,
@@ -103,7 +121,7 @@ export function ControlsScreen({
                 >
                   {rebindTarget?.action === action && rebindTarget?.index === 0
                     ? "PRESS ANY KEY..."
-                    : keys[0] || "[ EMPTY ]"}
+                    : formatKeyDisplayName(keys[0])}
                 </button>
               </div>
             </div>
