@@ -1,9 +1,7 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
-import { Registry } from "@/core/Registry";
-import { soundSynth } from "@/core/SoundSynth";
-import { Projectile } from "@/entities/Projectile";
+import { IWorld } from "@/core/Interfaces";
 
 export type BossState = "COOLDOWN" | "PATROL" | "TELEGRAPH" | "LUNGE" | "DEAD";
 
@@ -23,8 +21,8 @@ export class Boss extends BaseEntity {
   private volleyCount: number = 0;
   private volleyTimer: number = 0;
 
-  constructor(id: string) {
-    super(id);
+  constructor(id: string, world: IWorld) {
+    super(id, world);
     this.size = { width: 60, height: 60 };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
@@ -92,7 +90,7 @@ export class Boss extends BaseEntity {
           this.state = "LUNGE";
           this.stateTimer = 0.5; 
           
-          const player = Registry.player;
+          const player = this.world.player;
           if (player) {
             const dir = Math.sign(player.position.x - this.position.x);
             this.facingDirection = dir !== 0 ? dir : this.facingDirection;
@@ -136,8 +134,9 @@ export class Boss extends BaseEntity {
   }
 
   private fireSingleShotAtPlayer() {
-    const player = Registry.player;
-    if (!player || !Registry.projectilePool || player.isDead) return;
+    const player = this.world.player;
+    const pool = (this.world as any).projectilePool;
+    if (!player || !pool || player.isDead) return;
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -147,7 +146,7 @@ export class Boss extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    Registry.projectilePool.get(
+    pool.get(
       this.position.x + dirX * 40,
       this.position.y + dirY * 40,
       dirX,
@@ -156,14 +155,14 @@ export class Boss extends BaseEntity {
       1,
       250, 
       10.0, 
-      (p: Projectile) => Registry.projectilePool?.release(p)
+      (p: any) => this.world.releaseProjectile(p),
+      this.world
     );
-
-    soundSynth.playSlash(); 
   }
 
   private fireRadialOmniBurst() {
-    if (!Registry.projectilePool) return;
+    const pool = (this.world as any).projectilePool;
+    if (!pool) return;
 
     const projectileCount = 8;
     const angleStep = (Math.PI * 2) / projectileCount;
@@ -173,7 +172,7 @@ export class Boss extends BaseEntity {
       const dirX = Math.cos(angle);
       const dirY = Math.sin(angle);
 
-      Registry.projectilePool.get(
+      pool.get(
         this.position.x + dirX * 40,
         this.position.y + dirY * 40,
         dirX,
@@ -182,11 +181,10 @@ export class Boss extends BaseEntity {
         1,
         280, 
         4.0,
-        (p: Projectile) => Registry.projectilePool?.release(p)
+        (p: any) => this.world.releaseProjectile(p),
+        this.world
       );
     }
-
-    soundSynth.playDash(); 
   }
 
   private evaluatePhaseShifts() {
@@ -203,7 +201,7 @@ export class Boss extends BaseEntity {
   }
 
   private trackPlayer() {
-    const player = Registry.player;
+    const player = this.world.player;
     if (player && this.state !== "LUNGE") {
       const dirToPlayer = Math.sign(player.position.x - this.position.x);
       if (dirToPlayer !== 0) {
@@ -213,7 +211,7 @@ export class Boss extends BaseEntity {
   }
 
   private checkPlayerContact() {
-    const player = Registry.player;
+    const player = this.world.player;
     if (!player || player.isDead) return;
 
     const playerHalfW = player.size.width / 2;
@@ -249,18 +247,18 @@ export class Boss extends BaseEntity {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
 
-    for (const hazard of PhysicsComponent.hazards) {
+    for (const hazard of this.world.physicsWorld.hazards) {
       const isHit = (
         this.position.x + halfW > hazard.x &&
         this.position.x - halfW < hazard.x + hazard.width &&
         this.position.y + halfH > hazard.y &&
-        this.position.y - hazard.height < hazard.y + hazard.height
+        this.position.y - halfH < hazard.y + hazard.height
       );
 
       if (isHit) {
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
-          this.velocity.y = -550; // Hazard bounce
+          this.velocity.y = -550;
           this.physics.isGrounded = false;
         }
         break;

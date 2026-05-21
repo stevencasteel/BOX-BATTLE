@@ -1,10 +1,9 @@
 import { BaseEntity } from "./BaseEntity";
-import { PhysicsComponent, Rectangle } from "@/components/PhysicsComponent";
+import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
 import { inputProvider } from "@/core/InputProvider";
-import { Registry } from "@/core/Registry";
-import { soundSynth } from "@/core/SoundSynth";
-import { Camera } from "@/core/Camera";
+import { eventBroker } from "@/core/EventBroker";
+import { IWorld, Rectangle } from "@/core/Interfaces";
 
 interface GhostFrame {
   x: number;
@@ -48,7 +47,6 @@ export class Player extends BaseEntity {
   private ghosts: GhostFrame[] = [];
   private ghostSpawnTimer: number = 0;
 
-  // Determination & Healing States
   public determinationCounter: number = 0;
   public healingCharges: number = 0;
   public isHealing: boolean = false;
@@ -56,8 +54,8 @@ export class Player extends BaseEntity {
   private readonly maxHealingCharges: number = 3;
   private readonly healDuration: number = 2.0;
 
-  constructor(id: string) {
-    super(id);
+  constructor(id: string, world: IWorld) {
+    super(id, world);
     this.size = { width: 40, height: 80 };
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -86,7 +84,6 @@ export class Player extends BaseEntity {
       this.attackDirection = null;
     }
 
-    // --- Active Healing State Update ---
     if (this.isHealing) {
       this.velocity.x = 0;
       this.healTimer -= dt;
@@ -99,8 +96,12 @@ export class Player extends BaseEntity {
         this.isHealing = false;
         this.healingCharges = Math.max(0, this.healingCharges - 1);
         this.health.currentHealth = Math.min(this.health.maxHealth, this.health.currentHealth + 1);
-        soundSynth.playHitConfirm();
-        Camera.shake(3, 0.1);
+        eventBroker.publish("PLAYER_HEALED", {
+          amount: 1,
+          currentHealth: this.health.currentHealth,
+          maxHealth: this.health.maxHealth
+        });
+        eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
       }
 
       super.update(dt);
@@ -174,13 +175,12 @@ export class Player extends BaseEntity {
       this.dashDirection = moveAxis !== 0 ? Math.sign(moveAxis) : this.facingDirection;
       this.velocity.y = 0;
       this.ghostSpawnTimer = 0;
-      soundSynth.playDash();
+      eventBroker.publish("PLAYER_DASHED", { direction: this.dashDirection });
 
       super.update(dt);
       return;
     }
 
-    // --- Grounded Action Controls (Drop-through vs Healing) ---
     if (inputProvider.isJustPressed("JUMP")) {
       this.jumpBufferTimer = 0.1;
     } else {
@@ -188,42 +188,39 @@ export class Player extends BaseEntity {
     }
 
     if (this.jumpBufferTimer > 0) {
-      // Prioritize One-way Drop-through over jump/heal if holding Down
       if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.isStandingOnOneway()) {
         const physics = this.getComponent(PhysicsComponent);
         if (physics) {
-          physics.disablePlatformCollisionTimer = 0.25; // Disable platform collisions briefly
+          physics.disablePlatformCollisionTimer = 0.25;
         }
-        this.position.y += 12; // Slip physically below snapping threshold
+        this.position.y += 12;
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump(); // Play subtle drops/slip sound cue
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       }
-      // Else if on solid floor, holding Down + Jump initiates HEAL
       else if (inputProvider.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.healingCharges > 0 && this.health.currentHealth < this.health.maxHealth) {
         this.isHealing = true;
         this.healTimer = this.healDuration;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump();
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       }
-      // Normal jump actions
       else if (this.coyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump();
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.canDash = true;
-        soundSynth.playJump();
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
-        soundSynth.playJump();
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       }
     }
 
@@ -231,7 +228,6 @@ export class Player extends BaseEntity {
       this.velocity.y *= 0.4;
     }
 
-    // --- Responsive Combat Input Checks ---
     if (inputProvider.isJustPressed("ATTACK")) {
       this.isCharging = true;
       this.chargeTimer = 0;
@@ -247,10 +243,10 @@ export class Player extends BaseEntity {
           this.checkPogoAttack();
         } else if (inputProvider.isPressed("MOVE_UP")) {
           this.attackDirection = "up";
-          soundSynth.playSlash();
+          eventBroker.publish("PLAYER_ATTACKED", { direction: "up" });
         } else {
           this.attackDirection = "side";
-          soundSynth.playSlash();
+          eventBroker.publish("PLAYER_ATTACKED", { direction: "side" });
         }
       }
     }
@@ -282,7 +278,7 @@ export class Player extends BaseEntity {
     const ownerHalfH = this.size.height / 2;
     const feetY = this.position.y + ownerHalfH;
 
-    for (const platform of PhysicsComponent.onewayPlatforms) {
+    for (const platform of this.world.physicsWorld.onewayPlatforms) {
       if (this.position.x + 10 > platform.x && this.position.x - 10 < platform.x + platform.width) {
         if (Math.abs(feetY - platform.y) <= 6) {
           return true;
@@ -299,7 +295,6 @@ export class Player extends BaseEntity {
     if (this.determinationCounter >= 5) {
       this.determinationCounter = 0;
       this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
-      soundSynth.playHitConfirm();
     }
   }
 
@@ -309,7 +304,7 @@ export class Player extends BaseEntity {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
 
-    for (const hazard of PhysicsComponent.hazards) {
+    for (const hazard of this.world.physicsWorld.hazards) {
       const isHit = (
         this.position.x + halfW > hazard.x &&
         this.position.x - halfW < hazard.x + hazard.width &&
@@ -333,8 +328,6 @@ export class Player extends BaseEntity {
   }
 
   private fireFireball() {
-    if (!Registry.projectilePool) return;
-
     this.attackCooldownTimer = 0.12;
 
     let dirX = inputProvider.getAxis("MOVE_LEFT", "MOVE_RIGHT");
@@ -361,31 +354,35 @@ export class Player extends BaseEntity {
     const spawnX = this.position.x + normalizedDir.x * 30;
     const spawnY = this.position.y + normalizedDir.y * 30;
 
-    const proj = Registry.projectilePool.get(
-      spawnX,
-      spawnY,
-      normalizedDir.x,
-      normalizedDir.y,
-      "player",
-      damage,
-      speed,
-      lifespan,
-      (p: any) => Registry.projectilePool?.release(p)
-    );
+    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
 
-    if (isLvl2) {
-      proj.size = { width: 28, height: 28 };
-      soundSynth.playDash();
-    } else {
-      proj.size = { width: 14, height: 14 };
-      soundSynth.playJump();
+    const pool = (this.world as any).projectilePool;
+    if (pool) {
+      const proj = pool.get(
+        spawnX,
+        spawnY,
+        normalizedDir.x,
+        normalizedDir.y,
+        "player",
+        damage,
+        speed,
+        lifespan,
+        (p: any) => this.world.releaseProjectile(p),
+        this.world
+      );
+
+      if (isLvl2) {
+        proj.size = { width: 28, height: 28 };
+      } else {
+        proj.size = { width: 14, height: 14 };
+      }
     }
   }
 
   private checkMeleeAttackContact() {
     const targets = [];
-    if (Registry.boss && !Registry.boss.isDead) targets.push(Registry.boss);
-    for (const minion of Registry.minions) {
+    if (this.world.boss && !this.world.boss.isDead) targets.push(this.world.boss);
+    for (const minion of this.world.minions) {
       if (minion && !minion.isDead) targets.push(minion);
     }
 
@@ -434,8 +431,7 @@ export class Player extends BaseEntity {
             this.registerDamageDealt();
 
             if (isCloseRange) {
-              soundSynth.playHitConfirm();
-              Camera.shake(6, 0.12);
+              eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.12 });
             }
           }
         }
@@ -452,8 +448,8 @@ export class Player extends BaseEntity {
     };
 
     const targets = [];
-    if (Registry.boss && !Registry.boss.isDead) targets.push(Registry.boss);
-    for (const minion of Registry.minions) {
+    if (this.world.boss && !this.world.boss.isDead) targets.push(this.world.boss);
+    for (const minion of this.world.minions) {
       if (minion && !minion.isDead) targets.push(minion);
     }
 
@@ -479,42 +475,39 @@ export class Player extends BaseEntity {
         this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
-        soundSynth.playPogo();
+        eventBroker.publish("PLAYER_POGOED", undefined);
         return;
       }
     }
 
-    const pool = Registry.projectilePool;
-    if (pool) {
-      const activeProjectiles = [...pool.getActive()];
-      for (const proj of activeProjectiles) {
-        if (proj.isActive && proj.ownerId === "boss") {
-          const pW = proj.size.width / 2;
-          const pH = proj.size.height / 2;
+    const activeProjectiles = this.world.getProjectiles();
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        const pW = proj.size.width / 2;
+        const pH = proj.size.height / 2;
 
-          const isHit = (
-            pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
-            pogoHitbox.x < proj.position.x + pW &&
-            pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
-            pogoHitbox.y < proj.position.y + pH
-          );
+        const isHit = (
+          pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
+          pogoHitbox.x < proj.position.x + pW &&
+          pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
+          pogoHitbox.y < proj.position.y + pH
+        );
 
-          if (isHit) {
-            pool.release(proj);
-            this.registerDamageDealt();
+        if (isHit) {
+          this.world.releaseProjectile(proj);
+          this.registerDamageDealt();
 
-            this.velocity.y = -this.pogoForce;
-            this.position.y -= 2;
-            this.hasDoubleJump = true;
-            this.canDash = true;
-            soundSynth.playPogo();
-            return;
-          }
+          this.velocity.y = -this.pogoForce;
+          this.position.y -= 2;
+          this.hasDoubleJump = true;
+          this.canDash = true;
+          eventBroker.publish("PLAYER_POGOED", undefined);
+          return;
         }
       }
     }
 
-    const surfaces = [...PhysicsComponent.solids, ...PhysicsComponent.onewayPlatforms];
+    const surfaces = [...this.world.physicsWorld.solids, ...this.world.physicsWorld.onewayPlatforms];
     for (const solid of surfaces) {
       const isHit = (
         pogoHitbox.x + pogoHitbox.width > solid.x &&
@@ -528,7 +521,7 @@ export class Player extends BaseEntity {
         this.position.y -= 2;
         this.hasDoubleJump = true;
         this.canDash = true;
-        soundSynth.playPogo();
+        eventBroker.publish("PLAYER_POGOED", undefined);
         break;
       }
     }

@@ -1,12 +1,6 @@
 import { Component } from "@/entities/Component";
 import { BaseEntity } from "@/entities/BaseEntity";
-
-export interface Rectangle {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import { Rectangle } from "@/core/Interfaces";
 
 export class PhysicsComponent implements Component {
   public owner!: BaseEntity;
@@ -15,23 +9,7 @@ export class PhysicsComponent implements Component {
   public isOnWallLeft: boolean = false;
   public isOnWallRight: boolean = false;
 
-  public disablePlatformCollisionTimer: number = 0; // Timer to temporarily bypass one-way platforms
-
-  public static solids: Rectangle[] = [];
-  public static hazards: Rectangle[] = [];
-  public static onewayPlatforms: Rectangle[] = [];
-
-  public static setSolids(solids: Rectangle[]) {
-    PhysicsComponent.solids = solids;
-  }
-
-  public static setHazards(hazards: Rectangle[]) {
-    PhysicsComponent.hazards = hazards;
-  }
-
-  public static setOnewayPlatforms(platforms: Rectangle[]) {
-    PhysicsComponent.onewayPlatforms = platforms;
-  }
+  public disablePlatformCollisionTimer: number = 0;
 
   public setup(owner: BaseEntity, dependencies?: Record<string, any>): void {
     this.owner = owner;
@@ -64,8 +42,9 @@ export class PhysicsComponent implements Component {
 
   private resolveCollisionsX() {
     const ownerHalfW = this.owner.size.width / 2;
+    const physicsWorld = this.owner.world.physicsWorld;
 
-    for (const solid of PhysicsComponent.solids) {
+    for (const solid of physicsWorld.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.x > 0) {
           this.owner.position.x = solid.x - ownerHalfW;
@@ -81,9 +60,9 @@ export class PhysicsComponent implements Component {
 
   private resolveCollisionsY() {
     const ownerHalfH = this.owner.size.height / 2;
+    const physicsWorld = this.owner.world.physicsWorld;
 
-    // 1. Resolve Solid Blocks (Impassable from all sides)
-    for (const solid of PhysicsComponent.solids) {
+    for (const solid of physicsWorld.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.y > 0) {
           this.owner.position.y = solid.y - ownerHalfH;
@@ -96,13 +75,11 @@ export class PhysicsComponent implements Component {
       }
     }
 
-    // 2. Resolve One-Way Drop-Through Platforms (Only block downward movements if standing and timer is not active)
     if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
-      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016; // approximate previous position
+      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016;
 
-      for (const platform of PhysicsComponent.onewayPlatforms) {
+      for (const platform of physicsWorld.onewayPlatforms) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
-          // Only collide if feet were above the platform's top edge in the previous frame
           if (prevY + ownerHalfH - 4 <= platform.y) {
             this.owner.position.y = platform.y - ownerHalfH;
             this.owner.velocity.y = 0;

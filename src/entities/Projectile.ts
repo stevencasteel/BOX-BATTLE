@@ -1,9 +1,7 @@
 import { BaseEntity } from "./BaseEntity";
 import { Poolable } from "@/core/ObjectPool";
-import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
-import { Registry } from "@/core/Registry";
-import { soundSynth } from "@/core/SoundSynth";
+import { IWorld } from "@/core/Interfaces";
 
 export class Projectile extends BaseEntity implements Poolable {
   public isActive: boolean = false;
@@ -14,7 +12,7 @@ export class Projectile extends BaseEntity implements Poolable {
   private onRelease?: (proj: Projectile) => void;
 
   constructor() {
-    super("projectile");
+    super("projectile", null as any);
     this.size = { width: 14, height: 14 };
   }
 
@@ -27,7 +25,8 @@ export class Projectile extends BaseEntity implements Poolable {
     damage: number,
     speed: number,
     lifespan: number,
-    onRelease: (proj: Projectile) => void
+    onRelease: (proj: Projectile) => void,
+    world: IWorld
   ) {
     this.position = { x, y };
     this.velocity = { x: dirX * speed, y: dirY * speed };
@@ -36,6 +35,7 @@ export class Projectile extends BaseEntity implements Poolable {
     this.damage = damage;
     this.lifespan = lifespan;
     this.onRelease = onRelease;
+    this.world = world;
     
     this.isActive = true;
     this.isDead = false;
@@ -79,7 +79,7 @@ export class Projectile extends BaseEntity implements Poolable {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
 
-    for (const solid of PhysicsComponent.solids) {
+    for (const solid of this.world.physicsWorld.solids) {
       const isHit = (
         this.position.x + halfW > solid.x &&
         this.position.x - halfW < solid.x + solid.width &&
@@ -95,12 +95,13 @@ export class Projectile extends BaseEntity implements Poolable {
   }
 
   private checkProjectileClashes(): boolean {
-    if (this.ownerId !== "player" || !Registry.projectilePool) return false;
+    if (this.ownerId !== "player") return false;
 
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
 
-    for (const other of Registry.projectilePool.getActive()) {
+    const activeProjectiles = this.world.getProjectiles();
+    for (const other of activeProjectiles) {
       if (other.isActive && other.ownerId === "boss") {
         const oW = other.size.width / 2;
         const oH = other.size.height / 2;
@@ -113,8 +114,7 @@ export class Projectile extends BaseEntity implements Poolable {
         );
 
         if (isColliding) {
-          Registry.projectilePool.release(other);
-          soundSynth.playHitConfirm();
+          this.world.releaseProjectile(other);
           return true; 
         }
       }
@@ -126,14 +126,14 @@ export class Projectile extends BaseEntity implements Poolable {
     const targets = [];
     
     if (this.ownerId === "boss") {
-      if (Registry.player && !Registry.player.isDead) {
-        targets.push(Registry.player);
+      if (this.world.player && !this.world.player.isDead) {
+        targets.push(this.world.player);
       }
     } else {
-      if (Registry.boss && !Registry.boss.isDead) {
-        targets.push(Registry.boss);
+      if (this.world.boss && !this.world.boss.isDead) {
+        targets.push(this.world.boss);
       }
-      for (const minion of Registry.minions) {
+      for (const minion of this.world.minions) {
         if (minion && !minion.isDead) {
           targets.push(minion);
         }

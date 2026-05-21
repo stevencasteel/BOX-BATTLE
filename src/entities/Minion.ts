@@ -1,8 +1,7 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
-import { Registry } from "@/core/Registry";
-import { soundSynth } from "@/core/SoundSynth";
+import { IWorld } from "@/core/Interfaces";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
@@ -11,37 +10,32 @@ export class Minion extends BaseEntity {
   public health!: HealthComponent;
   private physics!: PhysicsComponent;
 
-  // AI & Movement variables
   private patrolSpeed: number = 100;
   private facingDirection: number = 1;
   private stateTimer: number = 0;
   
-  // Patrol limits for Flyer
   private pointA: { x: number; y: number } = { x: 0, y: 0 };
   private pointB: { x: number; y: number } = { x: 0, y: 0 };
   private flyerTarget: "A" | "B" = "B";
 
-  // Shooting & Attack States
   private shootTimer: number = 0;
   private attackState: "PATROL" | "TELEGRAPH" | "ATTACK" | "COOLDOWN" = "PATROL";
   private volleyCount: number = 0;
   private volleyTimer: number = 0;
 
-  constructor(id: string, type: MinionType, startPos: { x: number; y: number }) {
-    super(id);
+  constructor(id: string, type: MinionType, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, world);
     this.minionType = type;
     this.position = { ...startPos };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     
-    // Configure separate behaviors and stats
     if (type === "TURRET") {
       this.size = { width: 44, height: 44 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 3,
         invincibilityDuration: 0.15
       });
-      // Gravity disabled for static ground turrets
       this.physics.gravity = 0;
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
@@ -55,11 +49,10 @@ export class Minion extends BaseEntity {
         maxHealth: 2,
         invincibilityDuration: 0.15
       });
-      this.physics.gravity = 0; // Flying minion defies gravity
+      this.physics.gravity = 0;
       
-      // Establish patrol path
       this.pointA = { ...startPos };
-      this.pointB = { x: startPos.x, y: startPos.y - 180 }; // Fly vertically
+      this.pointB = { x: startPos.x, y: startPos.y - 180 };
     }
   }
 
@@ -69,17 +62,16 @@ export class Minion extends BaseEntity {
     this.stateTimer -= dt;
     this.shootTimer -= dt;
 
-    const player = Registry.player;
+    const player = this.world.player;
     const playerValid = player && !player.isDead;
 
-    // Type-Specific AI State Machine
     if (this.minionType === "TURRET") {
       this.velocity = { x: 0, y: 0 };
       
       if (playerValid) {
         const dist = this.getDistanceToPlayer(player);
         if (dist < 400 && this.shootTimer <= 0) {
-          this.shootTimer = 2.5; // Cooldown
+          this.shootTimer = 2.5;
           this.fireSingleShotAtPlayer(player);
         }
       }
@@ -88,20 +80,17 @@ export class Minion extends BaseEntity {
       if (this.attackState === "PATROL") {
         this.velocity.x = this.facingDirection * this.patrolSpeed;
         
-        // Reverse patrol directions on walls
         if (this.physics.isOnWallLeft) this.facingDirection = 1;
         else if (this.physics.isOnWallRight) this.facingDirection = -1;
 
-        // Check melee proximity trigger
         if (playerValid) {
           const distY = Math.abs(player.position.y - this.position.y);
           const distX = player.position.x - this.position.x;
           
           if (distY < 40 && Math.abs(distX) < 110 && Math.sign(distX) === this.facingDirection) {
             this.attackState = "TELEGRAPH";
-            this.stateTimer = 0.4; // Wind up telegraph
+            this.stateTimer = 0.4;
             this.velocity.x = 0;
-            soundSynth.playSelectTick();
           }
         }
       } 
@@ -109,16 +98,14 @@ export class Minion extends BaseEntity {
         this.velocity.x = 0;
         if (this.stateTimer <= 0) {
           this.attackState = "ATTACK";
-          this.stateTimer = 0.2; // Attack duration
-          this.velocity.x = this.facingDirection * 400; // Thrust forward
-          soundSynth.playSlash();
+          this.stateTimer = 0.2;
+          this.velocity.x = this.facingDirection * 400;
         }
       } 
       else if (this.attackState === "ATTACK") {
-        // Melee hit registration is handled by overlap checks in the GameArena loop
         if (this.stateTimer <= 0 || this.physics.isOnWallLeft || this.physics.isOnWallRight) {
           this.attackState = "COOLDOWN";
-          this.stateTimer = 1.2; // Recovery cooldown
+          this.stateTimer = 1.2;
           this.velocity.x = 0;
         }
       } 
@@ -130,7 +117,6 @@ export class Minion extends BaseEntity {
       }
     } 
     else if (this.minionType === "FLYER") {
-      // 1. Hover Patrol between points A and B
       const targetPos = this.flyerTarget === "A" ? this.pointA : this.pointB;
       const dx = targetPos.x - this.position.x;
       const dy = targetPos.y - this.position.y;
@@ -143,23 +129,21 @@ export class Minion extends BaseEntity {
         this.velocity.y = (dy / dist) * this.patrolSpeed;
       }
 
-      // 2. Ranged Volley
       if (playerValid) {
         const playerDist = this.getDistanceToPlayer(player);
         if (playerDist < 480 && this.shootTimer <= 0 && this.volleyCount === 0) {
           this.volleyCount = 3;
           this.volleyTimer = 0;
-          this.shootTimer = 3.5; // Volley cooldown
+          this.shootTimer = 3.5;
         }
       }
 
-      // Handle rapid fire burst
       if (this.volleyCount > 0) {
         this.volleyTimer -= dt;
         if (this.volleyTimer <= 0 && playerValid) {
           this.fireSingleShotAtPlayer(player);
           this.volleyCount--;
-          this.volleyTimer = 0.18; // Gap between rapid shots
+          this.volleyTimer = 0.18;
         }
       }
     }
@@ -174,7 +158,8 @@ export class Minion extends BaseEntity {
   }
 
   private fireSingleShotAtPlayer(player: any) {
-    if (!Registry.projectilePool) return;
+    const pool = (this.world as any).projectilePool;
+    if (!pool) return;
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -184,19 +169,18 @@ export class Minion extends BaseEntity {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
-    Registry.projectilePool.get(
+    pool.get(
       this.position.x + dirX * 30,
       this.position.y + dirY * 30,
       dirX,
       dirY,
-      "boss", // Minion projectiles behave as boss assets (harm the player)
-      1,      // 1 damage standard
-      400,    // speed
-      5.0,    // lifespan
-      (p: any) => Registry.projectilePool?.release(p)
+      "boss",
+      1,
+      400,
+      5.0,
+      (p: any) => this.world.releaseProjectile(p),
+      this.world
     );
-
-    soundSynth.playJump();
   }
 
   public draw(ctx: CanvasRenderingContext2D) {
@@ -206,17 +190,16 @@ export class Minion extends BaseEntity {
       ctx.fillStyle = "white";
     } else {
       if (this.minionType === "TURRET") {
-        ctx.fillStyle = "#718096"; // Steel Grey turret
+        ctx.fillStyle = "#718096";
       } else if (this.minionType === "LANCER") {
-        ctx.fillStyle = "hsl(280, 60%, 55%)"; // Purple Lancer
+        ctx.fillStyle = "hsl(280, 60%, 55%)";
       } else if (this.minionType === "FLYER") {
-        ctx.fillStyle = "hsl(200, 70%, 55%)"; // Light Blue Flyer
+        ctx.fillStyle = "hsl(200, 70%, 55%)";
       }
     }
 
-    // Apply indicators for active telegraph frames
     if (this.minionType === "LANCER" && this.attackState === "TELEGRAPH") {
-      ctx.fillStyle = "hsl(45, 100%, 50%)"; // Yellow warning indicator
+      ctx.fillStyle = "hsl(45, 100%, 50%)";
       ctx.shadowColor = "rgba(234, 179, 8, 0.6)";
       ctx.shadowBlur = 10;
     }
@@ -230,7 +213,6 @@ export class Minion extends BaseEntity {
 
     ctx.shadowBlur = 0;
 
-    // Draw simple visor/face details
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
     ctx.fillRect(

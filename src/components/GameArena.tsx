@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import GameLoop from "@/core/GameLoop";
-import { PhysicsComponent, Rectangle } from "@/components/PhysicsComponent";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { Registry } from "@/core/Registry";
@@ -11,6 +10,10 @@ import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
 import { useGameStore } from "@/store/useGameStore";
+import { World } from "@/core/World";
+import { SimulationSystems } from "@/core/SimulationSystems";
+import { eventBroker } from "@/core/EventBroker";
+import { Rectangle } from "@/core/Interfaces";
 
 interface GameArenaProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -65,33 +68,41 @@ export function GameArena({
     bossDeathTimer.current = -1;
     bossDeathPos.current = null;
 
-    PhysicsComponent.setSolids(solids);
-    PhysicsComponent.setHazards(hazards);
-    PhysicsComponent.setOnewayPlatforms(onewayPlatforms);
+    const systems = new SimulationSystems();
+    systems.setup();
 
-    const activeSpawners: Spawner[] = [
-      new Spawner("TURRET", 175, 490),
-      new Spawner("TURRET", 1075, 490),
-      new Spawner("LANCER", 625, 740),
-      new Spawner("FLYER", 625, 400)
-    ];
+    const world = new World(solids, hazards, onewayPlatforms);
 
     const pool = new ObjectPool(() => new Projectile(), 60);
+    world.projectilePool = pool;
     Registry.projectilePool = pool;
 
-    const player = new Player("player-01");
+    const player = new Player("player-01", world);
     player.position = { x: 150, y: 1000 };
 
-    const boss = new Boss("boss-01");
+    const boss = new Boss("boss-01", world);
     boss.position = { x: 1050, y: 1000 };
 
+    world.player = player;
+    world.boss = boss;
     Registry.player = player;
     Registry.boss = boss;
+
+    const activeSpawners: Spawner[] = [
+      new Spawner("TURRET", 175, 490, world),
+      new Spawner("TURRET", 1075, 490, world),
+      new Spawner("LANCER", 625, 740, world),
+      new Spawner("FLYER", 625, 400, world)
+    ];
 
     Camera.reset();
     
     const state = useGameStore.getState();
     state.setGameResult("PLAYING");
+
+    const unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
+      triggerDialogue(speaker, text);
+    });
 
     const handleUpdate = (dt: number) => {
       if (Camera.hitStopTimer > 0) {
@@ -124,7 +135,7 @@ export function GameArena({
         spawner.update(dt);
       }
 
-      const activeMinions = [...Registry.minions];
+      const activeMinions = [...world.minions];
       for (const minion of activeMinions) {
         minion.update(dt);
 
@@ -175,17 +186,17 @@ export function GameArena({
 
       if (bHealth && bHealth.currentHealth < 30 && !hasTriggeredFirstHit.current) {
         hasTriggeredFirstHit.current = true;
-        triggerDialogue("player", "I found you. This battle ends now!");
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
       if (bHealth && bHealth.currentHealth <= 21 && !hasTriggeredPhase2.current) {
         hasTriggeredPhase2.current = true;
-        triggerDialogue("boss", "You won't beat me! Watch out for my rapid fire!");
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
       }
 
       if (bHealth && bHealth.currentHealth <= 12 && !hasTriggeredPhase3.current) {
         hasTriggeredPhase3.current = true;
-        triggerDialogue("boss", "This is my final stand! Prepare yourself!");
+        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
       }
 
       if (player.isDead) {
@@ -193,21 +204,21 @@ export function GameArena({
         setTimeout(() => {
           state.setGameResult("GAMEOVER");
           loop.stop();
-          triggerDialogue("player", "No... I can't go on...");
-          triggerDialogue("boss", "You fought well... but I am victorious.");
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
         }, 3500);
       } else if (boss.isDead) {
         isCinematicActive.current = true;
         bossDeathTimer.current = 0;
         bossDeathPos.current = { x: boss.position.x, y: boss.position.y };
 
-        Camera.shake(30, 1.8);
+        eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
         setTimeout(() => {
           state.setGameResult("VICTORY");
           loop.stop();
-          triggerDialogue("boss", "No... How could I lose this fight...");
-          triggerDialogue("player", "It is over. The area is secure.");
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
         }, 3500);
       }
 
@@ -251,7 +262,7 @@ export function GameArena({
       boss.draw(ctx);
       player.draw(ctx);
 
-      const activeMinionsToDraw = Registry.minions;
+      const activeMinionsToDraw = world.minions;
       for (const minion of activeMinionsToDraw) {
         minion.draw(ctx);
       }
@@ -335,6 +346,8 @@ export function GameArena({
       boss.teardown();
       pool.clear();
       Camera.reset();
+      systems.teardown();
+      unsubDialogue();
       Registry.player = null;
       Registry.boss = null;
       Registry.projectilePool = null;
@@ -342,6 +355,7 @@ export function GameArena({
       for (const spawner of activeSpawners) {
         spawner.cleanup();
       }
+      world.minions = [];
       Registry.minions = [];
     };
   }, []);

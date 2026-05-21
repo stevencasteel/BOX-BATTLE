@@ -1,5 +1,5 @@
 import { Component } from "./Component";
-import { IEntity } from "@/core/Interfaces";
+import { IEntity, IWorld } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
   public position = { x: 0, y: 0 };
@@ -7,11 +7,13 @@ export class BaseEntity implements IEntity {
   public size = { width: 50, height: 50 };
   public id: string;
   public isDead: boolean = false;
+  public world: IWorld;
 
   private components = new Map<any, Component>();
 
-  constructor(id: string) {
+  constructor(id: string, world: IWorld) {
     this.id = id;
+    this.world = world;
   }
 
   public addComponent<T extends Component>(
