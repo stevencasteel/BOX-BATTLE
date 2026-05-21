@@ -34,6 +34,7 @@ export class Engine {
   private bossDeathTimer: number = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
   private deathTimeoutId: any = null;
+  private dialogueTimeoutId: any = null;
 
   private unsubDialogue!: () => void;
 
@@ -238,8 +239,10 @@ export class Engine {
       this.deathTimeoutId = setTimeout(() => {
         sessionState.setGameResult("GAMEOVER");
         this.stop();
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
+        this.dialogueTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
+        }, 1000);
       }, 3500);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
@@ -251,8 +254,10 @@ export class Engine {
       this.deathTimeoutId = setTimeout(() => {
         sessionState.setGameResult("VICTORY");
         this.stop();
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+        this.dialogueTimeoutId = setTimeout(() => {
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
+          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+        }, 1000);
       }, 3500);
     }
 
@@ -375,6 +380,10 @@ export class Engine {
     if (this.deathTimeoutId !== null) {
       clearTimeout(this.deathTimeoutId);
       this.deathTimeoutId = null;
+    }
+    if (this.dialogueTimeoutId !== null) {
+      clearTimeout(this.dialogueTimeoutId);
+      this.dialogueTimeoutId = null;
     }
     this.loop.cleanup();
     this.player.teardown();

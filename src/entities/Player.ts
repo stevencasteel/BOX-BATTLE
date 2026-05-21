@@ -76,7 +76,11 @@ export class Player extends BaseEntity {
     }
 
     const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
-    if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+    const isPogoing = this.meleeComponent.attackActive && this.meleeComponent.attackDirection === "down";
+
+    if (isPogoing) {
+      this.physics.gravity = 1200 * 0.85;
+    } else if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
       this.physics.gravity = 1200 * 1.4;
     } else {
       this.physics.gravity = 1200;
