@@ -49,6 +49,8 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash();
+        /* Dash Hit-Stop (Impact Freeze Frames): Apply a micro freeze-frame beat to emphasize active dash impact power */
+        Camera.triggerHitStop(0.035);
       })
     );
 

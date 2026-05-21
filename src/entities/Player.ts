@@ -22,13 +22,20 @@ export class Player extends BaseEntity {
   private readonly jumpForce: number = 680;
   private readonly wallSlideSpeed: number = 120;
 
+  /* Coyote Time (Ledge Jump Grace Period): Grace window to register jump inputs after slipping off solid surfaces */
   private coyoteTimer: number = 0;
+  /* Jump Buffering (Pre-ground Landing Inputs): Buffer window to capture pre-landing jump hits */
   private jumpBufferTimer: number = 0;
   public hasDoubleJump: boolean = true;
   public facingDirection: number = 1;
 
+  /* Wall Coyote Time: Grace window to execute wall jumps after slipping off vertical walls */
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
+
+  /* Visual Squash and Stretch (Kinetic Weight): Visual scaling variables for compression on landing and extension on jumps */
+  public visualScale = { x: 1, y: 1 };
+  private wasGrounded: boolean = false;
 
   public determinationCounter: number = 0;
   public healingCharges: number = 0;
@@ -75,14 +82,31 @@ export class Player extends BaseEntity {
       return;
     }
 
+    /* Visual Squash and Stretch: Smoothly interpolate back to default 1.0 dimension ratios */
+    this.visualScale.x += (1 - this.visualScale.x) * 12 * dt;
+    this.visualScale.y += (1 - this.visualScale.y) * 12 * dt;
+
+    if (this.physics.isGrounded && !this.wasGrounded) {
+      /* Compress vertically upon ground collision to emphasize landing impact force */
+      this.visualScale = { x: 1.22, y: 0.78 };
+    }
+    this.wasGrounded = this.physics.isGrounded;
+
     const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
     const isPogoing = this.meleeComponent.attackActive && this.meleeComponent.attackDirection === "down";
+    const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
 
     if (isPogoing) {
+      /* Active Pogo: Slightly dampen gravity to assist mid-air bounce adjustments */
       this.physics.gravity = 1200 * 0.85;
+    } else if (isNearJumpApex) {
+      /* Apex Gravity Scaling (Jump Peak "Hang Time"): Scale down gravity at the peak of a jump for more air control */
+      this.physics.gravity = 1200 * 0.65;
     } else if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
+      /* Fast Fall: Increase downward pull when pressing down */
       this.physics.gravity = 1200 * 1.4;
     } else {
+      /* Standard Fall */
       this.physics.gravity = 1200;
     }
 
@@ -171,6 +195,8 @@ export class Player extends BaseEntity {
       const normY = dirY / len;
       
       this.dashComponent.triggerDash(normX, normY);
+      /* Visual Squash and Stretch: Flatten horizontally on dash impulse */
+      this.visualScale = { x: 1.25, y: 0.75 };
       super.update(dt);
       return;
     }
@@ -197,16 +223,22 @@ export class Player extends BaseEntity {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on ground jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.dashComponent.resetDashCharge();
+        /* Visual Squash and Stretch: Stretch vertically on wall jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
+        /* Visual Squash and Stretch: Stretch vertically on double jump */
+        this.visualScale = { x: 0.82, y: 1.18 };
       }
     }
 
@@ -298,11 +330,13 @@ export class Player extends BaseEntity {
 
     for (const ghost of this.dashComponent.ghosts) {
       ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+      const gWidth = this.size.width * this.visualScale.x;
+      const gHeight = this.size.height * this.visualScale.y;
       ctx.fillRect(
-        ghost.x - this.size.width / 2,
-        ghost.y - this.size.height / 2,
-        this.size.width,
-        this.size.height
+        ghost.x - gWidth / 2,
+        ghost.y - gHeight / 2,
+        gWidth,
+        gHeight
       );
     }
 
@@ -315,11 +349,15 @@ export class Player extends BaseEntity {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
+    /* Render visual squash and stretch calculations on base fill bounds */
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+
     ctx.fillRect(
-      this.position.x - this.size.width / 2,
-      this.position.y - this.size.height / 2,
-      this.size.width,
-      this.size.height
+      this.position.x - vWidth / 2,
+      this.position.y - vHeight / 2,
+      vWidth,
+      vHeight
     );
 
     ctx.shadowBlur = 0;
