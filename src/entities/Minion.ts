@@ -2,26 +2,28 @@ import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/components/PhysicsComponent";
 import { HealthComponent } from "@/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
+import { MinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
 export class Minion extends BaseEntity {
   public minionType: MinionType;
   public health!: HealthComponent;
-  private physics!: PhysicsComponent;
+  public physics!: PhysicsComponent;
+  private behavior: MinionBehavior;
 
-  private patrolSpeed: number = 100;
-  private facingDirection: number = 1;
-  private stateTimer: number = 0;
+  public patrolSpeed: number = 100;
+  public facingDirection: number = 1;
+  public stateTimer: number = 0;
   
-  private pointA: { x: number; y: number } = { x: 0, y: 0 };
-  private pointB: { x: number; y: number } = { x: 0, y: 0 };
-  private flyerTarget: "A" | "B" = "B";
+  public pointA: { x: number; y: number } = { x: 0, y: 0 };
+  public pointB: { x: number; y: number } = { x: 0, y: 0 };
+  public flyerTarget: "A" | "B" = "B";
 
-  private shootTimer: number = 0;
-  private attackState: "PATROL" | "TELEGRAPH" | "ATTACK" | "COOLDOWN" = "PATROL";
-  private volleyCount: number = 0;
-  private volleyTimer: number = 0;
+  public shootTimer: number = 0;
+  public attackState: "PATROL" | "TELEGRAPH" | "ATTACK" | "COOLDOWN" = "PATROL";
+  public volleyCount: number = 0;
+  public volleyTimer: number = 0;
 
   constructor(id: string, type: MinionType, startPos: { x: number; y: number }, world: IWorld) {
     super(id, world);
@@ -37,13 +39,15 @@ export class Minion extends BaseEntity {
         invincibilityDuration: 0.15
       });
       this.physics.gravity = 0;
+      this.behavior = new TurretBehavior();
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 4,
         invincibilityDuration: 0.15
       });
-    } else if (type === "FLYER") {
+      this.behavior = new LancerBehavior();
+    } else {
       this.size = { width: 36, height: 36 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 2,
@@ -53,6 +57,7 @@ export class Minion extends BaseEntity {
       
       this.pointA = { ...startPos };
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
+      this.behavior = new FlyerBehavior();
     }
   }
 
@@ -62,109 +67,20 @@ export class Minion extends BaseEntity {
     this.stateTimer -= dt;
     this.shootTimer -= dt;
 
-    const player = this.world.player;
-    const playerValid = player && !player.isDead;
-
-    if (this.minionType === "TURRET") {
-      this.velocity = { x: 0, y: 0 };
-      
-      if (playerValid) {
-        const dist = this.getDistanceToPlayer(player);
-        if (dist < 400 && this.shootTimer <= 0) {
-          this.shootTimer = 2.5;
-          this.fireSingleShotAtPlayer(player);
-        }
-      }
-    } 
-    else if (this.minionType === "LANCER") {
-      if (this.attackState === "PATROL") {
-        this.velocity.x = this.facingDirection * this.patrolSpeed;
-        
-        if (this.physics.isOnWallLeft) this.facingDirection = 1;
-        else if (this.physics.isOnWallRight) this.facingDirection = -1;
-
-        if (playerValid) {
-          const distY = Math.abs(player.position.y - this.position.y);
-          const distX = player.position.x - this.position.x;
-          
-          if (distY < 40 && Math.abs(distX) < 110 && Math.sign(distX) === this.facingDirection) {
-            this.attackState = "TELEGRAPH";
-            this.stateTimer = 0.4;
-            this.velocity.x = 0;
-          }
-        }
-      } 
-      else if (this.attackState === "TELEGRAPH") {
-        this.velocity.x = 0;
-        if (this.stateTimer <= 0) {
-          this.attackState = "ATTACK";
-          this.stateTimer = 0.2;
-          this.velocity.x = this.facingDirection * 400;
-        }
-      } 
-      else if (this.attackState === "ATTACK") {
-        if (this.stateTimer <= 0 || this.physics.isOnWallLeft || this.physics.isOnWallRight) {
-          this.attackState = "COOLDOWN";
-          this.stateTimer = 1.2;
-          this.velocity.x = 0;
-        }
-      } 
-      else if (this.attackState === "COOLDOWN") {
-        this.velocity.x = 0;
-        if (this.stateTimer <= 0) {
-          this.attackState = "PATROL";
-        }
-      }
-    } 
-    else if (this.minionType === "FLYER") {
-      const targetPos = this.flyerTarget === "A" ? this.pointA : this.pointB;
-      const dx = targetPos.x - this.position.x;
-      const dy = targetPos.y - this.position.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 5) {
-        this.flyerTarget = this.flyerTarget === "A" ? "B" : "A";
-      } else {
-        this.velocity.x = (dx / dist) * this.patrolSpeed;
-        this.velocity.y = (dy / dist) * this.patrolSpeed;
-      }
-
-      if (playerValid) {
-        const playerDist = this.getDistanceToPlayer(player);
-        if (playerDist < 480 && this.shootTimer <= 0 && this.volleyCount === 0) {
-          this.volleyCount = 3;
-          this.volleyTimer = 0;
-          this.shootTimer = 3.5;
-        }
-      }
-
-      if (this.volleyCount > 0) {
-        this.volleyTimer -= dt;
-        if (this.volleyTimer <= 0 && playerValid) {
-          this.fireSingleShotAtPlayer(player);
-          this.volleyCount--;
-          this.volleyTimer = 0.18;
-        }
-      }
-    }
+    this.behavior.update(this, dt);
 
     this.checkHazardContact();
 
     super.update(dt);
   }
 
-  private getDistanceToPlayer(player: any): number {
-    const dx = player.position.x - this.position.x;
-    const dy = player.position.y - this.position.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  private fireSingleShotAtPlayer(player: any) {
+  public fireSingleShotAtPlayer(player: any) {
     const pool = (this.world as any).projectilePool;
     if (!pool) return;
 
     const dx = player.position.x - this.position.x;
-    const dy = player.position.y - this.position.y;
+    const dy = player.position.y - minionClamp(this.position.y);
+    function minionClamp(val: number) { return val; }
     const mag = Math.sqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
