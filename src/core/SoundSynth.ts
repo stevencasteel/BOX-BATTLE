@@ -209,6 +209,155 @@ class SoundSynth {
     }
   }
 
+  public playBossPhaseShift() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.8);
+
+    // FM LFO Vibrato mapping
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    lfo.frequency.setValueAtTime(15, now);
+    lfoGain.gain.setValueAtTime(30, now);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(350, now);
+    filter.frequency.exponentialRampToValueAtTime(1200, now + 0.8);
+    filter.Q.setValueAtTime(4.0, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.55, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    lfo.start(now);
+    osc.start(now);
+
+    lfo.stop(now + 0.82);
+    osc.stop(now + 0.82);
+  }
+
+  public playBossExplosion() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+
+    // Schedule 3 sequential expanding ring explosions
+    for (let i = 0; i < 3; i++) {
+      const delay = i * 0.25;
+      const ringNow = now + delay;
+
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(140 - i * 20, ringNow);
+      osc.frequency.exponentialRampToValueAtTime(40, ringNow + 0.35);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(600, ringNow);
+      filter.frequency.exponentialRampToValueAtTime(150, ringNow + 0.35);
+
+      gain.gain.setValueAtTime(0, ringNow);
+      gain.gain.linearRampToValueAtTime(0.45, ringNow + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ringNow + 0.35);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(ringNow);
+      osc.stop(ringNow + 0.36);
+
+      const noise = this.getNoiseBuffer();
+      if (noise) {
+        const src = this.ctx.createBufferSource();
+        src.buffer = noise;
+        const nGain = this.ctx.createGain();
+        const nFilter = this.ctx.createBiquadFilter();
+
+        nFilter.type = "lowpass";
+        nFilter.frequency.setValueAtTime(400, ringNow);
+
+        nGain.gain.setValueAtTime(0, ringNow);
+        nGain.gain.linearRampToValueAtTime(0.25, ringNow + 0.01);
+        nGain.gain.exponentialRampToValueAtTime(0.001, ringNow + 0.2);
+
+        src.connect(nFilter);
+        nFilter.connect(nGain);
+        nGain.connect(this.sfxGain);
+
+        src.start(ringNow);
+        src.stop(ringNow + 0.21);
+      }
+    }
+
+    // Heavy final sub-bass collapse sweep representing core dissolution
+    const finalNow = now + 0.85;
+    const finalOsc = this.ctx.createOscillator();
+    const finalGain = this.ctx.createGain();
+
+    finalOsc.type = "triangle";
+    finalOsc.frequency.setValueAtTime(90, finalNow);
+    finalOsc.frequency.exponentialRampToValueAtTime(25, finalNow + 0.6);
+
+    finalGain.gain.setValueAtTime(0, finalNow);
+    finalGain.gain.linearRampToValueAtTime(0.70, finalNow + 0.05);
+    finalGain.gain.exponentialRampToValueAtTime(0.001, finalNow + 0.6);
+
+    finalOsc.connect(finalGain);
+    finalGain.connect(this.sfxGain);
+
+    finalOsc.start(finalNow);
+    finalOsc.stop(finalNow + 0.61);
+  }
+
+  public playPlayerExplosion() {
+    this.resumeContext();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    // Linear pitch slide representing mechanical system failure
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.linearRampToValueAtTime(40, now + 0.8);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.linearRampToValueAtTime(60, now + 0.8);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.60, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.81);
+  }
+
   public playHealStart() {
     this.resumeContext();
     if (!this.ctx || !this.sfxGain) return;
@@ -219,7 +368,6 @@ class SoundSynth {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    // FM Sine Sweep: Rise smoothly from 220Hz (A3) to 660Hz (E5) over the 2-second progression
     osc.type = "sine";
     osc.frequency.setValueAtTime(220, now);
     osc.frequency.exponentialRampToValueAtTime(660, now + 2.0);
@@ -267,7 +415,6 @@ class SoundSynth {
     if (!this.ctx || !this.sfxGain) return;
 
     const now = this.ctx.currentTime;
-    // Harmonic A Major chime chord sweep
     const notes = [440, 554.37, 659.25, 880];
     notes.forEach((freq, idx) => {
       const osc = this.ctx!.createOscillator();
@@ -327,7 +474,6 @@ class SoundSynth {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    // High-pitched discordant high-passed square waves mimicking metallic spikes strike
     osc1.type = "square";
     osc1.frequency.setValueAtTime(1400, now);
     osc1.frequency.exponentialRampToValueAtTime(700, now + 0.12);

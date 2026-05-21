@@ -99,7 +99,6 @@ export class SimulationSystems {
       })
     );
 
-    // Healing Progression Subscribers
     this.unsubscribes.push(
       eventBroker.subscribe("HEAL_START", () => {
         soundSynth.playHealStart();
@@ -118,10 +117,16 @@ export class SimulationSystems {
       })
     );
 
-    // Spike Collision Subscriber
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
         soundSynth.playSpikeStrike();
+      })
+    );
+
+    // Boss threat level phase shift subscriber
+    this.unsubscribes.push(
+      eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+        soundSynth.playBossPhaseShift();
       })
     );
   }
@@ -130,6 +135,6 @@ export class SimulationSystems {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
     soundSynth.clearAllSlides();
-    soundSynth.stopHealDrone(); // Force stop any healing progress drones
+    soundSynth.stopHealDrone();
   }
 }

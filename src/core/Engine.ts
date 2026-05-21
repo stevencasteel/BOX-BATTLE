@@ -320,17 +320,20 @@ export class Engine {
     if (bHealth && bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
       this.hasTriggeredPhase2 = true;
       eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
+      eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
     }
 
     if (bHealth && bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
       this.hasTriggeredPhase3 = true;
       eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
+      eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
     }
 
     const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       soundSynth.clearAllSlides();
+      soundSynth.playPlayerExplosion();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
 
@@ -352,6 +355,7 @@ export class Engine {
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
       soundSynth.clearAllSlides();
+      soundSynth.playBossExplosion();
       this.bossDeathTimer = 0;
       this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
 

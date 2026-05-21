@@ -26,6 +26,7 @@ export type GameEventMap = {
   HEAL_CANCEL: void;
   HEAL_COMPLETE: void;
   PLAYER_SPIKED: void;
+  BOSS_PHASE_SHIFT: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
