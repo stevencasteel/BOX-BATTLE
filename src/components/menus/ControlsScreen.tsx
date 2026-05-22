@@ -107,7 +107,7 @@ export function ControlsScreen({
         </button>
       </div>
 
-      <div className="binding-board neo-pressed" style={{ margin: "0", maxHeight: "40vh", gap: "12px 32px", padding: "16px 24px", overflow: "hidden" }}>
+      <div className="binding-board neo-pressed">
         {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
           const keys = settingsManager.getKeyMap()[action] || [];
           const rowMenuIndex = idx + 3;
@@ -142,23 +142,7 @@ export function ControlsScreen({
         })}
       </div>
 
-      <div style={{
-        padding: "10px 20px",
-        borderRadius: "10px",
-        background: "rgba(168, 85, 247, 0.08)",
-        border: "1px solid rgba(168, 85, 247, 0.25)",
-        color: "hsl(280, 80%, 75%)",
-        fontSize: "11px",
-        fontWeight: "bold",
-        letterSpacing: "0.08em",
-        textAlign: "center",
-        textTransform: "uppercase",
-        textShadow: "0 0 6px rgba(168, 85, 247, 0.35)",
-        width: "100%",
-        maxWidth: "640px",
-        boxSizing: "border-box",
-        whiteSpace: "nowrap"
-      }}>
+      <div className="controls-notice">
         Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
       </div>
 

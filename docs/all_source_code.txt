@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 7:31:01 PM
+ [SYSTEM] Generated: 5/21/2026, 7:34:52 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -799,7 +799,6 @@ body {
   overflow: hidden;
 }
 
-/* Page Layout */
 .app-wrapper {
   width: 100vw;
   height: 100vh;
@@ -828,6 +827,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
 }
 
 .screen-inner {
@@ -845,7 +845,6 @@ body {
   overflow: hidden;
 }
 
-/* Core Layout Utilities */
 .flex-col {
   display: flex;
   flex-direction: column;
@@ -878,7 +877,6 @@ body {
   height: 100%;
 }
 
-/* CRT Filters - gameplay canvas only */
 .crt-scanlines {
   position: relative;
   will-change: transform, opacity;
@@ -906,16 +904,10 @@ body {
 }
 
 @keyframes crt-flicker-animation {
-  0% {
-    opacity: 0.985;
-  }
-
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0.985; }
+  100% { opacity: 1; }
 }
 
-/* Neumorphic Core Rules */
 .neo-elevated {
   background: var(--surface-elevated);
   box-shadow: var(--shadow-light), var(--shadow-dark);
@@ -934,9 +926,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
   padding: 24px 48px;
-  /* Taller button padding */
   font-size: 18px;
-  /* Scaled up text size */
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -963,7 +953,6 @@ body {
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-/* LED Indicators */
 .led-dot {
   width: 14px;
   height: 14px;
@@ -986,22 +975,19 @@ body {
   box-shadow: 0 0 8px var(--signal-yellow), 0 0 16px var(--signal-yellow-glow);
 }
 
-/* Specific Modules */
 .title-banner {
-  padding-top: 45px;
-  /* Increased top padding across screen headers */
+  padding-top: 25px;
   margin-top: 0;
   text-align: center;
 }
 
 .title-banner h1 {
-  font-size: 4.8rem;
+  font-size: clamp(2.2rem, 8vw, 4.8rem);
   text-shadow: 0 4px 15px rgba(0, 0, 0, 0.95);
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
   text-transform: uppercase;
 }
 
@@ -1016,40 +1002,34 @@ body {
 }
 
 @keyframes crt-pulse {
-  0% {
-    opacity: 0.6;
-  }
-
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 .btn-container {
-  width: 540px;
+  width: 100%;
+  max-width: 540px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   margin-bottom: 20px;
+  box-sizing: border-box;
 }
 
-/* Slot Matrices */
 .slot-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
   width: 100%;
   max-width: 640px;
   margin: auto 0;
-  gap: 24px;
 }
 
 .slot-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 40px;
-  /* Taller card container */
+  padding: 24px 32px;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1080,7 +1060,6 @@ body {
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-/* Mixers & Audio sliders */
 .mixer-board {
   width: 100%;
   max-width: 600px;
@@ -1089,7 +1068,7 @@ body {
   margin: auto 0;
   display: flex;
   flex-direction: column;
-  gap: 38px;
+  gap: 32px;
   box-sizing: border-box;
 }
 
@@ -1097,7 +1076,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 100%; /* Force full width expansion */
+  width: 100%;
 }
 
 .mixer-header {
@@ -1113,11 +1092,10 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  width: 100%; /* Force full width expansion */
+  width: 100%;
   box-sizing: border-box;
 }
 
-/* Rebinding board */
 .binding-board {
   width: 100%;
   max-width: 640px;
@@ -1125,11 +1103,11 @@ body {
   border-radius: 24px;
   margin: auto 0;
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Dual Column Layout */
+  grid-template-columns: 1fr 1fr;
   gap: 10px 20px;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 38vh;
+  max-height: 40vh;
 }
 
 .binding-row {
@@ -1154,11 +1132,27 @@ body {
   text-align: center;
   font-size: 14px;
   padding: 14px 22px;
-  /* Taller binding layout buttons */
   border-radius: 8px;
 }
 
-/* Status Panel */
+.controls-notice {
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: hsl(280, 80%, 75%);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
 .cabinet-status-panel {
   width: 100%;
   display: flex;
@@ -1210,8 +1204,6 @@ body {
   z-index: 99;
   padding: 24px;
   box-sizing: border-box;
-
-  /* Graceful Fade-In Transition: Animate overlay opacity and backdrop blur smoothly */
   animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   opacity: 0;
   will-change: opacity;
@@ -1232,7 +1224,6 @@ body {
   max-width: 640px;
   padding: 32px;
   width: 100%;
-  padding: 24px;
   border-radius: 20px;
   margin: auto 0;
   box-sizing: border-box;
@@ -1250,14 +1241,12 @@ body {
     opacity: 0.3;
     transform: scale(0.9);
   }
-
   100% {
     opacity: 1;
     transform: scale(1.15);
   }
 }
 
-/* Dialogue Board Classes */
 .dialogue-console {
   width: 100%;
   height: 130px;
@@ -1278,11 +1267,9 @@ body {
   gap: 14px;
   box-sizing: border-box;
   overflow: hidden;
-
-  /* Smooth cubic-bezier transitions for high-fidelity dismissals */
-  transition: 
-    opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-    border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+  transition:
+    opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   transform: scale(0.97);
@@ -1344,32 +1331,14 @@ body {
 }
 
 @keyframes rumble-anim {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-
-  20% {
-    transform: translate(-1px, -1px) rotate(-1deg);
-  }
-
-  40% {
-    transform: translate(-1px, 1px) rotate(1deg);
-  }
-
-  60% {
-    transform: translate(1px, -1px) rotate(0deg);
-  }
-
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-
-  100% {
-    transform: translate(1px, 1px) rotate(-1deg);
-  }
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  20% { transform: translate(-1px, -1px) rotate(-1deg); }
+  40% { transform: translate(-1px, 1px) rotate(1deg); }
+  60% { transform: translate(1px, -1px) rotate(0deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
-/* Low Health Vignette Pulse */
 .vignette-overlay {
   position: absolute;
   inset: 0;
@@ -1386,21 +1355,14 @@ body {
 }
 
 @keyframes vignette-heartbeat {
-  0% {
-    opacity: 0.15;
-  }
-
-  100% {
-    opacity: 0.55;
-  }
+  0% { opacity: 0.15; }
+  100% { opacity: 0.55; }
 }
 
-/* Chromatic split-channel CSS filter */
 .filter-chromatic {
   filter: url(#chromatic-aberration);
 }
 
-/* Concentric Expanding Shockwave Ring */
 .shockwave-blast {
   position: absolute;
   border-radius: 50%;
@@ -1421,11 +1383,9 @@ body {
     opacity: 1;
     filter: blur(1px);
   }
-
   50% {
     filter: blur(6px);
   }
-
   100% {
     width: 1200px;
     height: 1200px;
@@ -1433,10 +1393,6 @@ body {
     filter: blur(12px);
   }
 }
-
-/* =========================================================================
-   OVERHAULED TITLE SCREEN DESIGN SYSTEM
-   ========================================================================= */
 
 .title-screen-container {
   display: flex;
@@ -1467,8 +1423,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 45px;
-  /* Added top padding space */
+  padding-top: 25px;
 }
 
 .system-tag {
@@ -1490,7 +1445,7 @@ body {
 }
 
 .title-banner-overhauled h1 {
-  font-size: 3.5rem;
+  font-size: clamp(1.8rem, 7vw, 3.5rem);
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -1543,7 +1498,6 @@ body {
   gap: 18px;
 }
 
-/* Large Interactive Vector Buttons */
 .neo-btn-large {
   display: flex;
   align-items: center;
@@ -1555,7 +1509,6 @@ body {
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
   padding: 24px 32px;
-  /* Taller button layout */
   border-radius: 12px;
   cursor: pointer;
   width: 100%;
@@ -1581,7 +1534,6 @@ body {
 
 .neo-btn-large .btn-indicator-light {
   width: 8px;
-  /* Slightly scaled up */
   height: 8px;
   border-radius: 50%;
   background: #1e2430;
@@ -1604,8 +1556,7 @@ body {
 }
 
 .btn-main-label {
-  font-size: 18px;
-  /* Scaled up main text inside button */
+  font-size: clamp(14px, 4vw, 18px);
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -1619,8 +1570,7 @@ body {
 }
 
 .btn-sub-label {
-  font-size: 10px;
-  /* Scaled up subtitle text inside button */
+  font-size: clamp(8px, 2.5vw, 10px);
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -1636,13 +1586,11 @@ body {
 .cursor-arrow-large {
   color: var(--signal-green);
   font-size: 18px;
-  /* Scaled up arrow icon */
   font-weight: bold;
   animation: arrow-blink 0.4s infinite alternate;
   margin-left: 10px;
 }
 
-/* Title Footer elements */
 .title-screen-footer {
   z-index: 2;
   width: 100%;
@@ -1672,15 +1620,11 @@ body {
   font-weight: bold;
 }
 
-/* =========================================================================
-   OVERHAULED RETRO HARDWARE VOLUME SLIDERS
-   ========================================================================= */
-
 .custom-range-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 12px; /* Thick track */
+  height: 12px;
   border-radius: 6px;
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
@@ -1690,16 +1634,15 @@ body {
   cursor: pointer;
 }
 
-/* Chrome, Safari, Edge and Opera thumbs */
 .custom-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px; /* Hardware mixer physical fader dimensions */
+  width: 24px;
   height: 28px;
   border-radius: 6px;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 
+  box-shadow:
     -2px -2px 6px rgba(255, 255, 255, 0.01),
     4px 4px 10px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.08);
@@ -1713,14 +1656,13 @@ body {
   transform: scale(1.08);
 }
 
-/* Firefox thumbs */
 .custom-range-slider::-moz-range-thumb {
   width: 24px;
   height: 28px;
   border-radius: 6px;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 
+  box-shadow:
     -2px -2px 6px rgba(255, 255, 255, 0.01),
     4px 4px 10px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.08);
@@ -1734,7 +1676,6 @@ body {
   transform: scale(1.08);
 }
 
-/* Firefox native progress track fills */
 .custom-range-slider::-moz-range-progress {
   background: var(--signal-green);
   height: 12px;
@@ -1742,10 +1683,6 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-right: none;
 }
-
-/* =========================================================================
-   GLOWING RETRO CABINET SCROLLBARS
-   ========================================================================= */
 
 ::-webkit-scrollbar {
   width: 4px;
@@ -1766,10 +1703,6 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #4ade80;
 }
-
-/* =========================================================================
-   OVERHAULED TECHNICAL SPECS CREDITS GRID
-   ========================================================================= */
 
 .credits-grid {
   display: grid;
@@ -1807,6 +1740,259 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.source-view-workspace {
+  display: flex;
+  gap: 16px;
+  flex-grow: 1;
+  height: 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 14px 0;
+}
+
+.directory-tree-pane {
+  width: 24%;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.code-viewer-pane {
+  width: 76%;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #1d1f21;
+}
+
+.source-view-footer {
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .cabinet-outer {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    padding: 12px;
+    box-shadow: none;
+    border: none;
+  }
+
+  .screen-inner {
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .title-banner {
+    padding-top: 10px;
+  }
+
+  .neo-btn {
+    padding: 16px 32px;
+    font-size: 15px;
+  }
+
+  .neo-btn-large {
+    padding: 16px 20px;
+    border-radius: 10px;
+  }
+
+  .neo-btn-large .btn-indicator-light {
+    margin-right: 14px;
+  }
+
+  .btn-container {
+    gap: 14px;
+  }
+
+  .btn-container-overhauled {
+    gap: 10px;
+  }
+
+  .slot-list {
+    gap: 12px;
+  }
+
+  .slot-card {
+    padding: 16px 20px;
+    border-radius: 10px;
+  }
+
+  .mixer-board {
+    padding: 18px;
+    gap: 20px;
+  }
+
+  .cabinet-status-panel {
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  .hud-panel-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .hud-panel-block:nth-child(3) .neo-pressed {
+    width: 100px !important;
+  }
+
+  .dialogue-console {
+    height: 90px;
+    margin-top: 8px;
+    gap: 8px;
+  }
+
+  .dialogue-box-left,
+  .dialogue-box-right {
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .portrait-square {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dialogue-speaker-label {
+    font-size: 11px;
+  }
+
+  .dialogue-body-text {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .footer-status-bar {
+    font-size: 7px;
+    padding: 0;
+  }
+
+  .footer-center-prompt {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .binding-board {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-height: 35vh;
+    padding: 12px;
+  }
+
+  .binding-row {
+    padding: 4px 0;
+  }
+
+  .binding-btn {
+    min-width: 110px;
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .controls-notice {
+    font-size: 9px;
+    padding: 8px 12px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .credits-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  .credits-item {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 800px) {
+  .source-view-workspace {
+    flex-direction: column;
+    gap: 12px;
+    margin: 10px 0;
+  }
+
+  .directory-tree-pane {
+    width: 100%;
+    height: 30%;
+    min-height: 120px;
+    padding: 8px;
+  }
+
+  .code-viewer-pane {
+    width: 100%;
+    height: 70%;
+    padding: 10px;
+  }
+
+  .source-view-footer {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .source-view-footer > button,
+  .source-view-footer > a {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 14px 24px;
+    font-size: 13px;
+    justify-content: center;
+  }
+}
+
+@media (max-height: 600px) {
+  .title-banner {
+    padding-top: 4px;
+  }
+  .title-banner h2 {
+    font-size: 1.3rem !important;
+  }
+  .title-banner p {
+    margin: 2px 0 0;
+    font-size: 10px;
+  }
+  .title-screen-header {
+    padding-top: 6px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 2rem;
+  }
+  .btn-container-overhauled {
+    gap: 6px;
+  }
+  .neo-btn-large {
+    padding: 10px 16px;
+  }
+  .cabinet-status-panel {
+    display: none;
+  }
+  .dialogue-console {
+    display: none;
+  }
+}
+
 
 
 ● ./src/App.tsx
@@ -2750,7 +2936,7 @@ export function ControlsScreen({
         </button>
       </div>
 
-      <div className="binding-board neo-pressed" style={{ margin: "0", maxHeight: "40vh", gap: "12px 32px", padding: "16px 24px", overflow: "hidden" }}>
+      <div className="binding-board neo-pressed">
         {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
           const keys = settingsManager.getKeyMap()[action] || [];
           const rowMenuIndex = idx + 3;
@@ -2785,23 +2971,7 @@ export function ControlsScreen({
         })}
       </div>
 
-      <div style={{
-        padding: "10px 20px",
-        borderRadius: "10px",
-        background: "rgba(168, 85, 247, 0.08)",
-        border: "1px solid rgba(168, 85, 247, 0.25)",
-        color: "hsl(280, 80%, 75%)",
-        fontSize: "11px",
-        fontWeight: "bold",
-        letterSpacing: "0.08em",
-        textAlign: "center",
-        textTransform: "uppercase",
-        textShadow: "0 0 6px rgba(168, 85, 247, 0.35)",
-        width: "100%",
-        maxWidth: "640px",
-        boxSizing: "border-box",
-        whiteSpace: "nowrap"
-      }}>
+      <div className="controls-notice">
         Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
       </div>
 
@@ -3353,9 +3523,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: COLLAPSE/EXIT</p>
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexGrow: 1, height: "0", minHeight: "0", width: "100%", boxSizing: "border-box", margin: "14px 0" }}>
+      <div className="source-view-workspace">
         
-        <div ref={listRef} className="neo-pressed" style={{ width: "24%", overflowY: "auto", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
+        <div ref={listRef} className="directory-tree-pane neo-pressed">
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
             const isExpanded = node.isDir && !!expandedDirs[node.path];
@@ -3419,7 +3589,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        <div className="neo-pressed" style={{ width: "76%", overflowY: "auto", borderRadius: "12px", padding: "16px", boxSizing: "border-box", background: "#1d1f21" }}>
+        <div className="code-viewer-pane neo-pressed">
           {selectedFile ? (
             <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
               <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
@@ -3448,7 +3618,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
       </div>
 
-      <div className="flex-row" style={{ width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "8px", boxSizing: "border-box" }}>
+      <div className="source-view-footer flex-row">
         
         <a 
           href="https://github.com/stevencasteel/BOX-BATTLE" 

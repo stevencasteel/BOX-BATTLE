@@ -282,9 +282,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: COLLAPSE/EXIT</p>
       </div>
 
-      <div style={{ display: "flex", gap: "16px", flexGrow: 1, height: "0", minHeight: "0", width: "100%", boxSizing: "border-box", margin: "14px 0" }}>
+      <div className="source-view-workspace">
         
-        <div ref={listRef} className="neo-pressed" style={{ width: "24%", overflowY: "auto", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
+        <div ref={listRef} className="directory-tree-pane neo-pressed">
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
             const isExpanded = node.isDir && !!expandedDirs[node.path];
@@ -348,7 +348,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        <div className="neo-pressed" style={{ width: "76%", overflowY: "auto", borderRadius: "12px", padding: "16px", boxSizing: "border-box", background: "#1d1f21" }}>
+        <div className="code-viewer-pane neo-pressed">
           {selectedFile ? (
             <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
               <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
@@ -377,7 +377,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
       </div>
 
-      <div className="flex-row" style={{ width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "8px", boxSizing: "border-box" }}>
+      <div className="source-view-footer flex-row">
         
         <a 
           href="https://github.com/stevencasteel/BOX-BATTLE" 
