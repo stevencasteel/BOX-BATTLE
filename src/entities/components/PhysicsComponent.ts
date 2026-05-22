@@ -15,6 +15,11 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
+  private readonly maxStepSize: number = 6;
+  private readonly cornerNudgeThreshold: number = 6;
+  private readonly groundDetectionOffset: number = 1;
+  private readonly frameDurationEstimate: number = 0.016;
+
   public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
@@ -25,29 +30,36 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public update(dt: number): void {
+    this.decayDisablePlatformTimer(dt);
+    this.applyGravity(dt);
+    this.executeSplitAxisMovement(dt);
+    this.evaluateGroundedStatus();
+  }
+
+  private decayDisablePlatformTimer(dt: number): void {
     if (this.disablePlatformCollisionTimer > 0) {
       this.disablePlatformCollisionTimer -= dt;
     }
+  }
 
-    this.isGrounded = false;
-    const physicsWorld = this.owner.world.physicsWorld;
-    
+  private applyGravity(dt: number): void {
     if (!this.isGrounded) {
       this.owner.velocity.y += this.gravity * dt;
     }
+  }
 
+  private executeSplitAxisMovement(dt: number): void {
     this.isOnWallLeft = false;
     this.isOnWallRight = false;
 
-    const maxStepSize = 6;
-    const dx = this.owner.velocity.x * dt;
-    const dy = this.owner.velocity.y * dt;
+    const deltaX = this.owner.velocity.x * dt;
+    const deltaY = this.owner.velocity.y * dt;
 
-    const stepsX = Math.max(1, Math.ceil(Math.abs(dx) / maxStepSize));
-    const stepsY = Math.max(1, Math.ceil(Math.abs(dy) / maxStepSize));
+    const stepsX = Math.max(1, Math.ceil(Math.abs(deltaX) / this.maxStepSize));
+    const stepsY = Math.max(1, Math.ceil(Math.abs(deltaY) / this.maxStepSize));
 
-    const substepX = dx / stepsX;
-    const substepY = dy / stepsY;
+    const substepX = deltaX / stepsX;
+    const substepY = deltaY / stepsY;
 
     for (let i = 0; i < stepsX; i++) {
       this.owner.position.x += substepX;
@@ -62,44 +74,12 @@ export class PhysicsComponent implements IEntityComponent {
         break;
       }
     }
-
-    this.isGrounded = false;
-    if (this.owner.velocity.y >= 0) {
-      const solidCandidates = physicsWorld.getOverlapCandidates(
-        this.owner.position.x,
-        this.owner.position.y + 1,
-        this.owner.size.width + 12,
-        this.owner.size.height + 12,
-        "solid"
-      );
-      for (const solid of solidCandidates) {
-        if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, solid)) {
-          this.isGrounded = true;
-          break;
-        }
-      }
-      if (!this.isGrounded && this.disablePlatformCollisionTimer <= 0) {
-        const platformCandidates = physicsWorld.getOverlapCandidates(
-          this.owner.position.x,
-          this.owner.position.y + 1,
-          this.owner.size.width + 12,
-          this.owner.size.height + 12,
-          "platform"
-        );
-        for (const platform of platformCandidates) {
-          if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, platform)) {
-            this.isGrounded = true;
-            break;
-          }
-        }
-      }
-    }
   }
 
   private resolveCollisionsX(): boolean {
-    const ownerHalfW = this.owner.size.width / 2;
+    const ownerHalfWidth = this.owner.size.width / 2;
     const physicsWorld = this.owner.world.physicsWorld;
-    let collided = false;
+    let hasCollided = false;
 
     const solidCandidates = physicsWorld.getOverlapCandidates(
       this.owner.position.x,
@@ -112,24 +92,24 @@ export class PhysicsComponent implements IEntityComponent {
     for (const solid of solidCandidates) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.x > 0) {
-          this.owner.position.x = solid.x - ownerHalfW;
+          this.owner.position.x = solid.x - ownerHalfWidth;
           this.isOnWallRight = true;
         } else if (this.owner.velocity.x < 0) {
-          this.owner.position.x = solid.x + solid.width + ownerHalfW;
+          this.owner.position.x = solid.x + solid.width + ownerHalfWidth;
           this.isOnWallLeft = true;
         }
         this.owner.velocity.x = 0;
-        collided = true;
+        hasCollided = true;
       }
     }
-    return collided;
+    return hasCollided;
   }
 
   private resolveCollisionsY(): boolean {
-    const ownerHalfH = this.owner.size.height / 2;
-    const ownerHalfW = this.owner.size.width / 2;
+    const ownerHalfHeight = this.owner.size.height / 2;
+    const ownerHalfWidth = this.owner.size.width / 2;
     const physicsWorld = this.owner.world.physicsWorld;
-    let collided = false;
+    let hasCollided = false;
 
     const solidCandidates = physicsWorld.getOverlapCandidates(
       this.owner.position.x,
@@ -142,24 +122,22 @@ export class PhysicsComponent implements IEntityComponent {
     for (const solid of solidCandidates) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.y >= 0) {
-          this.owner.position.y = solid.y - ownerHalfH;
+          this.owner.position.y = solid.y - ownerHalfHeight;
           this.owner.velocity.y = 0;
           this.isGrounded = true;
-          collided = true;
+          hasCollided = true;
         } else if (this.owner.velocity.y < 0) {
-          const overlapRight = (this.owner.position.x + ownerHalfW) - solid.x;
-          const overlapLeft = (solid.x + solid.width) - (this.owner.position.x - ownerHalfW);
+          const overlapRight = (this.owner.position.x + ownerHalfWidth) - solid.x;
+          const overlapLeft = (solid.x + solid.width) - (this.owner.position.x - ownerHalfWidth);
 
-          const nudgeThreshold = 6;
-
-          if (overlapRight > 0 && overlapRight <= nudgeThreshold) {
+          if (overlapRight > 0 && overlapRight <= this.cornerNudgeThreshold) {
             this.owner.position.x -= overlapRight;
             if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
               continue;
             }
             this.owner.position.x += overlapRight;
           } 
-          else if (overlapLeft > 0 && overlapLeft <= nudgeThreshold) {
+          else if (overlapLeft > 0 && overlapLeft <= this.cornerNudgeThreshold) {
             this.owner.position.x += overlapLeft;
             if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
               continue;
@@ -167,15 +145,15 @@ export class PhysicsComponent implements IEntityComponent {
             this.owner.position.x -= overlapLeft;
           }
 
-          this.owner.position.y = solid.y + solid.height + ownerHalfH;
+          this.owner.position.y = solid.y + solid.height + ownerHalfHeight;
           this.owner.velocity.y = 0;
-          collided = true;
+          hasCollided = true;
         }
       }
     }
 
     if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
-      const prevY = this.owner.position.y - this.owner.velocity.y * 0.016;
+      const previousY = this.owner.position.y - this.owner.velocity.y * this.frameDurationEstimate;
 
       const platformCandidates = physicsWorld.getOverlapCandidates(
         this.owner.position.x,
@@ -187,27 +165,65 @@ export class PhysicsComponent implements IEntityComponent {
 
       for (const platform of platformCandidates) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
-          if (prevY + ownerHalfH - 4 <= platform.y) {
-            this.owner.position.y = platform.y - ownerHalfH;
+          if (previousY + ownerHalfHeight - 4 <= platform.y) {
+            this.owner.position.y = platform.y - ownerHalfHeight;
             this.owner.velocity.y = 0;
             this.isGrounded = true;
-            collided = true;
+            hasCollided = true;
           }
         }
       }
     }
 
-    return collided;
+    return hasCollided;
+  }
+
+  private evaluateGroundedStatus(): void {
+    this.isGrounded = false;
+    const physicsWorld = this.owner.world.physicsWorld;
+    const testPosY = this.owner.position.y + this.groundDetectionOffset;
+
+    if (this.owner.velocity.y >= 0) {
+      const solidCandidates = physicsWorld.getOverlapCandidates(
+        this.owner.position.x,
+        testPosY,
+        this.owner.size.width + 12,
+        this.owner.size.height + 12,
+        "solid"
+      );
+      for (const solid of solidCandidates) {
+        if (this.isOverlapping(this.owner.position.x, testPosY, solid)) {
+          this.isGrounded = true;
+          break;
+        }
+      }
+
+      if (!this.isGrounded && this.disablePlatformCollisionTimer <= 0) {
+        const platformCandidates = physicsWorld.getOverlapCandidates(
+          this.owner.position.x,
+          testPosY,
+          this.owner.size.width + 12,
+          this.owner.size.height + 12,
+          "platform"
+        );
+        for (const platform of platformCandidates) {
+          if (this.isOverlapping(this.owner.position.x, testPosY, platform)) {
+            this.isGrounded = true;
+            break;
+          }
+        }
+      }
+    }
   }
 
   private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
-    const halfW = this.owner.size.width / 2;
-    const halfH = this.owner.size.height / 2;
+    const halfWidth = this.owner.size.width / 2;
+    const halfHeight = this.owner.size.height / 2;
 
-    const left = x - halfW;
-    const right = x + halfW;
-    const top = y - halfH;
-    const bottom = y + halfH;
+    const left = x - halfWidth;
+    const right = x + halfWidth;
+    const top = y - halfHeight;
+    const bottom = y + halfHeight;
 
     return (
       right > rect.x &&
@@ -218,6 +234,6 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public teardown(): void {
-    // Standard cleanup
+    // Reserved for cleanup
   }
 }
