@@ -1,13 +1,18 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus } from "@/core/Interfaces";
+import { EntityStatus, IEntity } from "@/core/Interfaces";
 import { DashComponent } from "@/entities/components/DashComponent";
 
+export interface IMeleeCapable extends IEntity {
+  facingDirection: number;
+  hasDoubleJump: boolean;
+  registerDamageDealt?(): void;
+}
+
 export class MeleeComponent implements IEntityComponent {
-  public owner!: Player;
+  public owner!: IMeleeCapable;
   
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
@@ -18,7 +23,7 @@ export class MeleeComponent implements IEntityComponent {
   private readonly pogoForce: number = 450;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as Player;
+    this.owner = owner as unknown as IMeleeCapable;
   }
 
   public update(dt: number): void {

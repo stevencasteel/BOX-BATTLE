@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:38:58 PM
+ [SYSTEM] Generated: 5/22/2026, 1:42:43 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8899,13 +8899,13 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
 import { DashComponent } from "@/entities/components/DashComponent";
-import { MeleeComponent } from "@/entities/components/MeleeComponent";
+import { MeleeComponent, IMeleeCapable } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
-import { HealComponent } from "@/entities/components/HealComponent";
+import { HealComponent, IHealCapable } from "@/entities/components/HealComponent";
 import { IWorld, IDamageRecorder } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
-export class Player extends BaseEntity implements IDamageRecorder {
+export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable, IHealCapable {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
@@ -9783,12 +9783,16 @@ export class FireballComponent implements IEntityComponent {
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
+import { IEntity } from "@/core/Interfaces";
+
+export interface IHealCapable extends IEntity {
+  healingCharges: number;
+}
 
 export class HealComponent implements IEntityComponent {
-  public owner!: Player;
+  public owner!: IHealCapable;
   
   public isHealing: boolean = false;
   public healTimer: number = 0;
@@ -9796,7 +9800,7 @@ export class HealComponent implements IEntityComponent {
   private readonly healDuration: number = 2.0;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as Player;
+    this.owner = owner as unknown as IHealCapable;
   }
 
   public update(dt: number): void {
@@ -9986,14 +9990,19 @@ export class InputReceiverComponent implements IEntityComponent {
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus } from "@/core/Interfaces";
+import { EntityStatus, IEntity } from "@/core/Interfaces";
 import { DashComponent } from "@/entities/components/DashComponent";
 
+export interface IMeleeCapable extends IEntity {
+  facingDirection: number;
+  hasDoubleJump: boolean;
+  registerDamageDealt?(): void;
+}
+
 export class MeleeComponent implements IEntityComponent {
-  public owner!: Player;
+  public owner!: IMeleeCapable;
   
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
@@ -10004,7 +10013,7 @@ export class MeleeComponent implements IEntityComponent {
   private readonly pogoForce: number = 450;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as Player;
+    this.owner = owner as unknown as IMeleeCapable;
   }
 
   public update(dt: number): void {

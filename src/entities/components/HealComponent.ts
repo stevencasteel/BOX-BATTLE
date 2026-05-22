@@ -1,11 +1,15 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
+import { IEntity } from "@/core/Interfaces";
+
+export interface IHealCapable extends IEntity {
+  healingCharges: number;
+}
 
 export class HealComponent implements IEntityComponent {
-  public owner!: Player;
+  public owner!: IHealCapable;
   
   public isHealing: boolean = false;
   public healTimer: number = 0;
@@ -13,7 +17,7 @@ export class HealComponent implements IEntityComponent {
   private readonly healDuration: number = 2.0;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as Player;
+    this.owner = owner as unknown as IHealCapable;
   }
 
   public update(dt: number): void {
