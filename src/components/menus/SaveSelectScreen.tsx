@@ -49,16 +49,33 @@ export function SaveSelectScreen({
             onClick={() => handleSlotSelect(i)}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(i); }}
             className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
-            <div className="flex-col">
-              <span style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                {menuIndex === i && <span className="cursor-arrow" style={{ marginRight: "8px" }}>▶</span>}
-                Slot {i + 1}
+            <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
+              {/* Arrow is always rendered to maintain static text alignment, toggling only visibility */}
+              <span className="cursor-arrow" style={{ 
+                visibility: menuIndex === i ? "visible" : "hidden",
+                width: "16px",
+                display: "inline-block",
+                textAlign: "center"
+              }}>
+                ▶
               </span>
-              <span style={{ fontSize: "11px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "6px", paddingLeft: menuIndex === i ? "18px" : "0" }}>
-                {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
-              </span>
+              <div className="flex-col" style={{ textAlign: "left" }}>
+                <span style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  Slot {i + 1}
+                </span>
+                <span style={{ 
+                  fontSize: "11px", 
+                  textTransform: "uppercase", 
+                  color: menuIndex === i ? "#22c55e" : "#a0aec0", 
+                  marginTop: "6px" 
+                }}>
+                  {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+                </span>
+              </div>
             </div>
+
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
               <div className={`led-dot ${slot.empty
                   ? i === copySourceIndex ? "led-yellow" : ""
@@ -78,32 +95,55 @@ export function SaveSelectScreen({
             onClick={toggleCopyMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
             className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
+            style={{ 
+              flex: 1, 
+              padding: "18px", 
+              fontSize: "16px", 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: "8px" 
+            }}
           >
-            {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-            Copy Slot
-            {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+            <span>Copy Slot</span>
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
           </button>
           <button
             onClick={toggleEraseMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
             className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
+            style={{ 
+              flex: 1, 
+              padding: "18px", 
+              fontSize: "16px", 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: "8px" 
+            }}
           >
-            {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
-            Delete Slot
-            {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+            <span>Delete Slot</span>
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
           </button>
         </div>
         <button
           onClick={onBack}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(5); }}
           className={`neo-btn ${menuIndex === 5 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "18px", fontSize: "16px" }}
+          style={{ 
+            padding: "18px", 
+            fontSize: "16px", 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center", 
+            gap: "8px" 
+          }}
         >
-          {menuIndex === 5 && <span className="cursor-arrow">▶</span>}
-          Back
-          {menuIndex === 5 && <span className="cursor-arrow">◀</span>}
+          <span className="cursor-arrow" style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+          <span>Back</span>
+          <span className="cursor-arrow" style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
         </button>
       </div>
     </div>
