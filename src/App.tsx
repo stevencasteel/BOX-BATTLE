@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Action } from "@/core/InputProvider";
+import { Action, inputProvider } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
@@ -20,6 +20,60 @@ import { SourceViewScreen } from "@/components/menus/SourceViewScreen";
 import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
+
+const TouchButton = ({ action, label, style }: { action: Action; label: string; style?: React.CSSProperties }) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const el = buttonRef.current;
+    if (!el) return;
+
+    const handleStart = (e: TouchEvent) => {
+      e.preventDefault();
+      inputProvider.triggerTouchStart(action);
+    };
+
+    const handleEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      inputProvider.triggerTouchEnd(action);
+    };
+
+    el.addEventListener("touchstart", handleStart, { passive: false });
+    el.addEventListener("touchend", handleEnd, { passive: false });
+    el.addEventListener("touchcancel", handleEnd, { passive: false });
+
+    return () => {
+      el.removeEventListener("touchstart", handleStart);
+      el.removeEventListener("touchend", handleEnd);
+      el.removeEventListener("touchcancel", handleEnd);
+    };
+  }, [action]);
+
+  return (
+    <button
+      ref={buttonRef}
+      onMouseDown={(e) => { e.preventDefault(); inputProvider.triggerTouchStart(action); }}
+      onMouseUp={(e) => { e.preventDefault(); inputProvider.triggerTouchEnd(action); }}
+      onMouseLeave={(e) => { e.preventDefault(); inputProvider.triggerTouchEnd(action); }}
+      className="neo-btn"
+      style={{
+        ...style,
+        userSelect: "none",
+        touchAction: "none",
+        padding: "0",
+        borderRadius: "12px",
+        fontWeight: "bold",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)"
+      }}
+    >
+      {label}
+    </button>
+  );
+};
 
 export default function App() {
   const bootStage = useBootSequence();
@@ -62,25 +116,46 @@ export default function App() {
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
+  const [isTouchDevice] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(pointer: coarse)").matches;
+    }
+    return false;
+  });
+
   const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
+  const isPlayingScreen = currentScreen === "PLAYING";
 
   useEffect(() => {
-    if (currentScreen === "PLAYING") {
+    if (isPlayingScreen) {
       soundSynth.stopMusic();
     } else {
       soundSynth.setCabinetMuffle(true);
-      soundSynth.startMusic();
+      if (soundSynth.hasUserGestured) {
+        soundSynth.startMusic();
+      }
     }
-  }, [currentScreen]);
+  }, [isPlayingScreen, currentScreen]);
 
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };
 
   useEffect(() => {
-    soundSynth.startMusic();
+    const triggerOnFirstGesture = () => {
+      soundSynth.startMusic();
+      window.removeEventListener("click", triggerOnFirstGesture);
+      window.removeEventListener("touchstart", triggerOnFirstGesture);
+    };
+
+    window.addEventListener("click", triggerOnFirstGesture);
+    window.addEventListener("touchstart", triggerOnFirstGesture);
+
     reloadSaveSlots();
+
     return () => {
+      window.removeEventListener("click", triggerOnFirstGesture);
+      window.removeEventListener("touchstart", triggerOnFirstGesture);
       soundSynth.stopMusic();
     };
   }, []);
@@ -156,7 +231,7 @@ export default function App() {
   }, [rebindTarget]);
 
   useEffect(() => {
-    if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
+    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
       const config = screenConfigs[currentScreen];
@@ -180,7 +255,7 @@ export default function App() {
       };
 
       const maxIndex = config.getMaxIndex(context);
-      const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
+      const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
 
       const keyMap = settingsManager.getKeyMap();
       const jumpKeys = keyMap["JUMP"] || [];
@@ -248,7 +323,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);
+  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult, isPlayingScreen]);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -262,110 +337,208 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-full-height" : ""}`}>
+      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-full-height" : ""}`} style={isTouchDevice ? {
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "10px",
+        height: "100vh"
+      } : undefined}>
 
         {!isFullHeightScreen && (
-          <div className="cabinet-status-panel neo-pressed">
-            <div className="hud-panel-block" style={{ gap: "4px" }}>
-              <span className="hud-panel-title">PLAYER HP</span>
-              <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
-                    style={{
-                      background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b",
-                      border: "1px solid rgba(0,0,0,0.5)"
-                    }}
-                  />
-                ))}
-              </div>
-
-              <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
-                <div className="flex-row" style={{ gap: "4px" }}>
+          isTouchDevice ? (
+            <div className="cabinet-status-panel neo-pressed" style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "6px 12px",
+              height: "36px",
+              marginBottom: "4px",
+              boxSizing: "border-box",
+              flexShrink: 0,
+              borderRadius: "8px"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold" }}>HP</span>
+                <div className="flex-row" style={{ gap: "3px" }}>
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
+                        border: "1px solid rgba(0,0,0,0.5)"
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "2px", marginLeft: "2px" }}>
                   {[...Array(3)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${currentScreen === "PLAYING" && i < healingCharges ? "led-yellow" : ""}`}
+                      className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
                       style={{
-                        background: currentScreen === "PLAYING" && i < healingCharges ? "" : "#07080b",
-                        border: "1px solid rgba(0,0,0,0.5)",
-                        width: "6px",
-                        height: "6px"
+                        width: "4px",
+                        height: "4px",
+                        background: isPlayingScreen && i < healingCharges ? "" : "#07080b"
                       }}
                     />
                   ))}
                 </div>
                 <div className="neo-pressed" style={{
-                  width: "54px",
+                  width: "36px",
                   height: "6px",
                   borderRadius: "3px",
                   padding: "1px",
                   boxSizing: "border-box",
                   overflow: "hidden",
-                  background: "#07080b"
+                  background: "#07080b",
+                  marginLeft: "4px",
+                  display: "flex",
+                  alignItems: "center"
                 }}>
                   <div style={{
                     height: "100%",
-                    borderRadius: "2px",
-                    width: currentScreen === "PLAYING" ? `${(determination / 5) * 100}%` : "0%",
+                    borderRadius: "1.5px",
+                    width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
                     transition: "width 0.15s ease",
                     background: "hsl(280, 80%, 65%)",
                     boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
                   }} />
                 </div>
               </div>
-            </div>
-
-            <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
-              {currentScreen === "PLAYING" ? (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "14px",
-                  border: "1px solid rgba(255, 255, 255, 0.03)",
-                  background: "rgba(7, 8, 11, 0.85)",
-                  padding: "8px 22px",
-                  borderRadius: "8px",
-                  boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
-                }}>
-                  <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
-                  <span style={{
-                    fontSize: "16px",
-                    color: "rgba(34, 197, 94, 0.8)",
-                    fontWeight: 900,
-                    letterSpacing: "0.3em",
-                    textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
-                    textTransform: "uppercase",
-                    lineHeight: "1"
-                  }}>
-                    BOX BATTLE
-                  </span>
-                  <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+              <span style={{ fontSize: "9px", color: "#718096", fontWeight: "bold", letterSpacing: "0.1em" }}>BOX BATTLE</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
+                <div className="neo-pressed" style={{ width: "80px", height: "8px", borderRadius: "3px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
+                  <div
+                    className="led-red"
+                    style={{
+                      height: "100%",
+                      borderRadius: "1.5px",
+                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
+                      transition: "all 0.15s ease"
+                    }}
+                  />
                 </div>
-              ) : null}
-            </div>
-
-            <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-              <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
-              <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
-                <div
-                  className={currentScreen === "PLAYING" ? "led-red" : ""}
-                  style={{
-                    height: "100%",
-                    borderRadius: "2px",
-                    width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%",
-                    transition: "all 0.15s ease",
-                    background: currentScreen === "PLAYING" ? "" : "#07080b"
-                  }}
-                />
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="cabinet-status-panel neo-pressed">
+              <div className="hud-panel-block" style={{ gap: "4px" }}>
+                <span className="hud-panel-title">PLAYER HP</span>
+                <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
+                      style={{
+                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
+                        border: "1px solid rgba(0,0,0,0.5)"
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
+                  <div className="flex-row" style={{ gap: "4px" }}>
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
+                        style={{
+                          background: isPlayingScreen && i < healingCharges ? "" : "#07080b",
+                          border: "1px solid rgba(0,0,0,0.5)",
+                          width: "6px",
+                          height: "6px"
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="neo-pressed" style={{
+                    width: "54px",
+                    height: "6px",
+                    borderRadius: "3px",
+                    padding: "1px",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
+                    background: "#07080b"
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      borderRadius: "2px",
+                      width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
+                      transition: "width 0.15s ease",
+                      background: "hsl(280, 80%, 65%)",
+                      boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
+                    }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
+                {isPlayingScreen ? (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                    border: "1px solid rgba(255, 255, 255, 0.03)",
+                    background: "rgba(7, 8, 11, 0.85)",
+                    padding: "8px 22px",
+                    borderRadius: "8px",
+                    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
+                  }}>
+                    <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                    <span style={{
+                      fontSize: "16px",
+                      color: "rgba(34, 197, 94, 0.8)",
+                      fontWeight: 900,
+                      letterSpacing: "0.3em",
+                      textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
+                      textTransform: "uppercase",
+                      lineHeight: "1"
+                    }}>
+                      BOX BATTLE
+                    </span>
+                    <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
+                <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+                <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
+                  <div
+                    className={isPlayingScreen ? "led-red" : ""}
+                    style={{
+                      height: "100%",
+                      borderRadius: "2px",
+                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
+                      transition: "all 0.15s ease",
+                      background: isPlayingScreen ? "" : "#07080b"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )
         )}
 
-        <div className="game-viewport-container" ref={viewportRef}>
-          {currentScreen === "PLAYING" ? (
+        <div className="game-viewport-container" ref={viewportRef} style={isTouchDevice ? (isPlayingScreen ? {
+          flexGrow: 0,
+          flexShrink: 0,
+          width: "100%",
+          aspectRatio: "1/1",
+          maxHeight: "calc(100vh - 250px)",
+          height: "auto"
+        } : {
+          flexGrow: 1,
+          width: "100%",
+          height: "100%"
+        }) : undefined}>
+          {isPlayingScreen ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
                 <GameArena
@@ -487,21 +660,90 @@ export default function App() {
         </div>
 
         {!isFullHeightScreen && (
-          <div className="dialogue-console">
-            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}>
-              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: playerDialogue.active ? "" : "#07080b" }} />
+          <div className="dialogue-console" style={isTouchDevice ? {
+            height: "54px",
+            marginTop: "0px",
+            gap: "4px",
+            padding: "0",
+            flexShrink: 0
+          } : undefined}>
+            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`} style={isTouchDevice ? {
+              padding: "4px 8px",
+              gap: "8px",
+              borderRadius: "6px",
+              height: "100%"
+            } : undefined}>
+              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{
+                background: playerDialogue.active ? "" : "#07080b",
+                width: isTouchDevice ? "32px" : "64px",
+                height: isTouchDevice ? "32px" : "64px"
+              }} />
               <div className="dialogue-text-container">
-                <div className="dialogue-speaker-label">PLAYER</div>
-                <div className="dialogue-body-text">{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px" } : undefined}>PLAYER</div>
+                <div className="dialogue-body-text" style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}>{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
               </div>
             </div>
 
-            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}>
+            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`} style={isTouchDevice ? {
+              padding: "4px 8px",
+              gap: "8px",
+              borderRadius: "6px",
+              height: "100%"
+            } : undefined}>
               <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-                <div className="dialogue-speaker-label" style={{ color: "var(--signal-red)" }}>BOSS</div>
-                <div className="dialogue-body-text">{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}>BOSS</div>
+                <div className="dialogue-body-text" style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}>{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
               </div>
-              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{ background: bossDialogue.active ? "" : "#07080b" }} />
+              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{
+                background: bossDialogue.active ? "" : "#07080b",
+                width: isTouchDevice ? "32px" : "64px",
+                height: isTouchDevice ? "32px" : "64px"
+              }} />
+            </div>
+          </div>
+        )}
+
+        {/* Custom Ergonomic Touch Overlay for Mobile Game Arena Controls */}
+        {isPlayingScreen && isTouchDevice && (
+          <div style={{
+            display: "flex",
+            width: "100%",
+            gap: "8px",
+            background: "#0c0e12",
+            boxSizing: "border-box",
+            flexGrow: 1,
+            height: "0px",
+            paddingTop: "6px"
+          }}>
+            {/* Left Hand: Movement Panel (flex: 1.3) */}
+            <div style={{
+              flex: 1.3,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: "6px",
+              height: "100%"
+            }}>
+              <TouchButton action="MOVE_LEFT" label="◀" style={{ height: "100%", fontSize: "24px" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
+                <TouchButton action="MOVE_UP" label="▲" style={{ flex: 1, fontSize: "20px" }} />
+                <TouchButton action="MOVE_DOWN" label="▼" style={{ flex: 1, fontSize: "20px" }} />
+              </div>
+              <TouchButton action="MOVE_RIGHT" label="▶" style={{ height: "100%", fontSize: "24px" }} />
+            </div>
+
+            {/* Right Hand: Action Panel (flex: 1) */}
+            <div style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              height: "100%"
+            }}>
+              <TouchButton action="DASH" label="DASH" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-yellow)", color: "var(--signal-yellow)" }} />
+              <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
+                <TouchButton action="ATTACK" label="ATK" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-red)", color: "var(--signal-red)" }} />
+                <TouchButton action="JUMP" label="JMP" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-green)", color: "var(--signal-green)" }} />
+              </div>
             </div>
           </div>
         )}

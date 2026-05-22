@@ -103,6 +103,21 @@ class InputProvider {
     }
   };
 
+  public triggerTouchStart(action: Action) {
+    if (!this.pressed[action]) {
+      this.justPressed[action] = true;
+      this.pressed[action] = true;
+      this.pressTimestamps[action] = performance.now();
+    }
+  }
+
+  public triggerTouchEnd(action: Action) {
+    if (this.pressed[action]) {
+      this.justReleased[action] = true;
+      this.pressed[action] = false;
+    }
+  }
+
   public isPressed(action: Action): boolean {
     return this.pressed[action];
   }

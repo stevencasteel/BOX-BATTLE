@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
@@ -17,6 +17,13 @@ export function GameArena({
 }: GameArenaProps) {
   const triggerRef = useRef(triggerDialogue);
   
+  const [isMobileDevice] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(pointer: coarse)").matches;
+    }
+    return false;
+  });
+
   useEffect(() => {
     triggerRef.current = triggerDialogue;
   }, [triggerDialogue]);
@@ -100,7 +107,14 @@ export function GameArena({
           width={1250}
           height={1250}
           className="crt-scanlines crt-flicker"
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0c0d11", display: "block", margin: "auto" }}
+          style={{ 
+            maxWidth: "100%", 
+            maxHeight: "100%", 
+            objectFit: "contain", 
+            background: "#0c0d11", 
+            display: "block", 
+            margin: isMobileDevice ? "0 auto" : "auto" 
+          }}
         />
 
         <div className="vignette-overlay" />
