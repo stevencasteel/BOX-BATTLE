@@ -1,0 +1,42 @@
+.mixer-board {
+  width: 100%;
+  max-width: 600px;
+  padding: 32px;
+  border-radius: 28px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  box-sizing: border-box;
+}
+
+.mixer-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.mixer-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  color: #718096;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .mixer-board {
+    padding: 18px;
+    gap: 20px;
+  }
+}

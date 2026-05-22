@@ -1,3 +1,4 @@
+import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
 
 interface AudioScreenProps {

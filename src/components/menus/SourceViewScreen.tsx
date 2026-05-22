@@ -1,3 +1,4 @@
+import "./SourceViewScreen.css";
 import { useEffect, useState, useRef } from "react";
 import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";

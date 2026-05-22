@@ -1,0 +1,214 @@
+.cabinet-status-panel {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1vmin 1.5vmin;
+  border-radius: 1.5vmin;
+  margin-bottom: 1vmin;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.hud-panel-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-panel-title {
+  font-size: clamp(10px, 1.4vmin, 15px);
+  font-weight: bold;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.hud-panel-title-red {
+  color: var(--signal-red);
+}
+
+.game-viewport-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--void-bg);
+  position: relative;
+  contain: layout style paint;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.gameover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.94);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  padding: 24px;
+  box-sizing: border-box;
+  animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  opacity: 0;
+  will-change: opacity;
+}
+
+@keyframes overlay-fade-in {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+.dialogue-console {
+  width: 100%;
+  height: 8.5vmin;
+  min-height: 50px;
+  max-height: 90px;
+  display: flex;
+  gap: 1.5vmin;
+  margin-top: 1.2vmin;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.dialogue-box-left,
+.dialogue-box-right {
+  flex: 1;
+  border-radius: 1.5vmin;
+  padding: 1vmin 1.8vmin;
+  display: flex;
+  align-items: center;
+  gap: 1.2vmin;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition:
+    opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: scale(0.97);
+}
+
+.dialogue-active-green {
+  opacity: 1;
+  border-color: rgba(34, 197, 94, 0.25);
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(34, 197, 94, 0.08);
+  transform: scale(1.0);
+}
+
+.dialogue-active-red {
+  opacity: 1;
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(239, 68, 68, 0.08);
+  transform: scale(1.0);
+}
+
+.dialogue-inactive {
+  opacity: 0.12;
+  transform: scale(0.97);
+}
+
+.portrait-square {
+  width: 6vmin;
+  height: 6vmin;
+  min-width: 32px;
+  min-height: 32px;
+  max-width: 50px;
+  max-height: 50px;
+  border-radius: 1vmin;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.dialogue-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.dialogue-speaker-label {
+  font-size: clamp(9px, 1.2vmin, 13px);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  color: var(--signal-green);
+}
+
+.dialogue-body-text {
+  font-size: clamp(10px, 1.4vmin, 14px);
+  line-height: 1.35;
+  color: #eaeaea;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+.portrait-rumble {
+  animation: rumble-anim 0.08s infinite alternate;
+}
+
+@keyframes rumble-anim {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  20% { transform: translate(-1px, -1px) rotate(-1deg); }
+  40% { transform: translate(-1px, 1px) rotate(1deg); }
+  60% { transform: translate(1px, -1px) rotate(0deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  100% { transform: translate(1px, 1px) rotate(-1deg); }
+}
+
+@media (max-width: 768px) {
+  .cabinet-status-panel {
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .hud-panel-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .hud-panel-block:nth-child(3) .neo-pressed {
+    width: 100px !important;
+  }
+  .dialogue-console {
+    height: 90px;
+    margin-top: 8px;
+    gap: 8px;
+  }
+  .dialogue-box-left,
+  .dialogue-box-right {
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+  .portrait-square {
+    width: 44px;
+    height: 44px;
+  }
+  .dialogue-speaker-label {
+    font-size: 11px;
+  }
+  .dialogue-body-text {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+}
+
+@media (max-height: 600px) {
+  .cabinet-status-panel {
+    display: none;
+  }
+  .dialogue-console {
+    display: none;
+  }
+}

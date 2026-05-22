@@ -1,0 +1,58 @@
+.slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 640px;
+  margin: auto 0;
+}
+
+.slot-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.slot-card:active {
+  transform: scale(0.98);
+}
+
+.slot-card-empty {
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  color: #4a5568;
+}
+
+.slot-card-loaded {
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-light), var(--shadow-dark);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+}
+
+.slot-card-focused {
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
+  color: var(--signal-green);
+  border-color: rgba(34, 197, 94, 0.25);
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+@media (max-width: 768px) {
+  .slot-list {
+    gap: 12px;
+  }
+  .slot-card {
+    padding: 16px 20px;
+    border-radius: 10px;
+  }
+}

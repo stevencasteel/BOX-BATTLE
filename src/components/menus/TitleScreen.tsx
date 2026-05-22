@@ -1,3 +1,4 @@
+import "./TitleScreen.css";
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;

@@ -1,3 +1,4 @@
+import "./GameArena.css";
 import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";

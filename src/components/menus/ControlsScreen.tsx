@@ -1,3 +1,4 @@
+import "./ControlsScreen.css";
 import { useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";

@@ -20,6 +20,8 @@ import { SourceViewScreen } from "@/components/menus/SourceViewScreen";
 import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
+import "./styles/neomorphism.css";
+import "./components/GameArena.css";
 
 const TouchButton = ({ action, label, style }: { action: Action; label: string; style?: React.CSSProperties }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);

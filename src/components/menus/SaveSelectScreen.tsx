@@ -1,3 +1,4 @@
+import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
 
 interface SaveSelectScreenProps {

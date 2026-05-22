@@ -1,3 +1,4 @@
+import "./CreditsScreen.css";
 interface CreditsScreenProps {
   onBack: () => void;
 }
