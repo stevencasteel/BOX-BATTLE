@@ -102,70 +102,122 @@ export function GameArena({
     <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
 
-        <canvas
-          ref={canvasRef}
-          width={1250}
-          height={1250}
-          className="crt-scanlines crt-flicker"
-          style={{ 
-            maxWidth: "100%", 
-            maxHeight: "100%", 
-            objectFit: "contain", 
-            background: "#0c0d11", 
-            display: "block", 
-            margin: isMobileDevice ? "0 auto" : "auto auto 0 auto" 
-          }}
-        />
+        <div style={{
+          position: "relative",
+          margin: isMobileDevice ? "0 auto" : "auto auto 0 auto",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          maxWidth: "100%",
+          maxHeight: "100%",
+          aspectRatio: "1/1",
+          width: "100%",
+          height: "100%"
+        }}>
+          <canvas
+            ref={canvasRef}
+            width={1250}
+            height={1250}
+            className="crt-scanlines crt-flicker"
+            style={{ 
+              width: "100%",
+              height: "100%",
+              background: "#0c0d11", 
+              display: "block"
+            }}
+          />
 
-        <div className="vignette-overlay" />
+          <div className="vignette-overlay" />
 
-        {gameResult !== "PLAYING" && (
-          <div className="gameover-overlay">
-            {gameResult === "GAMEOVER" ? (
-              <div className="flex-col-center" style={{ gap: "16px" }}>
-                <h1 style={{ fontSize: "2.5rem", color: "#ef4444", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.2em", textShadow: "0 0 15px rgba(239, 68, 68, 0.75)" }}>
-                  GAME OVER
-                </h1>
-                <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  You were defeated.
-                </p>
+          {gameResult !== "PLAYING" && (
+            <div className="gameover-overlay">
+              <div className="gameover-box neo-elevated" style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "40px",
+                borderRadius: "20px",
+                border: gameResult === "GAMEOVER" ? "2px solid rgba(239, 68, 68, 0.35)" : "2px solid rgba(34, 197, 94, 0.35)",
+                boxShadow: gameResult === "GAMEOVER" 
+                  ? "0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1)" 
+                  : "0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1)",
+                background: "rgba(12, 14, 18, 0.95)",
+                maxWidth: "440px",
+                width: "85%",
+                boxSizing: "border-box",
+                textAlign: "center"
+              }}>
+
+                {gameResult === "GAMEOVER" ? (
+                  <div className="flex-col-center">
+                    <h1 style={{ 
+                      fontSize: "2.6rem", 
+                      margin: 0, 
+                      color: "var(--signal-red)", 
+                      fontWeight: 900, 
+                      textTransform: "uppercase", 
+                      letterSpacing: "0.22em", 
+                      textShadow: "0 0 15px var(--signal-red-glow)",
+                      lineHeight: "1.1"
+                    }}>
+                      DEFEATED
+                    </h1>
+                  </div>
+                ) : (
+                  <div className="flex-col-center">
+                    <h1 style={{ 
+                      fontSize: "2.6rem", 
+                      margin: 0, 
+                      color: "var(--signal-green)", 
+                      fontWeight: 900, 
+                      textTransform: "uppercase", 
+                      letterSpacing: "0.22em", 
+                      textShadow: "0 0 15px var(--signal-green-glow)",
+                      lineHeight: "1.1"
+                    }}>
+                      VICTORY
+                    </h1>
+                  </div>
+                )}
+
+                <div style={{
+                  height: "1px",
+                  width: "60px",
+                  background: "rgba(255,255,255,0.08)",
+                  margin: "24px 0"
+                }} />
+
+                <div className="flex-row" style={{ gap: "16px", width: "100%", justifyContent: "center" }}>
+                  <button
+                    onClick={() => {
+                      resetGameSession();
+                      navTo("PLAYING");
+                    }}
+                    onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+                    className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                  >
+                    <span className="cursor-arrow" style={{ marginRight: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
+                    RETRY
+                    <span className="cursor-arrow" style={{ marginLeft: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
+                  </button>
+                  <button
+                    onClick={() => navTo("TITLE")}
+                    onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+                    className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                  >
+                    <span className="cursor-arrow" style={{ marginRight: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
+                    MENU
+                    <span className="cursor-arrow" style={{ marginLeft: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="flex-col-center" style={{ gap: "16px" }}>
-                <h1 style={{ fontSize: "2.5rem", color: "#22c55e", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.2em", textShadow: "0 0 15px rgba(34, 197, 94, 0.75)" }}>
-                  VICTORY
-                </h1>
-                <p style={{ fontSize: "11px", color: "#718096", textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                  You defeated the boss!
-                </p>
-              </div>
-            )}
-
-            <div className="flex-row" style={{ gap: "16px", marginTop: "32px" }}>
-              <button
-                onClick={() => {
-                  resetGameSession();
-                  navTo("PLAYING");
-                }}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-                className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-                RETRY
-                {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
-              </button>
-              <button
-                onClick={() => navTo("TITLE")}
-                onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-                className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-              >
-                {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-                MENU
-                {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
-              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
       </div>
     </div>
   );

@@ -73,7 +73,7 @@ export class BossPatrolState extends BossState {
       const distance = Math.abs(player.position.x - this.owner.position.x);
       const distanceY = Math.abs(player.position.y - this.owner.position.y);
       if (distance < 120 && distanceY < 60) {
-        this.owner.stateMachine.changeState(this.owner.meleeState);
+        this.owner.stateMachine.changeState(this.owner.telegraphState);
         return;
       }
     }

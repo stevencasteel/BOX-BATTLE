@@ -235,8 +235,11 @@ export class SFXManager {
 
   public playPlayerExplosion(x?: number) {
     this.execute("player_explosion", 0, x, this.playerPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(220, "2n", now);
-      this.hurtSynth.frequency.rampTo(40, 0.8, now);
+      for (let i = 0; i < 3; i++) {
+        const delay = i * 0.25;
+        this.hurtSynth.triggerAttackRelease(180 - i * 30, "4n", now + delay);
+        this.hurtSynth.frequency.rampTo(40, 0.35, now + delay);
+      }
     });
   }
 
