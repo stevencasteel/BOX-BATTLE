@@ -8,8 +8,9 @@ export class InterfaceSFX {
   private playerDialoguePanner!: Tone.Panner;
   private bossDialoguePanner!: Tone.Panner;
 
-  private dialogueSynthPlayer!: Tone.Synth;
-  private dialogueSynthBoss!: Tone.Synth;
+  private dialogueSynthPlayer!: Tone.PolySynth;
+  private dialogueSynthBoss!: Tone.PolySynth;
+  private menuSynth!: Tone.Synth;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
@@ -22,15 +23,23 @@ export class InterfaceSFX {
     this.playerDialoguePanner = new Tone.Panner(-0.35).connect(sfxGain);
     this.bossDialoguePanner = new Tone.Panner(0.35).connect(sfxGain);
 
-    this.dialogueSynthPlayer = new Tone.Synth({
+    this.dialogueSynthPlayer = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
       envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
     }).connect(this.playerDialoguePanner);
 
-    this.dialogueSynthBoss = new Tone.Synth({
+    this.dialogueSynthBoss = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "triangle" },
       envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 }
     }).connect(this.bossDialoguePanner);
+
+    this.menuSynth = new Tone.Synth({
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 }
+    }).connect(this.playerDialoguePanner);
+
+    this.dialogueSynthPlayer.maxPolyphony = 4;
+    this.dialogueSynthBoss.maxPolyphony = 4;
   }
 
   public playSelectTick() {
@@ -52,18 +61,18 @@ export class InterfaceSFX {
   public playMenuConfirm() {
     const preset = SFX_PRESETS.interface.menu_confirm;
     this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
-      this.dialogueSynthPlayer.triggerAttackRelease(preset.startFreq, "16n", now);
-      this.dialogueSynthPlayer.frequency.setValueAtTime(preset.startFreq, now);
-      this.dialogueSynthPlayer.frequency.rampTo(preset.targetFreq, preset.duration, now);
+      this.menuSynth.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.menuSynth.frequency.setValueAtTime(preset.startFreq, now);
+      this.menuSynth.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
   public playMenuBack() {
     const preset = SFX_PRESETS.interface.menu_back;
     this.helper.execute("menu_back", 80, undefined, undefined, (now) => {
-      this.dialogueSynthBoss.triggerAttackRelease(preset.startFreq, "16n", now);
-      this.dialogueSynthBoss.frequency.setValueAtTime(preset.startFreq, now);
-      this.dialogueSynthBoss.frequency.rampTo(preset.targetFreq, preset.duration, now);
+      this.menuSynth.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.menuSynth.frequency.setValueAtTime(preset.startFreq, now);
+      this.menuSynth.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
