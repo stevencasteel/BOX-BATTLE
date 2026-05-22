@@ -113,7 +113,7 @@ export function GameArena({
             objectFit: "contain", 
             background: "#0c0d11", 
             display: "block", 
-            margin: isMobileDevice ? "0 auto" : "auto" 
+            margin: isMobileDevice ? "0 auto" : "auto auto 0 auto" 
           }}
         />
 
