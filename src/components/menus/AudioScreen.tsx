@@ -4,6 +4,7 @@ interface AudioScreenProps {
   audio: AudioSettings;
   menuIndex: number;
   handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  resetSettings: () => void;
   onBack: () => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
@@ -13,6 +14,7 @@ export function AudioScreen({
   audio,
   menuIndex,
   handleVolumeChange,
+  resetSettings,
   onBack,
   playHoverTick,
   setMenuIndex,
@@ -110,16 +112,29 @@ export function AudioScreen({
         </div>
       </div>
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
-        className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
-      >
-        {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-        Back
-        {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
-      </button>
+      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "280px", marginTop: "10px" }}>
+        <button
+          onClick={resetSettings}
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
+          className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
+          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+        >
+          {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          RESET ALL TO 100%
+          {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+        </button>
+
+        <button
+          onClick={onBack}
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
+          className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : ""}`}
+          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+        >
+          {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          Back
+          {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+        </button>
+      </div>
     </div>
   );
 }

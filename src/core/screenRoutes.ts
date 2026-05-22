@@ -15,6 +15,7 @@ export interface MenuContext {
   resetActions: () => void;
   audio: AudioSettings;
   handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  resetSettings?: () => void;
   setRebindTarget: (target: { action: Action; index: number } | null) => void;
   gameResult: string;
 }
@@ -99,9 +100,11 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     }
   },
   SOUND: {
-    getMaxIndex: () => 3,
-    onSelect: ({ menuIndex, navTo }) => {
+    getMaxIndex: () => 4,
+    onSelect: ({ menuIndex, navTo, resetSettings }) => {
       if (menuIndex === 3) {
+        resetSettings?.();
+      } else if (menuIndex === 4) {
         navTo("OPTIONS");
         soundSynth.playErrorTick();
       }

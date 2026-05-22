@@ -57,7 +57,7 @@ export default function App() {
     resetActions,
   } = useSaveSlots();
 
-  const { audio, handleVolumeChange } = useAudioSettings();
+  const { audio, handleVolumeChange, resetSettings } = useAudioSettings();
   const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
@@ -174,6 +174,7 @@ export default function App() {
         resetActions,
         audio,
         handleVolumeChange,
+        resetSettings,
         setRebindTarget,
         gameResult
       };
@@ -440,6 +441,7 @@ export default function App() {
                   audio={audio}
                   menuIndex={menuIndex}
                   handleVolumeChange={handleVolumeChange}
+                  resetSettings={resetSettings}
                   onBack={() => {
                     navTo("OPTIONS");
                   }}

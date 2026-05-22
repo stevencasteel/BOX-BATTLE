@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 9:45:28 AM
+ [SYSTEM] Generated: 5/22/2026, 9:48:51 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2395,7 +2395,7 @@ export default function App() {
     resetActions,
   } = useSaveSlots();
 
-  const { audio, handleVolumeChange } = useAudioSettings();
+  const { audio, handleVolumeChange, resetSettings } = useAudioSettings();
   const { playerDialogue, bossDialogue, triggerDialogue, resetDialogues } = useGameDialogue();
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
@@ -2512,6 +2512,7 @@ export default function App() {
         resetActions,
         audio,
         handleVolumeChange,
+        resetSettings,
         setRebindTarget,
         gameResult
       };
@@ -2778,6 +2779,7 @@ export default function App() {
                   audio={audio}
                   menuIndex={menuIndex}
                   handleVolumeChange={handleVolumeChange}
+                  resetSettings={resetSettings}
                   onBack={() => {
                     navTo("OPTIONS");
                   }}
@@ -3035,6 +3037,7 @@ interface AudioScreenProps {
   audio: AudioSettings;
   menuIndex: number;
   handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  resetSettings: () => void;
   onBack: () => void;
   playHoverTick: () => void;
   setMenuIndex: (index: number) => void;
@@ -3044,6 +3047,7 @@ export function AudioScreen({
   audio,
   menuIndex,
   handleVolumeChange,
+  resetSettings,
   onBack,
   playHoverTick,
   setMenuIndex,
@@ -3141,19 +3145,33 @@ export function AudioScreen({
         </div>
       </div>
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
-        className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
-      >
-        {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-        Back
-        {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
-      </button>
+      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "280px", marginTop: "10px" }}>
+        <button
+          onClick={resetSettings}
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
+          className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
+          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+        >
+          {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          RESET ALL TO 100%
+          {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+        </button>
+
+        <button
+          onClick={onBack}
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
+          className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : ""}`}
+          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+        >
+          {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          Back
+          {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+        </button>
+      </div>
     </div>
   );
 }
+
 
 
 ● ./src/components/menus/ControlsScreen.tsx
@@ -7386,6 +7404,7 @@ export interface MenuContext {
   resetActions: () => void;
   audio: AudioSettings;
   handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  resetSettings?: () => void;
   setRebindTarget: (target: { action: Action; index: number } | null) => void;
   gameResult: string;
 }
@@ -7470,9 +7489,11 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     }
   },
   SOUND: {
-    getMaxIndex: () => 3,
-    onSelect: ({ menuIndex, navTo }) => {
+    getMaxIndex: () => 4,
+    onSelect: ({ menuIndex, navTo, resetSettings }) => {
       if (menuIndex === 3) {
+        resetSettings?.();
+      } else if (menuIndex === 4) {
         navTo("OPTIONS");
         soundSynth.playErrorTick();
       }
@@ -10233,9 +10254,25 @@ export function useAudioSettings() {
     soundSynth.updateVolumes();
   };
 
+  const resetSettings = () => {
+    const defaulted: AudioSettings = {
+      masterVolume: 1.0,
+      sfxVolume: 1.0,
+      musicVolume: 1.0,
+      masterMuted: false,
+      sfxMuted: false,
+      musicMuted: false,
+    };
+    setAudio(defaulted);
+    settingsManager.setAudio(defaulted);
+    soundSynth.updateVolumes();
+    soundSynth.playHitConfirm();
+  };
+
   return {
     audio,
     handleVolumeChange,
+    resetSettings,
   };
 }
 

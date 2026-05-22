@@ -12,8 +12,24 @@ export function useAudioSettings() {
     soundSynth.updateVolumes();
   };
 
+  const resetSettings = () => {
+    const defaulted: AudioSettings = {
+      masterVolume: 1.0,
+      sfxVolume: 1.0,
+      musicVolume: 1.0,
+      masterMuted: false,
+      sfxMuted: false,
+      musicMuted: false,
+    };
+    setAudio(defaulted);
+    settingsManager.setAudio(defaulted);
+    soundSynth.updateVolumes();
+    soundSynth.playHitConfirm();
+  };
+
   return {
     audio,
     handleVolumeChange,
+    resetSettings,
   };
 }
