@@ -2,6 +2,7 @@ import "./SourceViewScreen.css";
 import { useEffect, useState, useRef } from "react";
 import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
+import { sourceCodeManifest } from "@/core/sourceCodeManifest";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -83,7 +84,7 @@ function getLanguageFromPath(filePath: string): string {
 }
 
 export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
-  const [manifest, setManifest] = useState<Record<string, string>>({});
+  const [manifest] = useState<Record<string, string>>(sourceCodeManifest);
   const [treeRoot, setTreeRoot] = useState<FileNode | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Record<string, boolean>>({
     "src": true,
@@ -111,20 +112,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    fetch("./source_code_manifest.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setManifest(data);
-        const paths = Object.keys(data);
-        const root = buildTree(paths);
-        setTreeRoot(root);
-        
-        const sortedPaths = paths.sort();
-        if (sortedPaths.length > 0) {
-          setSelectedFile(sortedPaths[0]);
-        }
-      })
-      .catch((err) => console.error("Could not fetch code manifest:", err));
+    const paths = Object.keys(sourceCodeManifest);
+    const root = buildTree(paths);
+    setTreeRoot(root);
+    
+    const sortedPaths = paths.sort();
+    if (sortedPaths.length > 0) {
+      setSelectedFile(sortedPaths[0]);
+    }
   }, []);
 
   useEffect(() => {
