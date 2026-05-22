@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import fs from 'fs';
+
+// 1. Rewrite src/components/menus/ControlsScreen.tsx with conditional placeholder rendering
+const controlsPath = 'src/components/menus/ControlsScreen.tsx';
+const newControlsContent = `import { useEffect, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
@@ -89,7 +93,7 @@ export function ControlsScreen({
             [ TOUCH INTERFACE CALIBRATION ]
           </span>
           <h3 style={{ fontSize: "16px", color: "#ffffff", margin: 0, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "bold" }}>
-            Bespoke Custom Touch Controls Coming Soon
+            Bespoke Custom Touch controls Coming Soon
           </h3>
           <p style={{ fontSize: "11px", color: "#718096", lineHeight: "1.6", textTransform: "uppercase", letterSpacing: "0.08em", maxWidth: "380px", margin: 0 }}>
             Virtual joystick remapping, physical boundary calibration, and responsive gesture-mapping menus are currently under engineering.
@@ -209,3 +213,84 @@ export function ControlsScreen({
     </div>
   );
 }
+`;
+
+fs.writeFileSync(controlsPath, newControlsContent, 'utf8');
+console.log("Successfully wrote updated touch placeholder ControlsScreen.tsx.");
+
+// 2. Patch src/core/screenRoutes.ts to scale getMaxIndex dynamically
+const routesPath = 'src/core/screenRoutes.ts';
+let routesContent = fs.readFileSync(routesPath, 'utf8');
+
+const targetRoutesControls = `  CONTROLS: {
+    getMaxIndex: () => 10,
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      if (menuIndex === 0) {
+        settingsManager.setPreset("DEFAULT_1");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 1) {
+        settingsManager.setPreset("DEFAULT_2");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 2) {
+        settingsManager.setPreset("CUSTOM");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 10) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const actionIndex = menuIndex - 3;
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },`;
+
+const replacementRoutesControls = `  CONTROLS: {
+    getMaxIndex: () => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      return isTouch ? 0 : 10;
+    },
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+        return;
+      }
+      if (menuIndex === 0) {
+        settingsManager.setPreset("DEFAULT_1");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 1) {
+        settingsManager.setPreset("DEFAULT_2");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 2) {
+        settingsManager.setPreset("CUSTOM");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 10) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const actionIndex = menuIndex - 3;
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },`;
+
+if (routesContent.includes(targetRoutesControls)) {
+  routesContent = routesContent.replace(targetRoutesControls, replacementRoutesControls);
+  fs.writeFileSync(routesPath, routesContent, 'utf8');
+  console.log("Successfully patched screenRoutes.ts with flexible touch menu limits.");
+} else {
+  console.warn("WARNING: Target controls router configuration not found inside screenRoutes.ts.");
+}
+

@@ -124,8 +124,18 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     }
   },
   CONTROLS: {
-    getMaxIndex: () => 10,
+    getMaxIndex: () => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      return isTouch ? 0 : 10;
+    },
     onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+        return;
+      }
       if (menuIndex === 0) {
         settingsManager.setPreset("DEFAULT_1");
         soundSynth.playHitConfirm();

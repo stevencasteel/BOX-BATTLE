@@ -261,15 +261,7 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div 
-        className="cabinet-outer"
-        style={isFullHeightScreen ? {
-          width: "96vw",
-          height: "95vh",
-          maxWidth: "1600px",
-          maxHeight: "1080px"
-        } : undefined}
-      >
+      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-full-height" : ""}`}>
 
         {!isFullHeightScreen && (
           <div className="cabinet-status-panel neo-pressed">
