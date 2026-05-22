@@ -201,11 +201,25 @@ export default function App() {
         dashKeys.includes(e.code) ||
         dashKeys.includes(e.key);
 
-      if (e.key === "ArrowDown" || e.key === "KeyS" || (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"))) {
+      const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
+
+      const isMoveForward =
+        e.key === "ArrowDown" ||
+        e.key === "KeyS" ||
+        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"));
+
+      const isMoveBackward =
+        e.key === "ArrowUp" ||
+        e.key === "KeyW" ||
+        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"));
+
+      if (isMoveForward) {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex + 1) % (maxIndex + 1));
-      } else if (e.key === "ArrowUp" || e.key === "KeyW" || (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"))) {
+      } else if (isMoveBackward) {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
@@ -220,10 +234,10 @@ export default function App() {
         }
       }
 
-      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      if (isSoundSliderZone && (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")) {
         if (config.onHorizontal) {
           e.preventDefault();
-          const direction = e.key === "ArrowRight" ? 1 : -1;
+          const direction = (e.key === "ArrowRight" || e.key === "KeyD") ? 1 : -1;
           config.onHorizontal(direction, context);
         }
       }

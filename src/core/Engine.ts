@@ -336,6 +336,7 @@ export class Engine {
     const sessionState = useSessionStore.getState();
     if (this.player.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      eventBroker.publish("CLEAR_DIALOGUES", undefined);
       soundSynth.clearAllSlides();
       soundSynth.stopChargeDrone();
       soundSynth.stopHealDrone();
@@ -360,6 +361,7 @@ export class Engine {
       }, 2000);
     } else if (this.boss.isDead && !this.isCinematicActive) {
       this.isCinematicActive = true;
+      eventBroker.publish("CLEAR_DIALOGUES", undefined);
       soundSynth.clearAllSlides();
       soundSynth.stopChargeDrone();
       soundSynth.stopHealDrone();

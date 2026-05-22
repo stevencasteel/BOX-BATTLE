@@ -124,14 +124,27 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     }
   },
   CONTROLS: {
-    getMaxIndex: () => 7,
-    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget }) => {
-      if (menuIndex === 7) {
+    getMaxIndex: () => 10,
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      if (menuIndex === 0) {
+        settingsManager.setPreset("DEFAULT_1");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 1) {
+        settingsManager.setPreset("DEFAULT_2");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 2) {
+        settingsManager.setPreset("CUSTOM");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 10) {
         navTo("OPTIONS");
         setMenuIndex(1);
         soundSynth.playErrorTick();
       } else {
-        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[menuIndex];
+        const actionIndex = menuIndex - 3;
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
         soundSynth.playHitConfirm();
         setRebindTarget({ action, index: 0 });
       }

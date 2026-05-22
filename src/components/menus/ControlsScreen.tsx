@@ -42,13 +42,11 @@ export function ControlsScreen({
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
       
-      {/* 1. Header (Top) */}
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
         <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Change keyboard buttons</p>
       </div>
 
-      {/* 2. Preset Selection Buttons (Suspended in Upper Negative Space) */}
       <div className="flex-row" style={{ gap: "16px" }}>
         <button
           onClick={() => {
@@ -56,15 +54,18 @@ export function ControlsScreen({
             soundSynth.playHitConfirm();
             reloadSaveSlots();
           }}
-          className="neo-btn"
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+          className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
           style={{
             padding: "16px 28px",
             fontSize: "14px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
-            color: settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
+            borderColor: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "rgba(34, 197, 94, 0.4)" : "",
+            color: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
           }}
         >
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
           PRESET 1
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
         </button>
         <button
           onClick={() => {
@@ -72,15 +73,18 @@ export function ControlsScreen({
             soundSynth.playHitConfirm();
             reloadSaveSlots();
           }}
-          className="neo-btn"
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+          className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
           style={{
             padding: "16px 28px",
             fontSize: "14px",
-            borderColor: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
-            color: settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
+            borderColor: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "rgba(34, 197, 94, 0.4)" : "",
+            color: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
           }}
         >
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
           PRESET 2
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
         </button>
         <button
           onClick={() => {
@@ -88,27 +92,30 @@ export function ControlsScreen({
             soundSynth.playHitConfirm();
             reloadSaveSlots();
           }}
-          className="neo-btn"
+          onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
+          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
           style={{
             padding: "16px 28px",
             fontSize: "14px",
-            borderColor: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
-            color: settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
+            borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
+            color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
           }}
         >
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
           CUSTOM
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>◀</span>
         </button>
       </div>
 
-      {/* 3. Interactive Binding Board (Middle Third Centerpiece) */}
-      <div className="binding-board neo-pressed" style={{ margin: "0", maxHeight: "32vh" }}>
+      <div className="binding-board neo-pressed" style={{ margin: "0", maxHeight: "40vh", gap: "12px 32px", padding: "16px 24px", overflow: "hidden" }}>
         {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
           const keys = settingsManager.getKeyMap()[action] || [];
-          const isFocusedRow = menuIndex === idx;
+          const rowMenuIndex = idx + 3;
+          const isFocusedRow = menuIndex === rowMenuIndex;
           return (
-            <div key={action} className="binding-row">
-              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "13px" }}>
-                {isFocusedRow && <span className="cursor-arrow" style={{ marginRight: "6px" }}>▶</span>}
+            <div key={action} className="binding-row" style={{ padding: "8px 4px" }}>
+              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "14px", display: "flex", alignItems: "center" }}>
+                <span className="cursor-arrow" style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}>▶</span>
                 {action.replace("_", " ")}
               </span>
               <div className="flex-row" style={{ gap: "8px" }}>
@@ -119,6 +126,8 @@ export function ControlsScreen({
                   }}
                   className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
                   style={{
+                    minWidth: "150px",
+                    padding: "16px 24px",
                     borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                     color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
                   }}
@@ -133,7 +142,6 @@ export function ControlsScreen({
         })}
       </div>
 
-      {/* 4. Help Instruction Card (Suspended in Lower Negative Space - Single Line Enforcement) */}
       <div style={{
         padding: "10px 20px",
         borderRadius: "10px",
@@ -154,16 +162,15 @@ export function ControlsScreen({
         Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
       </div>
 
-      {/* 5. Back Button (Bottom) */}
       <button
         onClick={onBack}
-        onMouseEnter={() => { playHoverTick(); setMenuIndex(7); }}
-        className={`neo-btn ${menuIndex === 7 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
+        onMouseEnter={() => { playHoverTick(); setMenuIndex(10); }}
+        className={`neo-btn ${menuIndex === 10 ? "neo-btn-focused" : ""}`}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        {menuIndex === 7 && <span className="cursor-arrow">▶</span>}
+        <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 10 ? "visible" : "hidden" }}>▶</span>
         Back
-        {menuIndex === 7 && <span className="cursor-arrow">◀</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 10 ? "visible" : "hidden" }}>◀</span>
       </button>
 
     </div>

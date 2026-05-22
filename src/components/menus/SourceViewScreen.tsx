@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { soundSynth } from "@/core/SoundSynth";
+import { settingsManager } from "@/core/SettingsManager";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -69,7 +70,6 @@ function flattenVisible(node: FileNode, expanded: Record<string, boolean>, list:
   return list;
 }
 
-// Maps file extensions to their corresponding Prism highlight profiles
 function getLanguageFromPath(filePath: string): string {
   const ext = filePath.split('.').pop() || '';
   if (ext === 'tsx') return 'tsx';
@@ -124,43 +124,145 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
+      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
+
+      const keyMap = settingsManager.getKeyMap();
+      const jumpKeys = keyMap["JUMP"] || [];
+      const attackKeys = keyMap["ATTACK"] || [];
+      const dashKeys = keyMap["DASH"] || [];
+
+      const isConfirmKey =
+        e.key === "Enter" ||
+        e.key === " " ||
+        e.code === "Space" ||
+        jumpKeys.includes(e.code) ||
+        jumpKeys.includes(e.key);
+
+      const isBackKey =
+        e.key === "Escape" ||
+        e.key === "Backspace" ||
+        attackKeys.includes(e.code) ||
+        attackKeys.includes(e.key) ||
+        dashKeys.includes(e.code) ||
+        dashKeys.includes(e.key);
+
       if (e.key === "ArrowDown" || e.key === "KeyS") {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setActiveIndex((prev) => (prev + 1) % visibleNodes.length);
+        setActiveIndex((prev) => {
+          if (prev >= visibleNodes.length) {
+            if (prev === visibleNodes.length + 2) {
+              return 0;
+            }
+            return prev + 1;
+          }
+          if (prev === visibleNodes.length - 1) {
+            return visibleNodes.length;
+          }
+          return prev + 1;
+        });
       } else if (e.key === "ArrowUp" || e.key === "KeyW") {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setActiveIndex((prev) => (prev - 1 + visibleNodes.length) % visibleNodes.length);
-      } else if (e.key === "Enter" || e.key === " " || e.code === "Space") {
+        setActiveIndex((prev) => {
+          if (prev >= visibleNodes.length) {
+            if (prev === visibleNodes.length) {
+              return visibleNodes.length - 1;
+            }
+            return prev - 1;
+          }
+          if (prev === 0) {
+            return visibleNodes.length + 2;
+          }
+          return prev - 1;
+        });
+      } else if (e.key === "ArrowRight" || e.key === "KeyD") {
         e.preventDefault();
-        soundSynth.playHitConfirm();
-        const node = visibleNodes[activeIndex];
-        if (node.isDir) {
-          setExpandedDirs((prev) => ({
-            ...prev,
-            [node.path]: !prev[node.path]
-          }));
+        soundSynth.playSelectTick();
+        if (activeIndex < visibleNodes.length) {
+          if (node.isDir && !expandedDirs[node.path]) {
+            setExpandedDirs((prev) => ({ ...prev, [node.path]: true }));
+          }
         } else {
-          setSelectedFile(node.path);
+          setActiveIndex((prev) => {
+            if (prev === visibleNodes.length + 2) {
+              return 0;
+            }
+            return prev + 1;
+          });
         }
-      } else if (e.key === "Backspace" || e.key === "Escape") {
+      } else if (e.key === "ArrowLeft" || e.key === "KeyA") {
         e.preventDefault();
-        soundSynth.playErrorTick();
-        onBack();
+        soundSynth.playSelectTick();
+        if (activeIndex < visibleNodes.length) {
+          if (node.isDir && expandedDirs[node.path]) {
+            setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
+          } else {
+            setActiveIndex(visibleNodes.length + 2);
+          }
+        } else {
+          setActiveIndex((prev) => {
+            if (prev === visibleNodes.length) {
+              return visibleNodes.length - 1;
+            }
+            return prev - 1;
+          });
+        }
+      } else if (isConfirmKey) {
+        e.preventDefault();
+        if (activeIndex < visibleNodes.length) {
+          soundSynth.playHitConfirm();
+          if (node.isDir) {
+            setExpandedDirs((prev) => ({
+              ...prev,
+              [node.path]: !prev[node.path]
+            }));
+          } else {
+            setSelectedFile(node.path);
+          }
+        } else if (activeIndex === visibleNodes.length) {
+          soundSynth.playHitConfirm();
+          window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank");
+        } else if (activeIndex === visibleNodes.length + 1) {
+          handleDownload();
+        } else if (activeIndex === visibleNodes.length + 2) {
+          soundSynth.playErrorTick();
+          onBack();
+        }
+      } else if (isBackKey) {
+        e.preventDefault();
+        if (activeIndex < visibleNodes.length) {
+          if (node.isDir && expandedDirs[node.path]) {
+            soundSynth.playErrorTick();
+            setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
+          } else {
+            soundSynth.playSelectTick();
+            setActiveIndex(visibleNodes.length + 2);
+          }
+        } else {
+          if (activeIndex === visibleNodes.length + 2) {
+            soundSynth.playErrorTick();
+            onBack();
+          } else {
+            soundSynth.playSelectTick();
+            setActiveIndex(visibleNodes.length + 2);
+          }
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, onBack]);
+  }, [visibleNodes, activeIndex, expandedDirs, onBack]);
 
   useEffect(() => {
-    const activeEl = listRef.current?.querySelector(".file-item-active");
-    if (activeEl) {
-      activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (activeIndex < visibleNodes.length) {
+      const activeEl = listRef.current?.querySelector(".file-item-active");
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
     }
-  }, [activeIndex]);
+  }, [activeIndex, visibleNodes.length]);
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -175,16 +277,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}>
       
-      {/* 1. Header (Top) */}
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN: SCROLL  •  ENTER: EXPAND/OPEN  •  BACKSPACE: EXIT</p>
+        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: COLLAPSE/EXIT</p>
       </div>
 
-      {/* 2. Fluid-Height Split Screen (Middle) */}
       <div style={{ display: "flex", gap: "16px", flexGrow: 1, height: "0", minHeight: "0", width: "100%", boxSizing: "border-box", margin: "14px 0" }}>
         
-        {/* Left Pane: Directory Tree */}
         <div ref={listRef} className="neo-pressed" style={{ width: "24%", overflowY: "auto", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px", boxSizing: "border-box" }}>
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
@@ -249,7 +348,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        {/* Right Pane: Syntax-Highlighted Code Block */}
         <div className="neo-pressed" style={{ width: "76%", overflowY: "auto", borderRadius: "12px", padding: "16px", boxSizing: "border-box", background: "#1d1f21" }}>
           {selectedFile ? (
             <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
@@ -279,17 +377,16 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
       </div>
 
-      {/* 3. Navigation & Action Control Footer Row (Bottom) */}
       <div className="flex-row" style={{ width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "8px", boxSizing: "border-box" }}>
         
-        {/* Left: GitHub Repository neomorphic button */}
         <a 
           href="https://github.com/stevencasteel/BOX-BATTLE" 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="neo-btn"
+          className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
           style={{ padding: "16px 28px", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center" }}
         >
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>
           <svg 
             viewBox="0 0 24 24" 
             width="14" 
@@ -304,26 +401,27 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
           </svg>
           GITHUB REPO
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span>
         </a>
 
-        {/* Center: File Download Trigger */}
         <button
           onClick={handleDownload}
-          className="neo-btn"
+          className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
           style={{ padding: "16px 28px", fontSize: "14px" }}
         >
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>
           DOWNLOAD SOURCE (.TXT)
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
         </button>
 
-        {/* Right: Exit Navigation */}
         <button
           onClick={onBack}
-          className="neo-btn neo-btn-focused"
+          className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
           style={{ padding: "16px 32px", fontSize: "14px", width: "160px" }}
         >
-          <span className="cursor-arrow">▶</span>
+          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>
           Back
-          <span className="cursor-arrow">◀</span>
+          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
         </button>
 
       </div>
