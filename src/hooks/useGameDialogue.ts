@@ -21,7 +21,7 @@ export function useGameDialogue() {
         const char = playerDialogue.text[idx];
         setPlayerDialogue((prev) => ({
           ...prev,
-          displayed: prev.displayed + char
+          displayed: playerDialogue.text.substring(0, idx + 1)
         }));
         soundSynth.playDialogueTick("player", char);
         idx++;
@@ -47,7 +47,7 @@ export function useGameDialogue() {
         const char = bossDialogue.text[idx];
         setBossDialogue((prev) => ({
           ...prev,
-          displayed: prev.displayed + char
+          displayed: bossDialogue.text.substring(0, idx + 1)
         }));
         soundSynth.playDialogueTick("boss", char);
         idx++;
