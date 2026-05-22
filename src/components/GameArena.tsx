@@ -92,6 +92,16 @@ export function GameArena({
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const navTo = useSessionStore((state) => state.navTo);
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
+  const retryCount = useSessionStore((state) => state.retryCount);
+  const currentScreen = useSessionStore((state) => state.currentScreen);
+
+  const initialRetryCountRef = useRef(retryCount);
+
+  useEffect(() => {
+    if (currentScreen === "PLAYING" && retryCount > initialRetryCountRef.current) {
+      engineRef.current?.reset();
+    }
+  }, [retryCount, currentScreen]);
 
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
@@ -187,7 +197,6 @@ export function GameArena({
                   <button
                     onClick={() => {
                       resetGameSession();
-                      engineRef.current?.reset();
                       navTo("PLAYING");
                     }}
                     onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
