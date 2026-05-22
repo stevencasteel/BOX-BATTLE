@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 2:12:25 PM
+ [SYSTEM] Generated: 5/22/2026, 2:17:31 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -671,39 +671,25 @@ import "./styles/neomorphism.css";
 import "./components/GameArena.css";
 
 const TouchButton = ({ action, label, style }: { action: Action; label: string; style?: React.CSSProperties }) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (e.pointerType === "touch") {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    inputProvider.triggerTouchStart(action);
+  };
 
-  useEffect(() => {
-    const el = buttonRef.current;
-    if (!el) return;
-
-    const handleStart = (e: TouchEvent) => {
-      e.preventDefault();
-      inputProvider.triggerTouchStart(action);
-    };
-
-    const handleEnd = (e: TouchEvent) => {
-      e.preventDefault();
-      inputProvider.triggerTouchEnd(action);
-    };
-
-    el.addEventListener("touchstart", handleStart, { passive: false });
-    el.addEventListener("touchend", handleEnd, { passive: false });
-    el.addEventListener("touchcancel", handleEnd, { passive: false });
-
-    return () => {
-      el.removeEventListener("touchstart", handleStart);
-      el.removeEventListener("touchend", handleEnd);
-      el.removeEventListener("touchcancel", handleEnd);
-    };
-  }, [action]);
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    inputProvider.triggerTouchEnd(action);
+  };
 
   return (
     <button
-      ref={buttonRef}
-      onMouseDown={(e) => { e.preventDefault(); inputProvider.triggerTouchStart(action); }}
-      onMouseUp={(e) => { e.preventDefault(); inputProvider.triggerTouchEnd(action); }}
-      onMouseLeave={(e) => { e.preventDefault(); inputProvider.triggerTouchEnd(action); }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={handlePointerUp}
       className="neo-btn"
       style={{
         ...style,
