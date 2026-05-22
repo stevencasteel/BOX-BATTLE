@@ -15,11 +15,15 @@ const outputFile = path.join(docsDir, 'all_source_code.txt');
 function shouldInclude(filePath) {
   const relPath = path.relative(rootDir, filePath).split(path.sep).join('/');
   
-  if (path.basename(filePath) === 'all_source_code.txt' || path.basename(filePath) === 'source_code_manifest.json') {
+  if (
+    path.basename(filePath) === 'all_source_code.txt' || 
+    path.basename(filePath) === 'source_code_manifest.json' ||
+    path.basename(filePath) === 'sourceCodeManifest.ts'
+  ) {
     return false;
   }
 
-  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', '.github', 'BOX_BATTLE_ARCHIVE', 'scripts'];
+  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', '.github', 'BOX_BATTLE_ARCHIVE'];
   if (ignoredPaths.some(p => relPath.startsWith(p) || relPath.includes(`/${p}/`))) return false;
   
   const boilerplateConfigs = ['.DS_Store', 'package-lock.json', 'tsconfig.tsbuildinfo'];
@@ -74,7 +78,7 @@ function generateTree(dir, prefix = '') {
     const isLast = i === items.length - 1;
     const branch = isLast ? '└── ' : '├── ';
     
-    const skippedDirs = ['node_modules', 'dist', '.git', 'BOX_BATTLE_ARCHIVE', 'scripts'];
+    const skippedDirs = ['node_modules', 'dist', '.git', 'BOX_BATTLE_ARCHIVE'];
     if (item.isDir && skippedDirs.includes(item.name)) {
       output += `${prefix}${branch}${item.name}/ (contents skipped)\n`;
       continue;
