@@ -83,7 +83,11 @@ export class Engine {
 
   private init() {
     this.systems = new SimulationSystems();
-    this.systems.setup();
+    this.systems.setup(
+      () => this.player.position.x,
+      () => this.boss.position.x,
+      (id) => this.world.minions.find(m => m.id === id)?.position.x ?? 625
+    );
 
     this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
 

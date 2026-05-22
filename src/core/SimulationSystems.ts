@@ -5,10 +5,22 @@ import { soundSynth } from "@/core/SoundSynth";
 export class SimulationSystems {
   private unsubscribes: (() => void)[] = [];
 
-  public setup(): void {
+  private getPlayerX!: () => number;
+  private getBossX!: () => number;
+  private getMinionX!: (id: string) => number;
+
+  public setup(
+    getPlayerX: () => number,
+    getBossX: () => number,
+    getMinionX: (id: string) => number
+  ): void {
+    this.getPlayerX = getPlayerX;
+    this.getBossX = getBossX;
+    this.getMinionX = getMinionX;
+
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        soundSynth.playHurt();
+        soundSynth.playHurt(this.getPlayerX());
         Camera.shake(15, 0.3);
         Camera.triggerHitStop(0.08);
       })
@@ -16,7 +28,7 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm();
+        soundSynth.playHitConfirm(this.getBossX());
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6);
           Camera.triggerHitStop(0.15);
@@ -28,8 +40,9 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm();
+      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+        const mX = this.getMinionX(id);
+        soundSynth.playHitConfirm(mX);
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15);
           Camera.triggerHitStop(0.03);
@@ -42,35 +55,35 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_JUMPED", () => {
-        soundSynth.playJump();
+        soundSynth.playJump(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
-        soundSynth.playDash();
+        soundSynth.playDash(this.getPlayerX());
         Camera.triggerHitStop(0.035);
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_POGOED", () => {
-        soundSynth.playPogo();
+        soundSynth.playPogo(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
-        soundSynth.playSlash(direction);
+        soundSynth.playSlash(direction, this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
         if (level === 2) {
-          soundSynth.playFireballLvl2();
+          soundSynth.playFireballLvl2(this.getPlayerX());
         } else {
-          soundSynth.playFireballLvl1();
+          soundSynth.playFireballLvl1(this.getPlayerX());
         }
       })
     );
@@ -88,26 +101,20 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
-        soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
-      })
-    );
-
-    this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_LANDED", () => {
-        soundSynth.playLanding();
+        soundSynth.playLanding(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("HEAL_START", () => {
-        soundSynth.playHealStart();
+        soundSynth.playHealStart(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("HEAL_CANCEL", () => {
-        soundSynth.playHealCancel();
+        soundSynth.playHealCancel(this.getPlayerX());
       })
     );
 
@@ -119,13 +126,13 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
-        soundSynth.playSpikeStrike();
+        soundSynth.playSpikeStrike(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
-        soundSynth.playBossPhaseShift();
+        soundSynth.playBossPhaseShift(this.getBossX());
       })
     );
 
@@ -141,34 +148,33 @@ export class SimulationSystems {
       })
     );
 
-    // Movement Recharge & Boss Swipe Subscribers
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
-        soundSynth.playDashRecharge();
+        soundSynth.playDashRecharge(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_SWIPED", () => {
-        soundSynth.playBossSwipe();
+        soundSynth.playBossSwipe(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_TELEGRAPH", () => {
-        soundSynth.playBossTelegraph();
+        soundSynth.playBossTelegraph(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_LUNGED", () => {
-        soundSynth.playBossLunge();
+        soundSynth.playBossLunge(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("CHARGE_START", () => {
-        soundSynth.playChargeStart();
+        soundSynth.playChargeStart(this.getPlayerX());
       })
     );
 
@@ -188,7 +194,6 @@ export class SimulationSystems {
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
-    soundSynth.clearAllSlides();
     soundSynth.stopHealDrone();
     soundSynth.stopChargeDrone();
   }

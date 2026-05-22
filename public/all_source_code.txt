@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 6:48:16 PM
+ [SYSTEM] Generated: 5/21/2026, 7:04:54 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -37,7 +37,6 @@
 │   │   ├── audio/
 │   │   │   ├── AudioContextManager.ts
 │   │   │   ├── DroneManager.ts
-│   │   │   ├── FrictionSlideManager.ts
 │   │   │   ├── MusicSequencer.ts
 │   │   │   └── SFXManager.ts
 │   │   ├── Camera.ts
@@ -3684,7 +3683,11 @@ export class Engine {
 
   private init() {
     this.systems = new SimulationSystems();
-    this.systems.setup();
+    this.systems.setup(
+      () => this.player.position.x,
+      () => this.boss.position.x,
+      (id) => this.world.minions.find(m => m.id === id)?.position.x ?? 625
+    );
 
     this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
 
@@ -4862,10 +4865,22 @@ import { soundSynth } from "@/core/SoundSynth";
 export class SimulationSystems {
   private unsubscribes: (() => void)[] = [];
 
-  public setup(): void {
+  private getPlayerX!: () => number;
+  private getBossX!: () => number;
+  private getMinionX!: (id: string) => number;
+
+  public setup(
+    getPlayerX: () => number,
+    getBossX: () => number,
+    getMinionX: (id: string) => number
+  ): void {
+    this.getPlayerX = getPlayerX;
+    this.getBossX = getBossX;
+    this.getMinionX = getMinionX;
+
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        soundSynth.playHurt();
+        soundSynth.playHurt(this.getPlayerX());
         Camera.shake(15, 0.3);
         Camera.triggerHitStop(0.08);
       })
@@ -4873,7 +4888,7 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm();
+        soundSynth.playHitConfirm(this.getBossX());
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6);
           Camera.triggerHitStop(0.15);
@@ -4885,8 +4900,9 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm();
+      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+        const mX = this.getMinionX(id);
+        soundSynth.playHitConfirm(mX);
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15);
           Camera.triggerHitStop(0.03);
@@ -4899,35 +4915,35 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_JUMPED", () => {
-        soundSynth.playJump();
+        soundSynth.playJump(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
-        soundSynth.playDash();
+        soundSynth.playDash(this.getPlayerX());
         Camera.triggerHitStop(0.035);
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_POGOED", () => {
-        soundSynth.playPogo();
+        soundSynth.playPogo(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
-        soundSynth.playSlash(direction);
+        soundSynth.playSlash(direction, this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
         if (level === 2) {
-          soundSynth.playFireballLvl2();
+          soundSynth.playFireballLvl2(this.getPlayerX());
         } else {
-          soundSynth.playFireballLvl1();
+          soundSynth.playFireballLvl1(this.getPlayerX());
         }
       })
     );
@@ -4945,26 +4961,20 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("ENTITY_SLIDE", ({ id, width, height, speed, shouldSlide }) => {
-        soundSynth.handleEntitySlide(id, width, height, speed, shouldSlide);
-      })
-    );
-
-    this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_LANDED", () => {
-        soundSynth.playLanding();
+        soundSynth.playLanding(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("HEAL_START", () => {
-        soundSynth.playHealStart();
+        soundSynth.playHealStart(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("HEAL_CANCEL", () => {
-        soundSynth.playHealCancel();
+        soundSynth.playHealCancel(this.getPlayerX());
       })
     );
 
@@ -4976,13 +4986,13 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
-        soundSynth.playSpikeStrike();
+        soundSynth.playSpikeStrike(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
-        soundSynth.playBossPhaseShift();
+        soundSynth.playBossPhaseShift(this.getBossX());
       })
     );
 
@@ -4998,34 +5008,33 @@ export class SimulationSystems {
       })
     );
 
-    // Movement Recharge & Boss Swipe Subscribers
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
-        soundSynth.playDashRecharge();
+        soundSynth.playDashRecharge(this.getPlayerX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_SWIPED", () => {
-        soundSynth.playBossSwipe();
+        soundSynth.playBossSwipe(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_TELEGRAPH", () => {
-        soundSynth.playBossTelegraph();
+        soundSynth.playBossTelegraph(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_LUNGED", () => {
-        soundSynth.playBossLunge();
+        soundSynth.playBossLunge(this.getBossX());
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("CHARGE_START", () => {
-        soundSynth.playChargeStart();
+        soundSynth.playChargeStart(this.getPlayerX());
       })
     );
 
@@ -5045,7 +5054,6 @@ export class SimulationSystems {
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
-    soundSynth.clearAllSlides();
     soundSynth.stopHealDrone();
     soundSynth.stopChargeDrone();
   }
@@ -5058,21 +5066,18 @@ export class SimulationSystems {
 import { AudioContextManager } from "./audio/AudioContextManager";
 import { SFXManager } from "./audio/SFXManager";
 import { MusicSequencer } from "./audio/MusicSequencer";
-import { FrictionSlideManager } from "./audio/FrictionSlideManager";
 import { DroneManager } from "./audio/DroneManager";
 
 class SoundSynth {
   private ctxManager: AudioContextManager;
   private sfx: SFXManager;
   private music: MusicSequencer;
-  private friction: FrictionSlideManager;
   private drones: DroneManager;
 
   constructor() {
     this.ctxManager = new AudioContextManager();
     this.sfx = new SFXManager(this.ctxManager);
     this.music = new MusicSequencer(this.ctxManager);
-    this.friction = new FrictionSlideManager(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
   }
 
@@ -5096,84 +5101,84 @@ class SoundSynth {
     this.ctxManager.setCabinetMuffle(active);
   }
 
-  public playBossTelegraph(): void {
-    this.sfx.playBossTelegraph();
+  public playBossTelegraph(x?: number): void {
+    this.sfx.playBossTelegraph(x);
   }
 
-  public playBossLunge(): void {
-    this.sfx.playBossLunge();
+  public playBossLunge(x?: number): void {
+    this.sfx.playBossLunge(x);
   }
 
-  public playDashRecharge(): void {
-    this.sfx.playDashRecharge();
+  public playDashRecharge(x?: number): void {
+    this.sfx.playDashRecharge(x);
   }
 
-  public playBossSwipe(): void {
-    this.sfx.playBossSwipe();
+  public playBossSwipe(x?: number): void {
+    this.sfx.playBossSwipe(x);
   }
 
-  public playMinionSpawning(): void {
-    this.sfx.playMinionSpawning();
+  public playMinionSpawning(x?: number): void {
+    this.sfx.playMinionSpawning(x);
   }
 
-  public playMinionDeconstruct(): void {
-    this.sfx.playMinionDeconstruct();
+  public playMinionDeconstruct(x?: number): void {
+    this.sfx.playMinionDeconstruct(x);
   }
 
-  public playBossPhaseShift(): void {
-    this.sfx.playBossPhaseShift();
+  public playBossPhaseShift(x?: number): void {
+    this.sfx.playBossPhaseShift(x);
   }
 
-  public playBossExplosion(): void {
-    this.sfx.playBossExplosion();
+  public playBossExplosion(x?: number): void {
+    this.sfx.playBossExplosion(x);
   }
 
-  public playPlayerExplosion(): void {
-    this.sfx.playPlayerExplosion();
+  public playPlayerExplosion(x?: number): void {
+    this.sfx.playPlayerExplosion(x);
   }
 
-  public playHealCancel(): void {
-    this.sfx.playHealCancel();
+  public playHealCancel(x?: number): void {
+    this.sfx.playHealCancel(x);
   }
 
-  public playSpikeStrike(): void {
-    this.sfx.playSpikeStrike();
+  public playSpikeStrike(x?: number): void {
+    this.sfx.playSpikeStrike(x);
   }
 
-  public playLanding(): void {
-    this.sfx.playLanding();
+  public playLanding(x?: number): void {
+    this.sfx.playLanding(x);
   }
 
-  public playFireballLvl1(): void {
-    this.sfx.playFireballLvl1();
+  public playFireballLvl1(x?: number): void {
+    this.sfx.playFireballLvl1(x);
   }
 
-  public playFireballLvl2(): void {
-    this.sfx.playFireballLvl2();
+  public playFireballLvl2(x?: number): void {
+    this.sfx.playFireballLvl2(x);
   }
 
-  public playJump(): void {
-    this.sfx.playJump();
+  public playJump(x?: number): void {
+    this.sfx.playJump(x);
   }
 
-  public playDash(): void {
-    this.sfx.playDash();
+  public playDash(x?: number): void {
+    this.sfx.playDash(x);
   }
 
-  public playSlash(direction?: "side" | "up" | "down"): void {
-    this.sfx.playSlash(direction);
+  public playSlash(direction?: "side" | "up" | "down", x?: number): void {
+    this.sfx.playSlash(direction, x);
   }
 
-  public playHitConfirm(): void {
-    this.sfx.playHitConfirm();
+  public playHitConfirm(x?: number): void {
+    this.sfx.playHitConfirm(x);
   }
 
-  public playPogo(): void {
-    this.sfx.playPogo();
+  public playPogo(x?: number): void {
+    this.sfx.playPogo(x);
   }
 
-  public playHurt(): void {
-    this.sfx.playHurt();
+  public playHurt(x?: number): void {
+    this.sfx.playHurt(x);
   }
 
   public playSelectTick(): void {
@@ -5204,24 +5209,20 @@ class SoundSynth {
     this.music.stopMusic();
   }
 
-  public handleEntitySlide(id: string, width: number, height: number, speed: number, shouldSlide: boolean): void {
-    this.friction.handleEntitySlide(id, width, height, speed, shouldSlide);
-  }
-
   public clearAllSlides(): void {
-    this.friction.clearAllSlides();
+    // Deprecated
   }
 
-  public playHealStart(): void {
-    this.drones.playHealStart();
+  public playHealStart(x?: number): void {
+    this.drones.playHealStart(x);
   }
 
   public stopHealDrone(): void {
     this.drones.stopHealDrone();
   }
 
-  public playChargeStart(): void {
-    this.drones.playChargeStart();
+  public playChargeStart(x?: number): void {
+    this.drones.playChargeStart(x);
   }
 
   public updateChargeTimer(timer: number): void {
@@ -5385,6 +5386,13 @@ export class AudioContextManager {
     }
   }
 
+  public getPanFromX(x: number): number {
+    const clampedX = Math.max(0, Math.min(1250, x));
+    const rawPan = (clampedX / 625) - 1.0;
+    const scaledPan = rawPan * 0.45;
+    return Math.max(-0.45, Math.min(0.45, scaledPan));
+  }
+
   private init() {
     if (this.initialized) return;
     if (!this.hasUserGestured) return;
@@ -5465,6 +5473,7 @@ interface ChargeDrone {
 export class DroneManager {
   private ctxManager: AudioContextManager;
   private musicSeq: MusicSequencer;
+  private panner!: Tone.Panner;
 
   private healDrone: DroneVoice | null = null;
   private chargeDrone: ChargeDrone | null = null;
@@ -5473,18 +5482,29 @@ export class DroneManager {
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
     this.musicSeq = musicSeq;
+    this.ctxManager.registerOnInit(() => this.init());
   }
 
-  public playHealStart() {
+  private init() {
+    this.panner = new Tone.Panner(0).connect(this.ctxManager.sfxGain);
+  }
+
+  public playHealStart(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopHealDrone();
+
+    if (x !== undefined && this.panner) {
+      this.panner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const osc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
     const filter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
     const gain = new Tone.Gain(0);
 
-    osc.chain(filter, gain, this.ctxManager.sfxGain);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.panner);
 
     osc.frequency.rampTo(660, 2.0);
     filter.frequency.rampTo(1320, 2.0);
@@ -5517,10 +5537,14 @@ export class DroneManager {
     this.healDrone = null;
   }
 
-  public playChargeStart() {
+  public playChargeStart(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopChargeDrone();
+
+    if (x !== undefined && this.panner) {
+      this.panner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const osc = new Tone.Oscillator({ type: "sawtooth", frequency: 220 }).start();
     const filter = new Tone.Filter({ frequency: 450, type: "lowpass", Q: 4.0 });
@@ -5530,7 +5554,9 @@ export class DroneManager {
     lfo.connect(filter.frequency);
     lfo.amplitude.setValueAtTime(110 / 360, Tone.now());
 
-    osc.chain(filter, gain, this.ctxManager.sfxGain);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.panner);
 
     this.chargeDrone = { osc, filter, lfo, gain };
     this.currentChargeLevel = 0;
@@ -5552,7 +5578,7 @@ export class DroneManager {
     else if (timer >= 0.25 && timer < 1.12) {
       this.currentChargeLevel = 1;
       const range = (timer - 0.25) / (1.12 - 0.25);
-      
+          
       osc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
       filter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
       lfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
@@ -5617,108 +5643,6 @@ export class DroneManager {
     chimeNotes.forEach((note, idx) => {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
     });
-  }
-}
-
-
-
-● ./src/core/audio/FrictionSlideManager.ts
-────────────────────────────────────────────────────
-import * as Tone from "tone";
-import { AudioContextManager } from "./AudioContextManager";
-
-interface FrictionVoice {
-  source: Tone.Noise;
-  filter: Tone.Filter;
-  gain: Tone.Gain;
-}
-
-export class FrictionSlideManager {
-  private ctxManager: AudioContextManager;
-  private activeSlides: Map<string, FrictionVoice> = new Map();
-
-  constructor(ctxManager: AudioContextManager) {
-    this.ctxManager = ctxManager;
-  }
-
-  public handleEntitySlide(id: string, width: number, height: number, speed: number, shouldSlide: boolean) {
-    if (!shouldSlide) {
-      this.stopFrictionSlide(id);
-      return;
-    }
-
-    this.ctxManager.resumeContext();
-    if (!this.ctxManager.initialized) return;
-
-    let voice = this.activeSlides.get(id);
-
-    if (!voice) {
-      const volume = width * height;
-      const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
-      const baseFreq = 800 * sizeFactor;
-
-      const source = new Tone.Noise("brown");
-      const filter = new Tone.Filter({ frequency: baseFreq, type: "lowpass" });
-      const gain = new Tone.Gain(0);
-
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctxManager.sfxGain);
-
-      source.start(Tone.now());
-
-      voice = { source, filter, gain };
-      this.activeSlides.set(id, voice);
-    }
-
-    const maxSpeed = 450;
-    const ratio = Math.min(1.0, speed / maxSpeed);
-    const targetGain = ratio * 0.22;
-
-    voice.gain.gain.rampTo(targetGain, 0.05);
-
-    const volume = width * height;
-    const sizeFactor = Math.max(0.6, Math.min(1.8, 3200 / volume));
-    const baseFreq = 800 * sizeFactor;
-    const targetCutoff = baseFreq * 0.4 + ratio * baseFreq * 0.8;
-
-    voice.filter.frequency.rampTo(targetCutoff, 0.05);
-  }
-
-  private stopFrictionSlide(id: string) {
-    const voice = this.activeSlides.get(id);
-    if (!voice) return;
-
-    const now = Tone.now();
-    voice.gain.gain.setValueAtTime(0, now);
-
-    const source = voice.source;
-    const filter = voice.filter;
-    const gain = voice.gain;
-
-    setTimeout(() => {
-      try {
-        source.stop();
-        source.disconnect();
-        filter.disconnect();
-        gain.disconnect();
-
-        source.dispose();
-        filter.dispose();
-        gain.dispose();
-      } catch (err) {
-        // Safe disposal
-      }
-    }, 80);
-
-    this.activeSlides.delete(id);
-  }
-
-  public clearAllSlides() {
-    const ids = Array.from(this.activeSlides.keys());
-    for (const id of ids) {
-      this.stopFrictionSlide(id);
-    }
   }
 }
 
@@ -5853,6 +5777,13 @@ export class SFXManager {
   private ctxManager: AudioContextManager;
   private lastTriggerTimes: Record<string, number> = {};
 
+  private playerPanner!: Tone.Panner;
+  private bossPanner!: Tone.Panner;
+  private impactPanner!: Tone.Panner;
+  private hurtPanner!: Tone.Panner;
+  private playerDialoguePanner!: Tone.Panner;
+  private bossDialoguePanner!: Tone.Panner;
+
   private jumpSynth!: Tone.Synth;
   private slashSynth!: Tone.Synth;
   private pogoSynth!: Tone.Synth;
@@ -5874,20 +5805,27 @@ export class SFXManager {
   private init() {
     const sfxGain = this.ctxManager.sfxGain;
 
+    this.playerPanner = new Tone.Panner(0).connect(sfxGain);
+    this.bossPanner = new Tone.Panner(0).connect(sfxGain);
+    this.impactPanner = new Tone.Panner(0).connect(sfxGain);
+    this.hurtPanner = new Tone.Panner(0).connect(sfxGain);
+    this.playerDialoguePanner = new Tone.Panner(-0.35).connect(sfxGain);
+    this.bossDialoguePanner = new Tone.Panner(0.35).connect(sfxGain);
+
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: "sine" },
       envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
-    }).connect(sfxGain);
+    }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
       oscillator: { type: "triangle" },
       envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
-    }).connect(sfxGain);
+    }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
       oscillator: { type: "sine" },
       envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
-    }).connect(sfxGain);
+    }).connect(this.playerPanner);
 
     this.dashNoise = new Tone.Noise("white");
     this.dashFilter = new Tone.Filter({ frequency: 1400, type: "bandpass", Q: 2.5 });
@@ -5897,40 +5835,40 @@ export class SFXManager {
       sustain: 0,
       release: 0.18
     });
-    this.dashNoise.chain(this.dashFilter, this.dashEnv, sfxGain);
+    this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
       harmonicity: 5.1,
       resonance: 4000
-    }).connect(sfxGain);
+    }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: "sawtooth" },
       envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
-    }).connect(sfxGain);
+    }).connect(this.hurtPanner);
 
     this.spikeSynth = new Tone.Synth({
       oscillator: { type: "square" },
       envelope: { attack: 0.005, decay: 0.12, sustain: 0, release: 0.12 }
-    }).connect(sfxGain);
+    }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
       oscillator: { type: "triangle" },
       envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 }
-    }).connect(sfxGain);
+    }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
       oscillator: { type: "sine" },
       envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
-    }).connect(sfxGain);
+    }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthBoss = new Tone.Synth({
       oscillator: { type: "triangle" },
       envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 }
-    }).connect(sfxGain);
+    }).connect(this.bossDialoguePanner);
   }
 
   private checkThrottle(key: string, limitMs: number): boolean {
@@ -5943,74 +5881,106 @@ export class SFXManager {
     return true;
   }
 
-  public playBossTelegraph() {
+  public playBossTelegraph(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("boss_telegraph", 150)) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const now = Tone.now();
     this.jumpSynth.triggerAttackRelease(320, "8n", now);
     this.jumpSynth.frequency.rampTo(680, 0.35);
   }
 
-  public playBossLunge() {
+  public playBossLunge(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("boss_lunge", 200)) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const now = Tone.now();
     this.hurtSynth.triggerAttackRelease(120, "2n", now);
     this.hurtSynth.frequency.rampTo(40, 0.45);
   }
 
-  public playDashRecharge() {
+  public playDashRecharge(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("dash_recharge", 150)) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const now = Tone.now();
     this.jumpSynth.triggerAttackRelease("A5", "16n", now);
     this.jumpSynth.triggerAttackRelease("E6", "16n", now + 0.04);
   }
 
-  public playBossSwipe() {
+  public playBossSwipe(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("boss_swipe", 150)) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(180, "8n");
     this.hurtSynth.frequency.rampTo(50, 0.22);
   }
 
-  public playMinionSpawning() {
+  public playMinionSpawning(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("minion_spawn", 100)) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.teleportSynth.triggerAttackRelease(180, "4n");
     this.teleportSynth.frequency.rampTo(720, 0.3);
   }
 
-  public playMinionDeconstruct() {
+  public playMinionDeconstruct(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("minion_deconstruct", 100)) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(280, "4n");
     this.hurtSynth.frequency.rampTo(60, 0.28);
   }
 
-  public playBossPhaseShift() {
+  public playBossPhaseShift(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(80, "2n");
     this.hurtSynth.frequency.rampTo(320, 0.8);
   }
 
-  public playBossExplosion() {
+  public playBossExplosion(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.bossPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const now = Tone.now();
     for (let i = 0; i < 3; i++) {
@@ -6020,44 +5990,59 @@ export class SFXManager {
     }
   }
 
-  public playPlayerExplosion() {
+  public playPlayerExplosion(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(220, "2n");
     this.hurtSynth.frequency.rampTo(40, 0.8);
   }
 
-  public playHealCancel() {
+  public playHealCancel(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(180, "8n");
   }
 
-  public playSpikeStrike() {
+  public playSpikeStrike(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("spike_strike", 80)) return;
+
+    if (x !== undefined) {
+      this.impactPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.spikeSynth.triggerAttackRelease(1400, "16n");
     this.spikeSynth.frequency.rampTo(700, 0.12);
   }
 
-  public playLanding() {
+  public playLanding(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("landing", 100)) return;
 
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
+
     this.pogoSynth.triggerAttackRelease(160, "8n");
     this.pogoSynth.frequency.rampTo(65, 0.11);
 
-    const sfxGain = this.ctxManager.sfxGain;
     const noise = new Tone.Noise("white").start();
     const filter = new Tone.Filter({ frequency: 1100, type: "bandpass", Q: 2.0 });
     const env = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.08, sustain: 0, release: 0.08 });
     
-    noise.chain(filter, env, sfxGain);
+    noise.chain(filter, env, this.playerPanner);
     env.triggerAttackRelease(0.08);
 
     setTimeout(() => {
@@ -6076,47 +6061,66 @@ export class SFXManager {
     }, 150);
   }
 
-  public playFireballLvl1() {
+  public playFireballLvl1(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.slashSynth.triggerAttackRelease(440, "8n");
     this.slashSynth.frequency.rampTo(160, 0.15);
   }
 
-  public playFireballLvl2() {
+  public playFireballLvl2(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(220, "4n");
     this.hurtSynth.frequency.rampTo(80, 0.25);
   }
 
-  public playJump() {
+  public playJump(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("jump", 100)) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.jumpSynth.triggerAttackRelease(240, "8n");
     this.jumpSynth.frequency.rampTo(580, 0.12);
   }
 
-  public playDash() {
+  public playDash(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("dash", 100)) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.dashEnv.triggerAttackRelease(0.18);
     this.dashFilter.frequency.setValueAtTime(1400, Tone.now());
     this.dashFilter.frequency.rampTo(500, 0.18);
   }
 
-  public playSlash(direction: "side" | "up" | "down" = "side") {
+  public playSlash(direction: "side" | "up" | "down" = "side", x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
 
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
+
     const now = Tone.now();
-    const sfxGain = this.ctxManager.sfxGain;
 
     if (direction === "side") {
       if (!this.checkThrottle("slash_side", 80)) return;
@@ -6126,7 +6130,7 @@ export class SFXManager {
       const filter2 = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
       const env = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: 0.15, sustain: 0, release: 0.15 });
 
-      noise.chain(filter, filter2, env, sfxGain);
+      noise.chain(filter, filter2, env, this.playerPanner);
       
       filter.frequency.rampTo(1000, 0.14);
       env.triggerAttackRelease(0.15, now);
@@ -6157,7 +6161,7 @@ export class SFXManager {
       const filter = new Tone.Filter({ frequency: 650, type: "bandpass", Q: 1.2 });
       const env = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.18, sustain: 0, release: 0.18 });
 
-      noise.chain(filter, env, sfxGain);
+      noise.chain(filter, env, this.playerPanner);
       env.triggerAttackRelease(0.18, now);
 
       setTimeout(() => {
@@ -6177,29 +6181,41 @@ export class SFXManager {
     }
   }
 
-  public playHitConfirm() {
+  public playHitConfirm(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("hit_confirm", 40)) return;
+
+    if (x !== undefined) {
+      this.impactPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const now = Tone.now();
     this.hitSynth.triggerAttackRelease("C6", "16n", now);
     this.dialogueSynthPlayer.triggerAttackRelease(880, "16n", now + 0.04);
   }
 
-  public playPogo() {
+  public playPogo(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("pogo", 80)) return;
+
+    if (x !== undefined) {
+      this.playerPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.pogoSynth.triggerAttackRelease(320, "16n");
     this.pogoSynth.frequency.rampTo(140, 0.09);
   }
 
-  public playHurt() {
+  public playHurt(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     if (!this.checkThrottle("hurt", 120)) return;
+
+    if (x !== undefined) {
+      this.hurtPanner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     this.hurtSynth.triggerAttackRelease(180, "8n");
     this.hurtSynth.frequency.rampTo(45, 0.16);
@@ -6230,14 +6246,13 @@ export class SFXManager {
     if (!this.ctxManager.initialized || !char) return;
     if (!this.checkThrottle("dialogue_tick", 35)) return;
 
-    const charCode = char.charCodeAt(0) || 65;
     const now = Tone.now();
 
     if (speaker === "player") {
-      const freq = 240 + (charCode % 6) * 35;
+      const freq = 240 + (char.charCodeAt(0) % 6) * 35;
       this.dialogueSynthPlayer.triggerAttackRelease(freq, "32n", now);
     } else {
-      const freq = 70 + (charCode % 5) * 12;
+      const freq = 70 + (char.charCodeAt(0) % 5) * 12;
       this.dialogueSynthBoss.triggerAttackRelease(freq, "24n", now);
     }
   }
@@ -6269,7 +6284,7 @@ export type GameEventMap = {
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number };
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
-  ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean };
+  ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean; x?: number };
   PLAYER_LANDED: void;
   HEAL_START: void;
   HEAL_CANCEL: void;
@@ -9162,7 +9177,6 @@ export class MeleeComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
-import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -9222,23 +9236,6 @@ export class PhysicsComponent implements IEntityComponent {
 
     this.owner.position.y += this.owner.velocity.y * dt;
     this.resolveCollisionsY();
-
-    this.updateFrictionSlideSound();
-  }
-
-  private updateFrictionSlideSound(): void {
-    if (this.owner.id !== "player-01") return;
-
-    const speed = Math.abs(this.owner.velocity.x);
-    const shouldSlide = this.isGrounded && speed > 15 && !this.owner.isDead;
-
-    eventBroker.publish("ENTITY_SLIDE", {
-      id: this.owner.id,
-      width: this.owner.size.width,
-      height: this.owner.size.height,
-      speed: speed,
-      shouldSlide: shouldSlide,
-    });
   }
 
   private resolveCollisionsX() {
@@ -9309,13 +9306,7 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public teardown(): void {
-    eventBroker.publish("ENTITY_SLIDE", {
-      id: this.owner.id,
-      width: this.owner.size.width,
-      height: this.owner.size.height,
-      speed: 0,
-      shouldSlide: false,
-    });
+    // Standard cleanup
   }
 }
 

@@ -1,21 +1,18 @@
 import { AudioContextManager } from "./audio/AudioContextManager";
 import { SFXManager } from "./audio/SFXManager";
 import { MusicSequencer } from "./audio/MusicSequencer";
-import { FrictionSlideManager } from "./audio/FrictionSlideManager";
 import { DroneManager } from "./audio/DroneManager";
 
 class SoundSynth {
   private ctxManager: AudioContextManager;
   private sfx: SFXManager;
   private music: MusicSequencer;
-  private friction: FrictionSlideManager;
   private drones: DroneManager;
 
   constructor() {
     this.ctxManager = new AudioContextManager();
     this.sfx = new SFXManager(this.ctxManager);
     this.music = new MusicSequencer(this.ctxManager);
-    this.friction = new FrictionSlideManager(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
   }
 
@@ -39,84 +36,84 @@ class SoundSynth {
     this.ctxManager.setCabinetMuffle(active);
   }
 
-  public playBossTelegraph(): void {
-    this.sfx.playBossTelegraph();
+  public playBossTelegraph(x?: number): void {
+    this.sfx.playBossTelegraph(x);
   }
 
-  public playBossLunge(): void {
-    this.sfx.playBossLunge();
+  public playBossLunge(x?: number): void {
+    this.sfx.playBossLunge(x);
   }
 
-  public playDashRecharge(): void {
-    this.sfx.playDashRecharge();
+  public playDashRecharge(x?: number): void {
+    this.sfx.playDashRecharge(x);
   }
 
-  public playBossSwipe(): void {
-    this.sfx.playBossSwipe();
+  public playBossSwipe(x?: number): void {
+    this.sfx.playBossSwipe(x);
   }
 
-  public playMinionSpawning(): void {
-    this.sfx.playMinionSpawning();
+  public playMinionSpawning(x?: number): void {
+    this.sfx.playMinionSpawning(x);
   }
 
-  public playMinionDeconstruct(): void {
-    this.sfx.playMinionDeconstruct();
+  public playMinionDeconstruct(x?: number): void {
+    this.sfx.playMinionDeconstruct(x);
   }
 
-  public playBossPhaseShift(): void {
-    this.sfx.playBossPhaseShift();
+  public playBossPhaseShift(x?: number): void {
+    this.sfx.playBossPhaseShift(x);
   }
 
-  public playBossExplosion(): void {
-    this.sfx.playBossExplosion();
+  public playBossExplosion(x?: number): void {
+    this.sfx.playBossExplosion(x);
   }
 
-  public playPlayerExplosion(): void {
-    this.sfx.playPlayerExplosion();
+  public playPlayerExplosion(x?: number): void {
+    this.sfx.playPlayerExplosion(x);
   }
 
-  public playHealCancel(): void {
-    this.sfx.playHealCancel();
+  public playHealCancel(x?: number): void {
+    this.sfx.playHealCancel(x);
   }
 
-  public playSpikeStrike(): void {
-    this.sfx.playSpikeStrike();
+  public playSpikeStrike(x?: number): void {
+    this.sfx.playSpikeStrike(x);
   }
 
-  public playLanding(): void {
-    this.sfx.playLanding();
+  public playLanding(x?: number): void {
+    this.sfx.playLanding(x);
   }
 
-  public playFireballLvl1(): void {
-    this.sfx.playFireballLvl1();
+  public playFireballLvl1(x?: number): void {
+    this.sfx.playFireballLvl1(x);
   }
 
-  public playFireballLvl2(): void {
-    this.sfx.playFireballLvl2();
+  public playFireballLvl2(x?: number): void {
+    this.sfx.playFireballLvl2(x);
   }
 
-  public playJump(): void {
-    this.sfx.playJump();
+  public playJump(x?: number): void {
+    this.sfx.playJump(x);
   }
 
-  public playDash(): void {
-    this.sfx.playDash();
+  public playDash(x?: number): void {
+    this.sfx.playDash(x);
   }
 
-  public playSlash(direction?: "side" | "up" | "down"): void {
-    this.sfx.playSlash(direction);
+  public playSlash(direction?: "side" | "up" | "down", x?: number): void {
+    this.sfx.playSlash(direction, x);
   }
 
-  public playHitConfirm(): void {
-    this.sfx.playHitConfirm();
+  public playHitConfirm(x?: number): void {
+    this.sfx.playHitConfirm(x);
   }
 
-  public playPogo(): void {
-    this.sfx.playPogo();
+  public playPogo(x?: number): void {
+    this.sfx.playPogo(x);
   }
 
-  public playHurt(): void {
-    this.sfx.playHurt();
+  public playHurt(x?: number): void {
+    this.sfx.playHurt(x);
   }
 
   public playSelectTick(): void {
@@ -147,24 +144,20 @@ class SoundSynth {
     this.music.stopMusic();
   }
 
-  public handleEntitySlide(id: string, width: number, height: number, speed: number, shouldSlide: boolean): void {
-    this.friction.handleEntitySlide(id, width, height, speed, shouldSlide);
-  }
-
   public clearAllSlides(): void {
-    this.friction.clearAllSlides();
+    // Deprecated
   }
 
-  public playHealStart(): void {
-    this.drones.playHealStart();
+  public playHealStart(x?: number): void {
+    this.drones.playHealStart(x);
   }
 
   public stopHealDrone(): void {
     this.drones.stopHealDrone();
   }
 
-  public playChargeStart(): void {
-    this.drones.playChargeStart();
+  public playChargeStart(x?: number): void {
+    this.drones.playChargeStart(x);
   }
 
   public updateChargeTimer(timer: number): void {

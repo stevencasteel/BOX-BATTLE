@@ -1,7 +1,6 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
-import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -61,23 +60,6 @@ export class PhysicsComponent implements IEntityComponent {
 
     this.owner.position.y += this.owner.velocity.y * dt;
     this.resolveCollisionsY();
-
-    this.updateFrictionSlideSound();
-  }
-
-  private updateFrictionSlideSound(): void {
-    if (this.owner.id !== "player-01") return;
-
-    const speed = Math.abs(this.owner.velocity.x);
-    const shouldSlide = this.isGrounded && speed > 15 && !this.owner.isDead;
-
-    eventBroker.publish("ENTITY_SLIDE", {
-      id: this.owner.id,
-      width: this.owner.size.width,
-      height: this.owner.size.height,
-      speed: speed,
-      shouldSlide: shouldSlide,
-    });
   }
 
   private resolveCollisionsX() {
@@ -148,12 +130,6 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public teardown(): void {
-    eventBroker.publish("ENTITY_SLIDE", {
-      id: this.owner.id,
-      width: this.owner.size.width,
-      height: this.owner.size.height,
-      speed: 0,
-      shouldSlide: false,
-    });
+    // Standard cleanup
   }
 }

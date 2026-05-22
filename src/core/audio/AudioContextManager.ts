@@ -49,6 +49,13 @@ export class AudioContextManager {
     }
   }
 
+  public getPanFromX(x: number): number {
+    const clampedX = Math.max(0, Math.min(1250, x));
+    const rawPan = (clampedX / 625) - 1.0;
+    const scaledPan = rawPan * 0.45;
+    return Math.max(-0.45, Math.min(0.45, scaledPan));
+  }
+
   private init() {
     if (this.initialized) return;
     if (!this.hasUserGestured) return;

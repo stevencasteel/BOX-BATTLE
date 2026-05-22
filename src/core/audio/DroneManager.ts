@@ -18,6 +18,7 @@ interface ChargeDrone {
 export class DroneManager {
   private ctxManager: AudioContextManager;
   private musicSeq: MusicSequencer;
+  private panner!: Tone.Panner;
 
   private healDrone: DroneVoice | null = null;
   private chargeDrone: ChargeDrone | null = null;
@@ -26,18 +27,29 @@ export class DroneManager {
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
     this.musicSeq = musicSeq;
+    this.ctxManager.registerOnInit(() => this.init());
   }
 
-  public playHealStart() {
+  private init() {
+    this.panner = new Tone.Panner(0).connect(this.ctxManager.sfxGain);
+  }
+
+  public playHealStart(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopHealDrone();
+
+    if (x !== undefined && this.panner) {
+      this.panner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const osc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
     const filter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
     const gain = new Tone.Gain(0);
 
-    osc.chain(filter, gain, this.ctxManager.sfxGain);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.panner);
 
     osc.frequency.rampTo(660, 2.0);
     filter.frequency.rampTo(1320, 2.0);
@@ -70,10 +82,14 @@ export class DroneManager {
     this.healDrone = null;
   }
 
-  public playChargeStart() {
+  public playChargeStart(x?: number) {
     this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopChargeDrone();
+
+    if (x !== undefined && this.panner) {
+      this.panner.pan.setValueAtTime(this.ctxManager.getPanFromX(x), Tone.now());
+    }
 
     const osc = new Tone.Oscillator({ type: "sawtooth", frequency: 220 }).start();
     const filter = new Tone.Filter({ frequency: 450, type: "lowpass", Q: 4.0 });
@@ -83,7 +99,9 @@ export class DroneManager {
     lfo.connect(filter.frequency);
     lfo.amplitude.setValueAtTime(110 / 360, Tone.now());
 
-    osc.chain(filter, gain, this.ctxManager.sfxGain);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.panner);
 
     this.chargeDrone = { osc, filter, lfo, gain };
     this.currentChargeLevel = 0;
@@ -105,7 +123,7 @@ export class DroneManager {
     else if (timer >= 0.25 && timer < 1.12) {
       this.currentChargeLevel = 1;
       const range = (timer - 0.25) / (1.12 - 0.25);
-      
+          
       osc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
       filter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
       lfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
