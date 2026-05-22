@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:18:28 PM
+ [SYSTEM] Generated: 5/22/2026, 1:19:37 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -5951,12 +5951,29 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 
 export class WorldRenderer {
+  private ctx: CanvasRenderingContext2D;
+  private cachedMeleeGradient: CanvasGradient;
+
+  constructor(ctx: CanvasRenderingContext2D) {
+    this.ctx = ctx;
+
+    // Allocate the radial gradient once at startup to prevent GC spikes in high-frame-rate loops
+    this.cachedMeleeGradient = ctx.createRadialGradient(0, 0, 25, 0, 0, 95);
+    this.cachedMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+    this.cachedMeleeGradient.addColorStop(0.20, "rgba(255, 255, 255, 1.0)");
+    this.cachedMeleeGradient.addColorStop(0.50, "rgba(132, 239, 158, 0.95)");
+    this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+  }
+
   private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player, alpha: number) {
     const facing = player.facingDirection;
     ctx.lineCap = "round";
 
     const progress = 1.0 - (player.meleeComponent.attackActiveTimer / 0.09);
     const opacity = Math.max(0, player.meleeComponent.attackActiveTimer / 0.09);
+
+    if (opacity <= 0.01) return;
 
     const alphaVal = alpha !== undefined ? alpha : 1.0;
     const drawX = player.previousPosition.x + (player.position.x - player.previousPosition.x) * alphaVal;
@@ -5972,59 +5989,26 @@ export class WorldRenderer {
       const cy = drawY;
 
       ctx.save();
-      ctx.lineCap = "butt";
-
-      const trailAngle = currentSweepAngle * 0.75;
       
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(
-        cx,
-        cy,
-        88,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
-        facing < 0
-      );
-      ctx.stroke();
-
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(
-        cx,
-        cy,
-        65,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
-        facing < 0
-      );
-      ctx.stroke();
-
-      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
+      // Shift origin space to (cx, cy) to draw pre-compiled cached gradient centered at (0, 0)
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = this.cachedMeleeGradient;
       ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
+      ctx.shadowBlur = 20;
       
       ctx.beginPath();
       ctx.arc(
-        cx,
-        cy,
+        0,
+        0,
         95,
         facing > 0 ? baseStart : Math.PI - baseStart,
         facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
         facing < 0
       );
       ctx.arc(
-        cx,
-        cy,
+        0,
+        0,
         25,
         facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
         facing > 0 ? baseStart : Math.PI - baseStart,
@@ -6087,11 +6071,6 @@ export class WorldRenderer {
       ctx.restore();
     }
   }
-  private ctx: CanvasRenderingContext2D;
-
-  constructor(ctx: CanvasRenderingContext2D) {
-    this.ctx = ctx;
-  }
 
   public render(
     world: World,
@@ -6125,18 +6104,19 @@ export class WorldRenderer {
       this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
     }
 
+    // Geometric Path Batching: Group hazard rendering triangles into a single GPU state call
     this.ctx.fillStyle = "hsl(350, 80%, 60%)";
+    this.ctx.beginPath();
     for (const hazard of hazards) {
       const spikeWidth = 25;
       const spikeCount = Math.floor(hazard.width / spikeWidth);
       for (let i = 0; i < spikeCount; i++) {
-        this.ctx.beginPath();
         this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
         this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
         this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-        this.ctx.fill();
       }
     }
+    this.ctx.fill();
 
     if (world.boss) {
       world.boss.draw(this.ctx, alpha);
