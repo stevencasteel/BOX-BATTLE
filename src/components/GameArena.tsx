@@ -1,31 +1,32 @@
 import "./GameArena.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   triggerDialogue: (speaker: "player" | "boss", text: string) => void;
   playHoverTick: () => void;
 }
 
 export function GameArena({
-  canvasRef,
   triggerDialogue,
   playHoverTick,
 }: GameArenaProps) {
   const triggerRef = useRef(triggerDialogue);
   const engineRef = useRef<Engine | null>(null);
-  
+  const [canvasNode, setCanvasNode] = useState<HTMLCanvasElement | null>(null);
+
   useEffect(() => {
     triggerRef.current = triggerDialogue;
   }, [triggerDialogue]);
 
   useEffect(() => {
+    if (!canvasNode) return;
+
     const updateVignette = (hp: number) => {
-      const overlay = canvasRef.current?.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+      const overlay = canvasNode.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
       if (overlay) {
         if (hp === 1) {
           overlay.classList.add("vignette-pulse");
@@ -49,14 +50,14 @@ export function GameArena({
       unsubHurt();
       unsubHealed();
     };
-  }, [canvasRef]);
+  }, [canvasNode]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = canvas?.parentElement;
-    if (!canvas || !container) return;
+    if (!canvasNode) return;
+    const container = canvasNode.parentElement;
+    if (!container) return;
 
-    const resizer = new CanvasResizer(canvas, 1250, 1250);
+    const resizer = new CanvasResizer(canvasNode, 1250, 1250);
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -70,13 +71,12 @@ export function GameArena({
     return () => {
       observer.disconnect();
     };
-  }, [canvasRef]);
+  }, [canvasNode]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvasNode) return;
 
-    const engine = new Engine(canvas, (speaker, text) => {
+    const engine = new Engine(canvasNode, (speaker, text) => {
       triggerRef.current(speaker, text);
     });
     engineRef.current = engine;
@@ -86,7 +86,7 @@ export function GameArena({
       engine.cleanup();
       engineRef.current = null;
     };
-  }, [canvasRef]);
+  }, [canvasNode]);
 
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -122,7 +122,7 @@ export function GameArena({
           height: "100%"
         }}>
           <canvas
-            ref={canvasRef}
+            ref={setCanvasNode}
             width={1250}
             height={1250}
             className="crt-scanlines crt-flicker"

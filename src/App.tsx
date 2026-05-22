@@ -65,7 +65,6 @@ const TouchButton = ({ action, label, style }: { action: Action; label: string; 
 
 export default function App() {
   const bootStage = useBootSequence();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
@@ -505,7 +504,6 @@ export default function App() {
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
                 <GameArena
-                  canvasRef={canvasRef}
                   triggerDialogue={() => {}}
                   playHoverTick={playHoverTick}
                 />
