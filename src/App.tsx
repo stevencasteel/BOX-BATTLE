@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action, inputProvider } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
@@ -16,7 +16,7 @@ import { SettingsScreen } from "@/components/menus/SettingsScreen";
 import { AudioScreen } from "@/components/menus/AudioScreen";
 import { ControlsScreen } from "@/components/menus/ControlsScreen";
 import { CreditsScreen } from "@/components/menus/CreditsScreen";
-import { SourceViewScreen } from "@/components/menus/SourceViewScreen";
+const SourceViewScreen = lazy(() => import("@/components/menus/SourceViewScreen").then(m => ({ default: m.SourceViewScreen })));
 import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
@@ -610,12 +610,19 @@ export default function App() {
               )}
 
               {currentScreen === "SOURCE_VIEW" && (
-                <SourceViewScreen
-                  onBack={() => {
-                    navTo("TITLE");
-                    setMenuIndex(3);
-                  }}
-                />
+                <Suspense fallback={
+                  <div className="flex-col-center h-full w-full" style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}>
+                    <div className="led-dot led-green" style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }} />
+                    <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase" }}>COMPILING SOURCE ARCHIVE...</span>
+                  </div>
+                }>
+                  <SourceViewScreen
+                    onBack={() => {
+                      navTo("TITLE");
+                      setMenuIndex(3);
+                    }}
+                  />
+                </Suspense>
               )}
             </div>
           )}

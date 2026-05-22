@@ -31,6 +31,9 @@ function scanDir(dir) {
         scanDir(fullPath);
       }
     } else if (entry.isFile()) {
+      if (entry.name === 'sourceCodeManifest.ts' || entry.name === 'source_code_manifest.json') {
+        continue;
+      }
       const ext = path.extname(entry.name);
       if (['.ts', '.tsx', '.js', '.jsx', '.css', '.json', '.md', '.txt', '.html'].includes(ext)) {
         const content = fs.readFileSync(fullPath, 'utf8');
