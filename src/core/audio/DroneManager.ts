@@ -64,7 +64,9 @@ export class DroneManager {
     const now = Tone.now();
 
     gain.gain.setValueAtTime(0, now);
-    setTimeout(() => {
+    
+    // Utilize Tone's Context timer instead of main thread window.setTimeout
+    Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
         osc.disconnect();
@@ -77,7 +79,7 @@ export class DroneManager {
       } catch (e) {
         // Safe disposal
       }
-    }, 150);
+    }, 0.15);
 
     this.healDrone = null;
   }
@@ -117,13 +119,13 @@ export class DroneManager {
       osc.frequency.setTargetAtTime(220 + progress * 100, now, 0.05);
       filter.frequency.setTargetAtTime(450 + progress * 150, now, 0.05);
       lfo.frequency.setTargetAtTime(6.0, now, 0.05);
-      lfo.amplitude.setTargetAtTime(120 / 360, now, 0.05);
+      lfo.amplitude.setTargetAtTime(110 / 360, now, 0.05);
       gain.gain.setTargetAtTime(0.25, now, 0.05);
     } 
     else if (timer >= 0.25 && timer < 1.12) {
       this.currentChargeLevel = 1;
       const range = (timer - 0.25) / (1.12 - 0.25);
-          
+              
       osc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
       filter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
       lfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
@@ -155,7 +157,9 @@ export class DroneManager {
     const now = Tone.now();
 
     gain.gain.setValueAtTime(0, now);
-    setTimeout(() => {
+    
+    // Utilize Tone's Context timer instead of main thread window.setTimeout
+    Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
         lfo.stop();
@@ -171,7 +175,7 @@ export class DroneManager {
       } catch (e) {
         // Safe disposal
       }
-    }, 80);
+    }, 0.08);
 
     this.chargeDrone = null;
     this.currentChargeLevel = 0;
