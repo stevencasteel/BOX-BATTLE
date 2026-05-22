@@ -167,7 +167,7 @@
   100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (pointer: coarse) {
   .cabinet-status-panel {
     padding: 10px 14px;
     border-radius: 10px;

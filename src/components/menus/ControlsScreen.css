@@ -55,7 +55,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (pointer: coarse) {
   .binding-board {
     grid-template-columns: 1fr;
     gap: 8px;

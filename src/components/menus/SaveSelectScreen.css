@@ -47,7 +47,7 @@
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (pointer: coarse) {
   .slot-list {
     gap: 10px;
     max-width: none;

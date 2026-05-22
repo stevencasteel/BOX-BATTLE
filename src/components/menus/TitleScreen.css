@@ -290,7 +290,7 @@
   margin-left: 1vmin;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (pointer: coarse) {
   .title-screen-container {
     padding: 8px 12px;
   }

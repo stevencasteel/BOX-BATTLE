@@ -135,7 +135,7 @@
   border-right: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (pointer: coarse) {
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;

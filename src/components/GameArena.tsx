@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
-import { CanvasResizer } from "@/core/CanvasResizer";
 
 interface GameArenaProps {
   triggerDialogue: (speaker: "player" | "boss", text: string) => void;
@@ -49,27 +48,6 @@ export function GameArena({
     return () => {
       unsubHurt();
       unsubHealed();
-    };
-  }, [canvasNode]);
-
-  useEffect(() => {
-    if (!canvasNode) return;
-    const container = canvasNode.parentElement;
-    if (!container) return;
-
-    const resizer = new CanvasResizer(canvasNode, 1250, 1250);
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        resizer.resize(width, height);
-      }
-    });
-
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
     };
   }, [canvasNode]);
 
@@ -128,7 +106,10 @@ export function GameArena({
             className="crt-scanlines crt-flicker"
             style={{ 
               background: "#0c0d11", 
-              display: "block"
+              display: "block",
+              width: "100%",
+              height: "100%",
+              objectFit: "contain"
             }}
           />
 
