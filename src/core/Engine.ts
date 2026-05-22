@@ -90,15 +90,9 @@ export class Engine {
     Camera.reset();
 
     const sessionState = useSessionStore.getState();
-    const gameplayState = useGameplayStore.getState();
     sessionState.setGameResult("PLAYING");
 
-    const pHealth = this.player.getComponent(HealthComponent);
-    const bHealth = this.boss.getComponent(HealthComponent);
-    if (pHealth) gameplayState.setPlayerHP(pHealth.currentHealth);
-    if (bHealth) gameplayState.setBossHP(bHealth.currentHealth);
-    gameplayState.setHealingCharges(this.player.healingCharges);
-    gameplayState.setDetermination(this.player.determinationCounter);
+    this.projectState();
 
     this.unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
       this.triggerDialogue(speaker, text);
@@ -121,6 +115,94 @@ export class Engine {
 
   public stop() {
     this.loop.stop();
+  }
+
+  public reset() {
+    this.isPaused = false;
+    this.accumulator = 0;
+
+    Camera.reset();
+    this.pool.clear();
+
+    for (const spawner of this.activeSpawners) {
+      spawner.cleanup();
+    }
+    this.world.minions = [];
+    this.activeSpawners = defaultLevelConfig.spawners.map(
+      (s) => new Spawner(s.type, s.x, s.y, this.world)
+    );
+
+    this.player.isDead = false;
+    this.player.position = { ...defaultLevelConfig.playerStart };
+    this.player.velocity = { x: 0, y: 0 };
+    this.player.facingDirection = 1;
+    this.player.hasDoubleJump = true;
+    this.player.determinationCounter = 0;
+    this.player.healingCharges = 0;
+    this.player.hurtTimer = 0;
+    this.player.visualScale = { x: 1, y: 1 };
+    
+    const pHealth = this.player.getComponent(HealthComponent);
+    if (pHealth) {
+      pHealth.reset();
+    }
+
+    this.player.dashComponent.isDashing = false;
+    this.player.dashComponent.dashTimer = 0;
+    this.player.dashComponent.dashCooldown = 0;
+    this.player.dashComponent.canDash = true;
+    this.player.dashComponent.ghosts = [];
+
+    this.player.meleeComponent.attackCooldownTimer = 0;
+    this.player.meleeComponent.attackActiveTimer = 0;
+    this.player.meleeComponent.attackActive = false;
+    this.player.meleeComponent.attackDirection = null;
+    this.player.meleeComponent.hasHitEnemyThisSwing = false;
+
+    this.player.fireballComponent.isCharging = false;
+    this.player.fireballComponent.chargeTimer = 0;
+
+    this.player.healComponent.isHealing = false;
+    this.player.healComponent.healTimer = 0;
+
+    this.boss.isDead = false;
+    this.boss.position = { ...defaultLevelConfig.bossStart };
+    this.boss.velocity = { x: 0, y: 0 };
+    this.boss.facingDirection = -1;
+    this.boss.currentPhase = 1;
+    this.boss.patrolSpeed = 200;
+    this.boss.lungeSpeed = 1200;
+
+    const bHealth = this.boss.getComponent(HealthComponent);
+    if (bHealth) {
+      bHealth.reset();
+    }
+    this.boss.stateMachine.changeState(this.boss.cooldownState);
+
+    this.particleSystem.cleanup();
+    this.particleSystem = new ParticleSystem();
+
+    this.battleDirector.cleanup();
+    this.battleDirector = new BattleDirector(() => this.stop());
+
+    const sessionState = useSessionStore.getState();
+    sessionState.setGameResult("PLAYING");
+
+    this.projectState();
+    
+    eventBroker.publish("CLEAR_DIALOGUES", undefined);
+  }
+
+  private projectState() {
+    const pHealth = this.player.getComponent(HealthComponent);
+    const bHealth = this.boss.getComponent(HealthComponent);
+    
+    useGameplayStore.setState({
+      playerHP: pHealth ? pHealth.currentHealth : 5,
+      bossHP: bHealth ? bHealth.currentHealth : 30,
+      healingCharges: this.player.healingCharges,
+      determination: this.player.determinationCounter
+    });
   }
 
   private handlePauseKey = (e: KeyboardEvent) => {
@@ -169,6 +251,7 @@ export class Engine {
         activeProjectiles[i].update(dt);
       }
       inputProvider.postUpdate();
+      this.projectState();
       return;
     }
 
@@ -218,9 +301,9 @@ export class Engine {
       activeProjectiles[i].update(dt);
     }
 
-
-
     inputProvider.postUpdate();
+
+    this.projectState();
   }
 
   private render() {

@@ -85,7 +85,6 @@ export default function App() {
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
-  const retryCount = useSessionStore((state) => state.retryCount);
 
   const navTo = useSessionStore((state) => state.navTo);
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
@@ -95,11 +94,6 @@ export default function App() {
   const bossHP = useGameplayStore((state) => state.bossHP);
   const healingCharges = useGameplayStore((state) => state.healingCharges);
   const determination = useGameplayStore((state) => state.determination);
-
-  const setPlayerHP = useGameplayStore((state) => state.setPlayerHP);
-  const setBossHP = useGameplayStore((state) => state.setBossHP);
-  const setHealingCharges = useGameplayStore((state) => state.setHealingCharges);
-  const setDetermination = useGameplayStore((state) => state.setDetermination);
 
   const {
     slots,
@@ -175,21 +169,6 @@ export default function App() {
     });
 
     const unsubs = [
-      eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
-        setPlayerHP(currentHealth);
-      }),
-      eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
-        setPlayerHP(currentHealth);
-      }),
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        setBossHP(currentHealth);
-      }),
-      eventBroker.subscribe("HEALING_CHARGES_CHANGED", ({ charges }) => {
-        setHealingCharges(charges);
-      }),
-      eventBroker.subscribe("DETERMINATION_CHANGED", ({ determination: detValue }) => {
-        setDetermination(detValue);
-      }),
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         triggerDialogue(speaker, text);
       }),
@@ -204,11 +183,7 @@ export default function App() {
     };
   }, [
     triggerDialogue, 
-    resetDialogues, 
-    setPlayerHP, 
-    setBossHP, 
-    setHealingCharges, 
-    setDetermination
+    resetDialogues
   ]);
 
   useEffect(() => {
@@ -545,7 +520,6 @@ export default function App() {
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
                 <GameArena
-                  key={retryCount}
                   canvasRef={canvasRef}
                   triggerDialogue={() => {}}
                   playHoverTick={playHoverTick}

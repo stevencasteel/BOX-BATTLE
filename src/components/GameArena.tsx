@@ -17,6 +17,7 @@ export function GameArena({
   playHoverTick,
 }: GameArenaProps) {
   const triggerRef = useRef(triggerDialogue);
+  const engineRef = useRef<Engine | null>(null);
   
   useEffect(() => {
     triggerRef.current = triggerDialogue;
@@ -78,10 +79,12 @@ export function GameArena({
     const engine = new Engine(canvas, (speaker, text) => {
       triggerRef.current(speaker, text);
     });
+    engineRef.current = engine;
     engine.start();
 
     return () => {
       engine.cleanup();
+      engineRef.current = null;
     };
   }, [canvasRef]);
 
@@ -184,6 +187,7 @@ export function GameArena({
                   <button
                     onClick={() => {
                       resetGameSession();
+                      engineRef.current?.reset();
                       navTo("PLAYING");
                     }}
                     onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}

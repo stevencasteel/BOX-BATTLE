@@ -37,6 +37,12 @@ export class HealthComponent implements IEntityComponent {
     if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
   }
 
+  public reset(): void {
+    this.currentHealth = this.maxHealth;
+    this.invincibilityTimer = 0;
+    this.hitFlashTimer = 0;
+  }
+
   public takeDamage(amount: number): boolean {
     const isDying = this.owner.status === EntityStatus.DYING;
     const isSpawning = this.owner.status === EntityStatus.SPAWNING;
