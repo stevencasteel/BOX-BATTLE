@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:19:37 PM
+ [SYSTEM] Generated: 5/22/2026, 1:22:20 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -7202,7 +7202,6 @@ export type GameEventMap = {
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number };
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
-  ENTITY_SLIDE: { id: string; width: number; height: number; speed: number; shouldSlide: boolean; x?: number };
   PLAYER_LANDED: void;
   HEAL_START: void;
   HEAL_CANCEL: void;
@@ -9493,12 +9492,12 @@ export class FireballComponent implements IEntityComponent {
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
+import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IAbilityUser } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements IEntityComponent {
-  public owner!: BaseEntity;
+  public owner!: Player;
   
   public isHealing: boolean = false;
   public healTimer: number = 0;
@@ -9506,7 +9505,7 @@ export class HealComponent implements IEntityComponent {
   private readonly healDuration: number = 2.0;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner;
+    this.owner = owner as Player;
   }
 
   public update(dt: number): void {
@@ -9534,13 +9533,10 @@ export class HealComponent implements IEntityComponent {
   }
 
   private completeHealing(): void {
-    const abilityUser = this.owner as unknown as IAbilityUser;
     this.isHealing = false;
 
-    if (abilityUser && abilityUser.healingCharges !== undefined) {
-      abilityUser.healingCharges = Math.max(0, abilityUser.healingCharges - 1);
-      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: abilityUser.healingCharges });
-    }
+    this.owner.healingCharges = Math.max(0, this.owner.healingCharges - 1);
+    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.owner.healingCharges });
 
     const health = this.owner.getComponent(HealthComponent);
     if (health) {
@@ -9699,13 +9695,14 @@ export class InputReceiverComponent implements IEntityComponent {
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
+import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus, IAbilityUser } from "@/core/Interfaces";
+import { EntityStatus } from "@/core/Interfaces";
 import { DashComponent } from "@/entities/components/DashComponent";
 
 export class MeleeComponent implements IEntityComponent {
-  public owner!: BaseEntity;
+  public owner!: Player;
   
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
@@ -9716,7 +9713,7 @@ export class MeleeComponent implements IEntityComponent {
   private readonly pogoForce: number = 450;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner;
+    this.owner = owner as Player;
   }
 
   public update(dt: number): void {
@@ -9758,8 +9755,7 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const abilityUser = this.owner as unknown as IAbilityUser;
-    const facing = abilityUser?.facingDirection ?? 1;
+    const facing = this.owner.facingDirection;
 
     for (const target of targets) {
       let isHit = false;
@@ -9903,10 +9899,7 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.position.y -= 2;
         this.hasHitEnemyThisSwing = true;
         
-        const abilityUser = this.owner as unknown as IAbilityUser;
-        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-          abilityUser.hasDoubleJump = true;
-        }
+        this.owner.hasDoubleJump = true;
 
         const dash = this.owner.getComponent(DashComponent);
         if (dash) {
@@ -9939,10 +9932,7 @@ export class MeleeComponent implements IEntityComponent {
           this.owner.position.y -= 2;
           this.hasHitEnemyThisSwing = true;
           
-          const abilityUser = this.owner as unknown as IAbilityUser;
-          if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-            abilityUser.hasDoubleJump = true;
-          }
+          this.owner.hasDoubleJump = true;
 
           const dash = this.owner.getComponent(DashComponent);
           if (dash) {
@@ -9973,10 +9963,7 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         
-        const abilityUser = this.owner as unknown as IAbilityUser;
-        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-          abilityUser.hasDoubleJump = true;
-        }
+        this.owner.hasDoubleJump = true;
 
         const dash = this.owner.getComponent(DashComponent);
         if (dash) {

@@ -1,12 +1,13 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
+import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus, IAbilityUser } from "@/core/Interfaces";
+import { EntityStatus } from "@/core/Interfaces";
 import { DashComponent } from "@/entities/components/DashComponent";
 
 export class MeleeComponent implements IEntityComponent {
-  public owner!: BaseEntity;
+  public owner!: Player;
   
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
@@ -17,7 +18,7 @@ export class MeleeComponent implements IEntityComponent {
   private readonly pogoForce: number = 450;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner;
+    this.owner = owner as Player;
   }
 
   public update(dt: number): void {
@@ -59,8 +60,7 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const abilityUser = this.owner as unknown as IAbilityUser;
-    const facing = abilityUser?.facingDirection ?? 1;
+    const facing = this.owner.facingDirection;
 
     for (const target of targets) {
       let isHit = false;
@@ -204,10 +204,7 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.position.y -= 2;
         this.hasHitEnemyThisSwing = true;
         
-        const abilityUser = this.owner as unknown as IAbilityUser;
-        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-          abilityUser.hasDoubleJump = true;
-        }
+        this.owner.hasDoubleJump = true;
 
         const dash = this.owner.getComponent(DashComponent);
         if (dash) {
@@ -240,10 +237,7 @@ export class MeleeComponent implements IEntityComponent {
           this.owner.position.y -= 2;
           this.hasHitEnemyThisSwing = true;
           
-          const abilityUser = this.owner as unknown as IAbilityUser;
-          if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-            abilityUser.hasDoubleJump = true;
-          }
+          this.owner.hasDoubleJump = true;
 
           const dash = this.owner.getComponent(DashComponent);
           if (dash) {
@@ -274,10 +268,7 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         
-        const abilityUser = this.owner as unknown as IAbilityUser;
-        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
-          abilityUser.hasDoubleJump = true;
-        }
+        this.owner.hasDoubleJump = true;
 
         const dash = this.owner.getComponent(DashComponent);
         if (dash) {

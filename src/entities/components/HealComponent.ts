@@ -1,11 +1,11 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
+import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IAbilityUser } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements IEntityComponent {
-  public owner!: BaseEntity;
+  public owner!: Player;
   
   public isHealing: boolean = false;
   public healTimer: number = 0;
@@ -13,7 +13,7 @@ export class HealComponent implements IEntityComponent {
   private readonly healDuration: number = 2.0;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner;
+    this.owner = owner as Player;
   }
 
   public update(dt: number): void {
@@ -41,13 +41,10 @@ export class HealComponent implements IEntityComponent {
   }
 
   private completeHealing(): void {
-    const abilityUser = this.owner as unknown as IAbilityUser;
     this.isHealing = false;
 
-    if (abilityUser && abilityUser.healingCharges !== undefined) {
-      abilityUser.healingCharges = Math.max(0, abilityUser.healingCharges - 1);
-      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: abilityUser.healingCharges });
-    }
+    this.owner.healingCharges = Math.max(0, this.owner.healingCharges - 1);
+    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.owner.healingCharges });
 
     const health = this.owner.getComponent(HealthComponent);
     if (health) {
