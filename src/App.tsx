@@ -75,11 +75,6 @@ export default function App() {
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
-  const playerHP = useGameplayStore((state) => state.playerHP);
-  const bossHP = useGameplayStore((state) => state.bossHP);
-  const healingCharges = useGameplayStore((state) => state.healingCharges);
-  const determination = useGameplayStore((state) => state.determination);
-
   const {
     slots,
     copySourceIndex,
@@ -166,10 +161,7 @@ export default function App() {
       unsubGameplay();
       unsubs.forEach((unsub) => unsub());
     };
-  }, [
-    triggerDialogue, 
-    resetDialogues
-  ]);
+  }, [triggerDialogue, resetDialogues]);
 
   useEffect(() => {
     if (!isPlayingScreen) {
@@ -325,11 +317,11 @@ export default function App() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
+                      id={`hud-m-php-${i}`}
+                      className="led-dot led-green"
                       style={{
                         width: "8px",
                         height: "8px",
-                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
                         border: "1px solid rgba(0,0,0,0.5)"
                       }}
                     />
@@ -339,11 +331,12 @@ export default function App() {
                   {[...Array(3)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
+                      id={`hud-m-heal-${i}`}
+                      className="led-dot"
                       style={{
                         width: "4px",
                         height: "4px",
-                        background: isPlayingScreen && i < healingCharges ? "" : "#07080b"
+                        background: "#07080b"
                       }}
                     />
                   ))}
@@ -360,10 +353,10 @@ export default function App() {
                   display: "flex",
                   alignItems: "center"
                 }}>
-                  <div style={{
+                  <div id="hud-m-det-bar" style={{
                     height: "100%",
                     borderRadius: "1.5px",
-                    width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
+                    width: "0%",
                     transition: "width 0.15s ease",
                     background: "hsl(280, 80%, 65%)",
                     boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
@@ -375,11 +368,12 @@ export default function App() {
                 <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
                 <div className="neo-pressed" style={{ width: "80px", height: "8px", borderRadius: "3px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
                   <div
+                    id="hud-m-boss-bar"
                     className="led-red"
                     style={{
                       height: "100%",
                       borderRadius: "1.5px",
-                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
+                      width: "0%",
                       transition: "all 0.15s ease"
                     }}
                   />
@@ -394,9 +388,9 @@ export default function App() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
+                      id={`hud-d-php-${i}`}
+                      className="led-dot led-green"
                       style={{
-                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
                         border: "1px solid rgba(0,0,0,0.5)"
                       }}
                     />
@@ -408,9 +402,9 @@ export default function App() {
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
+                        id={`hud-d-heal-${i}`}
+                        className="led-dot"
                         style={{
-                          background: isPlayingScreen && i < healingCharges ? "" : "#07080b",
                           border: "1px solid rgba(0,0,0,0.5)",
                           width: "6px",
                           height: "6px"
@@ -427,10 +421,10 @@ export default function App() {
                     overflow: "hidden",
                     background: "#07080b"
                   }}>
-                    <div style={{
+                    <div id="hud-d-det-bar" style={{
                       height: "100%",
                       borderRadius: "2px",
-                      width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
+                      width: "0%",
                       transition: "width 0.15s ease",
                       background: "hsl(280, 80%, 65%)",
                       boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
@@ -472,13 +466,13 @@ export default function App() {
                 <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
                 <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
                   <div
-                    className={isPlayingScreen ? "led-red" : ""}
+                    id="hud-d-boss-bar"
+                    className="led-red"
                     style={{
                       height: "100%",
                       borderRadius: "2px",
-                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
-                      transition: "all 0.15s ease",
-                      background: isPlayingScreen ? "" : "#07080b"
+                      width: "0%",
+                      transition: "all 0.15s ease"
                     }}
                   />
                 </div>
