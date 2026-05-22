@@ -337,7 +337,7 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-full-height" : ""}`} style={isTouchDevice ? {
+      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""}`} style={isTouchDevice ? {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",

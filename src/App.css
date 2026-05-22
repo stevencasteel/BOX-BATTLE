@@ -39,11 +39,11 @@ body {
 
 .cabinet-outer {
   position: relative;
-  width: 80vmin;
-  height: auto;
-  max-width: 800px;
-  max-height: 1020px;
-  border-radius: 2.8vmin;
+  width: min(95vw, 74.8vh);
+  height: min(121vw, 95vh);
+  max-width: 1200px;
+  max-height: 95vh;
+  border-radius: 20px;
   background: #0f1218;
   padding: 2.5vmin;
   box-shadow:
@@ -58,11 +58,20 @@ body {
   transition: all 0.2s ease-in-out;
 }
 
-.cabinet-full-height {
-  width: 96vw;
-  height: 95vh;
-  max-width: 1600px;
-  max-height: 1080px;
+.cabinet-wide-source {
+  width: 95vw !important;
+  height: 95vh !important;
+  max-width: 1500px !important;
+  max-height: 95vh !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+}
+
+.cabinet-wide-source .game-viewport-container {
+  aspect-ratio: auto !important;
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+  height: 100% !important;
 }
 
 .screen-inner {
@@ -404,9 +413,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2vmin 1.8vmin;
+  padding: 1vmin 1.5vmin;
   border-radius: 1.5vmin;
-  margin-bottom: 1.2vmin;
+  margin-bottom: 1vmin;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -499,9 +508,9 @@ body {
 
 .dialogue-console {
   width: 100%;
-  height: 11vmin;
+  height: 8.5vmin;
   min-height: 50px;
-  max-height: 120px;
+  max-height: 90px;
   display: flex;
   gap: 1.5vmin;
   margin-top: 1.2vmin;
@@ -547,12 +556,12 @@ body {
 }
 
 .portrait-square {
-  width: 8vmin;
-  height: 8vmin;
+  width: 6vmin;
+  height: 6vmin;
   min-width: 32px;
   min-height: 32px;
-  max-width: 64px;
-  max-height: 64px;
+  max-width: 50px;
+  max-height: 50px;
   border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
@@ -567,15 +576,15 @@ body {
 }
 
 .dialogue-speaker-label {
-  font-size: clamp(10px, 1.3vmin, 14px);
+  font-size: clamp(9px, 1.2vmin, 13px);
   font-weight: bold;
   letter-spacing: 0.15em;
   color: var(--signal-green);
 }
 
 .dialogue-body-text {
-  font-size: clamp(11px, 1.6vmin, 15px);
-  line-height: 1.4;
+  font-size: clamp(10px, 1.4vmin, 14px);
+  line-height: 1.35;
   color: #eaeaea;
   word-wrap: break-word;
   white-space: pre-wrap;
