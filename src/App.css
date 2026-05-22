@@ -1,7 +1,7 @@
 .cabinet-outer {
   position: relative;
-  width: min(95vw, 74.8vh);
-  height: min(121vw, 95vh);
+  width: min(95vw, 81.2vh);
+  height: min(111vw, 95vh);
   max-width: 1200px;
   max-height: 95vh;
   border-radius: 20px;

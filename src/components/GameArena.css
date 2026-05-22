@@ -76,7 +76,7 @@
   max-height: 90px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1.2vmin;
+  margin-top: auto;
   box-sizing: border-box;
   flex-shrink: 0;
 }
