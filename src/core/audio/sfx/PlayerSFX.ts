@@ -1,6 +1,7 @@
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -39,67 +40,71 @@ export class PlayerSFX {
     this.playerPanner = new Tone.Panner(0).connect(sfxGain);
     this.hurtPanner = new Tone.Panner(0).connect(sfxGain);
 
+    const presets = SFX_PRESETS.player;
+
     this.jumpSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.jump.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay }
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.fireball_lvl1.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay }
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+      oscillator: { type: presets.pogo.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay }
     }).connect(this.playerPanner);
 
     this.dashNoise = new Tone.Noise("white");
-    this.dashFilter = new Tone.Filter({ frequency: 1400, type: "bandpass", Q: 2.5 });
+    this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
     this.dashEnv = new Tone.AmplitudeEnvelope({
       attack: 0.01,
-      decay: 0.18,
+      decay: presets.dash.noiseDecay,
       sustain: 0,
-      release: 0.18
+      release: presets.dash.noiseDecay
     });
     this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
     this.hurtSynth = new Tone.Synth({
-      oscillator: { type: "sawtooth" },
-      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
+      oscillator: { type: presets.hurt.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay }
     }).connect(this.hurtPanner);
 
     this.landingNoise = new Tone.Noise("white");
-    this.landingFilter = new Tone.Filter({ frequency: 1100, type: "bandpass", Q: 2.0 });
-    this.landingEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.08, sustain: 0, release: 0.08 });
+    this.landingFilter = new Tone.Filter({ frequency: presets.landing.noiseFreq, type: "bandpass", Q: presets.landing.noiseQ });
+    this.landingEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.landing.noiseDecay, sustain: 0, release: presets.landing.noiseDecay });
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
     this.slashNoiseSide = new Tone.Noise("white");
-    this.slashFilterSide = new Tone.Filter({ frequency: 2200, type: "highpass" });
+    this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
-    this.slashEnvSide = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: 0.15, sustain: 0, release: 0.15 });
+    this.slashEnvSide = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: presets.slash_side.noiseDecay, sustain: 0, release: presets.slash_side.noiseDecay });
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
     this.slashNoisePuff = new Tone.Noise("pink");
-    this.slashFilterPuff = new Tone.Filter({ frequency: 650, type: "bandpass", Q: 1.2 });
-    this.slashEnvPuff = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.18, sustain: 0, release: 0.18 });
+    this.slashFilterPuff = new Tone.Filter({ frequency: presets.slash_puff.noiseFreq, type: "bandpass", Q: presets.slash_puff.noiseQ });
+    this.slashEnvPuff = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.slash_puff.noiseDecay, sustain: 0, release: presets.slash_puff.noiseDecay });
     this.slashNoisePuff.chain(this.slashFilterPuff, this.slashEnvPuff, this.playerPanner);
     this.slashNoisePuff.start();
   }
 
   public playDashRecharge(x?: number) {
+    const preset = SFX_PRESETS.player.dash_recharge;
     this.helper.execute("dash_recharge", 150, x, this.playerPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease("A5", "16n", now);
-      this.jumpSynth.triggerAttackRelease("E6", "16n", now + 0.04);
+      this.jumpSynth.triggerAttackRelease(preset.lowNote, "16n", now);
+      this.jumpSynth.triggerAttackRelease(preset.highNote, "16n", now + 0.04);
     });
   }
 
   public playHealCancel(x?: number) {
+    const preset = SFX_PRESETS.player.heal_cancel;
     this.helper.execute("heal_cancel", 0, x, this.playerPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
     });
   }
 
@@ -114,68 +119,77 @@ export class PlayerSFX {
   }
 
   public playLanding(x?: number) {
+    const preset = SFX_PRESETS.player.landing;
     this.helper.execute("landing", 100, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(160, "8n", now);
-      this.pogoSynth.frequency.rampTo(65, 0.11, now);
-      this.landingEnv.triggerAttackRelease(0.08, now);
+      this.pogoSynth.triggerAttackRelease(preset.synthFreq, "8n", now);
+      this.pogoSynth.frequency.rampTo(preset.synthTargetFreq, preset.synthDuration, now);
+      this.landingEnv.triggerAttackRelease(preset.noiseDecay, now);
     });
   }
 
   public playFireballLvl1(x?: number) {
+    const preset = SFX_PRESETS.player.fireball_lvl1;
     this.helper.execute("fireball_lvl1", 0, x, this.playerPanner, (now) => {
-      this.slashSynth.triggerAttackRelease(440, "8n", now);
-      this.slashSynth.frequency.rampTo(160, 0.15, now);
+      this.slashSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.slashSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playFireballLvl2(x?: number) {
+    const preset = SFX_PRESETS.player.fireball_lvl2;
     this.helper.execute("fireball_lvl2", 0, x, this.playerPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(220, "4n", now);
-      this.hurtSynth.frequency.rampTo(80, 0.25, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playJump(x?: number) {
+    const preset = SFX_PRESETS.player.jump;
     this.helper.execute("jump", 100, x, this.playerPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease(240, "8n", now);
-      this.jumpSynth.frequency.rampTo(580, 0.12, now);
+      this.jumpSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.jumpSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playDash(x?: number) {
+    const preset = SFX_PRESETS.player.dash;
     this.helper.execute("dash", 100, x, this.playerPanner, (now) => {
-      this.dashEnv.triggerAttackRelease(0.18, now);
-      this.dashFilter.frequency.setValueAtTime(1400, now);
-      this.dashFilter.frequency.rampTo(500, 0.18, now);
+      this.dashEnv.triggerAttackRelease(preset.noiseDecay, now);
+      this.dashFilter.frequency.setValueAtTime(preset.noiseFreq, now);
+      this.dashFilter.frequency.rampTo(preset.noiseTargetFreq, preset.noiseDuration, now);
     });
   }
 
   public playSlash(direction: "side" | "up" | "down" = "side", x?: number) {
     if (direction === "side") {
+      const preset = SFX_PRESETS.player.slash_side;
       this.helper.execute("slash_side", 80, x, this.playerPanner, (now) => {
-        this.slashFilterSide.frequency.rampTo(1000, 0.14, now);
-        this.slashEnvSide.triggerAttackRelease(0.15, now);
+        this.slashFilterSide.frequency.rampTo(preset.noiseTargetFreq, preset.noiseDuration, now);
+        this.slashEnvSide.triggerAttackRelease(preset.noiseDecay, now);
       });
     } else {
+      const preset = SFX_PRESETS.player.slash_puff;
       this.helper.execute("slash_puff", 100, x, this.playerPanner, (now) => {
-        this.pogoSynth.triggerAttackRelease(220, "8n", now);
-        this.pogoSynth.frequency.rampTo(90, 0.15, now);
-        this.slashEnvPuff.triggerAttackRelease(0.18, now);
+        this.pogoSynth.triggerAttackRelease(preset.synthFreq, "8n", now);
+        this.pogoSynth.frequency.rampTo(preset.synthTargetFreq, preset.synthDuration, now);
+        this.slashEnvPuff.triggerAttackRelease(preset.noiseDecay, now);
       });
     }
   }
 
   public playPogo(x?: number) {
+    const preset = SFX_PRESETS.player.pogo;
     this.helper.execute("pogo", 80, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(320, "16n", now);
-      this.pogoSynth.frequency.rampTo(140, 0.09, now);
+      this.pogoSynth.triggerAttackRelease(preset.frequency, "16n", now);
+      this.pogoSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playHurt(x?: number) {
+    const preset = SFX_PRESETS.player.hurt;
     this.helper.execute("hurt", 120, x, this.hurtPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
-      this.hurtSynth.frequency.rampTo(45, 0.16, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 }

@@ -238,6 +238,7 @@ export class Engine {
   }
 
   private fixedUpdate(dt: number) {
+    inputProvider.update();
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;

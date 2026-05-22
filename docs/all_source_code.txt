@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:29:46 PM
+ [SYSTEM] Generated: 5/22/2026, 1:38:58 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -50,7 +50,8 @@
 │   │   │   ├── AudioContextManager.ts
 │   │   │   ├── DroneManager.ts
 │   │   │   ├── MusicSequencer.ts
-│   │   │   └── SFXManager.ts
+│   │   │   ├── SFXManager.ts
+│   │   │   └── sfxPresetData.ts
 │   │   ├── BattleDirector.ts
 │   │   ├── Camera.ts
 │   │   ├── CanvasResizer.ts
@@ -4512,6 +4513,7 @@ export class Engine {
   }
 
   private fixedUpdate(dt: number) {
+    inputProvider.update();
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;
@@ -4719,6 +4721,26 @@ class InputProvider {
     DASH: 0
   };
 
+  private keyboardPressed: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false
+  };
+
+  private gamepadPressed: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false
+  };
+
   private pressed: Record<Action, boolean> = {
     MOVE_LEFT: false,
     MOVE_RIGHT: false,
@@ -4771,37 +4793,25 @@ class InputProvider {
     const action = this.getActionFromCode(e.code);
     if (action) {
       e.preventDefault();
-      if (!this.pressed[action]) {
-        this.justPressed[action] = true;
-        this.pressed[action] = true;
-        this.pressTimestamps[action] = performance.now();
+      if (!this.keyboardPressed[action]) {
+        this.keyboardPressed[action] = true;
       }
     }
   };
-
-  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
-    const elapsed = performance.now() - this.pressTimestamps[action];
-    if (elapsed <= windowMs) {
-      this.pressTimestamps[action] = 0;
-      return true;
-    }
-    return false;
-  }
 
   private handleKeyUp = (e: KeyboardEvent) => {
     const action = this.getActionFromCode(e.code);
     if (action) {
       e.preventDefault();
-      if (this.pressed[action]) {
-        this.justReleased[action] = true;
-        this.pressed[action] = false;
-      }
+      this.keyboardPressed[action] = false;
     }
   };
 
   private handleBlur = () => {
-    for (const key in this.pressed) {
+    for (const key in this.keyboardPressed) {
       const action = key as Action;
+      this.keyboardPressed[action] = false;
+      this.gamepadPressed[action] = false;
       this.pressed[action] = false;
       this.justPressed[action] = false;
       this.justReleased[action] = false;
@@ -4810,18 +4820,22 @@ class InputProvider {
   };
 
   public triggerTouchStart(action: Action) {
-    if (!this.pressed[action]) {
-      this.justPressed[action] = true;
-      this.pressed[action] = true;
-      this.pressTimestamps[action] = performance.now();
+    if (!this.keyboardPressed[action]) {
+      this.keyboardPressed[action] = true;
     }
   }
 
   public triggerTouchEnd(action: Action) {
-    if (this.pressed[action]) {
-      this.justReleased[action] = true;
-      this.pressed[action] = false;
+    this.keyboardPressed[action] = false;
+  }
+
+  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+    const elapsed = performance.now() - this.pressTimestamps[action];
+    if (elapsed <= windowMs) {
+      this.pressTimestamps[action] = 0;
+      return true;
     }
+    return false;
   }
 
   public isPressed(action: Action): boolean {
@@ -4841,6 +4855,58 @@ class InputProvider {
     if (this.pressed[negative]) axis -= 1;
     if (this.pressed[positive]) axis += 1;
     return axis;
+  }
+
+  public pollGamepads() {
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+
+    const gamepads = navigator.getGamepads();
+    
+    const currentGamepadPressed: Record<Action, boolean> = {
+      MOVE_LEFT: false,
+      MOVE_RIGHT: false,
+      MOVE_UP: false,
+      MOVE_DOWN: false,
+      JUMP: false,
+      ATTACK: false,
+      DASH: false
+    };
+
+    for (let i = 0; i < gamepads.length; i++) {
+      const gp = gamepads[i];
+      if (!gp) continue;
+
+      if (gp.buttons[0]?.pressed) currentGamepadPressed["JUMP"] = true;
+      if (gp.buttons[2]?.pressed || gp.buttons[3]?.pressed) currentGamepadPressed["ATTACK"] = true;
+      if (gp.buttons[1]?.pressed || gp.buttons[5]?.pressed || gp.buttons[7]?.pressed) currentGamepadPressed["DASH"] = true;
+
+      const axisThreshold = 0.35;
+      if (gp.axes[0] < -axisThreshold || gp.buttons[14]?.pressed) currentGamepadPressed["MOVE_LEFT"] = true;
+      if (gp.axes[0] > axisThreshold || gp.buttons[15]?.pressed) currentGamepadPressed["MOVE_RIGHT"] = true;
+      if (gp.axes[1] < -axisThreshold || gp.buttons[12]?.pressed) currentGamepadPressed["MOVE_UP"] = true;
+      if (gp.axes[1] > axisThreshold || gp.buttons[13]?.pressed) currentGamepadPressed["MOVE_DOWN"] = true;
+    }
+
+    this.gamepadPressed = currentGamepadPressed;
+  }
+
+  public update() {
+    this.pollGamepads();
+
+    const actions: Action[] = ["MOVE_LEFT", "MOVE_RIGHT", "MOVE_UP", "MOVE_DOWN", "JUMP", "ATTACK", "DASH"];
+    for (const action of actions) {
+      const isNowPressed = this.keyboardPressed[action] || this.gamepadPressed[action];
+      const wasPressed = this.pressed[action];
+
+      this.pressed[action] = isNowPressed;
+
+      if (isNowPressed && !wasPressed) {
+        this.justPressed[action] = true;
+        this.pressTimestamps[action] = performance.now();
+      } else if (!isNowPressed && wasPressed) {
+        this.justReleased[action] = true;
+      }
+    }
   }
 
   public postUpdate() {
@@ -6761,6 +6827,7 @@ export class SFXManager {
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -6787,14 +6854,16 @@ export class BossSFX {
     this.impactPanner = new Tone.Panner(0).connect(sfxGain);
     this.hurtPanner = new Tone.Panner(0).connect(sfxGain);
 
+    const presets = SFX_PRESETS.boss;
+
     this.jumpSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.telegraph.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay }
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
-      oscillator: { type: "sawtooth" },
-      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
+      oscillator: { type: presets.lunge.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay }
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
@@ -6805,13 +6874,13 @@ export class BossSFX {
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
-      oscillator: { type: "square" },
-      envelope: { attack: 0.005, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.spike_strike.oscillatorType },
+      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay }
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 }
+      oscillator: { type: presets.minion_spawn.oscillatorType },
+      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay }
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
@@ -6821,44 +6890,50 @@ export class BossSFX {
   }
 
   public playBossTelegraph(x?: number) {
+    const preset = SFX_PRESETS.boss.telegraph;
     this.helper.execute("boss_telegraph", 150, x, this.bossPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease(320, "8n", now);
-      this.jumpSynth.frequency.rampTo(680, 0.35, now);
+      this.jumpSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.jumpSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossLunge(x?: number) {
+    const preset = SFX_PRESETS.boss.lunge;
     this.helper.execute("boss_lunge", 200, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(120, "2n", now);
-      this.hurtSynth.frequency.rampTo(40, 0.45, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "2n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossSwipe(x?: number) {
+    const preset = SFX_PRESETS.boss.swipe;
     this.helper.execute("boss_swipe", 150, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
-      this.hurtSynth.frequency.rampTo(50, 0.22, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playMinionSpawning(x?: number) {
+    const preset = SFX_PRESETS.boss.minion_spawn;
     this.helper.execute("minion_spawn", 100, x, this.bossPanner, (now) => {
-      this.teleportSynth.triggerAttackRelease(180, "4n", now);
-      this.teleportSynth.frequency.rampTo(720, 0.3, now);
+      this.teleportSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.teleportSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playMinionDeconstruct(x?: number) {
+    const preset = SFX_PRESETS.boss.minion_deconstruct;
     this.helper.execute("minion_deconstruct", 100, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(280, "4n", now);
-      this.hurtSynth.frequency.rampTo(60, 0.28, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossPhaseShift(x?: number) {
+    const preset = SFX_PRESETS.boss.phase_shift;
     this.helper.execute("boss_phase_shift", 0, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(80, "2n", now);
-      this.hurtSynth.frequency.rampTo(320, 0.8, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "2n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
@@ -6873,16 +6948,18 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
+    const preset = SFX_PRESETS.boss.spike_strike;
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
-      this.spikeSynth.triggerAttackRelease(1400, "16n", now);
-      this.spikeSynth.frequency.rampTo(700, 0.12, now);
+      this.spikeSynth.triggerAttackRelease(preset.frequency, "16n", now);
+      this.spikeSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playHitConfirm(x?: number) {
+    const preset = SFX_PRESETS.boss.hit_confirm;
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
-      this.hitSynth.triggerAttackRelease("C6", "16n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(880, "16n", now + 0.04);
+      this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.synthFreq, "16n", now + preset.synthDelay);
     });
   }
 }
@@ -6894,6 +6971,7 @@ export class BossSFX {
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class InterfaceSFX {
   private helper: SFXHelper;
@@ -6926,32 +7004,36 @@ export class InterfaceSFX {
   }
 
   public playSelectTick() {
+    const preset = SFX_PRESETS.interface.select_tick;
     this.helper.execute("select_tick", 30, undefined, undefined, (now) => {
-      this.dialogueSynthPlayer.triggerAttackRelease(950, "32n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(1400, "32n", now + 0.025);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.note1, "32n", now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.note2, "32n", now + preset.delay);
     });
   }
 
   public playErrorTick() {
+    const preset = SFX_PRESETS.interface.error_tick;
     this.helper.execute("error_tick", 30, undefined, undefined, (now) => {
-      this.dialogueSynthBoss.triggerAttackRelease(260, "16n", now);
-      this.dialogueSynthBoss.triggerAttackRelease(160, "16n", now + 0.05);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.note1, "16n", now);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.note2, "16n", now + preset.delay);
     });
   }
 
   public playMenuConfirm() {
+    const preset = SFX_PRESETS.interface.menu_confirm;
     this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
-      this.dialogueSynthPlayer.triggerAttackRelease(440, "16n", now);
-      this.dialogueSynthPlayer.frequency.setValueAtTime(440, now);
-      this.dialogueSynthPlayer.frequency.rampTo(880, 0.12, now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.dialogueSynthPlayer.frequency.setValueAtTime(preset.startFreq, now);
+      this.dialogueSynthPlayer.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
   public playMenuBack() {
+    const preset = SFX_PRESETS.interface.menu_back;
     this.helper.execute("menu_back", 80, undefined, undefined, (now) => {
-      this.dialogueSynthBoss.triggerAttackRelease(587, "16n", now);
-      this.dialogueSynthBoss.frequency.setValueAtTime(587, now);
-      this.dialogueSynthBoss.frequency.rampTo(293, 0.12, now);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.dialogueSynthBoss.frequency.setValueAtTime(preset.startFreq, now);
+      this.dialogueSynthBoss.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
@@ -6976,6 +7058,7 @@ export class InterfaceSFX {
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -7014,67 +7097,71 @@ export class PlayerSFX {
     this.playerPanner = new Tone.Panner(0).connect(sfxGain);
     this.hurtPanner = new Tone.Panner(0).connect(sfxGain);
 
+    const presets = SFX_PRESETS.player;
+
     this.jumpSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.jump.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay }
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.fireball_lvl1.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay }
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+      oscillator: { type: presets.pogo.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay }
     }).connect(this.playerPanner);
 
     this.dashNoise = new Tone.Noise("white");
-    this.dashFilter = new Tone.Filter({ frequency: 1400, type: "bandpass", Q: 2.5 });
+    this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
     this.dashEnv = new Tone.AmplitudeEnvelope({
       attack: 0.01,
-      decay: 0.18,
+      decay: presets.dash.noiseDecay,
       sustain: 0,
-      release: 0.18
+      release: presets.dash.noiseDecay
     });
     this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
     this.hurtSynth = new Tone.Synth({
-      oscillator: { type: "sawtooth" },
-      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
+      oscillator: { type: presets.hurt.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay }
     }).connect(this.hurtPanner);
 
     this.landingNoise = new Tone.Noise("white");
-    this.landingFilter = new Tone.Filter({ frequency: 1100, type: "bandpass", Q: 2.0 });
-    this.landingEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.08, sustain: 0, release: 0.08 });
+    this.landingFilter = new Tone.Filter({ frequency: presets.landing.noiseFreq, type: "bandpass", Q: presets.landing.noiseQ });
+    this.landingEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.landing.noiseDecay, sustain: 0, release: presets.landing.noiseDecay });
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
     this.slashNoiseSide = new Tone.Noise("white");
-    this.slashFilterSide = new Tone.Filter({ frequency: 2200, type: "highpass" });
+    this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
-    this.slashEnvSide = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: 0.15, sustain: 0, release: 0.15 });
+    this.slashEnvSide = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: presets.slash_side.noiseDecay, sustain: 0, release: presets.slash_side.noiseDecay });
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
     this.slashNoisePuff = new Tone.Noise("pink");
-    this.slashFilterPuff = new Tone.Filter({ frequency: 650, type: "bandpass", Q: 1.2 });
-    this.slashEnvPuff = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: 0.18, sustain: 0, release: 0.18 });
+    this.slashFilterPuff = new Tone.Filter({ frequency: presets.slash_puff.noiseFreq, type: "bandpass", Q: presets.slash_puff.noiseQ });
+    this.slashEnvPuff = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.slash_puff.noiseDecay, sustain: 0, release: presets.slash_puff.noiseDecay });
     this.slashNoisePuff.chain(this.slashFilterPuff, this.slashEnvPuff, this.playerPanner);
     this.slashNoisePuff.start();
   }
 
   public playDashRecharge(x?: number) {
+    const preset = SFX_PRESETS.player.dash_recharge;
     this.helper.execute("dash_recharge", 150, x, this.playerPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease("A5", "16n", now);
-      this.jumpSynth.triggerAttackRelease("E6", "16n", now + 0.04);
+      this.jumpSynth.triggerAttackRelease(preset.lowNote, "16n", now);
+      this.jumpSynth.triggerAttackRelease(preset.highNote, "16n", now + 0.04);
     });
   }
 
   public playHealCancel(x?: number) {
+    const preset = SFX_PRESETS.player.heal_cancel;
     this.helper.execute("heal_cancel", 0, x, this.playerPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
     });
   }
 
@@ -7089,68 +7176,77 @@ export class PlayerSFX {
   }
 
   public playLanding(x?: number) {
+    const preset = SFX_PRESETS.player.landing;
     this.helper.execute("landing", 100, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(160, "8n", now);
-      this.pogoSynth.frequency.rampTo(65, 0.11, now);
-      this.landingEnv.triggerAttackRelease(0.08, now);
+      this.pogoSynth.triggerAttackRelease(preset.synthFreq, "8n", now);
+      this.pogoSynth.frequency.rampTo(preset.synthTargetFreq, preset.synthDuration, now);
+      this.landingEnv.triggerAttackRelease(preset.noiseDecay, now);
     });
   }
 
   public playFireballLvl1(x?: number) {
+    const preset = SFX_PRESETS.player.fireball_lvl1;
     this.helper.execute("fireball_lvl1", 0, x, this.playerPanner, (now) => {
-      this.slashSynth.triggerAttackRelease(440, "8n", now);
-      this.slashSynth.frequency.rampTo(160, 0.15, now);
+      this.slashSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.slashSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playFireballLvl2(x?: number) {
+    const preset = SFX_PRESETS.player.fireball_lvl2;
     this.helper.execute("fireball_lvl2", 0, x, this.playerPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(220, "4n", now);
-      this.hurtSynth.frequency.rampTo(80, 0.25, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playJump(x?: number) {
+    const preset = SFX_PRESETS.player.jump;
     this.helper.execute("jump", 100, x, this.playerPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease(240, "8n", now);
-      this.jumpSynth.frequency.rampTo(580, 0.12, now);
+      this.jumpSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.jumpSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playDash(x?: number) {
+    const preset = SFX_PRESETS.player.dash;
     this.helper.execute("dash", 100, x, this.playerPanner, (now) => {
-      this.dashEnv.triggerAttackRelease(0.18, now);
-      this.dashFilter.frequency.setValueAtTime(1400, now);
-      this.dashFilter.frequency.rampTo(500, 0.18, now);
+      this.dashEnv.triggerAttackRelease(preset.noiseDecay, now);
+      this.dashFilter.frequency.setValueAtTime(preset.noiseFreq, now);
+      this.dashFilter.frequency.rampTo(preset.noiseTargetFreq, preset.noiseDuration, now);
     });
   }
 
   public playSlash(direction: "side" | "up" | "down" = "side", x?: number) {
     if (direction === "side") {
+      const preset = SFX_PRESETS.player.slash_side;
       this.helper.execute("slash_side", 80, x, this.playerPanner, (now) => {
-        this.slashFilterSide.frequency.rampTo(1000, 0.14, now);
-        this.slashEnvSide.triggerAttackRelease(0.15, now);
+        this.slashFilterSide.frequency.rampTo(preset.noiseTargetFreq, preset.noiseDuration, now);
+        this.slashEnvSide.triggerAttackRelease(preset.noiseDecay, now);
       });
     } else {
+      const preset = SFX_PRESETS.player.slash_puff;
       this.helper.execute("slash_puff", 100, x, this.playerPanner, (now) => {
-        this.pogoSynth.triggerAttackRelease(220, "8n", now);
-        this.pogoSynth.frequency.rampTo(90, 0.15, now);
-        this.slashEnvPuff.triggerAttackRelease(0.18, now);
+        this.pogoSynth.triggerAttackRelease(preset.synthFreq, "8n", now);
+        this.pogoSynth.frequency.rampTo(preset.synthTargetFreq, preset.synthDuration, now);
+        this.slashEnvPuff.triggerAttackRelease(preset.noiseDecay, now);
       });
     }
   }
 
   public playPogo(x?: number) {
+    const preset = SFX_PRESETS.player.pogo;
     this.helper.execute("pogo", 80, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(320, "16n", now);
-      this.pogoSynth.frequency.rampTo(140, 0.09, now);
+      this.pogoSynth.triggerAttackRelease(preset.frequency, "16n", now);
+      this.pogoSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playHurt(x?: number) {
+    const preset = SFX_PRESETS.player.hurt;
     this.helper.execute("hurt", 120, x, this.hurtPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
-      this.hurtSynth.frequency.rampTo(45, 0.16, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 }
@@ -7200,6 +7296,184 @@ export class SFXHelper {
     return true;
   }
 }
+
+
+
+● ./src/core/audio/sfxPresetData.ts
+────────────────────────────────────────────────────
+export type BasicOscillatorType = "sine" | "sawtooth" | "triangle" | "square";
+
+export interface SFXPreset {
+  frequency: number;
+  targetFrequency?: number;
+  rampDuration?: number;
+  decay: number;
+  sustain?: number;
+  release?: number;
+  oscillatorType: BasicOscillatorType;
+  filterType?: "lowpass" | "highpass" | "bandpass";
+  filterFrequency?: number;
+  filterTargetFrequency?: number;
+  filterQ?: number;
+  noiseType?: "white" | "pink" | "brown";
+}
+
+export const SFX_PRESETS = {
+  player: {
+    jump: {
+      frequency: 240,
+      targetFrequency: 580,
+      rampDuration: 0.12,
+      decay: 0.12,
+      oscillatorType: "sine" as BasicOscillatorType
+    },
+    dash_recharge: {
+      lowNote: "A5",
+      highNote: "E6",
+      decay: 0.06
+    },
+    heal_cancel: {
+      frequency: 180,
+      decay: 0.12,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    pogo: {
+      frequency: 320,
+      targetFrequency: 140,
+      rampDuration: 0.09,
+      decay: 0.1,
+      oscillatorType: "sine" as BasicOscillatorType
+    },
+    hurt: {
+      frequency: 180,
+      targetFrequency: 45,
+      rampDuration: 0.16,
+      decay: 0.16,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    fireball_lvl1: {
+      frequency: 440,
+      targetFrequency: 160,
+      rampDuration: 0.15,
+      decay: 0.12,
+      oscillatorType: "triangle" as BasicOscillatorType
+    },
+    fireball_lvl2: {
+      frequency: 220,
+      targetFrequency: 80,
+      rampDuration: 0.25,
+      decay: 0.25,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    landing: {
+      synthFreq: 160,
+      synthTargetFreq: 65,
+      synthDuration: 0.11,
+      noiseFreq: 1100,
+      noiseDecay: 0.08,
+      noiseQ: 2.0
+    },
+    dash: {
+      noiseFreq: 1400,
+      noiseTargetFreq: 500,
+      noiseDuration: 0.18,
+      noiseDecay: 0.18,
+      noiseQ: 2.5
+    },
+    slash_side: {
+      noiseFreq: 2200,
+      noiseTargetFreq: 1000,
+      noiseDuration: 0.14,
+      noiseDecay: 0.15
+    },
+    slash_puff: {
+      synthFreq: 220,
+      synthTargetFreq: 90,
+      synthDuration: 0.15,
+      noiseFreq: 650,
+      noiseDecay: 0.18,
+      noiseQ: 1.2
+    }
+  },
+  boss: {
+    telegraph: {
+      frequency: 320,
+      targetFrequency: 680,
+      rampDuration: 0.35,
+      decay: 0.12,
+      oscillatorType: "sine" as BasicOscillatorType
+    },
+    lunge: {
+      frequency: 120,
+      targetFrequency: 40,
+      rampDuration: 0.45,
+      decay: 0.5,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    swipe: {
+      frequency: 180,
+      targetFrequency: 50,
+      rampDuration: 0.22,
+      decay: 0.16,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    minion_spawn: {
+      frequency: 180,
+      targetFrequency: 720,
+      rampDuration: 0.3,
+      decay: 0.3,
+      oscillatorType: "triangle" as BasicOscillatorType
+    },
+    minion_deconstruct: {
+      frequency: 280,
+      targetFrequency: 60,
+      rampDuration: 0.28,
+      decay: 0.28,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    phase_shift: {
+      frequency: 80,
+      targetFrequency: 320,
+      rampDuration: 0.8,
+      decay: 0.8,
+      oscillatorType: "sawtooth" as BasicOscillatorType
+    },
+    spike_strike: {
+      frequency: 1400,
+      targetFrequency: 700,
+      rampDuration: 0.12,
+      decay: 0.12,
+      oscillatorType: "square" as BasicOscillatorType
+    },
+    hit_confirm: {
+      metalNote: "C6",
+      synthFreq: 880,
+      synthDelay: 0.04
+    }
+  },
+  interface: {
+    select_tick: {
+      note1: 950,
+      note2: 1400,
+      delay: 0.025
+    },
+    error_tick: {
+      note1: 260,
+      note2: 160,
+      delay: 0.05
+    },
+    menu_confirm: {
+      startFreq: 440,
+      targetFreq: 880,
+      duration: 0.12
+    },
+    menu_back: {
+      startFreq: 587,
+      targetFreq: 293,
+      duration: 0.12
+    }
+  }
+};
 
 
 

@@ -1,6 +1,7 @@
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -27,14 +28,16 @@ export class BossSFX {
     this.impactPanner = new Tone.Panner(0).connect(sfxGain);
     this.hurtPanner = new Tone.Panner(0).connect(sfxGain);
 
+    const presets = SFX_PRESETS.boss;
+
     this.jumpSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.telegraph.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay }
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
-      oscillator: { type: "sawtooth" },
-      envelope: { attack: 0.01, decay: 0.16, sustain: 0, release: 0.16 }
+      oscillator: { type: presets.lunge.oscillatorType },
+      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay }
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
@@ -45,13 +48,13 @@ export class BossSFX {
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
-      oscillator: { type: "square" },
-      envelope: { attack: 0.005, decay: 0.12, sustain: 0, release: 0.12 }
+      oscillator: { type: presets.spike_strike.oscillatorType },
+      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay }
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.05, decay: 0.3, sustain: 0, release: 0.3 }
+      oscillator: { type: presets.minion_spawn.oscillatorType },
+      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay }
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
@@ -61,44 +64,50 @@ export class BossSFX {
   }
 
   public playBossTelegraph(x?: number) {
+    const preset = SFX_PRESETS.boss.telegraph;
     this.helper.execute("boss_telegraph", 150, x, this.bossPanner, (now) => {
-      this.jumpSynth.triggerAttackRelease(320, "8n", now);
-      this.jumpSynth.frequency.rampTo(680, 0.35, now);
+      this.jumpSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.jumpSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossLunge(x?: number) {
+    const preset = SFX_PRESETS.boss.lunge;
     this.helper.execute("boss_lunge", 200, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(120, "2n", now);
-      this.hurtSynth.frequency.rampTo(40, 0.45, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "2n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossSwipe(x?: number) {
+    const preset = SFX_PRESETS.boss.swipe;
     this.helper.execute("boss_swipe", 150, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(180, "8n", now);
-      this.hurtSynth.frequency.rampTo(50, 0.22, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "8n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playMinionSpawning(x?: number) {
+    const preset = SFX_PRESETS.boss.minion_spawn;
     this.helper.execute("minion_spawn", 100, x, this.bossPanner, (now) => {
-      this.teleportSynth.triggerAttackRelease(180, "4n", now);
-      this.teleportSynth.frequency.rampTo(720, 0.3, now);
+      this.teleportSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.teleportSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playMinionDeconstruct(x?: number) {
+    const preset = SFX_PRESETS.boss.minion_deconstruct;
     this.helper.execute("minion_deconstruct", 100, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(280, "4n", now);
-      this.hurtSynth.frequency.rampTo(60, 0.28, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "4n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playBossPhaseShift(x?: number) {
+    const preset = SFX_PRESETS.boss.phase_shift;
     this.helper.execute("boss_phase_shift", 0, x, this.bossPanner, (now) => {
-      this.hurtSynth.triggerAttackRelease(80, "2n", now);
-      this.hurtSynth.frequency.rampTo(320, 0.8, now);
+      this.hurtSynth.triggerAttackRelease(preset.frequency, "2n", now);
+      this.hurtSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
@@ -113,16 +122,18 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
+    const preset = SFX_PRESETS.boss.spike_strike;
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
-      this.spikeSynth.triggerAttackRelease(1400, "16n", now);
-      this.spikeSynth.frequency.rampTo(700, 0.12, now);
+      this.spikeSynth.triggerAttackRelease(preset.frequency, "16n", now);
+      this.spikeSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
   }
 
   public playHitConfirm(x?: number) {
+    const preset = SFX_PRESETS.boss.hit_confirm;
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
-      this.hitSynth.triggerAttackRelease("C6", "16n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(880, "16n", now + 0.04);
+      this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.synthFreq, "16n", now + preset.synthDelay);
     });
   }
 }

@@ -1,6 +1,7 @@
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
+import { SFX_PRESETS } from "../sfxPresetData";
 
 export class InterfaceSFX {
   private helper: SFXHelper;
@@ -33,32 +34,36 @@ export class InterfaceSFX {
   }
 
   public playSelectTick() {
+    const preset = SFX_PRESETS.interface.select_tick;
     this.helper.execute("select_tick", 30, undefined, undefined, (now) => {
-      this.dialogueSynthPlayer.triggerAttackRelease(950, "32n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(1400, "32n", now + 0.025);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.note1, "32n", now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.note2, "32n", now + preset.delay);
     });
   }
 
   public playErrorTick() {
+    const preset = SFX_PRESETS.interface.error_tick;
     this.helper.execute("error_tick", 30, undefined, undefined, (now) => {
-      this.dialogueSynthBoss.triggerAttackRelease(260, "16n", now);
-      this.dialogueSynthBoss.triggerAttackRelease(160, "16n", now + 0.05);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.note1, "16n", now);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.note2, "16n", now + preset.delay);
     });
   }
 
   public playMenuConfirm() {
+    const preset = SFX_PRESETS.interface.menu_confirm;
     this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
-      this.dialogueSynthPlayer.triggerAttackRelease(440, "16n", now);
-      this.dialogueSynthPlayer.frequency.setValueAtTime(440, now);
-      this.dialogueSynthPlayer.frequency.rampTo(880, 0.12, now);
+      this.dialogueSynthPlayer.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.dialogueSynthPlayer.frequency.setValueAtTime(preset.startFreq, now);
+      this.dialogueSynthPlayer.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
   public playMenuBack() {
+    const preset = SFX_PRESETS.interface.menu_back;
     this.helper.execute("menu_back", 80, undefined, undefined, (now) => {
-      this.dialogueSynthBoss.triggerAttackRelease(587, "16n", now);
-      this.dialogueSynthBoss.frequency.setValueAtTime(587, now);
-      this.dialogueSynthBoss.frequency.rampTo(293, 0.12, now);
+      this.dialogueSynthBoss.triggerAttackRelease(preset.startFreq, "16n", now);
+      this.dialogueSynthBoss.frequency.setValueAtTime(preset.startFreq, now);
+      this.dialogueSynthBoss.frequency.rampTo(preset.targetFreq, preset.duration, now);
     });
   }
 
