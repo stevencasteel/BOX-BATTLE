@@ -12,20 +12,9 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle, EntityStatus } from "@/core/Interfaces";
+import { Rectangle, EntityStatus, Particle } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-  size: number;
-  life: number;
-  maxLife: number;
-  shape: "spark" | "dust" | "ring";
-}
+import { WorldRenderer } from "@/core/WorldRenderer";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -38,6 +27,7 @@ export class Engine {
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
+  private renderer!: WorldRenderer;
 
   private hasTriggeredFirstHit: boolean = false;
   private hasTriggeredPhase2: boolean = false;
@@ -51,12 +41,10 @@ export class Engine {
   private dialogueStaggerTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private dialogueClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  /* Pause Diagnostics */
   public isPaused: boolean = false;
 
   private unsubDialogue!: () => void;
 
-  /* Particles Database */
   private particles: Particle[] = [];
   private unsubEvents: (() => void)[] = [];
 
@@ -90,6 +78,7 @@ export class Engine {
     );
 
     this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
+    this.renderer = new WorldRenderer(this.ctx);
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
@@ -128,7 +117,6 @@ export class Engine {
 
     this.particles = [];
 
-    // Spark Particles Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
         const sparkCount = count || 12;
@@ -154,7 +142,6 @@ export class Engine {
       })
     );
 
-    // Friction Dust Puff Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
         const count = 10;
@@ -177,7 +164,6 @@ export class Engine {
       })
     );
 
-    // Shockwave Blast Ring Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
         this.particles.push({
@@ -208,7 +194,7 @@ export class Engine {
     this.loop.stop();
   }
 
-      private handlePauseKey = (e: KeyboardEvent) => {
+  private handlePauseKey = (e: KeyboardEvent) => {
     if (e.code === "KeyP") {
       this.isPaused = !this.isPaused;
       if (this.isPaused) {
@@ -259,7 +245,6 @@ export class Engine {
       return;
     }
 
-    /* Update Particle Coordinates and age Lifespans */
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
@@ -375,6 +360,7 @@ export class Engine {
         sessionState.setGameResult("VICTORY");
         this.stop();
         this.dialogueTimeoutId = setTimeout(() => {
+          
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
         }, 500);
         this.dialogueStaggerTimeoutId = setTimeout(() => {
@@ -390,163 +376,17 @@ export class Engine {
   }
 
   private render() {
-    this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, 1250, 1250);
-
-    this.ctx.save();
-    this.ctx.translate(Camera.offsetX, Camera.offsetY);
-
-    this.ctx.fillStyle = "#1e1e24";
-    for (const solid of this.solids) {
-      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
-    }
-
-    this.ctx.fillStyle = "#2c3e50";
-    for (const platform of this.onewayPlatforms) {
-      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
-    }
-
-    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
-    for (const hazard of this.hazards) {
-      const spikeWidth = 25;
-      const spikeCount = Math.floor(hazard.width / spikeWidth);
-      for (let i = 0; i < spikeCount; i++) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-        this.ctx.fill();
-      }
-    }
-
-    this.boss.draw(this.ctx);
-
-    /* Render Active Particles */
-    for (const p of this.particles) {
-      const pct = p.life / p.maxLife;
-      this.ctx.save();
-      
-      if (p.shape === "spark") {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 8;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      } 
-      else if (p.shape === "dust") {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } 
-      else if (p.shape === "ring") {
-        const radius = p.size + (1.0 - pct) * 44;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.lineWidth = 2.5;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 10 * pct;
-        this.ctx.stroke();
-      }
-      
-      if (this.isPaused) {
-      /* Draw semi-transparent overlay */
-      this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
-      this.ctx.fillRect(0, 0, 1250, 1250);
-
-      /* Draw paused diagnostic text */
-      this.ctx.fillStyle = "#ffffff";
-      this.ctx.font = "bold 44px monospace";
-      this.ctx.textAlign = "center";
-      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
-
-      this.ctx.font = "bold 18px monospace";
-      this.ctx.fillStyle = "var(--signal-green)";
-      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
-    }
-
-    this.ctx.restore();
-    }
-    this.player.draw(this.ctx);
-
-    const activeMinionsToDraw = this.world.minions;
-    for (const minion of activeMinionsToDraw) {
-      minion.draw(this.ctx);
-    }
-
-    const activeProjectiles = this.pool.getActive();
-    for (const proj of activeProjectiles) {
-      proj.draw(this.ctx);
-    }
-
-    if (this.bossDeathTimer >= 0 && this.bossDeathPos) {
-      const t = this.bossDeathTimer;
-      const px = this.bossDeathPos.x;
-      const py = this.bossDeathPos.y;
-
-      if (t < 0.25) {
-        const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-        this.ctx.fillRect(0, 0, 1250, 1250);
-      }
-
-      const ringCount = 3;
-      const speed = 750;
-      for (let i = 0; i < ringCount; i++) {
-        const delay = i * 0.15;
-        const ringTime = t - delay;
-        if (ringTime > 0 && ringTime < 1.2) {
-          const radius = ringTime * speed;
-          const opacity = Math.max(0, 1 - ringTime / 1.2);
-
-          this.ctx.save();
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
-          this.ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
-          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-          this.ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
-          this.ctx.stroke();
-
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
-          this.ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
-          this.ctx.shadowBlur = 0;
-          this.ctx.stroke();
-          this.ctx.restore();
-        }
-      }
-
-      const particleCount = 24;
-      const particleSpeed = 550;
-      const particleLife = 1.0;
-      if (t < particleLife) {
-        const opacity = Math.max(0, 1 - t / particleLife);
-        this.ctx.save();
-        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-        this.ctx.shadowBlur = 15;
-        for (let i = 0; i < particleCount; i++) {
-          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
-          const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
-
-          this.ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
-          this.ctx.fillRect(x - 4, y - 4, 8, 8);
-          this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          this.ctx.fillRect(x - 2, y - 2, 4, 4);
-        }
-        this.ctx.restore();
-      }
-    }
-
-    this.ctx.restore();
+    this.renderer.render(
+      this.world,
+      this.particles,
+      this.solids,
+      this.onewayPlatforms,
+      this.hazards,
+      this.pool,
+      this.isPaused,
+      this.bossDeathTimer,
+      this.bossDeathPos
+    );
   }
 
   public cleanup() {

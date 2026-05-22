@@ -19,6 +19,24 @@ export interface Rectangle {
   height: number;
 }
 
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  shape: "spark" | "dust" | "ring";
+}
+
+export interface IAbilityUser {
+  hasDoubleJump?: boolean;
+  healingCharges?: number;
+  facingDirection?: number;
+}
+
 export interface IEntity {
   id: string;
   position: Vector2D;

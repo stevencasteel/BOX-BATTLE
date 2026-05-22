@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 10:33:22 AM
+ [SYSTEM] Generated: 5/22/2026, 10:38:06 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -56,7 +56,8 @@
 │   │   ├── SimulationSystems.ts
 │   │   ├── SoundSynth.ts
 │   │   ├── StateMachine.ts
-│   │   └── World.ts
+│   │   ├── World.ts
+│   │   └── WorldRenderer.ts
 │   ├── entities/
 │   │   ├── components/
 │   │   │   ├── DashComponent.ts
@@ -90,11 +91,6 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
-├── patch_controls.js
-├── patch_minion_spawns.js
-├── patch_phase2.js
-├── patch_phase3.js
-├── patch_player_jumps.js
 ├── README.md
 ├── TODO.txt
 ├── tsconfig.app.json
@@ -400,676 +396,6 @@ export default defineConfig([
     "vite": "^8.0.12"
   }
 }
-
-
-
-● ./patch_controls.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-// 1. Rewrite src/components/menus/ControlsScreen.tsx with conditional placeholder rendering
-const controlsPath = 'src/components/menus/ControlsScreen.tsx';
-const newControlsContent = `import { useEffect, useState } from "react";
-import { Action } from "@/core/InputProvider";
-import { settingsManager } from "@/core/SettingsManager";
-import { soundSynth } from "@/core/SoundSynth";
-
-interface ControlsScreenProps {
-  menuIndex: number;
-  rebindTarget: { action: Action; index: number } | null;
-  onBack: () => void;
-  playHoverTick: () => void;
-  setMenuIndex: (index: number) => void;
-  setRebindTarget: (target: { action: Action; index: number } | null) => void;
-  reloadSaveSlots: () => void;
-}
-
-function formatKeyDisplayName(code: string): string {
-  if (!code) return "[ EMPTY ]";
-  
-  const upper = code.trim();
-  if (upper === "Space") return "SPACE";
-  if (upper === "ArrowLeft") return "LEFT ARROW";
-  if (upper === "ArrowRight") return "RIGHT ARROW";
-  if (upper === "ArrowUp") return "UP ARROW";
-  if (upper === "ArrowDown") return "DOWN ARROW";
-  if (upper === "Period") return ".";
-  if (upper === "Comma") return ",";
-  if (upper === "Slash") return "/";
-  if (upper === "Backspace") return "BACKSPACE";
-  if (upper === "Escape") return "ESC";
-  
-  return upper.replace(/^Key/, "");
-}
-
-export function ControlsScreen({
-  menuIndex,
-  rebindTarget,
-  onBack,
-  playHoverTick,
-  setMenuIndex,
-  setRebindTarget,
-  reloadSaveSlots,
-}: ControlsScreenProps) {
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
-    }
-  }, []);
-
-  const handleRebindTrigger = (action: Action) => {
-    if (isTouchDevice) {
-      soundSynth.playErrorTick();
-      return;
-    }
-    soundSynth.playHitConfirm();
-    setRebindTarget({ action, index: 0 });
-  };
-
-  const backBtnIndex = isTouchDevice ? 0 : 10;
-
-  return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
-      
-      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CONTROLS</h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
-        </p>
-      </div>
-
-      {isTouchDevice ? (
-        <div className="mixer-board neo-pressed" style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "16px",
-          padding: "32px",
-          textAlign: "center",
-          margin: "auto 0",
-          width: "100%",
-          maxWidth: "540px",
-          borderColor: "rgba(234, 179, 8, 0.15)",
-          boxSizing: "border-box"
-        }}>
-          <div className="led-dot led-yellow" style={{ width: "16px", height: "16px", marginBottom: "8px" }} />
-          <span style={{ fontSize: "13px", fontWeight: "bold", color: "var(--signal-yellow)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
-            [ TOUCH INTERFACE CALIBRATION ]
-          </span>
-          <h3 style={{ fontSize: "16px", color: "#ffffff", margin: 0, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "bold" }}>
-            Bespoke Custom Touch controls Coming Soon
-          </h3>
-          <p style={{ fontSize: "11px", color: "#718096", lineHeight: "1.6", textTransform: "uppercase", letterSpacing: "0.08em", maxWidth: "380px", margin: 0 }}>
-            Virtual joystick remapping, physical boundary calibration, and responsive gesture-mapping menus are currently under engineering.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="flex-row" style={{ gap: "16px" }}>
-            <button
-              onClick={() => {
-                settingsManager.setPreset("DEFAULT_1");
-                soundSynth.playHitConfirm();
-                reloadSaveSlots();
-              }}
-              onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-              className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-              style={{
-                padding: "16px 28px",
-                fontSize: "14px",
-                borderColor: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "rgba(34, 197, 94, 0.4)" : "",
-                color: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
-              }}
-            >
-              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-              PRESET 1
-              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
-            </button>
-            <button
-              onClick={() => {
-                settingsManager.setPreset("DEFAULT_2");
-                soundSynth.playHitConfirm();
-                reloadSaveSlots();
-              }}
-              onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-              className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-              style={{
-                padding: "16px 28px",
-                fontSize: "14px",
-                borderColor: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "rgba(34, 197, 94, 0.4)" : "",
-                color: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
-              }}
-            >
-              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-              PRESET 2
-              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
-            </button>
-            <button
-              onClick={() => {
-                settingsManager.setPreset("CUSTOM");
-                soundSynth.playHitConfirm();
-                reloadSaveSlots();
-              }}
-              onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-              className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
-              style={{
-                padding: "16px 28px",
-                fontSize: "14px",
-                borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
-                color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
-              }}
-            >
-              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-              CUSTOM
-              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>◀</span>
-            </button>
-          </div>
-
-          <div className="binding-board neo-pressed">
-            {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
-              const keys = settingsManager.getKeyMap()[action] || [];
-              const rowMenuIndex = idx + 3;
-              const isFocusedRow = menuIndex === rowMenuIndex;
-              return (
-                <div key={action} className="binding-row" style={{ padding: "8px 4px" }}>
-                  <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "14px", display: "flex", alignItems: "center" }}>
-                    <span className="cursor-arrow" style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}>▶</span>
-                    {action.replace("_", " ")}
-                  </span>
-                  <div className="flex-row" style={{ gap: "8px" }}>
-                    <button
-                      onClick={() => handleRebindTrigger(action)}
-                      className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
-                      style={{
-                        minWidth: "150px",
-                        padding: "16px 24px",
-                        borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
-                        color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
-                      }}
-                    >
-                      {rebindTarget?.action === action && rebindTarget?.index === 0
-                        ? "PRESS ANY KEY..."
-                        : formatKeyDisplayName(keys[0])}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="controls-notice">
-            Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
-          </div>
-        </>
-      )}
-
-      <button
-        onClick={onBack}
-        onMouseEnter={() => { playHoverTick(); setMenuIndex(backBtnIndex); }}
-        className={`neo-btn ${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
-      >
-        <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
-        Back
-        <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>◀</span>
-      </button>
-
-    </div>
-  );
-}
-`;
-
-fs.writeFileSync(controlsPath, newControlsContent, 'utf8');
-console.log("Successfully wrote updated touch placeholder ControlsScreen.tsx.");
-
-// 2. Patch src/core/screenRoutes.ts to scale getMaxIndex dynamically
-const routesPath = 'src/core/screenRoutes.ts';
-let routesContent = fs.readFileSync(routesPath, 'utf8');
-
-const targetRoutesControls = `  CONTROLS: {
-    getMaxIndex: () => 10,
-    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
-      if (menuIndex === 0) {
-        settingsManager.setPreset("DEFAULT_1");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 1) {
-        settingsManager.setPreset("DEFAULT_2");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 2) {
-        settingsManager.setPreset("CUSTOM");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 10) {
-        navTo("OPTIONS");
-        setMenuIndex(1);
-        soundSynth.playErrorTick();
-      } else {
-        const actionIndex = menuIndex - 3;
-        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
-        soundSynth.playHitConfirm();
-        setRebindTarget({ action, index: 0 });
-      }
-    },`;
-
-const replacementRoutesControls = `  CONTROLS: {
-    getMaxIndex: () => {
-      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-      return isTouch ? 0 : 10;
-    },
-    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
-      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-      if (isTouch) {
-        navTo("OPTIONS");
-        setMenuIndex(1);
-        soundSynth.playErrorTick();
-        return;
-      }
-      if (menuIndex === 0) {
-        settingsManager.setPreset("DEFAULT_1");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 1) {
-        settingsManager.setPreset("DEFAULT_2");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 2) {
-        settingsManager.setPreset("CUSTOM");
-        soundSynth.playHitConfirm();
-        reloadSaveSlots();
-      } else if (menuIndex === 10) {
-        navTo("OPTIONS");
-        setMenuIndex(1);
-        soundSynth.playErrorTick();
-      } else {
-        const actionIndex = menuIndex - 3;
-        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
-        soundSynth.playHitConfirm();
-        setRebindTarget({ action, index: 0 });
-      }
-    },`;
-
-if (routesContent.includes(targetRoutesControls)) {
-  routesContent = routesContent.replace(targetRoutesControls, replacementRoutesControls);
-  fs.writeFileSync(routesPath, routesContent, 'utf8');
-  console.log("Successfully patched screenRoutes.ts with flexible touch menu limits.");
-} else {
-  console.warn("WARNING: Target controls router configuration not found inside screenRoutes.ts.");
-}
-
-
-
-
-● ./patch_minion_spawns.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-const filepath = 'src/entities/Minion.ts';
-let content = fs.readFileSync(filepath, 'utf8');
-
-// 1. Minion spawning trigger at end of constructor
-const constructorTarget = `    this.pointA = { ...startPos };
-    this.pointB = { x: startPos.x, y: startPos.y - 180 };
-    this.behavior = new FlyerBehavior();
-  }
-}`;
-
-const constructorReplacement = `    this.pointA = { ...startPos };
-    this.pointB = { x: startPos.x, y: startPos.y - 180 };
-    this.behavior = new FlyerBehavior();
-  }
-  eventBroker.publish("MINION_SPAWNING", undefined);
-}`;
-
-// 2. Minion dissolving trigger at start of death sequence
-const deathTarget = `public startDeathSequence() {
-  this.isDying = true;
-  this.dissolveTimer = 0.5;`;
-
-const deathReplacement = `public startDeathSequence() {
-  eventBroker.publish("MINION_DISSOLVING", undefined);
-  this.isDying = true;
-  this.dissolveTimer = 0.5;`;
-
-if (!content.includes(constructorTarget) || !content.includes(deathTarget)) {
-  console.error("ERROR: Constructor or startDeathSequence targets not found in Minion.ts.");
-  process.exit(1);
-}
-
-content = content.replace(constructorTarget, constructorReplacement);
-content = content.replace(deathTarget, deathReplacement);
-
-fs.writeFileSync(filepath, content, 'utf8');
-console.log("Successfully patched Minion.ts with assembly and deconstruction event emitters.");
-
-
-
-● ./patch_phase2.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-function replaceInFile(filepath, target, replacement) {
-  const content = fs.readFileSync(filepath, 'utf8');
-  if (!content.includes(target)) {
-    console.error(`ERROR: Target string not found in ${filepath}`);
-    process.exit(1);
-  }
-  fs.writeFileSync(filepath, content.split(target).join(replacement));
-  console.log(`Successfully patched: ${filepath}`);
-}
-
-// Remove Registry imports and setup statements inside Engine.ts
-replaceInFile(
-  'src/core/Engine.ts',
-  "import { Registry } from \"@/core/Registry\";\n",
-  ""
-);
-
-replaceInFile(
-  'src/core/Engine.ts',
-  `    this.pool = new ObjectPool(() => new Projectile(), 60);
-    this.world.projectilePool = this.pool;
-    Registry.projectilePool = this.pool;`,
-  `    this.pool = new ObjectPool(() => new Projectile(), 60);
-    this.world.projectilePool = this.pool;`
-);
-
-replaceInFile(
-  'src/core/Engine.ts',
-  `    this.world.player = this.player;
-    this.world.boss = this.boss;
-    Registry.player = this.player;
-    Registry.boss = this.boss;`,
-  `    this.world.player = this.player;
-    this.world.boss = this.boss;`
-);
-
-replaceInFile(
-  'src/core/Engine.ts',
-  `    Registry.player = null;
-    Registry.boss = null;
-    Registry.projectilePool = null;
-    Camera.reset();
-    this.systems.teardown();
-    this.unsubDialogue();
-    this.unsubEvents.forEach((unsub) => unsub());
-    this.unsubEvents = [];
-    this.particles = [];
-    window.removeEventListener("keydown", this.handlePauseKey);
-    Registry.player = null;
-    Registry.boss = null;
-    Registry.projectilePool = null;
-
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];
-    Registry.minions = [];`,
-  `    Camera.reset();
-    this.systems.teardown();
-    this.unsubDialogue();
-    this.unsubEvents.forEach((unsub) => unsub());
-    this.unsubEvents = [];
-    this.particles = [];
-    window.removeEventListener("keydown", this.handlePauseKey);
-
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];`
-);
-
-console.log("All Registry coupling references inside Engine.ts successfully removed.");
-
-
-
-● ./patch_phase3.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-function replaceInFile(filepath, target, replacement) {
-  const content = fs.readFileSync(filepath, 'utf8');
-  if (!content.includes(target)) {
-    console.error(`ERROR: Target string not found in ${filepath}`);
-    process.exit(1);
-  }
-  fs.writeFileSync(filepath, content.split(target).join(replacement));
-  console.log(`Successfully patched: ${filepath}`);
-}
-
-// 1. Safe cast window in SoundSynth.ts instead of utilizing 'any'
-replaceInFile(
-  'src/core/SoundSynth.ts',
-  'const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;',
-  'const AudioContextClass = window.AudioContext || (window as unknown as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;'
-);
-
-// 2. MeleeComponent imports and cleanups
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  'import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";',
-  'import { IDamageRecorder, EntityStatus } from "@/core/Interfaces";\nimport { Player } from "@/entities/Player";'
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  'const facing = (this.owner as any).facingDirection ?? 1;',
-  'const facing = (this.owner as Player).facingDirection ?? 1;'
-);
-
-// Clean up IDamageRecorder casting and cleanly reference the optional core action
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `            const recorder = this.owner as unknown as IDamageRecorder;
-            if (recorder.registerDamageDealt) {
-              recorder.registerDamageDealt();
-            }`,
-  `            this.owner.registerDamageDealt?.();`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }`,
-  `          this.owner.registerDamageDealt?.();`
-);
-
-// Clean up SPAWN_SPARKS cast bypass
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  'eventBroker.publish("SPAWN_SPARKS" as any, {',
-  'eventBroker.publish("SPAWN_SPARKS", {'
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
-          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
-        }`,
-  `        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          this.owner.registerDamageDealt?.();
-          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
-        }`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `      if (isHit) {
-        const health = target.getComponent(HealthComponent);
-        if (health) {
-          health.takeDamage(1);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
-        }`,
-  `      if (isHit) {
-        const health = target.getComponent(HealthComponent);
-        if (health) {
-          health.takeDamage(1);
-          this.owner.registerDamageDealt?.();
-        }`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          const recorder = this.owner as unknown as IDamageRecorder;
-          if (recorder.registerDamageDealt) {
-            recorder.registerDamageDealt();
-          }
-
-          this.owner.velocity.y = -this.pogoForce;`,
-  `        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          this.owner.registerDamageDealt?.();
-
-          this.owner.velocity.y = -this.pogoForce;`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`,
-  `        const player = this.owner as Player;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`,
-  `        const player = this.owner as Player;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`
-);
-
-replaceInFile(
-  'src/entities/components/MeleeComponent.ts',
-  `        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`,
-  `        const player = this.owner as Player;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
-        }`
-);
-
-console.log("All Phase 3 high-fidelity casting cleanups applied successfully.");
-
-
-
-● ./patch_player_jumps.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-const filepath = 'src/entities/Player.ts';
-let content = fs.readFileSync(filepath, 'utf8');
-
-// 1. Coyote Ground Jump Patch
-const coyoteTarget = `      else if (this.coyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.coyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on ground jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Jump Dust Puff */
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-      }`;
-
-const coyoteReplacement = `      else if (this.coyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.coyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on ground jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Jump Dust Puff */
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      }`;
-
-// 2. Wall Coyote Jump Patch
-const wallTarget = `      else if (this.wallCoyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.velocity.x = this.lastWallNormal * 1650;
-        this.wallCoyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        this.dashComponent.resetDashCharge();
-        /* Visual Squash and Stretch: Stretch vertically on wall jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Wall Slide Dust Puff */
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-      }`;
-
-const wallReplacement = `      else if (this.wallCoyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.velocity.x = this.lastWallNormal * 1650;
-        this.wallCoyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        this.dashComponent.resetDashCharge();
-        /* Visual Squash and Stretch: Stretch vertically on wall jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Wall Slide Dust Puff */
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      }`;
-
-// 3. Double Jump Patch
-const doubleTarget = `      } else if (this.hasDoubleJump) {
-        this.velocity.y = -this.jumpForce;
-        this.hasDoubleJump = false;
-        this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on double jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-      }`;
-
-const doubleReplacement = `      } else if (this.hasDoubleJump) {
-        this.velocity.y = -this.jumpForce;
-        this.hasDoubleJump = false;
-        this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on double jump */
-        this.visualScale = { x: 0.82, y: 1.18 };
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      }`;
-
-if (!content.includes(coyoteTarget) || !content.includes(wallTarget) || !content.includes(doubleTarget)) {
-  console.error("ERROR: One or more jump block targets were not found in Player.ts.");
-  process.exit(1);
-}
-
-content = content.replace(coyoteTarget, coyoteReplacement);
-content = content.replace(wallTarget, wallReplacement);
-content = content.replace(doubleTarget, doubleReplacement);
-
-fs.writeFileSync(filepath, content, 'utf8');
-console.log("Successfully patched Player.ts with all jump event publishers.");
 
 
 
@@ -4814,20 +4140,9 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle, EntityStatus } from "@/core/Interfaces";
+import { Rectangle, EntityStatus, Particle } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-  size: number;
-  life: number;
-  maxLife: number;
-  shape: "spark" | "dust" | "ring";
-}
+import { WorldRenderer } from "@/core/WorldRenderer";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -4840,6 +4155,7 @@ export class Engine {
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
+  private renderer!: WorldRenderer;
 
   private hasTriggeredFirstHit: boolean = false;
   private hasTriggeredPhase2: boolean = false;
@@ -4853,12 +4169,10 @@ export class Engine {
   private dialogueStaggerTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private dialogueClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  /* Pause Diagnostics */
   public isPaused: boolean = false;
 
   private unsubDialogue!: () => void;
 
-  /* Particles Database */
   private particles: Particle[] = [];
   private unsubEvents: (() => void)[] = [];
 
@@ -4892,6 +4206,7 @@ export class Engine {
     );
 
     this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
+    this.renderer = new WorldRenderer(this.ctx);
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
@@ -4930,7 +4245,6 @@ export class Engine {
 
     this.particles = [];
 
-    // Spark Particles Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
         const sparkCount = count || 12;
@@ -4956,7 +4270,6 @@ export class Engine {
       })
     );
 
-    // Friction Dust Puff Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
         const count = 10;
@@ -4979,7 +4292,6 @@ export class Engine {
       })
     );
 
-    // Shockwave Blast Ring Listener
     this.unsubEvents.push(
       eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
         this.particles.push({
@@ -5010,7 +4322,7 @@ export class Engine {
     this.loop.stop();
   }
 
-      private handlePauseKey = (e: KeyboardEvent) => {
+  private handlePauseKey = (e: KeyboardEvent) => {
     if (e.code === "KeyP") {
       this.isPaused = !this.isPaused;
       if (this.isPaused) {
@@ -5061,7 +4373,6 @@ export class Engine {
       return;
     }
 
-    /* Update Particle Coordinates and age Lifespans */
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
@@ -5177,6 +4488,7 @@ export class Engine {
         sessionState.setGameResult("VICTORY");
         this.stop();
         this.dialogueTimeoutId = setTimeout(() => {
+          
           eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
         }, 500);
         this.dialogueStaggerTimeoutId = setTimeout(() => {
@@ -5192,163 +4504,17 @@ export class Engine {
   }
 
   private render() {
-    this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, 1250, 1250);
-
-    this.ctx.save();
-    this.ctx.translate(Camera.offsetX, Camera.offsetY);
-
-    this.ctx.fillStyle = "#1e1e24";
-    for (const solid of this.solids) {
-      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
-    }
-
-    this.ctx.fillStyle = "#2c3e50";
-    for (const platform of this.onewayPlatforms) {
-      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
-    }
-
-    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
-    for (const hazard of this.hazards) {
-      const spikeWidth = 25;
-      const spikeCount = Math.floor(hazard.width / spikeWidth);
-      for (let i = 0; i < spikeCount; i++) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-        this.ctx.fill();
-      }
-    }
-
-    this.boss.draw(this.ctx);
-
-    /* Render Active Particles */
-    for (const p of this.particles) {
-      const pct = p.life / p.maxLife;
-      this.ctx.save();
-      
-      if (p.shape === "spark") {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 8;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      } 
-      else if (p.shape === "dust") {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } 
-      else if (p.shape === "ring") {
-        const radius = p.size + (1.0 - pct) * 44;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.lineWidth = 2.5;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 10 * pct;
-        this.ctx.stroke();
-      }
-      
-      if (this.isPaused) {
-      /* Draw semi-transparent overlay */
-      this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
-      this.ctx.fillRect(0, 0, 1250, 1250);
-
-      /* Draw paused diagnostic text */
-      this.ctx.fillStyle = "#ffffff";
-      this.ctx.font = "bold 44px monospace";
-      this.ctx.textAlign = "center";
-      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
-
-      this.ctx.font = "bold 18px monospace";
-      this.ctx.fillStyle = "var(--signal-green)";
-      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
-    }
-
-    this.ctx.restore();
-    }
-    this.player.draw(this.ctx);
-
-    const activeMinionsToDraw = this.world.minions;
-    for (const minion of activeMinionsToDraw) {
-      minion.draw(this.ctx);
-    }
-
-    const activeProjectiles = this.pool.getActive();
-    for (const proj of activeProjectiles) {
-      proj.draw(this.ctx);
-    }
-
-    if (this.bossDeathTimer >= 0 && this.bossDeathPos) {
-      const t = this.bossDeathTimer;
-      const px = this.bossDeathPos.x;
-      const py = this.bossDeathPos.y;
-
-      if (t < 0.25) {
-        const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-        this.ctx.fillRect(0, 0, 1250, 1250);
-      }
-
-      const ringCount = 3;
-      const speed = 750;
-      for (let i = 0; i < ringCount; i++) {
-        const delay = i * 0.15;
-        const ringTime = t - delay;
-        if (ringTime > 0 && ringTime < 1.2) {
-          const radius = ringTime * speed;
-          const opacity = Math.max(0, 1 - ringTime / 1.2);
-
-          this.ctx.save();
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
-          this.ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
-          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-          this.ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
-          this.ctx.stroke();
-
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
-          this.ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
-          this.ctx.shadowBlur = 0;
-          this.ctx.stroke();
-          this.ctx.restore();
-        }
-      }
-
-      const particleCount = 24;
-      const particleSpeed = 550;
-      const particleLife = 1.0;
-      if (t < particleLife) {
-        const opacity = Math.max(0, 1 - t / particleLife);
-        this.ctx.save();
-        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-        this.ctx.shadowBlur = 15;
-        for (let i = 0; i < particleCount; i++) {
-          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
-          const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
-
-          this.ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
-          this.ctx.fillRect(x - 4, y - 4, 8, 8);
-          this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          this.ctx.fillRect(x - 2, y - 2, 4, 4);
-        }
-        this.ctx.restore();
-      }
-    }
-
-    this.ctx.restore();
+    this.renderer.render(
+      this.world,
+      this.particles,
+      this.solids,
+      this.onewayPlatforms,
+      this.hazards,
+      this.pool,
+      this.isPaused,
+      this.bossDeathTimer,
+      this.bossDeathPos
+    );
   }
 
   public cleanup() {
@@ -5642,6 +4808,24 @@ export interface Rectangle {
   y: number;
   width: number;
   height: number;
+}
+
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  life: number;
+  maxLife: number;
+  shape: "spark" | "dust" | "ring";
+}
+
+export interface IAbilityUser {
+  hasDoubleJump?: boolean;
+  healingCharges?: number;
+  facingDirection?: number;
 }
 
 export interface IEntity {
@@ -6495,7 +5679,7 @@ export class StateMachine {
 
 ● ./src/core/World.ts
 ────────────────────────────────────────────────────
-import { IWorld, IEntity, IPhysicsWorld, IProjectile } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -6507,7 +5691,7 @@ export class World implements IWorld {
   public physicsWorld: IPhysicsWorld;
   public projectilePool: ObjectPool<Projectile> | null = null;
 
-  constructor(solids: any[], hazards: any[], onewayPlatforms: any[]) {
+  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
@@ -6547,6 +5731,194 @@ export class World implements IWorld {
       (p: any) => this.releaseProjectile(p),
       this
     ) as any as IProjectile;
+  }
+}
+
+
+
+● ./src/core/WorldRenderer.ts
+────────────────────────────────────────────────────
+import { Camera } from "./Camera";
+import { World } from "./World";
+import { Rectangle, Particle } from "./Interfaces";
+import { Projectile } from "@/entities/Projectile";
+import { ObjectPool } from "./ObjectPool";
+
+export class WorldRenderer {
+  private ctx: CanvasRenderingContext2D;
+
+  constructor(ctx: CanvasRenderingContext2D) {
+    this.ctx = ctx;
+  }
+
+  public render(
+    world: World,
+    particles: Particle[],
+    solids: Rectangle[],
+    onewayPlatforms: Rectangle[],
+    hazards: Rectangle[],
+    projectilePool: ObjectPool<Projectile>,
+    isPaused: boolean,
+    bossDeathTimer: number,
+    bossDeathPos: { x: number; y: number } | null
+  ) {
+    this.ctx.fillStyle = "#0c0d11";
+    this.ctx.fillRect(0, 0, 1250, 1250);
+
+    this.ctx.save();
+    this.ctx.translate(Camera.offsetX, Camera.offsetY);
+
+    this.ctx.fillStyle = "#1e1e24";
+    for (const solid of solids) {
+      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    }
+
+    this.ctx.fillStyle = "#2c3e50";
+    for (const platform of onewayPlatforms) {
+      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+      this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+    }
+
+    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
+    for (const hazard of hazards) {
+      const spikeWidth = 25;
+      const spikeCount = Math.floor(hazard.width / spikeWidth);
+      for (let i = 0; i < spikeCount; i++) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
+        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+        this.ctx.fill();
+      }
+    }
+
+    if (world.boss) {
+      world.boss.draw(this.ctx);
+    }
+
+    for (const p of particles) {
+      const pct = p.life / p.maxLife;
+      this.ctx.save();
+      
+      if (p.shape === "spark") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 8;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      } 
+      else if (p.shape === "dust") {
+        this.ctx.fillStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+      } 
+      else if (p.shape === "ring") {
+        const radius = p.size + (1.0 - pct) * 44;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 10 * pct;
+        this.ctx.stroke();
+      }
+      this.ctx.restore();
+    }
+
+    if (world.player) {
+      world.player.draw(this.ctx);
+    }
+
+    for (const minion of world.minions) {
+      minion.draw(this.ctx);
+    }
+
+    const activeProjectiles = projectilePool.getActive();
+    for (const proj of activeProjectiles) {
+      proj.draw(this.ctx);
+    }
+
+    if (bossDeathTimer >= 0 && bossDeathPos) {
+      const t = bossDeathTimer;
+      const px = bossDeathPos.x;
+      const py = bossDeathPos.y;
+
+      if (t < 0.25) {
+        const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+        this.ctx.fillRect(0, 0, 1250, 1250);
+      }
+
+      const ringCount = 3;
+      const speed = 750;
+      for (let i = 0; i < ringCount; i++) {
+        const delay = i * 0.15;
+        const ringTime = t - delay;
+        if (ringTime > 0 && ringTime < 1.2) {
+          const radius = ringTime * speed;
+          const opacity = Math.max(0, 1 - ringTime / 1.2);
+
+          this.ctx.save();
+          this.ctx.beginPath();
+          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
+          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
+          this.ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+          this.ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
+          this.ctx.stroke();
+
+          this.ctx.beginPath();
+          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
+          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
+          this.ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
+          this.ctx.shadowBlur = 0;
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+
+      const particleCount = 24;
+      const particleSpeed = 550;
+      const particleLife = 1.0;
+      if (t < particleLife) {
+        const opacity = Math.max(0, 1 - t / particleLife);
+        this.ctx.save();
+        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+        this.ctx.shadowBlur = 15;
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
+          const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
+          const x = px + Math.cos(angle) * distance;
+          const y = py + Math.sin(angle) * distance;
+
+          this.ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
+          this.ctx.fillRect(x - 4, y - 4, 8, 8);
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          this.ctx.fillRect(x - 2, y - 2, 4, 4);
+        }
+        this.ctx.restore();
+      }
+    }
+
+    if (isPaused) {
+      this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
+      this.ctx.fillRect(0, 0, 1250, 1250);
+
+      this.ctx.fillStyle = "#ffffff";
+      this.ctx.font = "bold 44px monospace";
+      this.ctx.textAlign = "center";
+      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
+
+      this.ctx.font = "bold 18px monospace";
+      this.ctx.fillStyle = "var(--signal-green)";
+      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
+    }
+
+    this.ctx.restore();
   }
 }
 
@@ -9817,7 +9189,7 @@ export class FireballComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { Player } from "@/entities/Player";
+import { IAbilityUser } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
 export class HealComponent implements IEntityComponent {
@@ -9857,10 +9229,13 @@ export class HealComponent implements IEntityComponent {
   }
 
   private completeHealing(): void {
-    const player = this.owner as Player;
+    const abilityUser = this.owner as unknown as IAbilityUser;
     this.isHealing = false;
-    player.healingCharges = Math.max(0, player.healingCharges - 1);
-    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: player.healingCharges });
+
+    if (abilityUser && abilityUser.healingCharges !== undefined) {
+      abilityUser.healingCharges = Math.max(0, abilityUser.healingCharges - 1);
+      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: abilityUser.healingCharges });
+    }
 
     const health = this.owner.getComponent(HealthComponent);
     if (health) {
@@ -10015,9 +9390,8 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus } from "@/core/Interfaces";
-import { Player } from "@/entities/Player";
-
+import { EntityStatus, IAbilityUser } from "@/core/Interfaces";
+import { DashComponent } from "@/entities/components/DashComponent";
 
 export class MeleeComponent implements IEntityComponent {
   public owner!: BaseEntity;
@@ -10073,14 +9447,14 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const facing = (this.owner as Player).facingDirection ?? 1;
+    const abilityUser = this.owner as unknown as IAbilityUser;
+    const facing = abilityUser?.facingDirection ?? 1;
 
     for (const target of targets) {
       let isHit = false;
       let distance = 0;
 
       if (this.attackDirection === "side") {
-        /* Side Slash Sweep (Circular radial segment check matching visual arc) */
         const cx = this.owner.position.x + (facing * 35);
         const cy = this.owner.position.y;
         
@@ -10095,7 +9469,6 @@ export class MeleeComponent implements IEntityComponent {
           isHit = true;
         }
       } else if (this.attackDirection === "up") {
-        /* Up Slash Sweep (Circular radial segment check matching visual arc) */
         const cx = this.owner.position.x;
         const cy = this.owner.position.y - 35;
 
@@ -10218,12 +9591,15 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         this.hasHitEnemyThisSwing = true;
-        this.hasHitEnemyThisSwing = true;
         
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
+        const abilityUser = this.owner as unknown as IAbilityUser;
+        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+          abilityUser.hasDoubleJump = true;
+        }
+
+        const dash = this.owner.getComponent(DashComponent);
+        if (dash) {
+          dash.resetDashCharge();
         }
         
         eventBroker.publish("PLAYER_POGOED", undefined);
@@ -10252,10 +9628,14 @@ export class MeleeComponent implements IEntityComponent {
           this.owner.position.y -= 2;
           this.hasHitEnemyThisSwing = true;
           
-          const player = this.owner as any;
-          player.hasDoubleJump = true;
-          if (player.dashComponent) {
-            player.dashComponent.resetDashCharge();
+          const abilityUser = this.owner as unknown as IAbilityUser;
+          if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+            abilityUser.hasDoubleJump = true;
+          }
+
+          const dash = this.owner.getComponent(DashComponent);
+          if (dash) {
+            dash.resetDashCharge();
           }
           
           eventBroker.publish("PLAYER_POGOED", undefined);
@@ -10282,10 +9662,14 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
+        const abilityUser = this.owner as unknown as IAbilityUser;
+        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+          abilityUser.hasDoubleJump = true;
+        }
+
+        const dash = this.owner.getComponent(DashComponent);
+        if (dash) {
+          dash.resetDashCharge();
         }
         
         eventBroker.publish("PLAYER_POGOED", undefined);

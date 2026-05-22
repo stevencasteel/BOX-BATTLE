@@ -2,9 +2,8 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus } from "@/core/Interfaces";
-import { Player } from "@/entities/Player";
-
+import { EntityStatus, IAbilityUser } from "@/core/Interfaces";
+import { DashComponent } from "@/entities/components/DashComponent";
 
 export class MeleeComponent implements IEntityComponent {
   public owner!: BaseEntity;
@@ -60,14 +59,14 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    const facing = (this.owner as Player).facingDirection ?? 1;
+    const abilityUser = this.owner as unknown as IAbilityUser;
+    const facing = abilityUser?.facingDirection ?? 1;
 
     for (const target of targets) {
       let isHit = false;
       let distance = 0;
 
       if (this.attackDirection === "side") {
-        /* Side Slash Sweep (Circular radial segment check matching visual arc) */
         const cx = this.owner.position.x + (facing * 35);
         const cy = this.owner.position.y;
         
@@ -82,7 +81,6 @@ export class MeleeComponent implements IEntityComponent {
           isHit = true;
         }
       } else if (this.attackDirection === "up") {
-        /* Up Slash Sweep (Circular radial segment check matching visual arc) */
         const cx = this.owner.position.x;
         const cy = this.owner.position.y - 35;
 
@@ -205,12 +203,15 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         this.hasHitEnemyThisSwing = true;
-        this.hasHitEnemyThisSwing = true;
         
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
+        const abilityUser = this.owner as unknown as IAbilityUser;
+        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+          abilityUser.hasDoubleJump = true;
+        }
+
+        const dash = this.owner.getComponent(DashComponent);
+        if (dash) {
+          dash.resetDashCharge();
         }
         
         eventBroker.publish("PLAYER_POGOED", undefined);
@@ -239,10 +240,14 @@ export class MeleeComponent implements IEntityComponent {
           this.owner.position.y -= 2;
           this.hasHitEnemyThisSwing = true;
           
-          const player = this.owner as any;
-          player.hasDoubleJump = true;
-          if (player.dashComponent) {
-            player.dashComponent.resetDashCharge();
+          const abilityUser = this.owner as unknown as IAbilityUser;
+          if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+            abilityUser.hasDoubleJump = true;
+          }
+
+          const dash = this.owner.getComponent(DashComponent);
+          if (dash) {
+            dash.resetDashCharge();
           }
           
           eventBroker.publish("PLAYER_POGOED", undefined);
@@ -269,10 +274,14 @@ export class MeleeComponent implements IEntityComponent {
         this.owner.velocity.y = -this.pogoForce;
         this.owner.position.y -= 2;
         
-        const player = this.owner as any;
-        player.hasDoubleJump = true;
-        if (player.dashComponent) {
-          player.dashComponent.resetDashCharge();
+        const abilityUser = this.owner as unknown as IAbilityUser;
+        if (abilityUser && typeof abilityUser.hasDoubleJump === "boolean") {
+          abilityUser.hasDoubleJump = true;
+        }
+
+        const dash = this.owner.getComponent(DashComponent);
+        if (dash) {
+          dash.resetDashCharge();
         }
         
         eventBroker.publish("PLAYER_POGOED", undefined);

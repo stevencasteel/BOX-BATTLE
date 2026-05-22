@@ -1,4 +1,4 @@
-import { IWorld, IEntity, IPhysicsWorld, IProjectile } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -10,7 +10,7 @@ export class World implements IWorld {
   public physicsWorld: IPhysicsWorld;
   public projectilePool: ObjectPool<Projectile> | null = null;
 
-  constructor(solids: any[], hazards: any[], onewayPlatforms: any[]) {
+  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
