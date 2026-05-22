@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 12:11:22 PM
+ [SYSTEM] Generated: 5/22/2026, 12:14:39 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -848,10 +848,10 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (gameResult !== "PLAYING") {
+    if (!isPlayingScreen) {
       resetDialogues();
     }
-  }, [gameResult, resetDialogues]);
+  }, [isPlayingScreen, resetDialogues]);
 
   useEffect(() => {
     if (!rebindTarget) return;

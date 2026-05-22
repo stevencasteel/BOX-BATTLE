@@ -212,10 +212,10 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (gameResult !== "PLAYING") {
+    if (!isPlayingScreen) {
       resetDialogues();
     }
-  }, [gameResult, resetDialogues]);
+  }, [isPlayingScreen, resetDialogues]);
 
   useEffect(() => {
     if (!rebindTarget) return;
