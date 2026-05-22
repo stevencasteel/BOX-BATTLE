@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
@@ -39,12 +40,31 @@ export function ControlsScreen({
   setRebindTarget,
   reloadSaveSlots,
 }: ControlsScreenProps) {
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+    }
+  }, []);
+
+  const handleRebindTrigger = (action: Action) => {
+    if (isTouchDevice) {
+      soundSynth.playErrorTick();
+      return;
+    }
+    soundSynth.playHitConfirm();
+    setRebindTarget({ action, index: 0 });
+  };
+
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
       
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Change keyboard buttons</p>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
+          {isTouchDevice ? "Preset selection available for keyboards" : "Change keyboard buttons"}
+        </p>
       </div>
 
       <div className="flex-row" style={{ gap: "16px" }}>
@@ -88,15 +108,21 @@ export function ControlsScreen({
         </button>
         <button
           onClick={() => {
+            if (isTouchDevice) {
+              soundSynth.playErrorTick();
+              return;
+            }
             settingsManager.setPreset("CUSTOM");
             soundSynth.playHitConfirm();
             reloadSaveSlots();
           }}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""} ${isTouchDevice ? "neo-disabled" : ""}`}
           style={{
             padding: "16px 28px",
             fontSize: "14px",
+            opacity: isTouchDevice ? 0.35 : 1,
+            cursor: isTouchDevice ? "not-allowed" : "pointer",
             borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
             color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
           }}
@@ -107,7 +133,7 @@ export function ControlsScreen({
         </button>
       </div>
 
-      <div className="binding-board neo-pressed">
+      <div className="binding-board neo-pressed" style={{ opacity: isTouchDevice ? 0.6 : 1 }}>
         {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
           const keys = settingsManager.getKeyMap()[action] || [];
           const rowMenuIndex = idx + 3;
@@ -120,14 +146,13 @@ export function ControlsScreen({
               </span>
               <div className="flex-row" style={{ gap: "8px" }}>
                 <button
-                  onClick={() => {
-                    soundSynth.playHitConfirm();
-                    setRebindTarget({ action, index: 0 });
-                  }}
+                  onClick={() => handleRebindTrigger(action)}
                   className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
+                  disabled={isTouchDevice}
                   style={{
                     minWidth: "150px",
                     padding: "16px 24px",
+                    cursor: isTouchDevice ? "not-allowed" : "pointer",
                     borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                     color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
                   }}
@@ -142,8 +167,15 @@ export function ControlsScreen({
         })}
       </div>
 
-      <div className="controls-notice">
-        Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
+      <div className="controls-notice" style={{
+        background: isTouchDevice ? "rgba(239, 68, 68, 0.08)" : "rgba(168, 85, 247, 0.08)",
+        borderColor: isTouchDevice ? "rgba(239, 68, 68, 0.25)" : "rgba(168, 85, 247, 0.25)",
+        color: isTouchDevice ? "hsl(350, 80%, 75%)" : "hsl(280, 80%, 75%)",
+        textShadow: isTouchDevice ? "0 0 6px rgba(239, 68, 68, 0.35)" : "0 0 6px rgba(168, 85, 247, 0.35)"
+      }}>
+        {isTouchDevice 
+          ? "PHYSICAL KEYBOARD DETECTOR ACTIVE: KEY REBINDING REQUIRES AN ATTACHED ACCESSORY."
+          : "Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)"}
       </div>
 
       <button

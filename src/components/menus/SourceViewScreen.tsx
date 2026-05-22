@@ -93,8 +93,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [visibleNodes, setVisibleNodes] = useState<FileNode[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkRes = () => {
+        setIsMobile(window.innerWidth <= 800);
+      };
+      checkRes();
+      window.addEventListener("resize", checkRes);
+      return () => window.removeEventListener("resize", checkRes);
+    }
+  }, []);
 
   useEffect(() => {
     fetch("./source_code_manifest.json")
@@ -279,12 +291,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: COLLAPSE/EXIT</p>
+        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
+          {isMobile ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
+        </p>
       </div>
 
       <div className="source-view-workspace">
         
-        <div ref={listRef} className="directory-tree-pane neo-pressed">
+        <div ref={listRef} className="directory-tree-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
             const isExpanded = node.isDir && !!expandedDirs[node.path];
@@ -304,10 +318,12 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                   }
                 }}
                 style={{
-                  padding: "6px 10px",
-                  paddingLeft: `${node.depth * 16 + 10}px`,
+                  paddingTop: isMobile ? "12px" : "6px",
+                  paddingBottom: isMobile ? "12px" : "6px",
+                  paddingRight: isMobile ? "14px" : "10px",
+                  paddingLeft: `${node.depth * (isMobile ? 18 : 16) + (isMobile ? 14 : 10)}px`,
                   borderRadius: "6px",
-                  fontSize: "11px",
+                  fontSize: isMobile ? "12px" : "11px",
                   fontFamily: "monospace",
                   cursor: "pointer",
                   display: "flex",
@@ -348,7 +364,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        <div className="code-viewer-pane neo-pressed">
+        <div className="code-viewer-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
           {selectedFile ? (
             <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
               <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
@@ -362,7 +378,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                     margin: 0,
                     padding: 0,
                     background: "transparent",
-                    fontSize: "11px",
+                    fontSize: isMobile ? "9px" : "11px",
                     lineHeight: "1.5",
                   }}
                 >

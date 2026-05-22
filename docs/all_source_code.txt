@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 7:34:52 PM
+ [SYSTEM] Generated: 5/21/2026, 7:38:27 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -797,6 +797,9 @@ body {
   padding: 0;
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   overflow: hidden;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .app-wrapper {
@@ -938,11 +941,17 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .neo-btn:hover {
   background: var(--surface-highlight);
   color: #ffffff;
+}
+
+.neo-btn:active {
+  transform: scale(0.97);
+  background: var(--surface-bg);
 }
 
 .neo-btn-focused {
@@ -1036,6 +1045,11 @@ body {
   width: 100%;
   box-sizing: border-box;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.slot-card:active {
+  transform: scale(0.98);
 }
 
 .slot-card-empty {
@@ -1516,11 +1530,16 @@ body {
   transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
   outline: none;
   text-align: left;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .neo-btn-large:hover {
   background: #141922;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.neo-btn-large:active {
+  transform: scale(0.98);
 }
 
 .neo-btn-large-focused {
@@ -1837,6 +1856,16 @@ body {
     gap: 20px;
   }
 
+  .custom-range-slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 32px;
+  }
+
+  .custom-range-slider::-moz-range-thumb {
+    width: 28px;
+    height: 32px;
+  }
+
   .cabinet-status-panel {
     padding: 10px 14px;
     border-radius: 10px;
@@ -1935,14 +1964,14 @@ body {
 
   .directory-tree-pane {
     width: 100%;
-    height: 30%;
-    min-height: 120px;
+    height: 35%;
+    min-height: 140px;
     padding: 8px;
   }
 
   .code-viewer-pane {
     width: 100%;
-    height: 70%;
+    height: 65%;
     padding: 10px;
   }
 
@@ -2827,6 +2856,7 @@ export function AudioScreen({
 
 ● ./src/components/menus/ControlsScreen.tsx
 ────────────────────────────────────────────────────
+import { useEffect, useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
@@ -2868,12 +2898,31 @@ export function ControlsScreen({
   setRebindTarget,
   reloadSaveSlots,
 }: ControlsScreenProps) {
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+    }
+  }, []);
+
+  const handleRebindTrigger = (action: Action) => {
+    if (isTouchDevice) {
+      soundSynth.playErrorTick();
+      return;
+    }
+    soundSynth.playHitConfirm();
+    setRebindTarget({ action, index: 0 });
+  };
+
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
       
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>Change keyboard buttons</p>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
+          {isTouchDevice ? "Preset selection available for keyboards" : "Change keyboard buttons"}
+        </p>
       </div>
 
       <div className="flex-row" style={{ gap: "16px" }}>
@@ -2917,15 +2966,21 @@ export function ControlsScreen({
         </button>
         <button
           onClick={() => {
+            if (isTouchDevice) {
+              soundSynth.playErrorTick();
+              return;
+            }
             settingsManager.setPreset("CUSTOM");
             soundSynth.playHitConfirm();
             reloadSaveSlots();
           }}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""} ${isTouchDevice ? "neo-disabled" : ""}`}
           style={{
             padding: "16px 28px",
             fontSize: "14px",
+            opacity: isTouchDevice ? 0.35 : 1,
+            cursor: isTouchDevice ? "not-allowed" : "pointer",
             borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
             color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
           }}
@@ -2936,7 +2991,7 @@ export function ControlsScreen({
         </button>
       </div>
 
-      <div className="binding-board neo-pressed">
+      <div className="binding-board neo-pressed" style={{ opacity: isTouchDevice ? 0.6 : 1 }}>
         {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
           const keys = settingsManager.getKeyMap()[action] || [];
           const rowMenuIndex = idx + 3;
@@ -2949,14 +3004,13 @@ export function ControlsScreen({
               </span>
               <div className="flex-row" style={{ gap: "8px" }}>
                 <button
-                  onClick={() => {
-                    soundSynth.playHitConfirm();
-                    setRebindTarget({ action, index: 0 });
-                  }}
+                  onClick={() => handleRebindTrigger(action)}
                   className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
+                  disabled={isTouchDevice}
                   style={{
                     minWidth: "150px",
                     padding: "16px 24px",
+                    cursor: isTouchDevice ? "not-allowed" : "pointer",
                     borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                     color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
                   }}
@@ -2971,8 +3025,15 @@ export function ControlsScreen({
         })}
       </div>
 
-      <div className="controls-notice">
-        Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
+      <div className="controls-notice" style={{
+        background: isTouchDevice ? "rgba(239, 68, 68, 0.08)" : "rgba(168, 85, 247, 0.08)",
+        borderColor: isTouchDevice ? "rgba(239, 68, 68, 0.25)" : "rgba(168, 85, 247, 0.25)",
+        color: isTouchDevice ? "hsl(350, 80%, 75%)" : "hsl(280, 80%, 75%)",
+        textShadow: isTouchDevice ? "0 0 6px rgba(239, 68, 68, 0.35)" : "0 0 6px rgba(168, 85, 247, 0.35)"
+      }}>
+        {isTouchDevice 
+          ? "PHYSICAL KEYBOARD DETECTOR ACTIVE: KEY REBINDING REQUIRES AN ATTACHED ACCESSORY."
+          : "Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)"}
       </div>
 
       <button
@@ -3334,8 +3395,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [visibleNodes, setVisibleNodes] = useState<FileNode[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkRes = () => {
+        setIsMobile(window.innerWidth <= 800);
+      };
+      checkRes();
+      window.addEventListener("resize", checkRes);
+      return () => window.removeEventListener("resize", checkRes);
+    }
+  }, []);
 
   useEffect(() => {
     fetch("./source_code_manifest.json")
@@ -3520,12 +3593,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: COLLAPSE/EXIT</p>
+        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
+          {isMobile ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
+        </p>
       </div>
 
       <div className="source-view-workspace">
         
-        <div ref={listRef} className="directory-tree-pane neo-pressed">
+        <div ref={listRef} className="directory-tree-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
           {visibleNodes.map((node, idx) => {
             const isActive = idx === activeIndex;
             const isExpanded = node.isDir && !!expandedDirs[node.path];
@@ -3545,10 +3620,10 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                   }
                 }}
                 style={{
-                  padding: "6px 10px",
-                  paddingLeft: `${node.depth * 16 + 10}px`,
+                  padding: isMobile ? "12px 14px" : "6px 10px",
+                  paddingLeft: `${node.depth * (isMobile ? 18 : 16) + 10}px`,
                   borderRadius: "6px",
-                  fontSize: "11px",
+                  fontSize: isMobile ? "12px" : "11px",
                   fontFamily: "monospace",
                   cursor: "pointer",
                   display: "flex",
@@ -3589,7 +3664,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           })}
         </div>
 
-        <div className="code-viewer-pane neo-pressed">
+        <div className="code-viewer-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
           {selectedFile ? (
             <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
               <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
@@ -3603,7 +3678,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                     margin: 0,
                     padding: 0,
                     background: "transparent",
-                    fontSize: "11px",
+                    fontSize: isMobile ? "9px" : "11px",
                     lineHeight: "1.5",
                   }}
                 >
