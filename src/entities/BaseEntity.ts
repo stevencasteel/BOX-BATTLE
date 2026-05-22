@@ -3,6 +3,7 @@ import { IEntity, IWorld, Vector2D, EntityStatus } from "@/core/Interfaces";
 
 export class BaseEntity implements IEntity {
   public position: Vector2D = { x: 0, y: 0 };
+  public previousPosition: Vector2D = { x: 0, y: 0 };
   public velocity: Vector2D = { x: 0, y: 0 };
   public size = { width: 50, height: 50 };
   public id: string;
@@ -48,13 +49,17 @@ export class BaseEntity implements IEntity {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
     if (this.isDead) return;
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.fillRect(
-      this.position.x - this.size.width / 2,
-      this.position.y - this.size.height / 2,
+      drawX - this.size.width / 2,
+      drawY - this.size.height / 2,
       this.size.width,
       this.size.height
     );

@@ -13,6 +13,7 @@ import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
 import { Rectangle, EntityStatus } from "@/core/Interfaces";
+import { BaseEntity } from "@/entities/BaseEntity";
 import { defaultLevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
@@ -76,9 +77,11 @@ export class Engine {
 
     this.player = new Player("player-01", this.world);
     this.player.position = { ...defaultLevelConfig.playerStart };
+    this.player.previousPosition = { ...defaultLevelConfig.playerStart };
 
     this.boss = new Boss("boss-01", this.world);
     this.boss.position = { ...defaultLevelConfig.bossStart };
+    this.boss.previousPosition = { ...defaultLevelConfig.bossStart };
 
     this.world.player = this.player;
     this.world.boss = this.boss;
@@ -134,6 +137,7 @@ export class Engine {
 
     this.player.isDead = false;
     this.player.position = { ...defaultLevelConfig.playerStart };
+    this.player.previousPosition = { ...defaultLevelConfig.playerStart };
     this.player.velocity = { x: 0, y: 0 };
     this.player.facingDirection = 1;
     this.player.hasDoubleJump = true;
@@ -167,6 +171,7 @@ export class Engine {
 
     this.boss.isDead = false;
     this.boss.position = { ...defaultLevelConfig.bossStart };
+    this.boss.previousPosition = { ...defaultLevelConfig.bossStart };
     this.boss.velocity = { x: 0, y: 0 };
     this.boss.facingDirection = -1;
     this.boss.currentPhase = 1;
@@ -242,6 +247,16 @@ export class Engine {
 
     this.battleDirector.update(dt, this.player, this.boss);
 
+    this.player.previousPosition = { ...this.player.position };
+    this.boss.previousPosition = { ...this.boss.position };
+    for (const minion of this.world.minions) {
+      (minion as BaseEntity).previousPosition = { ...minion.position };
+    }
+    const activeProjectiles = this.pool.getActive();
+    for (const proj of activeProjectiles) {
+      proj.previousPosition = { ...proj.position };
+    }
+
     if (this.battleDirector.isCinematicActive()) {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
@@ -296,9 +311,9 @@ export class Engine {
       }
     }
 
-    const activeProjectiles = [...this.pool.getActive()];
-    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      activeProjectiles[i].update(dt);
+    const activeProjectilesUpdate = [...this.pool.getActive()];
+    for (let i = activeProjectilesUpdate.length - 1; i >= 0; i--) {
+      activeProjectilesUpdate[i].update(dt);
     }
 
     inputProvider.postUpdate();
@@ -307,6 +322,7 @@ export class Engine {
   }
 
   private render() {
+    const alpha = this.accumulator / this.fixedTimeStep;
     this.renderer.render(
       this.world,
       this.particleSystem.getParticles(),
@@ -316,7 +332,8 @@ export class Engine {
       this.pool,
       this.isPaused,
       this.battleDirector.getDeathVisuals().timer,
-      this.battleDirector.getDeathVisuals().pos
+      this.battleDirector.getDeathVisuals().pos,
+      alpha
     );
   }
 

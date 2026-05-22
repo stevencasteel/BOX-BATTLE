@@ -35,6 +35,9 @@ export class Boss extends BaseEntity {
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 60, height: 60 };
+    
+    this.position = { x: 0, y: 0 };
+    this.previousPosition = { x: 0, y: 0 };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -208,8 +211,12 @@ export class Boss extends BaseEntity {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
     if (this.isDead) return;
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     const activeState = this.activeStateName;
 
@@ -228,8 +235,8 @@ export class Boss extends BaseEntity {
     }
 
     ctx.fillRect(
-      this.position.x - this.size.width / 2,
-      this.position.y - this.size.height / 2,
+      drawX - this.size.width / 2,
+      drawY - this.size.height / 2,
       this.size.width,
       this.size.height
     );

@@ -6,12 +6,16 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 
 export class WorldRenderer {
-  private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player) {
+  private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player, alpha: number) {
     const facing = player.facingDirection;
     ctx.lineCap = "round";
 
     const progress = 1.0 - (player.meleeComponent.attackActiveTimer / 0.09);
     const opacity = Math.max(0, player.meleeComponent.attackActiveTimer / 0.09);
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = player.previousPosition.x + (player.position.x - player.previousPosition.x) * alphaVal;
+    const drawY = player.previousPosition.y + (player.position.y - player.previousPosition.y) * alphaVal;
 
     if (player.attackDirection === "side") {
       const offset = facing * 35;
@@ -19,8 +23,8 @@ export class WorldRenderer {
       const angleLength = Math.PI;
       const currentSweepAngle = angleLength * progress;
 
-      const cx = player.position.x + offset;
-      const cy = player.position.y;
+      const cx = drawX + offset;
+      const cy = drawY;
 
       ctx.save();
       ctx.lineCap = "butt";
@@ -86,8 +90,8 @@ export class WorldRenderer {
       ctx.restore();
     }
     else if (player.attackDirection === "up") {
-      const cx = player.position.x;
-      const cy = player.position.y - 35;
+      const cx = drawX;
+      const cy = drawY - 35;
 
       const currentRadius = 30 + progress * 65;
       const currentInnerRadius = 15 + progress * 15;
@@ -112,8 +116,8 @@ export class WorldRenderer {
       ctx.restore();
     }
     else if (player.attackDirection === "down") {
-      const cx = player.position.x;
-      const cy = player.position.y + 35;
+      const cx = drawX;
+      const cy = drawY + 35;
 
       const currentRadius = 30 + progress * 65;
       const currentInnerRadius = 15 + progress * 15;
@@ -153,7 +157,8 @@ export class WorldRenderer {
     projectilePool: ObjectPool<Projectile>,
     isPaused: boolean,
     bossDeathTimer: number,
-    bossDeathPos: { x: number; y: number } | null
+    bossDeathPos: { x: number; y: number } | null,
+    alpha: number
   ) {
     this.ctx.fillStyle = "#0c0d11";
     this.ctx.fillRect(0, 0, 1250, 1250);
@@ -189,7 +194,7 @@ export class WorldRenderer {
     }
 
     if (world.boss) {
-      world.boss.draw(this.ctx);
+      world.boss.draw(this.ctx, alpha);
     }
 
     for (const p of particles) {
@@ -223,20 +228,20 @@ export class WorldRenderer {
     }
 
     if (world.player) {
-      world.player.draw(this.ctx);
+      world.player.draw(this.ctx, alpha);
       const player = world.player as Player;
       if (player.attackActive) {
-        this.drawPlayerAttackVisual(this.ctx, player);
+        this.drawPlayerAttackVisual(this.ctx, player, alpha);
       }
     }
 
     for (const minion of world.minions) {
-      minion.draw(this.ctx);
+      minion.draw(this.ctx, alpha);
     }
 
     const activeProjectiles = projectilePool.getActive();
     for (const proj of activeProjectiles) {
-      proj.draw(this.ctx);
+      proj.draw(this.ctx, alpha);
     }
 
     if (bossDeathTimer >= 0 && bossDeathPos) {

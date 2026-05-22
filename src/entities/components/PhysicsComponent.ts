@@ -31,6 +31,39 @@ export class PhysicsComponent implements IEntityComponent {
 
     this.isGrounded = false;
     const physicsWorld = this.owner.world.physicsWorld;
+    
+    if (!this.isGrounded) {
+      this.owner.velocity.y += this.gravity * dt;
+    }
+
+    this.isOnWallLeft = false;
+    this.isOnWallRight = false;
+
+    const maxStepSize = 6;
+    const dx = this.owner.velocity.x * dt;
+    const dy = this.owner.velocity.y * dt;
+
+    const stepsX = Math.max(1, Math.ceil(Math.abs(dx) / maxStepSize));
+    const stepsY = Math.max(1, Math.ceil(Math.abs(dy) / maxStepSize));
+
+    const substepX = dx / stepsX;
+    const substepY = dy / stepsY;
+
+    for (let i = 0; i < stepsX; i++) {
+      this.owner.position.x += substepX;
+      if (this.resolveCollisionsX()) {
+        break;
+      }
+    }
+
+    for (let i = 0; i < stepsY; i++) {
+      this.owner.position.y += substepY;
+      if (this.resolveCollisionsY()) {
+        break;
+      }
+    }
+
+    this.isGrounded = false;
     if (this.owner.velocity.y >= 0) {
       for (const solid of physicsWorld.solids) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, solid)) {
@@ -47,24 +80,12 @@ export class PhysicsComponent implements IEntityComponent {
         }
       }
     }
-
-    if (!this.isGrounded) {
-      this.owner.velocity.y += this.gravity * dt;
-    }
-
-    this.isOnWallLeft = false;
-    this.isOnWallRight = false;
-
-    this.owner.position.x += this.owner.velocity.x * dt;
-    this.resolveCollisionsX();
-
-    this.owner.position.y += this.owner.velocity.y * dt;
-    this.resolveCollisionsY();
   }
 
-  private resolveCollisionsX() {
+  private resolveCollisionsX(): boolean {
     const ownerHalfW = this.owner.size.width / 2;
     const physicsWorld = this.owner.world.physicsWorld;
+    let collided = false;
 
     for (const solid of physicsWorld.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
@@ -76,13 +97,17 @@ export class PhysicsComponent implements IEntityComponent {
           this.isOnWallLeft = true;
         }
         this.owner.velocity.x = 0;
+        collided = true;
       }
     }
+    return collided;
   }
 
-  private resolveCollisionsY() {
+  private resolveCollisionsY(): boolean {
     const ownerHalfH = this.owner.size.height / 2;
+    const ownerHalfW = this.owner.size.width / 2;
     const physicsWorld = this.owner.world.physicsWorld;
+    let collided = false;
 
     for (const solid of physicsWorld.solids) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
@@ -90,9 +115,31 @@ export class PhysicsComponent implements IEntityComponent {
           this.owner.position.y = solid.y - ownerHalfH;
           this.owner.velocity.y = 0;
           this.isGrounded = true;
+          collided = true;
         } else if (this.owner.velocity.y < 0) {
+          const overlapRight = (this.owner.position.x + ownerHalfW) - solid.x;
+          const overlapLeft = (solid.x + solid.width) - (this.owner.position.x - ownerHalfW);
+
+          const nudgeThreshold = 6;
+
+          if (overlapRight > 0 && overlapRight <= nudgeThreshold) {
+            this.owner.position.x -= overlapRight;
+            if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+              continue;
+            }
+            this.owner.position.x += overlapRight;
+          } 
+          else if (overlapLeft > 0 && overlapLeft <= nudgeThreshold) {
+            this.owner.position.x += overlapLeft;
+            if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+              continue;
+            }
+            this.owner.position.x -= overlapLeft;
+          }
+
           this.owner.position.y = solid.y + solid.height + ownerHalfH;
           this.owner.velocity.y = 0;
+          collided = true;
         }
       }
     }
@@ -106,10 +153,13 @@ export class PhysicsComponent implements IEntityComponent {
             this.owner.position.y = platform.y - ownerHalfH;
             this.owner.velocity.y = 0;
             this.isGrounded = true;
+            collided = true;
           }
         }
       }
     }
+
+    return collided;
   }
 
   private isOverlapping(x: number, y: number, rect: Rectangle): boolean {

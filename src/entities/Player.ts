@@ -22,18 +22,14 @@ export class Player extends BaseEntity implements IDamageRecorder {
   private readonly jumpForce: number = 680;
   private readonly wallSlideSpeed: number = 120;
 
-  /* Coyote Time (Ledge Jump Grace Period): Grace window to register jump inputs after slipping off solid surfaces */
   private coyoteTimer: number = 0;
-  /* Jump Buffering (Pre-ground Landing Inputs): Buffer window to capture pre-landing jump hits */
   private jumpBufferTimer: number = 0;
   public hasDoubleJump: boolean = true;
   public facingDirection: number = 1;
 
-  /* Wall Coyote Time: Grace window to execute wall jumps after slipping off vertical walls */
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
 
-  /* Visual Squash and Stretch (Kinetic Weight): Visual scaling variables for compression on landing and extension on jumps */
   public visualScale = { x: 1, y: 1 };
   private airtimeDuration: number = 0;
 
@@ -48,6 +44,9 @@ export class Player extends BaseEntity implements IDamageRecorder {
     super(id, world);
     this.size = { width: 40, height: 80 };
 
+    this.position = { x: 0, y: 0 };
+    this.previousPosition = { x: 0, y: 0 };
+
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
@@ -61,7 +60,7 @@ export class Player extends BaseEntity implements IDamageRecorder {
     this.healComponent = this.addComponent(HealComponent, new HealComponent());
 
     this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
-      this.hurtTimer = 0.15; // Enable knockback input-stun window
+      this.hurtTimer = 0.15;
       if (this.healComponent.isHealing) {
         this.healComponent.cancelHealing();
       }
@@ -85,18 +84,14 @@ export class Player extends BaseEntity implements IDamageRecorder {
       return;
     }
 
-    /* Visual Squash and Stretch: Smoothly interpolate back to default 1.0 dimension ratios */
     this.visualScale.x += (1 - this.visualScale.x) * 12 * dt;
     this.visualScale.y += (1 - this.visualScale.y) * 12 * dt;
 
     if (!this.physics.isGrounded) {
-      /* Track accumulated airtime to skip vertical squashes on micro-seams or subpixel jitters */
       this.airtimeDuration += dt;
     } else {
       if (this.airtimeDuration > 0.08) {
-        /* Compress vertically upon hitting solid ground to represent landing compression */
         this.visualScale = { x: 1.22, y: 0.78 };
-        /* Spawn Landing Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
         eventBroker.publish("PLAYER_LANDED", undefined);
       }
@@ -108,29 +103,23 @@ export class Player extends BaseEntity implements IDamageRecorder {
     const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
 
     if (isPogoing) {
-      /* Active Pogo: Slightly dampen gravity to assist mid-air bounce adjustments */
       this.physics.gravity = 1200 * 0.85;
     } else if (isNearJumpApex) {
-      /* Apex Gravity Scaling (Jump Peak "Hang Time"): Scale down gravity at the peak of a jump for more air control */
       this.physics.gravity = 1200 * 0.65;
     } else if (isFalling && this.inputReceiver.isPressed("MOVE_DOWN")) {
-      /* Fast Fall: Increase downward pull when pressing down */
       this.physics.gravity = 1200 * 1.4;
     } else {
-      /* Standard Fall */
       this.physics.gravity = 1200;
     }
 
     if (this.hurtTimer > 0) {
       this.hurtTimer -= dt;
-      // Let physics / gravity resolve
       this.velocity.y += this.physics.gravity * dt;
-      // High friction/drag on horizontal velocity during knockback
       const knockbackFriction = 800.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
       
       super.update(dt);
-      return; // Stun active, cancel all key polling
+      return;
     }
 
     super.update(dt);
@@ -171,7 +160,6 @@ export class Player extends BaseEntity implements IDamageRecorder {
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     
     if (this.meleeComponent.attackActive) {
-      // Ground the player horizontally during melee slash
       const friction = 2000.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
     } else {
@@ -206,7 +194,6 @@ export class Player extends BaseEntity implements IDamageRecorder {
       const normY = dirY / len;
       
       this.dashComponent.triggerDash(normX, normY);
-      /* Visual Squash and Stretch: Flatten horizontally on dash impulse */
       this.visualScale = { x: 1.25, y: 0.75 };
       super.update(dt);
       return;
@@ -234,29 +221,24 @@ export class Player extends BaseEntity implements IDamageRecorder {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on ground jump */
         this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Jump Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-            eventBroker.publish("PLAYER_JUMPED", undefined);
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.wallCoyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.velocity.x = this.lastWallNormal * 1650;
         this.wallCoyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.dashComponent.resetDashCharge();
-        /* Visual Squash and Stretch: Stretch vertically on wall jump */
         this.visualScale = { x: 0.82, y: 1.18 };
-        /* Spawn Wall Slide Dust Puff */
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-            eventBroker.publish("PLAYER_JUMPED", undefined);
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       } else if (this.hasDoubleJump) {
         this.velocity.y = -this.jumpForce;
         this.hasDoubleJump = false;
         this.jumpBufferTimer = 0;
-        /* Visual Squash and Stretch: Stretch vertically on double jump */
         this.visualScale = { x: 0.82, y: 1.18 };
-            eventBroker.publish("PLAYER_JUMPED", undefined);
+        eventBroker.publish("PLAYER_JUMPED", undefined);
       }
     }
 
@@ -344,8 +326,12 @@ export class Player extends BaseEntity implements IDamageRecorder {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
     if (this.isDead) return;
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     for (const ghost of this.dashComponent.ghosts) {
       ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
@@ -369,13 +355,12 @@ export class Player extends BaseEntity implements IDamageRecorder {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
-    /* Render visual squash and stretch calculations on base fill bounds anchored to the ground */
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
-    const feetY = this.position.y + this.size.height / 2;
+    const feetY = drawY + this.size.height / 2;
 
     ctx.fillRect(
-      this.position.x - vWidth / 2,
+      drawX - vWidth / 2,
       feetY - vHeight,
       vWidth,
       vHeight
@@ -393,10 +378,10 @@ export class Player extends BaseEntity implements IDamageRecorder {
 
       const radius1 = 44 + Math.sin(cycle) * 8;
       const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(this.position.x, this.position.y, radius1, 0, Math.PI * 2);
+      ctx.arc(drawX, drawY, radius1, 0, Math.PI * 2);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(this.position.x, this.position.y, radius2, 0, Math.PI * 2);
+      ctx.arc(drawX, drawY, radius2, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
@@ -407,19 +392,15 @@ export class Player extends BaseEntity implements IDamageRecorder {
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
       ctx.arc(
-        this.position.x,
-        this.position.y,
+        drawX,
+        drawY,
         this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
         0,
         Math.PI * 2
       );
       ctx.stroke();
     }
-
-
   }
-
-
 
   public teardown() {
     this.unsubHurt();

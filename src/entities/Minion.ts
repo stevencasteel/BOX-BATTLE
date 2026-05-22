@@ -33,16 +33,16 @@ export class Minion extends BaseEntity {
   public volleyCount: number = 0;
   public volleyTimer: number = 0;
 
-  // Spawning and Dissolving transition variables
   public isSpawning: boolean = true;
-  public spawnTimer: number = 0.6; // 600ms entrance
+  public spawnTimer: number = 0.6;
   public isDying: boolean = false;
-  public dissolveTimer: number = 0.5; // 500ms dissolution
+  public dissolveTimer: number = 0.5;
 
   constructor(id: string, type: MinionType, startPos: { x: number; y: number }, world: IWorld) {
     super(id, world);
     this.minionType = type;
     this.position = { ...startPos };
+    this.previousPosition = { ...startPos };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     
@@ -86,7 +86,6 @@ export class Minion extends BaseEntity {
       ? "hsl(280, 70%, 65%)" 
       : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
 
-    // Publish massive radial explosion of sparks
     eventBroker.publish("SPAWN_SPARKS", {
       x: this.position.x,
       y: this.position.y,
@@ -96,7 +95,6 @@ export class Minion extends BaseEntity {
       count: 24
     });
 
-    // Publish circular shockwave blast ring
     eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
@@ -115,14 +113,13 @@ export class Minion extends BaseEntity {
         ? "hsl(280, 70%, 65%)" 
         : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
 
-      // Cohesive grid-construct gather particles pulling inward
       if (Math.random() < 0.5) {
         const angle = Math.random() * Math.PI * 2;
         const dist = 40 + Math.random() * 30;
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x + Math.cos(angle) * dist,
           y: this.position.y + Math.sin(angle) * dist,
-          angle: angle + Math.PI, // face straight inward
+          angle: angle + Math.PI,
           color: mColor
         });
       }
@@ -142,12 +139,11 @@ export class Minion extends BaseEntity {
         ? "hsl(280, 70%, 65%)" 
         : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
 
-      // Spawn beautiful ascending vapor dissolve embers
       if (Math.random() < 0.6) {
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
           y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
-          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2), // float straight up
+          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2),
           color: mColor
         });
       }
@@ -218,24 +214,28 @@ export class Minion extends BaseEntity {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
     if (this.isDead) return;
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     ctx.save();
 
     if (this.isSpawning) {
       const pct = 1.0 - (this.spawnTimer / 0.6);
       ctx.globalAlpha = pct;
-      ctx.translate(this.position.x, this.position.y);
+      ctx.translate(drawX, drawY);
       ctx.scale(pct, pct);
-      ctx.translate(-this.position.x, -this.position.y);
+      ctx.translate(-drawX, -drawY);
     } 
     else if (this.isDying) {
       const pct = this.dissolveTimer / 0.5;
       ctx.globalAlpha = pct;
-      ctx.translate(this.position.x, this.position.y);
+      ctx.translate(drawX, drawY);
       ctx.scale(pct, pct);
-      ctx.translate(-this.position.x, -this.position.y);
+      ctx.translate(-drawX, -drawY);
     }
 
     if (this.health.isFlashing()) {
@@ -257,8 +257,8 @@ export class Minion extends BaseEntity {
     }
 
     ctx.fillRect(
-      this.position.x - this.size.width / 2,
-      this.position.y - this.size.height / 2,
+      drawX - this.size.width / 2,
+      drawY - this.size.height / 2,
       this.size.width,
       this.size.height
     );
@@ -268,8 +268,8 @@ export class Minion extends BaseEntity {
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
     ctx.fillRect(
-      this.position.x + (faceDirection * 8) - 2,
-      this.position.y - 12,
+      drawX + (faceDirection * 8) - 2,
+      drawY - 12,
       6,
       4
     );

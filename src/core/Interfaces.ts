@@ -40,13 +40,14 @@ export interface IAbilityUser {
 export interface IEntity {
   id: string;
   position: Vector2D;
+  previousPosition: Vector2D;
   velocity: Vector2D;
   size: { width: number; height: number };
   isDead: boolean;
   status: EntityStatus;
   world: IWorld;
   update(dt: number): void;
-  draw(ctx: CanvasRenderingContext2D): void;
+  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
   addComponent<T extends IEntityComponent>(
     componentClass: new (...args: any[]) => T,

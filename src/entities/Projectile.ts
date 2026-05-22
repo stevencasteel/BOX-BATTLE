@@ -30,6 +30,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     world: IWorld
   ) {
     this.position = { x, y };
+    this.previousPosition = { x, y };
     this.velocity = { x: dirX * speed, y: dirY * speed };
     
     this.ownerId = ownerId;
@@ -51,28 +52,38 @@ export class Projectile extends BaseEntity implements IPoolable {
   public update(dt: number) {
     if (!this.isActive) return;
 
-    this.position.x += this.velocity.x * dt;
-    this.position.y += this.velocity.y * dt;
-
     this.lifespan -= dt;
     if (this.lifespan <= 0) {
       this.selfRelease();
       return;
     }
 
-    if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
-      this.selfRelease();
-      return;
-    }
+    const dx = this.velocity.x * dt;
+    const dy = this.velocity.y * dt;
+    const maxStepSize = 5;
 
-    if (this.checkProjectileClashes()) {
-      this.selfRelease();
-      return;
-    }
+    const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) / maxStepSize));
+    const substepX = dx / steps;
+    const substepY = dy / steps;
 
-    if (this.checkEntityCollisions()) {
-      this.selfRelease();
-      return;
+    for (let i = 0; i < steps; i++) {
+      this.position.x += substepX;
+      this.position.y += substepY;
+
+      if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
+        this.selfRelease();
+        return;
+      }
+
+      if (this.checkProjectileClashes()) {
+        this.selfRelease();
+        return;
+      }
+
+      if (this.checkEntityCollisions()) {
+        this.selfRelease();
+        return;
+      }
     }
   }
 
@@ -196,7 +207,6 @@ export class Projectile extends BaseEntity implements IPoolable {
   }
 
   private selfRelease() {
-    /* Spawn Radial Projectile Impact Ring */
     eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
@@ -207,8 +217,12 @@ export class Projectile extends BaseEntity implements IPoolable {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
     if (!this.isActive) return;
+
+    const alphaVal = alpha !== undefined ? alpha : 1.0;
+    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     if (this.ownerId === "player") {
       ctx.fillStyle = "hsl(142, 71%, 58%)";
@@ -220,7 +234,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(this.position.x, this.position.y, this.size.width / 2, 0, Math.PI * 2);
+    ctx.arc(drawX, drawY, this.size.width / 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
