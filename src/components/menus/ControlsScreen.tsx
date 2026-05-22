@@ -97,7 +97,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px" }}>
+          <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
             <button
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_1");
@@ -189,7 +189,7 @@ export function ControlsScreen({
             })}
           </div>
 
-          <div className="controls-notice">
+          <div className="controls-notice" style={{ marginTop: "auto", marginBottom: "auto" }}>
             Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
           </div>
         </>
