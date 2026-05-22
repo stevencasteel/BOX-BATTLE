@@ -32,8 +32,11 @@ export class MusicSequencer {
       envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.25 }
     }).connect(musicGain);
 
-    const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(musicGain);
-    this.musicArpSynth.connect(delay);
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+    if (!isMobile) {
+      const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(musicGain);
+      this.musicArpSynth.connect(delay);
+    }
 
     this.setupMusicSequences();
 

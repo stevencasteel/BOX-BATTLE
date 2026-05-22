@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
@@ -40,13 +40,12 @@ export function ControlsScreen({
   setRebindTarget,
   reloadSaveSlots,
 }: ControlsScreenProps) {
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
-
-  useEffect(() => {
+  const [isTouchDevice] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+      return window.matchMedia("(pointer: coarse)").matches;
     }
-  }, []);
+    return false;
+  });
 
   const handleRebindTrigger = (action: Action) => {
     if (isTouchDevice) {

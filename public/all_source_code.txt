@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/21/2026, 7:38:27 PM
+ [SYSTEM] Generated: 5/22/2026, 9:45:28 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -90,6 +90,7 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
+├── patch_controls.js
 ├── patch_minion_spawns.js
 ├── patch_phase2.js
 ├── patch_phase3.js
@@ -399,6 +400,307 @@ export default defineConfig([
     "vite": "^8.0.12"
   }
 }
+
+
+
+● ./patch_controls.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+// 1. Rewrite src/components/menus/ControlsScreen.tsx with conditional placeholder rendering
+const controlsPath = 'src/components/menus/ControlsScreen.tsx';
+const newControlsContent = `import { useEffect, useState } from "react";
+import { Action } from "@/core/InputProvider";
+import { settingsManager } from "@/core/SettingsManager";
+import { soundSynth } from "@/core/SoundSynth";
+
+interface ControlsScreenProps {
+  menuIndex: number;
+  rebindTarget: { action: Action; index: number } | null;
+  onBack: () => void;
+  playHoverTick: () => void;
+  setMenuIndex: (index: number) => void;
+  setRebindTarget: (target: { action: Action; index: number } | null) => void;
+  reloadSaveSlots: () => void;
+}
+
+function formatKeyDisplayName(code: string): string {
+  if (!code) return "[ EMPTY ]";
+  
+  const upper = code.trim();
+  if (upper === "Space") return "SPACE";
+  if (upper === "ArrowLeft") return "LEFT ARROW";
+  if (upper === "ArrowRight") return "RIGHT ARROW";
+  if (upper === "ArrowUp") return "UP ARROW";
+  if (upper === "ArrowDown") return "DOWN ARROW";
+  if (upper === "Period") return ".";
+  if (upper === "Comma") return ",";
+  if (upper === "Slash") return "/";
+  if (upper === "Backspace") return "BACKSPACE";
+  if (upper === "Escape") return "ESC";
+  
+  return upper.replace(/^Key/, "");
+}
+
+export function ControlsScreen({
+  menuIndex,
+  rebindTarget,
+  onBack,
+  playHoverTick,
+  setMenuIndex,
+  setRebindTarget,
+  reloadSaveSlots,
+}: ControlsScreenProps) {
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+    }
+  }, []);
+
+  const handleRebindTrigger = (action: Action) => {
+    if (isTouchDevice) {
+      soundSynth.playErrorTick();
+      return;
+    }
+    soundSynth.playHitConfirm();
+    setRebindTarget({ action, index: 0 });
+  };
+
+  const backBtnIndex = isTouchDevice ? 0 : 10;
+
+  return (
+    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
+      
+      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CONTROLS</h2>
+        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
+          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
+        </p>
+      </div>
+
+      {isTouchDevice ? (
+        <div className="mixer-board neo-pressed" style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "16px",
+          padding: "32px",
+          textAlign: "center",
+          margin: "auto 0",
+          width: "100%",
+          maxWidth: "540px",
+          borderColor: "rgba(234, 179, 8, 0.15)",
+          boxSizing: "border-box"
+        }}>
+          <div className="led-dot led-yellow" style={{ width: "16px", height: "16px", marginBottom: "8px" }} />
+          <span style={{ fontSize: "13px", fontWeight: "bold", color: "var(--signal-yellow)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            [ TOUCH INTERFACE CALIBRATION ]
+          </span>
+          <h3 style={{ fontSize: "16px", color: "#ffffff", margin: 0, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "bold" }}>
+            Bespoke Custom Touch controls Coming Soon
+          </h3>
+          <p style={{ fontSize: "11px", color: "#718096", lineHeight: "1.6", textTransform: "uppercase", letterSpacing: "0.08em", maxWidth: "380px", margin: 0 }}>
+            Virtual joystick remapping, physical boundary calibration, and responsive gesture-mapping menus are currently under engineering.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex-row" style={{ gap: "16px" }}>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("DEFAULT_1");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+              className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
+              PRESET 1
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
+            </button>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("DEFAULT_2");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+              className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
+              PRESET 2
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
+            </button>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("CUSTOM");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
+              className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
+              CUSTOM
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>◀</span>
+            </button>
+          </div>
+
+          <div className="binding-board neo-pressed">
+            {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
+              const keys = settingsManager.getKeyMap()[action] || [];
+              const rowMenuIndex = idx + 3;
+              const isFocusedRow = menuIndex === rowMenuIndex;
+              return (
+                <div key={action} className="binding-row" style={{ padding: "8px 4px" }}>
+                  <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "14px", display: "flex", alignItems: "center" }}>
+                    <span className="cursor-arrow" style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}>▶</span>
+                    {action.replace("_", " ")}
+                  </span>
+                  <div className="flex-row" style={{ gap: "8px" }}>
+                    <button
+                      onClick={() => handleRebindTrigger(action)}
+                      className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
+                      style={{
+                        minWidth: "150px",
+                        padding: "16px 24px",
+                        borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
+                        color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
+                      }}
+                    >
+                      {rebindTarget?.action === action && rebindTarget?.index === 0
+                        ? "PRESS ANY KEY..."
+                        : formatKeyDisplayName(keys[0])}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="controls-notice">
+            Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
+          </div>
+        </>
+      )}
+
+      <button
+        onClick={onBack}
+        onMouseEnter={() => { playHoverTick(); setMenuIndex(backBtnIndex); }}
+        className={`neo-btn ${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}`}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
+        Back
+        <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>◀</span>
+      </button>
+
+    </div>
+  );
+}
+`;
+
+fs.writeFileSync(controlsPath, newControlsContent, 'utf8');
+console.log("Successfully wrote updated touch placeholder ControlsScreen.tsx.");
+
+// 2. Patch src/core/screenRoutes.ts to scale getMaxIndex dynamically
+const routesPath = 'src/core/screenRoutes.ts';
+let routesContent = fs.readFileSync(routesPath, 'utf8');
+
+const targetRoutesControls = `  CONTROLS: {
+    getMaxIndex: () => 10,
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      if (menuIndex === 0) {
+        settingsManager.setPreset("DEFAULT_1");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 1) {
+        settingsManager.setPreset("DEFAULT_2");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 2) {
+        settingsManager.setPreset("CUSTOM");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 10) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const actionIndex = menuIndex - 3;
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },`;
+
+const replacementRoutesControls = `  CONTROLS: {
+    getMaxIndex: () => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      return isTouch ? 0 : 10;
+    },
+    onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+        return;
+      }
+      if (menuIndex === 0) {
+        settingsManager.setPreset("DEFAULT_1");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 1) {
+        settingsManager.setPreset("DEFAULT_2");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 2) {
+        settingsManager.setPreset("CUSTOM");
+        soundSynth.playHitConfirm();
+        reloadSaveSlots();
+      } else if (menuIndex === 10) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+      } else {
+        const actionIndex = menuIndex - 3;
+        const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
+        soundSynth.playHitConfirm();
+        setRebindTarget({ action, index: 0 });
+      }
+    },`;
+
+if (routesContent.includes(targetRoutesControls)) {
+  routesContent = routesContent.replace(targetRoutesControls, replacementRoutesControls);
+  fs.writeFileSync(routesPath, routesContent, 'utf8');
+  console.log("Successfully patched screenRoutes.ts with flexible touch menu limits.");
+} else {
+  console.warn("WARNING: Target controls router configuration not found inside screenRoutes.ts.");
+}
+
 
 
 
@@ -831,6 +1133,13 @@ body {
   overflow: hidden;
   box-sizing: border-box;
   transition: all 0.2s ease-in-out;
+}
+
+.cabinet-full-height {
+  width: 96vw;
+  height: 95vh;
+  max-width: 1600px;
+  max-height: 1080px;
 }
 
 .screen-inner {
@@ -1800,7 +2109,8 @@ body {
 }
 
 @media (max-width: 768px) {
-  .cabinet-outer {
+  .cabinet-outer,
+  .cabinet-full-height {
     width: 100vw;
     height: 100vh;
     max-width: none;
@@ -2289,15 +2599,7 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div 
-        className="cabinet-outer"
-        style={isFullHeightScreen ? {
-          width: "96vw",
-          height: "95vh",
-          maxWidth: "1600px",
-          maxHeight: "1080px"
-        } : undefined}
-      >
+      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-full-height" : ""}`}>
 
         {!isFullHeightScreen && (
           <div className="cabinet-status-panel neo-pressed">
@@ -2856,7 +3158,7 @@ export function AudioScreen({
 
 ● ./src/components/menus/ControlsScreen.tsx
 ────────────────────────────────────────────────────
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
@@ -2898,13 +3200,12 @@ export function ControlsScreen({
   setRebindTarget,
   reloadSaveSlots,
 }: ControlsScreenProps) {
-  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(false);
-
-  useEffect(() => {
+  const [isTouchDevice] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+      return window.matchMedia("(pointer: coarse)").matches;
     }
-  }, []);
+    return false;
+  });
 
   const handleRebindTrigger = (action: Action) => {
     if (isTouchDevice) {
@@ -2915,136 +3216,153 @@ export function ControlsScreen({
     setRebindTarget({ action, index: 0 });
   };
 
+  const backBtnIndex = isTouchDevice ? 0 : 10;
+
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}>
       
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>KEY CONTROLS</h2>
+        <h2 style={{ fontSize: "2rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>CONTROLS</h2>
         <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          {isTouchDevice ? "Preset selection available for keyboards" : "Change keyboard buttons"}
+          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
         </p>
       </div>
 
-      <div className="flex-row" style={{ gap: "16px" }}>
-        <button
-          onClick={() => {
-            settingsManager.setPreset("DEFAULT_1");
-            soundSynth.playHitConfirm();
-            reloadSaveSlots();
-          }}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
-          className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-          style={{
-            padding: "16px 28px",
-            fontSize: "14px",
-            borderColor: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "rgba(34, 197, 94, 0.4)" : "",
-            color: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
-          }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-          PRESET 1
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
-        </button>
-        <button
-          onClick={() => {
-            settingsManager.setPreset("DEFAULT_2");
-            soundSynth.playHitConfirm();
-            reloadSaveSlots();
-          }}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
-          className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-          style={{
-            padding: "16px 28px",
-            fontSize: "14px",
-            borderColor: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "rgba(34, 197, 94, 0.4)" : "",
-            color: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
-          }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-          PRESET 2
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
-        </button>
-        <button
-          onClick={() => {
-            if (isTouchDevice) {
-              soundSynth.playErrorTick();
-              return;
-            }
-            settingsManager.setPreset("CUSTOM");
-            soundSynth.playHitConfirm();
-            reloadSaveSlots();
-          }}
-          onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
-          className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""} ${isTouchDevice ? "neo-disabled" : ""}`}
-          style={{
-            padding: "16px 28px",
-            fontSize: "14px",
-            opacity: isTouchDevice ? 0.35 : 1,
-            cursor: isTouchDevice ? "not-allowed" : "pointer",
-            borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
-            color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
-          }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-          CUSTOM
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>◀</span>
-        </button>
-      </div>
+      {isTouchDevice ? (
+        <div className="mixer-board neo-pressed" style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "16px",
+          padding: "32px",
+          textAlign: "center",
+          margin: "auto 0",
+          width: "100%",
+          maxWidth: "540px",
+          borderColor: "rgba(234, 179, 8, 0.15)",
+          boxSizing: "border-box"
+        }}>
+          <div className="led-dot led-yellow" style={{ width: "16px", height: "16px", marginBottom: "8px" }} />
+          <span style={{ fontSize: "13px", fontWeight: "bold", color: "var(--signal-yellow)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            [ TOUCH INTERFACE CALIBRATION ]
+          </span>
+          <h3 style={{ fontSize: "16px", color: "#ffffff", margin: 0, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: "bold" }}>
+            Bespoke Custom Touch Controls Coming Soon
+          </h3>
+          <p style={{ fontSize: "11px", color: "#718096", lineHeight: "1.6", textTransform: "uppercase", letterSpacing: "0.08em", maxWidth: "380px", margin: 0 }}>
+            Virtual joystick remapping, physical boundary calibration, and responsive gesture-mapping menus are currently under engineering.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("DEFAULT_1");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+              className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
+              PRESET 1
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}>◀</span>
+            </button>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("DEFAULT_2");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+              className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
+              PRESET 2
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}>◀</span>
+            </button>
+            <button
+              onClick={() => {
+                settingsManager.setPreset("CUSTOM");
+                soundSynth.playHitConfirm();
+                reloadSaveSlots();
+              }}
+              onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
+              className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+              style={{
+                padding: "16px 28px",
+                fontSize: "14px",
+                borderColor: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "rgba(34, 197, 94, 0.4)" : "",
+                color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : ""
+              }}
+            >
+              <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
+              CUSTOM
+              <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}>◀</span>
+            </button>
+          </div>
 
-      <div className="binding-board neo-pressed" style={{ opacity: isTouchDevice ? 0.6 : 1 }}>
-        {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
-          const keys = settingsManager.getKeyMap()[action] || [];
-          const rowMenuIndex = idx + 3;
-          const isFocusedRow = menuIndex === rowMenuIndex;
-          return (
-            <div key={action} className="binding-row" style={{ padding: "8px 4px" }}>
-              <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "14px", display: "flex", alignItems: "center" }}>
-                <span className="cursor-arrow" style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}>▶</span>
-                {action.replace("_", " ")}
-              </span>
-              <div className="flex-row" style={{ gap: "8px" }}>
-                <button
-                  onClick={() => handleRebindTrigger(action)}
-                  className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
-                  disabled={isTouchDevice}
-                  style={{
-                    minWidth: "150px",
-                    padding: "16px 24px",
-                    cursor: isTouchDevice ? "not-allowed" : "pointer",
-                    borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
-                    color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
-                  }}
-                >
-                  {rebindTarget?.action === action && rebindTarget?.index === 0
-                    ? "PRESS ANY KEY..."
-                    : formatKeyDisplayName(keys[0])}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+          <div className="binding-board neo-pressed">
+            {(Object.keys(settingsManager.getKeyMap()) as Action[]).map((action, idx) => {
+              const keys = settingsManager.getKeyMap()[action] || [];
+              const rowMenuIndex = idx + 3;
+              const isFocusedRow = menuIndex === rowMenuIndex;
+              return (
+                <div key={action} className="binding-row" style={{ padding: "8px 4px" }}>
+                  <span className="binding-action-label" style={{ color: isFocusedRow ? "#22c55e" : "", fontSize: "14px", display: "flex", alignItems: "center" }}>
+                    <span className="cursor-arrow" style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}>▶</span>
+                    {action.replace("_", " ")}
+                  </span>
+                  <div className="flex-row" style={{ gap: "8px" }}>
+                    <button
+                      onClick={() => handleRebindTrigger(action)}
+                      className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
+                      style={{
+                        minWidth: "150px",
+                        padding: "16px 24px",
+                        borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
+                        color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : ""
+                      }}
+                    >
+                      {rebindTarget?.action === action && rebindTarget?.index === 0
+                        ? "PRESS ANY KEY..."
+                        : formatKeyDisplayName(keys[0])}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      <div className="controls-notice" style={{
-        background: isTouchDevice ? "rgba(239, 68, 68, 0.08)" : "rgba(168, 85, 247, 0.08)",
-        borderColor: isTouchDevice ? "rgba(239, 68, 68, 0.25)" : "rgba(168, 85, 247, 0.25)",
-        color: isTouchDevice ? "hsl(350, 80%, 75%)" : "hsl(280, 80%, 75%)",
-        textShadow: isTouchDevice ? "0 0 6px rgba(239, 68, 68, 0.35)" : "0 0 6px rgba(168, 85, 247, 0.35)"
-      }}>
-        {isTouchDevice 
-          ? "PHYSICAL KEYBOARD DETECTOR ACTIVE: KEY REBINDING REQUIRES AN ATTACHED ACCESSORY."
-          : "Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)"}
-      </div>
+          <div className="controls-notice" style={{ marginTop: "auto", marginBottom: "auto" }}>
+            Determination Heal: Hold [Move Down] + Press [Jump] (Requires 1 Heal Charge)
+          </div>
+        </>
+      )}
 
       <button
         onClick={onBack}
-        onMouseEnter={() => { playHoverTick(); setMenuIndex(10); }}
-        className={`neo-btn ${menuIndex === 10 ? "neo-btn-focused" : ""}`}
+        onMouseEnter={() => { playHoverTick(); setMenuIndex(backBtnIndex); }}
+        className={`neo-btn ${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}`}
         style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === 10 ? "visible" : "hidden" }}>▶</span>
+        <span className="cursor-arrow" style={{ marginRight: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
         Back
-        <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === 10 ? "visible" : "hidden" }}>◀</span>
+        <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>◀</span>
       </button>
 
     </div>
@@ -3174,16 +3492,33 @@ export function SaveSelectScreen({
             onClick={() => handleSlotSelect(i)}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(i); }}
             className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
-            <div className="flex-col">
-              <span style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                {menuIndex === i && <span className="cursor-arrow" style={{ marginRight: "8px" }}>▶</span>}
-                Slot {i + 1}
+            <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
+              {/* Arrow is always rendered to maintain static text alignment, toggling only visibility */}
+              <span className="cursor-arrow" style={{ 
+                visibility: menuIndex === i ? "visible" : "hidden",
+                width: "16px",
+                display: "inline-block",
+                textAlign: "center"
+              }}>
+                ▶
               </span>
-              <span style={{ fontSize: "11px", textTransform: "uppercase", color: menuIndex === i ? "#22c55e" : "#a0aec0", marginTop: "6px", paddingLeft: menuIndex === i ? "18px" : "0" }}>
-                {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
-              </span>
+              <div className="flex-col" style={{ textAlign: "left" }}>
+                <span style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  Slot {i + 1}
+                </span>
+                <span style={{ 
+                  fontSize: "11px", 
+                  textTransform: "uppercase", 
+                  color: menuIndex === i ? "#22c55e" : "#a0aec0", 
+                  marginTop: "6px" 
+                }}>
+                  {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+                </span>
+              </div>
             </div>
+
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
               <div className={`led-dot ${slot.empty
                   ? i === copySourceIndex ? "led-yellow" : ""
@@ -3203,37 +3538,61 @@ export function SaveSelectScreen({
             onClick={toggleCopyMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
             className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
+            style={{ 
+              flex: 1, 
+              padding: "18px", 
+              fontSize: "16px", 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: "8px" 
+            }}
           >
-            {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
-            Copy Slot
-            {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+            <span>Copy Slot</span>
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
           </button>
           <button
             onClick={toggleEraseMode}
             onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
             className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}`}
-            style={{ flex: 1, padding: "18px", fontSize: "16px" }}
+            style={{ 
+              flex: 1, 
+              padding: "18px", 
+              fontSize: "16px", 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              gap: "8px" 
+            }}
           >
-            {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
-            Delete Slot
-            {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+            <span>Delete Slot</span>
+            <span className="cursor-arrow" style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
           </button>
         </div>
         <button
           onClick={onBack}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(5); }}
           className={`neo-btn ${menuIndex === 5 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "18px", fontSize: "16px" }}
+          style={{ 
+            padding: "18px", 
+            fontSize: "16px", 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center", 
+            gap: "8px" 
+          }}
         >
-          {menuIndex === 5 && <span className="cursor-arrow">▶</span>}
-          Back
-          {menuIndex === 5 && <span className="cursor-arrow">◀</span>}
+          <span className="cursor-arrow" style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>▶</span>
+          <span>Back</span>
+          <span className="cursor-arrow" style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}>◀</span>
         </button>
       </div>
     </div>
   );
 }
+
 
 
 ● ./src/components/menus/SettingsScreen.tsx
@@ -3396,6 +3755,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
   
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -3438,8 +3798,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
-      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
-
       const keyMap = settingsManager.getKeyMap();
       const jumpKeys = keyMap["JUMP"] || [];
       const attackKeys = keyMap["ATTACK"] || [];
@@ -3459,6 +3817,17 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         attackKeys.includes(e.key) ||
         dashKeys.includes(e.code) ||
         dashKeys.includes(e.key);
+
+      if (isMobile && mobileView === "CODE") {
+        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
+          e.preventDefault();
+          soundSynth.playSelectTick();
+          setMobileView("TOC");
+          return;
+        }
+      }
+
+      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
 
       if (e.key === "ArrowDown" || e.key === "KeyS") {
         e.preventDefault();
@@ -3512,6 +3881,15 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           if (node.isDir && expandedDirs[node.path]) {
             setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
           } else {
+            const parts = node.path.split("/");
+            if (parts.length > 1) {
+              const parentPath = parts.slice(0, -1).join("/");
+              const parentIdx = visibleNodes.findIndex((n) => n.isDir && n.path === parentPath);
+              if (parentIdx !== -1) {
+                setActiveIndex(parentIdx);
+                return;
+              }
+            }
             setActiveIndex(visibleNodes.length + 2);
           }
         } else {
@@ -3533,6 +3911,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }));
           } else {
             setSelectedFile(node.path);
+            if (isMobile) {
+              setMobileView("CODE");
+            }
           }
         } else if (activeIndex === visibleNodes.length) {
           soundSynth.playHitConfirm();
@@ -3567,7 +3948,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, expandedDirs, onBack]);
+  }, [visibleNodes, activeIndex, expandedDirs, onBack, isMobile, mobileView]);
 
   useEffect(() => {
     if (activeIndex < visibleNodes.length) {
@@ -3594,152 +3975,281 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          {isMobile ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
+          {isMobile 
+            ? mobileView === "TOC" 
+              ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" 
+              : "SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE"
+            : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
         </p>
       </div>
 
       <div className="source-view-workspace">
         
-        <div ref={listRef} className="directory-tree-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
-          {visibleNodes.map((node, idx) => {
-            const isActive = idx === activeIndex;
-            const isExpanded = node.isDir && !!expandedDirs[node.path];
-            const isCurrentlySelected = !node.isDir && node.path === selectedFile;
+        {(!isMobile || mobileView === "TOC") && (
+          <div 
+            ref={listRef} 
+            className="directory-tree-pane neo-pressed" 
+            style={{ 
+              WebkitOverflowScrolling: "touch",
+              width: isMobile ? "100%" : "24%",
+              height: isMobile ? "100%" : ""
+            }}
+          >
+            {visibleNodes.map((node, idx) => {
+              const isActive = idx === activeIndex;
+              const isExpanded = node.isDir && !!expandedDirs[node.path];
+              const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
-            return (
-              <div
-                key={node.path + "-" + idx}
-                className={isActive ? "file-item-active" : ""}
-                onClick={() => {
-                  soundSynth.playSelectTick();
-                  setActiveIndex(idx);
-                  if (node.isDir) {
-                    setExpandedDirs((prev) => ({ ...prev, [node.path]: !prev[node.path] }));
-                  } else {
-                    setSelectedFile(node.path);
-                  }
-                }}
-                style={{
-                  padding: isMobile ? "12px 14px" : "6px 10px",
-                  paddingLeft: `${node.depth * (isMobile ? 18 : 16) + 10}px`,
-                  borderRadius: "6px",
-                  fontSize: isMobile ? "12px" : "11px",
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  color: isActive 
-                    ? "var(--signal-green)" 
-                    : isCurrentlySelected 
-                      ? "#ffffff" 
-                      : node.isDir 
-                        ? "#718096" 
-                        : "#4a5568",
-                  background: isActive 
-                    ? "rgba(34, 197, 94, 0.08)" 
-                    : isCurrentlySelected 
-                      ? "rgba(255, 255, 255, 0.03)" 
-                      : "transparent",
-                  border: isActive 
-                    ? "1px solid rgba(34, 197, 94, 0.25)" 
-                    : "1px solid transparent",
-                  textShadow: isActive ? "0 0 6px var(--signal-green-glow)" : "none",
-                  wordBreak: "break-all",
-                  transition: "all 0.12s ease",
-                  textAlign: "left"
-                }}
-              >
-                <span style={{ minWidth: "12px", fontSize: "9px" }}>
-                  {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
-                </span>
-                <span style={{ fontSize: "12px" }}>
-                  {node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}
-                </span>
-                <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>
-                  {node.name}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="code-viewer-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
-          {selectedFile ? (
-            <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
-              <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
-                // FILE: {selectedFile}
-              </div>
-              <div style={{ flexGrow: 1, overflow: "auto" }}>
-                <SyntaxHighlighter
-                  language={getLanguageFromPath(selectedFile)}
-                  style={atomDark}
-                  customStyle={{
-                    margin: 0,
-                    padding: 0,
-                    background: "transparent",
-                    fontSize: isMobile ? "9px" : "11px",
-                    lineHeight: "1.5",
+              return (
+                <div
+                  key={node.path + "-" + idx}
+                  className={isActive ? "file-item-active" : ""}
+                  onClick={() => {
+                    soundSynth.playSelectTick();
+                    setActiveIndex(idx);
+                    if (node.isDir) {
+                      setExpandedDirs((prev) => ({ ...prev, [node.path]: !prev[node.path] }));
+                    } else {
+                      setSelectedFile(node.path);
+                      if (isMobile) {
+                        setMobileView("CODE");
+                      }
+                    }
+                  }}
+                  style={{
+                    paddingTop: isMobile ? "14px" : "6px",
+                    paddingBottom: isMobile ? "14px" : "6px",
+                    paddingRight: isMobile ? "16px" : "10px",
+                    paddingLeft: `${node.depth * (isMobile ? 22 : 16) + (isMobile ? 16 : 10)}px`,
+                    borderRadius: "6px",
+                    fontSize: isMobile ? "13px" : "11px",
+                    fontFamily: "monospace",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: isActive 
+                      ? "var(--signal-green)" 
+                      : isCurrentlySelected 
+                        ? "#ffffff" 
+                        : node.isDir 
+                          ? "#718096" 
+                          : "#4a5568",
+                    background: isActive 
+                      ? "rgba(34, 197, 94, 0.08)" 
+                      : isCurrentlySelected 
+                        ? "rgba(255, 255, 255, 0.03)" 
+                        : "transparent",
+                    border: isActive 
+                      ? "1px solid rgba(34, 197, 94, 0.25)" 
+                      : "1px solid transparent",
+                    textShadow: isActive ? "0 0 6px var(--signal-green-glow)" : "none",
+                    wordBreak: "break-all",
+                    transition: "all 0.12s ease",
+                    textAlign: "left"
                   }}
                 >
-                  {manifest[selectedFile] || ""}
-                </SyntaxHighlighter>
+                  <span style={{ minWidth: "12px", fontSize: "10px" }}>
+                    {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
+                  </span>
+                  <span style={{ fontSize: "13px" }}>
+                    {node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}
+                  </span>
+                  <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>
+                    {node.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {(!isMobile || mobileView === "CODE") && (
+          <div 
+            className="code-viewer-pane neo-pressed" 
+            style={{ 
+              WebkitOverflowScrolling: "touch",
+              width: isMobile ? "100%" : "76%",
+              height: isMobile ? "100%" : "",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            {isMobile && (
+              <button
+                onClick={() => {
+                  soundSynth.playSelectTick();
+                  setMobileView("TOC");
+                }}
+                className="neo-btn"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "12px",
+                  marginBottom: "12px",
+                  borderColor: "var(--signal-green)",
+                  color: "var(--signal-green)",
+                  flexShrink: 0,
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px"
+                }}
+              >
+                📁 BACK TO DIRECTORY
+              </button>
+            )}
+
+            {selectedFile ? (
+              <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+                <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0, fontSize: isMobile ? "10px" : "11px", wordBreak: "break-all" }}>
+                  // FILE: {selectedFile}
+                </div>
+                <div style={{ flexGrow: 1, overflow: "auto" }}>
+                  <SyntaxHighlighter
+                    language={getLanguageFromPath(selectedFile)}
+                    style={atomDark}
+                    customStyle={{
+                      margin: 0,
+                      padding: 0,
+                      background: "transparent",
+                      fontSize: isMobile ? "10px" : "11px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    {manifest[selectedFile] || ""}
+                  </SyntaxHighlighter>
+                </div>
               </div>
-            </div>
-          ) : (
-            <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
-          )}
-        </div>
+            ) : (
+              <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
+            )}
+          </div>
+        )}
 
       </div>
 
-      <div className="source-view-footer flex-row">
-        
-        <a 
-          href="https://github.com/stevencasteel/BOX-BATTLE" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 28px", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>
-          <svg 
-            viewBox="0 0 24 24" 
-            width="14" 
-            height="14" 
-            stroke="currentColor" 
-            strokeWidth="2.5" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            style={{ display: "inline-block", marginRight: "8px" }}
+      <div 
+        className="source-view-footer" 
+        style={{ 
+          display: "flex", 
+          flexDirection: "row", 
+          gap: isMobile ? "8px" : "16px", 
+          width: "100%", 
+          justifyContent: "space-between", 
+          boxSizing: "border-box", 
+          marginTop: "12px",
+          flexShrink: 0
+        }}
+      >
+        <div style={{ flex: 1, display: "flex" }}>
+          <a 
+            href="https://github.com/stevencasteel/BOX-BATTLE" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 28px", 
+              fontSize: isMobile ? "12px" : "14px", 
+              textDecoration: "none", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              boxSizing: "border-box"
+            }}
           >
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-          </svg>
-          GITHUB REPO
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span>
-        </a>
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>}
+            <svg 
+              viewBox="0 0 24 24" 
+              width={isMobile ? "22" : "14"} 
+              height={isMobile ? "22" : "14"} 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              fill="none" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{ display: "inline-block", marginRight: isMobile ? "0" : "8px" }}
+            >
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg>
+            {!isMobile && <>GITHUB REPO <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span></>}
+          </a>
+        </div>
 
-        <button
-          onClick={handleDownload}
-          className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 28px", fontSize: "14px" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>
-          DOWNLOAD SOURCE (.TXT)
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
-        </button>
+        <div style={{ flex: 1, display: "flex" }}>
+          <button
+            onClick={handleDownload}
+            className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 28px", 
+              fontSize: isMobile ? "12px" : "14px",
+              boxSizing: "border-box"
+            }}
+          >
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>}
+            {isMobile ? (
+              <svg 
+                viewBox="0 0 24 24" 
+                width="22" 
+                height="22" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ display: "inline-block" }}
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ) : (
+              <>
+                DOWNLOAD SOURCE (.TXT)
+                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
+              </>
+            )}
+          </button>
+        </div>
 
-        <button
-          onClick={onBack}
-          className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 32px", fontSize: "14px", width: "160px" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>
-          Back
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
-        </button>
-
+        <div style={{ flex: 1, display: "flex" }}>
+          <button
+            onClick={onBack}
+            className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 32px", 
+              fontSize: isMobile ? "12px" : "14px",
+              boxSizing: "border-box"
+            }}
+          >
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>}
+            {isMobile ? (
+              <svg 
+                viewBox="0 0 24 24" 
+                width="22" 
+                height="22" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ display: "inline-block" }}
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            ) : (
+              <>
+                Back
+                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
     </div>
@@ -5765,6 +6275,9 @@ export class AudioContextManager {
 
     this.initialized = true;
 
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+    Tone.getContext().lookAhead = isMobile ? 0.15 : 0.05;
+
     this.masterVolume = new Tone.Volume(-120).toDestination();
     this.limiter = new Tone.Limiter(-12);
 
@@ -6050,8 +6563,11 @@ export class MusicSequencer {
       envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.25 }
     }).connect(musicGain);
 
-    const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(musicGain);
-    this.musicArpSynth.connect(delay);
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+    if (!isMobile) {
+      const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(musicGain);
+      this.musicArpSynth.connect(delay);
+    }
 
     this.setupMusicSequences();
 
@@ -6979,8 +7495,18 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     }
   },
   CONTROLS: {
-    getMaxIndex: () => 10,
+    getMaxIndex: () => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      return isTouch ? 0 : 10;
+    },
     onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
+      const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) {
+        navTo("OPTIONS");
+        setMenuIndex(1);
+        soundSynth.playErrorTick();
+        return;
+      }
       if (menuIndex === 0) {
         settingsManager.setPreset("DEFAULT_1");
         soundSynth.playHitConfirm();

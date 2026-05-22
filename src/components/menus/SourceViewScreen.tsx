@@ -94,6 +94,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
   
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -136,8 +137,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
-      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
-
       const keyMap = settingsManager.getKeyMap();
       const jumpKeys = keyMap["JUMP"] || [];
       const attackKeys = keyMap["ATTACK"] || [];
@@ -157,6 +156,17 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         attackKeys.includes(e.key) ||
         dashKeys.includes(e.code) ||
         dashKeys.includes(e.key);
+
+      if (isMobile && mobileView === "CODE") {
+        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
+          e.preventDefault();
+          soundSynth.playSelectTick();
+          setMobileView("TOC");
+          return;
+        }
+      }
+
+      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
 
       if (e.key === "ArrowDown" || e.key === "KeyS") {
         e.preventDefault();
@@ -210,6 +220,15 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           if (node.isDir && expandedDirs[node.path]) {
             setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
           } else {
+            const parts = node.path.split("/");
+            if (parts.length > 1) {
+              const parentPath = parts.slice(0, -1).join("/");
+              const parentIdx = visibleNodes.findIndex((n) => n.isDir && n.path === parentPath);
+              if (parentIdx !== -1) {
+                setActiveIndex(parentIdx);
+                return;
+              }
+            }
             setActiveIndex(visibleNodes.length + 2);
           }
         } else {
@@ -231,6 +250,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }));
           } else {
             setSelectedFile(node.path);
+            if (isMobile) {
+              setMobileView("CODE");
+            }
           }
         } else if (activeIndex === visibleNodes.length) {
           soundSynth.playHitConfirm();
@@ -265,7 +287,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, expandedDirs, onBack]);
+  }, [visibleNodes, activeIndex, expandedDirs, onBack, isMobile, mobileView]);
 
   useEffect(() => {
     if (activeIndex < visibleNodes.length) {
@@ -292,154 +314,281 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          {isMobile ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
+          {isMobile 
+            ? mobileView === "TOC" 
+              ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" 
+              : "SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE"
+            : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
         </p>
       </div>
 
       <div className="source-view-workspace">
         
-        <div ref={listRef} className="directory-tree-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
-          {visibleNodes.map((node, idx) => {
-            const isActive = idx === activeIndex;
-            const isExpanded = node.isDir && !!expandedDirs[node.path];
-            const isCurrentlySelected = !node.isDir && node.path === selectedFile;
+        {(!isMobile || mobileView === "TOC") && (
+          <div 
+            ref={listRef} 
+            className="directory-tree-pane neo-pressed" 
+            style={{ 
+              WebkitOverflowScrolling: "touch",
+              width: isMobile ? "100%" : "24%",
+              height: isMobile ? "100%" : ""
+            }}
+          >
+            {visibleNodes.map((node, idx) => {
+              const isActive = idx === activeIndex;
+              const isExpanded = node.isDir && !!expandedDirs[node.path];
+              const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
-            return (
-              <div
-                key={node.path + "-" + idx}
-                className={isActive ? "file-item-active" : ""}
-                onClick={() => {
-                  soundSynth.playSelectTick();
-                  setActiveIndex(idx);
-                  if (node.isDir) {
-                    setExpandedDirs((prev) => ({ ...prev, [node.path]: !prev[node.path] }));
-                  } else {
-                    setSelectedFile(node.path);
-                  }
-                }}
-                style={{
-                  paddingTop: isMobile ? "12px" : "6px",
-                  paddingBottom: isMobile ? "12px" : "6px",
-                  paddingRight: isMobile ? "14px" : "10px",
-                  paddingLeft: `${node.depth * (isMobile ? 18 : 16) + (isMobile ? 14 : 10)}px`,
-                  borderRadius: "6px",
-                  fontSize: isMobile ? "12px" : "11px",
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  color: isActive 
-                    ? "var(--signal-green)" 
-                    : isCurrentlySelected 
-                      ? "#ffffff" 
-                      : node.isDir 
-                        ? "#718096" 
-                        : "#4a5568",
-                  background: isActive 
-                    ? "rgba(34, 197, 94, 0.08)" 
-                    : isCurrentlySelected 
-                      ? "rgba(255, 255, 255, 0.03)" 
-                      : "transparent",
-                  border: isActive 
-                    ? "1px solid rgba(34, 197, 94, 0.25)" 
-                    : "1px solid transparent",
-                  textShadow: isActive ? "0 0 6px var(--signal-green-glow)" : "none",
-                  wordBreak: "break-all",
-                  transition: "all 0.12s ease",
-                  textAlign: "left"
-                }}
-              >
-                <span style={{ minWidth: "12px", fontSize: "9px" }}>
-                  {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
-                </span>
-                <span style={{ fontSize: "12px" }}>
-                  {node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}
-                </span>
-                <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>
-                  {node.name}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="code-viewer-pane neo-pressed" style={{ WebkitOverflowScrolling: "touch" }}>
-          {selectedFile ? (
-            <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%" }}>
-              <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0 }}>
-                // FILE: {selectedFile}
-              </div>
-              <div style={{ flexGrow: 1, overflow: "auto" }}>
-                <SyntaxHighlighter
-                  language={getLanguageFromPath(selectedFile)}
-                  style={atomDark}
-                  customStyle={{
-                    margin: 0,
-                    padding: 0,
-                    background: "transparent",
-                    fontSize: isMobile ? "9px" : "11px",
-                    lineHeight: "1.5",
+              return (
+                <div
+                  key={node.path + "-" + idx}
+                  className={isActive ? "file-item-active" : ""}
+                  onClick={() => {
+                    soundSynth.playSelectTick();
+                    setActiveIndex(idx);
+                    if (node.isDir) {
+                      setExpandedDirs((prev) => ({ ...prev, [node.path]: !prev[node.path] }));
+                    } else {
+                      setSelectedFile(node.path);
+                      if (isMobile) {
+                        setMobileView("CODE");
+                      }
+                    }
+                  }}
+                  style={{
+                    paddingTop: isMobile ? "14px" : "6px",
+                    paddingBottom: isMobile ? "14px" : "6px",
+                    paddingRight: isMobile ? "16px" : "10px",
+                    paddingLeft: `${node.depth * (isMobile ? 22 : 16) + (isMobile ? 16 : 10)}px`,
+                    borderRadius: "6px",
+                    fontSize: isMobile ? "13px" : "11px",
+                    fontFamily: "monospace",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: isActive 
+                      ? "var(--signal-green)" 
+                      : isCurrentlySelected 
+                        ? "#ffffff" 
+                        : node.isDir 
+                          ? "#718096" 
+                          : "#4a5568",
+                    background: isActive 
+                      ? "rgba(34, 197, 94, 0.08)" 
+                      : isCurrentlySelected 
+                        ? "rgba(255, 255, 255, 0.03)" 
+                        : "transparent",
+                    border: isActive 
+                      ? "1px solid rgba(34, 197, 94, 0.25)" 
+                      : "1px solid transparent",
+                    textShadow: isActive ? "0 0 6px var(--signal-green-glow)" : "none",
+                    wordBreak: "break-all",
+                    transition: "all 0.12s ease",
+                    textAlign: "left"
                   }}
                 >
-                  {manifest[selectedFile] || ""}
-                </SyntaxHighlighter>
+                  <span style={{ minWidth: "12px", fontSize: "10px" }}>
+                    {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
+                  </span>
+                  <span style={{ fontSize: "13px" }}>
+                    {node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}
+                  </span>
+                  <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>
+                    {node.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {(!isMobile || mobileView === "CODE") && (
+          <div 
+            className="code-viewer-pane neo-pressed" 
+            style={{ 
+              WebkitOverflowScrolling: "touch",
+              width: isMobile ? "100%" : "76%",
+              height: isMobile ? "100%" : "",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            {isMobile && (
+              <button
+                onClick={() => {
+                  soundSynth.playSelectTick();
+                  setMobileView("TOC");
+                }}
+                className="neo-btn"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "12px",
+                  marginBottom: "12px",
+                  borderColor: "var(--signal-green)",
+                  color: "var(--signal-green)",
+                  flexShrink: 0,
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px"
+                }}
+              >
+                📁 BACK TO DIRECTORY
+              </button>
+            )}
+
+            {selectedFile ? (
+              <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+                <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0, fontSize: isMobile ? "10px" : "11px", wordBreak: "break-all" }}>
+                  // FILE: {selectedFile}
+                </div>
+                <div style={{ flexGrow: 1, overflow: "auto" }}>
+                  <SyntaxHighlighter
+                    language={getLanguageFromPath(selectedFile)}
+                    style={atomDark}
+                    customStyle={{
+                      margin: 0,
+                      padding: 0,
+                      background: "transparent",
+                      fontSize: isMobile ? "10px" : "11px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    {manifest[selectedFile] || ""}
+                  </SyntaxHighlighter>
+                </div>
               </div>
-            </div>
-          ) : (
-            <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
-          )}
-        </div>
+            ) : (
+              <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
+            )}
+          </div>
+        )}
 
       </div>
 
-      <div className="source-view-footer flex-row">
-        
-        <a 
-          href="https://github.com/stevencasteel/BOX-BATTLE" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 28px", fontSize: "14px", textDecoration: "none", display: "flex", alignItems: "center" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>
-          <svg 
-            viewBox="0 0 24 24" 
-            width="14" 
-            height="14" 
-            stroke="currentColor" 
-            strokeWidth="2.5" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            style={{ display: "inline-block", marginRight: "8px" }}
+      <div 
+        className="source-view-footer" 
+        style={{ 
+          display: "flex", 
+          flexDirection: "row", 
+          gap: isMobile ? "8px" : "16px", 
+          width: "100%", 
+          justifyContent: "space-between", 
+          boxSizing: "border-box", 
+          marginTop: "12px",
+          flexShrink: 0
+        }}
+      >
+        <div style={{ flex: 1, display: "flex" }}>
+          <a 
+            href="https://github.com/stevencasteel/BOX-BATTLE" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 28px", 
+              fontSize: isMobile ? "12px" : "14px", 
+              textDecoration: "none", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              boxSizing: "border-box"
+            }}
           >
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-          </svg>
-          GITHUB REPO
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span>
-        </a>
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>}
+            <svg 
+              viewBox="0 0 24 24" 
+              width={isMobile ? "22" : "14"} 
+              height={isMobile ? "22" : "14"} 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              fill="none" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{ display: "inline-block", marginRight: isMobile ? "0" : "8px" }}
+            >
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+            </svg>
+            {!isMobile && <>GITHUB REPO <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span></>}
+          </a>
+        </div>
 
-        <button
-          onClick={handleDownload}
-          className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 28px", fontSize: "14px" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>
-          DOWNLOAD SOURCE (.TXT)
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
-        </button>
+        <div style={{ flex: 1, display: "flex" }}>
+          <button
+            onClick={handleDownload}
+            className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 28px", 
+              fontSize: isMobile ? "12px" : "14px",
+              boxSizing: "border-box"
+            }}
+          >
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>}
+            {isMobile ? (
+              <svg 
+                viewBox="0 0 24 24" 
+                width="22" 
+                height="22" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ display: "inline-block" }}
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            ) : (
+              <>
+                DOWNLOAD SOURCE (.TXT)
+                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
+              </>
+            )}
+          </button>
+        </div>
 
-        <button
-          onClick={onBack}
-          className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
-          style={{ padding: "16px 32px", fontSize: "14px", width: "160px" }}
-        >
-          <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>
-          Back
-          <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
-        </button>
-
+        <div style={{ flex: 1, display: "flex" }}>
+          <button
+            onClick={onBack}
+            className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
+            style={{ 
+              width: "100%", 
+              padding: isMobile ? "12px" : "16px 32px", 
+              fontSize: isMobile ? "12px" : "14px",
+              boxSizing: "border-box"
+            }}
+          >
+            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>}
+            {isMobile ? (
+              <svg 
+                viewBox="0 0 24 24" 
+                width="22" 
+                height="22" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ display: "inline-block" }}
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            ) : (
+              <>
+                Back
+                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
     </div>

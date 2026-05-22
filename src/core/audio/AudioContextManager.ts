@@ -62,6 +62,9 @@ export class AudioContextManager {
 
     this.initialized = true;
 
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+    Tone.getContext().lookAhead = isMobile ? 0.15 : 0.05;
+
     this.masterVolume = new Tone.Volume(-120).toDestination();
     this.limiter = new Tone.Limiter(-12);
 
