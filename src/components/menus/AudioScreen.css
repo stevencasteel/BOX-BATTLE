@@ -1,26 +1,26 @@
 .mixer-board {
   width: 100%;
-  max-width: 600px;
-  padding: 32px;
-  border-radius: 28px;
+  max-width: 60vmin;
+  padding: 3.2vmin;
+  border-radius: 2.8vmin;
   margin: auto 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 3.2vmin;
   box-sizing: border-box;
 }
 
 .mixer-strip {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1vmin;
   width: 100%;
 }
 
 .mixer-header {
   display: flex;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 1.5vmin;
   font-weight: bold;
   letter-spacing: 0.12em;
   color: #718096;
@@ -29,7 +29,7 @@
 .slider-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1.6vmin;
   width: 100%;
   box-sizing: border-box;
 }
@@ -38,5 +38,13 @@
   .mixer-board {
     padding: 18px;
     gap: 20px;
+    max-width: none;
+    border-radius: 16px;
+  }
+  .mixer-header {
+    font-size: 14px;
+  }
+  .slider-row {
+    gap: 12px;
   }
 }

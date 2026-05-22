@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 12:02:43 PM
+ [SYSTEM] Generated: 5/22/2026, 12:11:22 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -421,8 +421,6 @@ export default defineConfig([
   position: relative;
   width: min(95vw, 81.2vh);
   height: min(111vw, 95vh);
-  max-width: 1200px;
-  max-height: 95vh;
   border-radius: 20px;
   background: #0f1218;
   padding: 2.5vmin;
@@ -468,7 +466,7 @@ export default defineConfig([
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 24px;
+  padding: 2.5vmin;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -561,13 +559,13 @@ export default defineConfig([
 }
 
 .title-banner {
-  padding-top: 25px;
+  padding-top: 2vmin;
   margin-top: 0;
   text-align: center;
 }
 
 .title-banner h2 {
-  font-size: 2rem;
+  font-size: 2.5vmin;
   margin: 0;
   font-weight: bold;
   text-transform: uppercase;
@@ -576,9 +574,9 @@ export default defineConfig([
 }
 
 .title-banner p {
-  font-size: 14px;
+  font-size: 1.3vmin;
   color: var(--signal-green);
-  margin: 12px 0 0;
+  margin: 1vmin 0 0;
   letter-spacing: 0.35em;
   font-weight: bold;
   text-shadow: 0 0 8px var(--signal-green-glow);
@@ -610,6 +608,12 @@ export default defineConfig([
 
   .title-banner {
     padding-top: 10px;
+  }
+  .title-banner h2 {
+    font-size: 20px;
+  }
+  .title-banner p {
+    font-size: 11px;
   }
 }
 
@@ -1849,27 +1853,27 @@ export function GameArena({
 ────────────────────────────────────────────────────
 .mixer-board {
   width: 100%;
-  max-width: 600px;
-  padding: 32px;
-  border-radius: 28px;
+  max-width: 60vmin;
+  padding: 3.2vmin;
+  border-radius: 2.8vmin;
   margin: auto 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 3.2vmin;
   box-sizing: border-box;
 }
 
 .mixer-strip {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1vmin;
   width: 100%;
 }
 
 .mixer-header {
   display: flex;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 1.5vmin;
   font-weight: bold;
   letter-spacing: 0.12em;
   color: #718096;
@@ -1878,7 +1882,7 @@ export function GameArena({
 .slider-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1.6vmin;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1887,6 +1891,14 @@ export function GameArena({
   .mixer-board {
     padding: 18px;
     gap: 20px;
+    max-width: none;
+    border-radius: 16px;
+  }
+  .mixer-header {
+    font-size: 14px;
+  }
+  .slider-row {
+    gap: 12px;
   }
 }
 
@@ -2009,12 +2021,12 @@ export function AudioScreen({
         </div>
       </div>
 
-      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "280px", marginTop: "10px" }}>
+      <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
         <button
           onClick={resetSettings}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
           className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
-          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+          style={{ width: "100%", padding: "1.4vmin 2vmin", fontSize: "1.4vmin", borderRadius: "1vmin", whiteSpace: "nowrap" }}
         >
           {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
           RESET ALL TO 100%
@@ -2025,7 +2037,7 @@ export function AudioScreen({
           onClick={onBack}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
           className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : ""}`}
-          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+          style={{ width: "100%", padding: "1.4vmin 2vmin", fontSize: "1.4vmin", borderRadius: "1vmin", whiteSpace: "nowrap" }}
         >
           {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
           Back
@@ -2042,13 +2054,13 @@ export function AudioScreen({
 ────────────────────────────────────────────────────
 .binding-board {
   width: 100%;
-  max-width: 640px;
-  padding: 16px 20px;
-  border-radius: 24px;
+  max-width: 64vmin;
+  padding: 1.6vmin 2vmin;
+  border-radius: 2.4vmin;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px 20px;
+  gap: 1vmin 2vmin;
   box-sizing: border-box;
   overflow-y: auto;
   max-height: 40vh;
@@ -2058,9 +2070,9 @@ export function AudioScreen({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 1.2vmin;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 6px 4px;
+  padding: 0.6vmin 0.4vmin;
   box-sizing: border-box;
 }
 
@@ -2072,27 +2084,27 @@ export function AudioScreen({
 }
 
 .binding-btn {
-  min-width: 100px;
+  min-width: 10vmin;
   text-align: center;
-  font-size: 14px;
-  padding: 14px 22px;
-  border-radius: 8px;
+  font-size: 1.4vmin;
+  padding: 1.4vmin 2.2vmin;
+  border-radius: 0.8vmin;
 }
 
 .controls-notice {
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 1vmin 2vmin;
+  border-radius: 1vmin;
   background: rgba(168, 85, 247, 0.08);
   border: 1px solid rgba(168, 85, 247, 0.25);
   color: hsl(280, 80%, 75%);
-  font-size: 11px;
+  font-size: 1.1vmin;
   font-weight: bold;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 640px;
+  max-width: 64vmin;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -2101,22 +2113,28 @@ export function AudioScreen({
   .binding-board {
     grid-template-columns: 1fr;
     gap: 8px;
-    max-height: 35vh;
-    padding: 12px;
+    max-height: 30vh;
+    padding: 10px;
+    max-width: none;
+    border-radius: 16px;
   }
   .binding-row {
     padding: 4px 0;
+    font-size: 12px;
   }
   .binding-btn {
     min-width: 110px;
     padding: 10px 16px;
     font-size: 12px;
+    border-radius: 6px;
   }
   .controls-notice {
     font-size: 9px;
     padding: 8px 12px;
     white-space: normal;
     line-height: 1.4;
+    max-width: none;
+    border-radius: 8px;
   }
 }
 
@@ -2341,10 +2359,10 @@ export function ControlsScreen({
 ● ./src/components/menus/CreditsScreen.css
 ────────────────────────────────────────────────────
 .credits-block {
-  max-width: 640px;
-  padding: 32px;
+  max-width: 64vmin;
+  padding: 3.2vmin;
   width: 100%;
-  border-radius: 20px;
+  border-radius: 2vmin;
   margin: auto 0;
   box-sizing: border-box;
 }
@@ -2352,7 +2370,7 @@ export function ControlsScreen({
 .credits-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 1.2vmin;
   width: 100%;
   box-sizing: border-box;
 }
@@ -2360,17 +2378,17 @@ export function ControlsScreen({
 .credits-item {
   background: var(--surface-bg);
   border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 1.2vmin;
+  padding: 1.2vmin 1.6vmin;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.4vmin;
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
 }
 
 .credits-tech-title {
-  font-size: 10px;
+  font-size: 1.4vmin;
   font-weight: bold;
   color: var(--signal-green);
   text-transform: uppercase;
@@ -2379,7 +2397,7 @@ export function ControlsScreen({
 }
 
 .credits-tech-desc {
-  font-size: 9px;
+  font-size: 1.25vmin;
   color: #a0aec0;
   line-height: 1.45;
   text-transform: uppercase;
@@ -2390,6 +2408,7 @@ export function ControlsScreen({
   .credits-block {
     padding: 12px 16px !important;
     border-radius: 12px !important;
+    max-width: none;
   }
   .credits-grid {
     grid-template-columns: 1fr;
@@ -2399,6 +2418,13 @@ export function ControlsScreen({
   }
   .credits-item {
     padding: 8px 12px;
+    border-radius: 8px;
+  }
+  .credits-tech-title {
+    font-size: 11px;
+  }
+  .credits-tech-desc {
+    font-size: 10px;
   }
 }
 
@@ -2419,15 +2445,15 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>Engine Architecture & Technologies</p>
       </div>
 
-      <div className="credits-block neo-pressed flex-col" style={{ width: "100%", maxWidth: "680px", padding: "18px 24px", borderRadius: "24px", boxSizing: "border-box" }}>
-        <div style={{ textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "12px", marginBottom: "12px" }}>
-          <p style={{ fontSize: "12px", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Built by Steven Casteel</p>
-          <p style={{ fontSize: "9px", color: "#4ade80", margin: "6px 0 0", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "bold", textShadow: "0 0 6px rgba(74, 222, 128, 0.2)" }}>AI Co-Pilots: Gemini 2.5 Pro, Gemini 3.5 Flash</p>
+      <div className="credits-block neo-pressed flex-col" style={{ width: "100%", maxWidth: "68vmin", padding: "3.2vmin", borderRadius: "2vmin", boxSizing: "border-box" }}>
+        <div style={{ textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.03)", paddingBottom: "1.2vmin", marginBottom: "1.2vmin" }}>
+          <p style={{ fontSize: "1.6vmin", fontWeight: "bold", color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, textShadow: "0 0 8px rgba(34, 197, 94, 0.45)" }}>Built by Steven Casteel</p>
+          <p style={{ fontSize: "1.2vmin", color: "#4ade80", margin: "0.6vmin 0 0", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: "bold", textShadow: "0 0 6px rgba(74, 222, 128, 0.2)" }}>AI Co-Pilots: Gemini 2.5 Pro, Gemini 3.5 Flash</p>
           <a 
             href="https://www.stevencasteel.com" 
             target="_blank" 
             rel="noopener noreferrer" 
-            style={{ display: "inline-block", fontSize: "8px", color: "#4a5568", margin: "6px 0 0", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease" }}
+            style={{ display: "inline-block", fontSize: "1.1vmin", color: "#4a5568", margin: "0.6vmin 0 0", letterSpacing: "0.15em", textDecoration: "none", transition: "color 0.15s ease" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "var(--signal-green)")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "#4a5568")}
           >
@@ -2478,9 +2504,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 .slot-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 2.2vmin;
   width: 100%;
-  max-width: 640px;
+  max-width: 64vmin;
   margin: auto 0;
 }
 
@@ -2488,8 +2514,8 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
-  border-radius: 14px;
+  padding: 2.4vmin 3.2vmin;
+  border-radius: 1.4vmin;
   cursor: pointer;
   transition: all 0.15s ease;
   width: 100%;
@@ -2527,6 +2553,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 @media (max-width: 768px) {
   .slot-list {
     gap: 10px;
+    max-width: none;
   }
   .slot-card {
     padding: 12px 16px;
@@ -3525,14 +3552,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 14px 24px;
+  padding: 1.5vmin 2.5vmin;
   position: relative;
 }
 
 .title-grid-overlay {
   position: absolute;
   inset: 0;
-  background-size: 32px 32px;
+  background-size: 3.2vmin 3.2vmin;
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
@@ -3546,29 +3573,29 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 25px;
+  padding-top: 1.5vmin;
 }
 
 .system-tag {
-  font-size: 9px;
+  font-size: 1.1vmin;
   color: #4a5568;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: bold;
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 5px 14px;
-  border-radius: 4px;
+  padding: 0.5vmin 1.4vmin;
+  border-radius: 0.4vmin;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .title-banner-overhauled {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 1.5vmin;
   width: 100%;
 }
 
 .title-banner-overhauled h1 {
-  font-size: clamp(1.8rem, 7vw, 3.5rem);
+  font-size: 4vmin;
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -3583,20 +3610,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 1.6vmin;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 0.8vmin;
 }
 
 .subtitle-line {
   height: 1px;
   flex-grow: 1;
-  max-width: 80px;
+  max-width: 8vmin;
   background: linear-gradient(to right, transparent, var(--signal-green), transparent);
 }
 
 .subtitle-text {
-  font-size: 11px;
+  font-size: 1.2vmin;
   color: var(--signal-green);
   margin: 0;
   letter-spacing: 0.35em;
@@ -3615,20 +3642,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
 .btn-container {
   width: 100%;
-  max-width: 540px;
+  max-width: 54vmin;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 2.4vmin;
   margin-bottom: 20px;
   box-sizing: border-box;
 }
 
 .btn-container-overhauled {
   width: 100%;
-  max-width: 580px;
+  max-width: 58vmin;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.8vmin;
 }
 
 .neo-btn-large {
@@ -3750,24 +3777,24 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 .title-screen-footer {
   z-index: 2;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 1vmin;
 }
 
 .footer-deco-line {
   height: 1px;
   background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 80%, transparent);
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 0.8vmin;
 }
 
 .footer-status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 8px;
+  font-size: 0.9vmin;
   color: #4a5568;
   letter-spacing: 0.15em;
-  padding: 0 16px;
+  padding: 0 1.6vmin;
   text-transform: uppercase;
 }
 
@@ -3776,22 +3803,89 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   font-weight: bold;
 }
 
+.title-screen-container .neo-btn-large {
+  padding: 2.2vmin 3.2vmin;
+  border-radius: 1.2vmin;
+}
+
+.title-screen-container .neo-btn-large-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+}
+
+.title-screen-container .neo-btn-large .btn-indicator-light {
+  width: 1vmin;
+  height: 1vmin;
+  margin-right: 2.4vmin;
+}
+
+.title-screen-container .btn-main-label {
+  font-size: 1.7vmin;
+}
+
+.title-screen-container .btn-sub-label {
+  font-size: 1vmin;
+}
+
+.title-screen-container .cursor-arrow-large {
+  font-size: 1.8vmin;
+  margin-left: 1vmin;
+}
+
 @media (max-width: 768px) {
   .title-screen-container {
     padding: 8px 12px;
   }
+  .title-screen-header {
+    padding-top: 10px;
+  }
+  .system-tag {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+  .title-banner-overhauled {
+    margin-top: 8px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 26px;
+  }
+  .title-subtitle-container {
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .subtitle-text {
+    font-size: 10px;
+  }
+  .btn-container {
+    max-width: none;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .btn-container-overhauled {
+    max-width: none;
+    gap: 10px;
+  }
   .neo-btn-large {
-    padding: 16px 20px;
+    padding: 14px 20px;
     border-radius: 10px;
   }
   .neo-btn-large .btn-indicator-light {
+    width: 8px;
+    height: 8px;
     margin-right: 14px;
   }
-  .btn-container {
-    gap: 14px;
+  .btn-main-label {
+    font-size: 14px;
   }
-  .btn-container-overhauled {
-    gap: 10px;
+  .btn-sub-label {
+    font-size: 9px;
+  }
+  .cursor-arrow-large {
+    font-size: 14px;
   }
   .footer-status-bar {
     font-size: 7px;
@@ -3799,6 +3893,26 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }
   .footer-center-prompt {
     display: none;
+  }
+  
+  .title-screen-container .neo-btn-large {
+    padding: 14px 20px;
+    border-radius: 10px;
+  }
+  .title-screen-container .neo-btn-large .btn-indicator-light {
+    width: 8px;
+    height: 8px;
+    margin-right: 14px;
+  }
+  .title-screen-container .btn-main-label {
+    font-size: 14px;
+  }
+  .title-screen-container .btn-sub-label {
+    font-size: 9px;
+  }
+  .title-screen-container .cursor-arrow-large {
+    font-size: 14px;
+    margin-left: 10px;
   }
 }
 
@@ -10442,19 +10556,19 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   box-shadow: var(--shadow-light), var(--shadow-dark);
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
-  padding: 24px 48px;
-  font-size: 18px;
+  padding: 2.2vmin 4.4vmin;
+  font-size: 1.7vmin;
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  border-radius: 12px;
+  border-radius: 1.2vmin;
   cursor: pointer;
   transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.8vmin;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -10477,8 +10591,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .led-dot {
-  width: 14px;
-  height: 14px;
+  width: 1.3vmin;
+  height: 1.3vmin;
   border-radius: 25%;
   transition: all 0.2s ease;
 }
@@ -10502,12 +10616,12 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 12px;
-  border-radius: 6px;
+  height: 1.2vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
   outline: none;
-  margin: 10px 0;
+  margin: 1vmin 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
@@ -10515,9 +10629,9 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 .custom-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 28px;
-  border-radius: 6px;
+  width: 2.2vmin;
+  height: 2.6vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -10535,9 +10649,9 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .custom-range-slider::-moz-range-thumb {
-  width: 24px;
-  height: 28px;
-  border-radius: 6px;
+  width: 2.2vmin;
+  height: 2.6vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -10556,8 +10670,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 
 .custom-range-slider::-moz-range-progress {
   background: var(--signal-green);
-  height: 12px;
-  border-radius: 6px;
+  height: 1.2vmin;
+  border-radius: 0.6vmin;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-right: none;
 }
@@ -10566,14 +10680,26 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;
+    border-radius: 12px;
+  }
+  .led-dot {
+    width: 14px;
+    height: 14px;
+  }
+  .custom-range-slider {
+    height: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
   }
   .custom-range-slider::-webkit-slider-thumb {
     width: 28px;
     height: 32px;
+    border-radius: 6px;
   }
   .custom-range-slider::-moz-range-thumb {
     width: 28px;
     height: 32px;
+    border-radius: 6px;
   }
 }
 

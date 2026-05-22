@@ -113,12 +113,12 @@ export function AudioScreen({
         </div>
       </div>
 
-      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "280px", marginTop: "10px" }}>
+      <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
         <button
           onClick={resetSettings}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
           className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
-          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+          style={{ width: "100%", padding: "1.4vmin 2vmin", fontSize: "1.4vmin", borderRadius: "1vmin", whiteSpace: "nowrap" }}
         >
           {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
           RESET ALL TO 100%
@@ -129,7 +129,7 @@ export function AudioScreen({
           onClick={onBack}
           onMouseEnter={() => { playHoverTick(); setMenuIndex(4); }}
           className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : ""}`}
-          style={{ width: "100%", padding: "14px 24px", fontSize: "14px", borderRadius: "10px" }}
+          style={{ width: "100%", padding: "1.4vmin 2vmin", fontSize: "1.4vmin", borderRadius: "1vmin", whiteSpace: "nowrap" }}
         >
           {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
           Back

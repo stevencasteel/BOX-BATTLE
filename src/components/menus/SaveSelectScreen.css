@@ -1,9 +1,9 @@
 .slot-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 2.2vmin;
   width: 100%;
-  max-width: 640px;
+  max-width: 64vmin;
   margin: auto 0;
 }
 
@@ -11,8 +11,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 32px;
-  border-radius: 14px;
+  padding: 2.4vmin 3.2vmin;
+  border-radius: 1.4vmin;
   cursor: pointer;
   transition: all 0.15s ease;
   width: 100%;
@@ -50,6 +50,7 @@
 @media (max-width: 768px) {
   .slot-list {
     gap: 10px;
+    max-width: none;
   }
   .slot-card {
     padding: 12px 16px;

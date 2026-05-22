@@ -15,19 +15,19 @@
   box-shadow: var(--shadow-light), var(--shadow-dark);
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
-  padding: 24px 48px;
-  font-size: 18px;
+  padding: 2.2vmin 4.4vmin;
+  font-size: 1.7vmin;
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  border-radius: 12px;
+  border-radius: 1.2vmin;
   cursor: pointer;
   transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.8vmin;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -50,8 +50,8 @@
 }
 
 .led-dot {
-  width: 14px;
-  height: 14px;
+  width: 1.3vmin;
+  height: 1.3vmin;
   border-radius: 25%;
   transition: all 0.2s ease;
 }
@@ -75,12 +75,12 @@
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 12px;
-  border-radius: 6px;
+  height: 1.2vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
   outline: none;
-  margin: 10px 0;
+  margin: 1vmin 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
@@ -88,9 +88,9 @@
 .custom-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 28px;
-  border-radius: 6px;
+  width: 2.2vmin;
+  height: 2.6vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -108,9 +108,9 @@
 }
 
 .custom-range-slider::-moz-range-thumb {
-  width: 24px;
-  height: 28px;
-  border-radius: 6px;
+  width: 2.2vmin;
+  height: 2.6vmin;
+  border-radius: 0.6vmin;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -129,8 +129,8 @@
 
 .custom-range-slider::-moz-range-progress {
   background: var(--signal-green);
-  height: 12px;
-  border-radius: 6px;
+  height: 1.2vmin;
+  border-radius: 0.6vmin;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-right: none;
 }
@@ -139,13 +139,25 @@
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;
+    border-radius: 12px;
+  }
+  .led-dot {
+    width: 14px;
+    height: 14px;
+  }
+  .custom-range-slider {
+    height: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
   }
   .custom-range-slider::-webkit-slider-thumb {
     width: 28px;
     height: 32px;
+    border-radius: 6px;
   }
   .custom-range-slider::-moz-range-thumb {
     width: 28px;
     height: 32px;
+    border-radius: 6px;
   }
 }
