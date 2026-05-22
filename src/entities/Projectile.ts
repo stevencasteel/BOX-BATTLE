@@ -90,8 +90,17 @@ export class Projectile extends BaseEntity implements IPoolable {
   private checkSolidCollisions(): boolean {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
+    const physicsWorld = this.world.physicsWorld;
 
-    for (const solid of this.world.physicsWorld.solids) {
+    const solidCandidates = physicsWorld.getOverlapCandidates(
+      this.position.x,
+      this.position.y,
+      this.size.width + 12,
+      this.size.height + 12,
+      "solid"
+    );
+
+    for (const solid of solidCandidates) {
       const isHit = (
         this.position.x + halfW > solid.x &&
         this.position.x - halfW < solid.x + solid.width &&
@@ -112,8 +121,17 @@ export class Projectile extends BaseEntity implements IPoolable {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
     const prevY = this.position.y - this.velocity.y * 0.016;
+    const physicsWorld = this.world.physicsWorld;
 
-    for (const platform of this.world.physicsWorld.onewayPlatforms) {
+    const platformCandidates = physicsWorld.getOverlapCandidates(
+      this.position.x,
+      this.position.y,
+      this.size.width + 12,
+      this.size.height + 12,
+      "platform"
+    );
+
+    for (const platform of platformCandidates) {
       const isHit = (
         this.position.x + halfW > platform.x &&
         this.position.x - halfW < platform.x + platform.width &&

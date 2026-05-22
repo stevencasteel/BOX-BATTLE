@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:42:43 PM
+ [SYSTEM] Generated: 5/22/2026, 1:46:38 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -4307,6 +4307,11 @@ export class Engine {
   private activeSpawners: Spawner[] = [];
   private renderer!: WorldRenderer;
 
+  private cachedPlayerHP: number = -1;
+  private cachedBossHP: number = -1;
+  private cachedHealingCharges: number = -1;
+  private cachedDetermination: number = -1;
+
   private battleDirector!: BattleDirector;
 
   public isPaused: boolean = false;
@@ -4477,12 +4482,29 @@ export class Engine {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
     
-    useGameplayStore.setState({
-      playerHP: pHealth ? pHealth.currentHealth : 5,
-      bossHP: bHealth ? bHealth.currentHealth : 30,
-      healingCharges: this.player.healingCharges,
-      determination: this.player.determinationCounter
-    });
+    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
+    const nextBossHP = bHealth ? bHealth.currentHealth : 30;
+    const nextHealingCharges = this.player.healingCharges;
+    const nextDetermination = this.player.determinationCounter;
+
+    if (
+      nextPlayerHP !== this.cachedPlayerHP ||
+      nextBossHP !== this.cachedBossHP ||
+      nextHealingCharges !== this.cachedHealingCharges ||
+      nextDetermination !== this.cachedDetermination
+    ) {
+      this.cachedPlayerHP = nextPlayerHP;
+      this.cachedBossHP = nextBossHP;
+      this.cachedHealingCharges = nextHealingCharges;
+      this.cachedDetermination = nextDetermination;
+
+      useGameplayStore.setState({
+        playerHP: nextPlayerHP,
+        bossHP: nextBossHP,
+        healingCharges: nextHealingCharges,
+        determination: nextDetermination
+      });
+    }
   }
 
   private handlePauseKey = (e: KeyboardEvent) => {
@@ -5019,6 +5041,7 @@ export interface IPhysicsWorld {
   hazards: Rectangle[];
   onewayPlatforms: Rectangle[];
   isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean;
+  getOverlapCandidates(x: number, y: number, width: number, height: number, type: "solid" | "platform" | "hazard"): Rectangle[];
 }
 
 export interface IWorld {
@@ -5248,10 +5271,75 @@ export class PhysicsWorld implements IPhysicsWorld {
   public hazards: Rectangle[] = [];
   public onewayPlatforms: Rectangle[] = [];
 
+  private static readonly CELL_SIZE = 250;
+  private solidGrid: Map<string, Rectangle[]> = new Map();
+  private platformGrid: Map<string, Rectangle[]> = new Map();
+  private hazardGrid: Map<string, Rectangle[]> = new Map();
+
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = solids;
     this.hazards = hazards;
     this.onewayPlatforms = onewayPlatforms;
+
+    this.indexGeometry(this.solids, this.solidGrid);
+    this.indexGeometry(this.onewayPlatforms, this.platformGrid);
+    this.indexGeometry(this.hazards, this.hazardGrid);
+  }
+
+  private indexGeometry(rects: Rectangle[], grid: Map<string, Rectangle[]>) {
+    for (const rect of rects) {
+      const startX = Math.floor(rect.x / PhysicsWorld.CELL_SIZE);
+      const endX = Math.floor((rect.x + rect.width) / PhysicsWorld.CELL_SIZE);
+      const startY = Math.floor(rect.y / PhysicsWorld.CELL_SIZE);
+      const endY = Math.floor((rect.y + rect.height) / PhysicsWorld.CELL_SIZE);
+
+      for (let cx = startX; cx <= endX; cx++) {
+        for (let cy = startY; cy <= endY; cy++) {
+          const key = `${cx},${cy}`;
+          if (!grid.has(key)) {
+            grid.set(key, []);
+          }
+          grid.get(key)!.push(rect);
+        }
+      }
+    }
+  }
+
+  public getOverlapCandidates(x: number, y: number, width: number, height: number, type: "solid" | "platform" | "hazard"): Rectangle[] {
+    const grid = type === "solid" ? this.solidGrid : type === "platform" ? this.platformGrid : this.hazardGrid;
+    const fallback = type === "solid" ? this.solids : type === "platform" ? this.onewayPlatforms : this.hazards;
+
+    const halfW = width / 2;
+    const halfH = height / 2;
+    const left = x - halfW;
+    const right = x + halfW;
+    const top = y - halfH;
+    const bottom = y + halfH;
+
+    const startX = Math.floor(left / PhysicsWorld.CELL_SIZE);
+    const endX = Math.floor(right / PhysicsWorld.CELL_SIZE);
+    const startY = Math.floor(top / PhysicsWorld.CELL_SIZE);
+    const endY = Math.floor(bottom / PhysicsWorld.CELL_SIZE);
+
+    const resultSet = new Set<Rectangle>();
+
+    for (let cx = startX; cx <= endX; cx++) {
+      for (let cy = startY; cy <= endY; cy++) {
+        const key = `${cx},${cy}`;
+        const cellCandidates = grid.get(key);
+        if (cellCandidates) {
+          for (const candidate of cellCandidates) {
+            resultSet.add(candidate);
+          }
+        }
+      }
+    }
+
+    if (resultSet.size === 0) {
+      return fallback;
+    }
+
+    return Array.from(resultSet);
   }
 
   public isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean {
@@ -9400,8 +9488,17 @@ export class Projectile extends BaseEntity implements IPoolable {
   private checkSolidCollisions(): boolean {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
+    const physicsWorld = this.world.physicsWorld;
 
-    for (const solid of this.world.physicsWorld.solids) {
+    const solidCandidates = physicsWorld.getOverlapCandidates(
+      this.position.x,
+      this.position.y,
+      this.size.width + 12,
+      this.size.height + 12,
+      "solid"
+    );
+
+    for (const solid of solidCandidates) {
       const isHit = (
         this.position.x + halfW > solid.x &&
         this.position.x - halfW < solid.x + solid.width &&
@@ -9422,8 +9519,17 @@ export class Projectile extends BaseEntity implements IPoolable {
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
     const prevY = this.position.y - this.velocity.y * 0.016;
+    const physicsWorld = this.world.physicsWorld;
 
-    for (const platform of this.world.physicsWorld.onewayPlatforms) {
+    const platformCandidates = physicsWorld.getOverlapCandidates(
+      this.position.x,
+      this.position.y,
+      this.size.width + 12,
+      this.size.height + 12,
+      "platform"
+    );
+
+    for (const platform of platformCandidates) {
       const isHit = (
         this.position.x + halfW > platform.x &&
         this.position.x - halfW < platform.x + platform.width &&
@@ -10348,14 +10454,28 @@ export class PhysicsComponent implements IEntityComponent {
 
     this.isGrounded = false;
     if (this.owner.velocity.y >= 0) {
-      for (const solid of physicsWorld.solids) {
+      const solidCandidates = physicsWorld.getOverlapCandidates(
+        this.owner.position.x,
+        this.owner.position.y + 1,
+        this.owner.size.width + 12,
+        this.owner.size.height + 12,
+        "solid"
+      );
+      for (const solid of solidCandidates) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, solid)) {
           this.isGrounded = true;
           break;
         }
       }
       if (!this.isGrounded && this.disablePlatformCollisionTimer <= 0) {
-        for (const platform of physicsWorld.onewayPlatforms) {
+        const platformCandidates = physicsWorld.getOverlapCandidates(
+          this.owner.position.x,
+          this.owner.position.y + 1,
+          this.owner.size.width + 12,
+          this.owner.size.height + 12,
+          "platform"
+        );
+        for (const platform of platformCandidates) {
           if (this.isOverlapping(this.owner.position.x, this.owner.position.y + 1, platform)) {
             this.isGrounded = true;
             break;
@@ -10370,7 +10490,15 @@ export class PhysicsComponent implements IEntityComponent {
     const physicsWorld = this.owner.world.physicsWorld;
     let collided = false;
 
-    for (const solid of physicsWorld.solids) {
+    const solidCandidates = physicsWorld.getOverlapCandidates(
+      this.owner.position.x,
+      this.owner.position.y,
+      this.owner.size.width + 12,
+      this.owner.size.height + 12,
+      "solid"
+    );
+
+    for (const solid of solidCandidates) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.x > 0) {
           this.owner.position.x = solid.x - ownerHalfW;
@@ -10392,7 +10520,15 @@ export class PhysicsComponent implements IEntityComponent {
     const physicsWorld = this.owner.world.physicsWorld;
     let collided = false;
 
-    for (const solid of physicsWorld.solids) {
+    const solidCandidates = physicsWorld.getOverlapCandidates(
+      this.owner.position.x,
+      this.owner.position.y,
+      this.owner.size.width + 24,
+      this.owner.size.height + 24,
+      "solid"
+    );
+
+    for (const solid of solidCandidates) {
       if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
         if (this.owner.velocity.y >= 0) {
           this.owner.position.y = solid.y - ownerHalfH;
@@ -10430,7 +10566,15 @@ export class PhysicsComponent implements IEntityComponent {
     if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
       const prevY = this.owner.position.y - this.owner.velocity.y * 0.016;
 
-      for (const platform of physicsWorld.onewayPlatforms) {
+      const platformCandidates = physicsWorld.getOverlapCandidates(
+        this.owner.position.x,
+        this.owner.position.y,
+        this.owner.size.width + 12,
+        this.owner.size.height + 12,
+        "platform"
+      );
+
+      for (const platform of platformCandidates) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
           if (prevY + ownerHalfH - 4 <= platform.y) {
             this.owner.position.y = platform.y - ownerHalfH;

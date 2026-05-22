@@ -85,6 +85,7 @@ export interface IPhysicsWorld {
   hazards: Rectangle[];
   onewayPlatforms: Rectangle[];
   isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean;
+  getOverlapCandidates(x: number, y: number, width: number, height: number, type: "solid" | "platform" | "hazard"): Rectangle[];
 }
 
 export interface IWorld {

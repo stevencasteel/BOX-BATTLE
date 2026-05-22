@@ -32,6 +32,11 @@ export class Engine {
   private activeSpawners: Spawner[] = [];
   private renderer!: WorldRenderer;
 
+  private cachedPlayerHP: number = -1;
+  private cachedBossHP: number = -1;
+  private cachedHealingCharges: number = -1;
+  private cachedDetermination: number = -1;
+
   private battleDirector!: BattleDirector;
 
   public isPaused: boolean = false;
@@ -202,12 +207,29 @@ export class Engine {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
     
-    useGameplayStore.setState({
-      playerHP: pHealth ? pHealth.currentHealth : 5,
-      bossHP: bHealth ? bHealth.currentHealth : 30,
-      healingCharges: this.player.healingCharges,
-      determination: this.player.determinationCounter
-    });
+    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
+    const nextBossHP = bHealth ? bHealth.currentHealth : 30;
+    const nextHealingCharges = this.player.healingCharges;
+    const nextDetermination = this.player.determinationCounter;
+
+    if (
+      nextPlayerHP !== this.cachedPlayerHP ||
+      nextBossHP !== this.cachedBossHP ||
+      nextHealingCharges !== this.cachedHealingCharges ||
+      nextDetermination !== this.cachedDetermination
+    ) {
+      this.cachedPlayerHP = nextPlayerHP;
+      this.cachedBossHP = nextBossHP;
+      this.cachedHealingCharges = nextHealingCharges;
+      this.cachedDetermination = nextDetermination;
+
+      useGameplayStore.setState({
+        playerHP: nextPlayerHP,
+        bossHP: nextBossHP,
+        healingCharges: nextHealingCharges,
+        determination: nextDetermination
+      });
+    }
   }
 
   private handlePauseKey = (e: KeyboardEvent) => {
