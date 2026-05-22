@@ -104,7 +104,7 @@ export function GameArena({
 
         <div style={{
           position: "relative",
-          margin: isMobileDevice ? "0 auto" : "auto auto 0 auto",
+          margin: "0 auto",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -120,8 +120,6 @@ export function GameArena({
             height={1250}
             className="crt-scanlines crt-flicker"
             style={{ 
-              width: "100%",
-              height: "100%",
               background: "#0c0d11", 
               display: "block"
             }}

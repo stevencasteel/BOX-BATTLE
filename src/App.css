@@ -39,13 +39,13 @@ body {
 
 .cabinet-outer {
   position: relative;
-  width: 95vmin;
-  height: 95vmin;
-  max-width: 920px;
-  max-height: 1120px;
-  border-radius: 28px;
+  width: 80vmin;
+  height: auto;
+  max-width: 800px;
+  max-height: 1020px;
+  border-radius: 2.8vmin;
   background: #0f1218;
-  padding: 20px;
+  padding: 2.5vmin;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -404,10 +404,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
-  border-radius: 16px;
-  margin-bottom: 14px;
+  padding: 1.2vmin 1.8vmin;
+  border-radius: 1.5vmin;
+  margin-bottom: 1.2vmin;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .hud-panel-block {
@@ -417,7 +418,7 @@ body {
 }
 
 .hud-panel-title {
-  font-size: 15px;
+  font-size: clamp(10px, 1.4vmin, 15px);
   font-weight: bold;
   color: #718096;
   text-transform: uppercase;
@@ -430,14 +431,15 @@ body {
 
 .game-viewport-container {
   width: 100%;
-  flex-grow: 1;
-  flex-shrink: 1;
-  min-height: 0;
+  aspect-ratio: 1 / 1;
   border-radius: 16px;
   overflow: hidden;
   background: var(--void-bg);
   position: relative;
   contain: layout style paint;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .gameover-overlay {
@@ -497,22 +499,24 @@ body {
 
 .dialogue-console {
   width: 100%;
-  height: clamp(80px, 12vh, 130px);
+  height: 11vmin;
+  min-height: 50px;
+  max-height: 120px;
   display: flex;
-  gap: 16px;
-  margin-top: clamp(6px, 1.5vh, 14px);
+  gap: 1.5vmin;
+  margin-top: 1.2vmin;
   box-sizing: border-box;
-  flex-shrink: 1;
+  flex-shrink: 0;
 }
 
 .dialogue-box-left,
 .dialogue-box-right {
   flex: 1;
-  border-radius: 14px;
-  padding: clamp(8px, 1.5vh, 16px) clamp(12px, 2vh, 24px);
+  border-radius: 1.5vmin;
+  padding: 1vmin 1.8vmin;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.5vh, 14px);
+  gap: 1.2vmin;
   box-sizing: border-box;
   overflow: hidden;
   transition:
@@ -543,9 +547,13 @@ body {
 }
 
 .portrait-square {
-  width: clamp(44px, 7vh, 64px);
-  height: clamp(44px, 7vh, 64px);
-  border-radius: 8px;
+  width: 8vmin;
+  height: 8vmin;
+  min-width: 32px;
+  min-height: 32px;
+  max-width: 64px;
+  max-height: 64px;
+  border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
 }
@@ -559,14 +567,14 @@ body {
 }
 
 .dialogue-speaker-label {
-  font-size: 13px;
+  font-size: clamp(10px, 1.3vmin, 14px);
   font-weight: bold;
   letter-spacing: 0.15em;
   color: var(--signal-green);
 }
 
 .dialogue-body-text {
-  font-size: 15px;
+  font-size: clamp(11px, 1.6vmin, 15px);
   line-height: 1.4;
   color: #eaeaea;
   word-wrap: break-word;

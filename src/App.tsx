@@ -539,8 +539,8 @@ export default function App() {
           height: "100%"
         }) : undefined}>
           {isPlayingScreen ? (
-            <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
+            <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
+              <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
                 <GameArena
                   key={retryCount}
                   canvasRef={canvasRef}
