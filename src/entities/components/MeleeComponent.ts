@@ -14,33 +14,44 @@ export interface IMeleeCapable extends IEntity {
 export class MeleeComponent implements IEntityComponent {
   public owner!: IMeleeCapable;
   
+  // High-frequency timing registers
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
   public attackActive: boolean = false;
   public attackDirection: "side" | "up" | "down" | null = null;
   public hasHitEnemyThisSwing: boolean = false;
 
+  // Balancing & Reach parameters
   private readonly pogoForce: number = 450;
+  private readonly meleeRangeLimit: number = 95;
+  private readonly closeRangeThreshold: number = 75;
+  private readonly sideReachOffset: number = 35;
+  private readonly verticalReachOffset: number = 35;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner as unknown as IMeleeCapable;
   }
 
   public update(dt: number): void {
-    if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= dt;
-    if (this.attackActiveTimer > 0) this.attackActiveTimer -= dt;
+    this.decayAttackTimers(dt);
 
-    if (this.attackActive && this.attackActiveTimer <= 0) {
-      this.attackActive = false;
-      this.attackDirection = null;
-    }
-
+    // Evaluate active swing intersections if we have not registered contact yet
     if (this.attackActive && !this.hasHitEnemyThisSwing) {
       if (this.attackDirection === "down") {
         this.checkPogoAttack();
       } else {
         this.checkMeleeAttackContact();
       }
+    }
+  }
+
+  private decayAttackTimers(dt: number): void {
+    if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= dt;
+    if (this.attackActiveTimer > 0) this.attackActiveTimer -= dt;
+
+    if (this.attackActive && this.attackActiveTimer <= 0) {
+      this.attackActive = false;
+      this.attackDirection = null;
     }
   }
 
@@ -54,61 +65,61 @@ export class MeleeComponent implements IEntityComponent {
     eventBroker.publish("PLAYER_ATTACKED", { direction });
   }
 
-  private checkMeleeAttackContact() {
-    const targets: BaseEntity[] = [];
-    if (this.owner.world.boss && !this.owner.world.boss.isDead) {
-      targets.push(this.owner.world.boss as BaseEntity);
-    }
-    for (const minion of this.owner.world.minions) {
-      if (minion && minion.status === EntityStatus.ACTIVE) {
-        targets.push(minion as BaseEntity);
-      }
-    }
+  /**
+   * Main intersection bridge for horizontal (side) and vertical-upward swipes.
+   */
+  private checkMeleeAttackContact(): void {
+    this.swipeEnemies();
+    this.swipeIncomingProjectiles();
+  }
 
+  /**
+   * Evaluates and applies swipe damage to valid boss and minion targets within range.
+   */
+  private swipeEnemies(): void {
+    const targets = this.gatherAwaitingTargets();
     const facing = this.owner.facingDirection;
 
     for (const target of targets) {
-      let isHit = false;
-      let distance = 0;
+      let isWithinSwingArc = false;
+      let distanceToTarget = 0;
 
       if (this.attackDirection === "side") {
-        const cx = this.owner.position.x + (facing * 35);
-        const cy = this.owner.position.y;
+        const centerReachX = this.owner.position.x + (facing * this.sideReachOffset);
+        const centerReachY = this.owner.position.y;
         
-        const dx = target.position.x - cx;
-        const dy = target.position.y - cy;
-        distance = Math.sqrt(dx * dx + dy * dy);
+        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distance <= 95 + (target.size.width / 2);
-        const withinDirection = (facing > 0 && target.position.x >= cx - 25) || (facing < 0 && target.position.x <= cx + 25);
+        const withinReach = distanceToTarget <= this.meleeRangeLimit + (target.size.width / 2);
+        const withinDirection = (facing > 0 && target.position.x >= centerReachX - 25) || 
+                                (facing < 0 && target.position.x <= centerReachX + 25);
 
         if (withinReach && withinDirection) {
-          isHit = true;
+          isWithinSwingArc = true;
         }
-      } else if (this.attackDirection === "up") {
-        const cx = this.owner.position.x;
-        const cy = this.owner.position.y - 35;
+      } 
+      else if (this.attackDirection === "up") {
+        const centerReachX = this.owner.position.x;
+        const centerReachY = this.owner.position.y - this.verticalReachOffset;
 
-        const dx = target.position.x - cx;
-        const dy = target.position.y - cy;
-        distance = Math.sqrt(dx * dx + dy * dy);
+        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distance <= 95 + (target.size.height / 2);
-        const withinDirection = target.position.y <= cy + 25;
+        const withinReach = distanceToTarget <= this.meleeRangeLimit + (target.size.height / 2);
+        const withinDirection = target.position.y <= centerReachY + 25;
 
         if (withinReach && withinDirection) {
-          isHit = true;
+          isWithinSwingArc = true;
         }
       }
 
-      if (isHit) {
+      if (isWithinSwingArc) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          const isCloseRange = distance <= 75;
-          const damage = isCloseRange ? 5 : 1;
+          const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
+          const damageAmount = isCloseRange ? 5 : 1;
 
-          const damaged = health.takeDamage(damage);
-          if (damaged) {
+          const registeredDamage = health.takeDamage(damageAmount);
+          if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
             this.owner.registerDamageDealt?.();
 
@@ -125,41 +136,46 @@ export class MeleeComponent implements IEntityComponent {
         }
       }
     }
+  }
 
+  /**
+   * Evaluates and releases/deflects incoming hostile projectiles within swipe reach.
+   */
+  private swipeIncomingProjectiles(): void {
+    const facing = this.owner.facingDirection;
     const activeProjectiles = [...this.owner.world.getProjectiles()];
+
     for (const proj of activeProjectiles) {
       if (proj.isActive && proj.ownerId === "boss") {
-        let isHit = false;
+        let isDeflected = false;
 
         if (this.attackDirection === "side") {
-          const cx = this.owner.position.x + (facing * 35);
-          const cy = this.owner.position.y;
-          const dx = proj.position.x - cx;
-          const dy = proj.position.y - cy;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const centerReachX = this.owner.position.x + (facing * this.sideReachOffset);
+          const centerReachY = this.owner.position.y;
+          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= 95 + (proj.size.width / 2);
-          const withinDirection = (facing > 0 && proj.position.x >= cx - 25) || (facing < 0 && proj.position.x <= cx + 25);
+          const withinReach = distance <= this.meleeRangeLimit + (proj.size.width / 2);
+          const withinDirection = (facing > 0 && proj.position.x >= centerReachX - 25) || 
+                                  (facing < 0 && proj.position.x <= centerReachX + 25);
 
           if (withinReach && withinDirection) {
-            isHit = true;
+            isDeflected = true;
           }
-        } else if (this.attackDirection === "up") {
-          const cx = this.owner.position.x;
-          const cy = this.owner.position.y - 35;
-          const dx = proj.position.x - cx;
-          const dy = proj.position.y - cy;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        } 
+        else if (this.attackDirection === "up") {
+          const centerReachX = this.owner.position.x;
+          const centerReachY = this.owner.position.y - this.verticalReachOffset;
+          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= 95 + (proj.size.height / 2);
-          const withinDirection = proj.position.y <= cy + 25;
+          const withinReach = distance <= this.meleeRangeLimit + (proj.size.height / 2);
+          const withinDirection = proj.position.y <= centerReachY + 25;
 
           if (withinReach && withinDirection) {
-            isHit = true;
+            isDeflected = true;
           }
         }
 
-        if (isHit) {
+        if (isDeflected) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
           this.owner.registerDamageDealt?.();
@@ -169,7 +185,10 @@ export class MeleeComponent implements IEntityComponent {
     }
   }
 
-  public checkPogoAttack() {
+  /**
+   * Main intersection bridge for downward pogo hits against enemies, projectiles, and solid ground.
+   */
+  private checkPogoAttack(): void {
     const pogoHitbox = {
       x: this.owner.position.x - 45,
       y: this.owner.position.y + 40,
@@ -177,6 +196,106 @@ export class MeleeComponent implements IEntityComponent {
       height: 44.5
     };
 
+    if (this.pogoEnemies(pogoHitbox)) return;
+    if (this.pogoIncomingProjectiles(pogoHitbox)) return;
+    this.pogoEnvironmentSurfaces(pogoHitbox);
+  }
+
+  private pogoEnemies(pogoBox: { x: number; y: number; width: number; height: number }): boolean {
+    const targets = this.gatherAwaitingTargets();
+
+    for (const target of targets) {
+      const halfW = target.size.width / 2;
+      const halfH = target.size.height / 2;
+
+      const isColliding = (
+        pogoBox.x + pogoBox.width > target.position.x - halfW &&
+        pogoBox.x < target.position.x + halfW &&
+        pogoBox.y + pogoBox.height > target.position.y - halfH &&
+        pogoBox.y < target.position.y + halfH
+      );
+
+      if (isColliding) {
+        const health = target.getComponent(HealthComponent);
+        if (health) {
+          health.takeDamage(1);
+          this.owner.registerDamageDealt?.();
+        }
+
+        this.applyPogoRebound();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private pogoIncomingProjectiles(pogoBox: { x: number; y: number; width: number; height: number }): boolean {
+    const activeProjectiles = this.owner.world.getProjectiles();
+
+    for (const proj of activeProjectiles) {
+      if (proj.isActive && proj.ownerId === "boss") {
+        const pW = proj.size.width / 2;
+        const pH = proj.size.height / 2;
+
+        const isColliding = (
+          pogoBox.x + pogoBox.width > proj.position.x - pW &&
+          pogoBox.x < proj.position.x + pW &&
+          pogoBox.y + pogoBox.height > proj.position.y - pH &&
+          pogoBox.y < proj.position.y + pH
+        );
+
+        if (isColliding) {
+          this.owner.world.releaseProjectile(proj);
+          this.owner.registerDamageDealt?.();
+          this.applyPogoRebound();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private pogoEnvironmentSurfaces(pogoBox: { x: number; y: number; width: number; height: number }): void {
+    const surfaces = [
+      ...this.owner.world.physicsWorld.solids, 
+      ...this.owner.world.physicsWorld.onewayPlatforms,
+      ...this.owner.world.physicsWorld.hazards
+    ];
+    
+    for (const solid of surfaces) {
+      const isColliding = (
+        pogoBox.x + pogoBox.width > solid.x &&
+        pogoBox.x < solid.x + solid.width &&
+        pogoBox.y + pogoBox.height > solid.y &&
+        pogoBox.y < solid.y + solid.height
+      );
+
+      if (isColliding) {
+        this.applyPogoRebound();
+        break;
+      }
+    }
+  }
+
+  /**
+   * Calculates vertical push force upon landing a successful downward strike,
+   * restoring the double-jump and dash registers.
+   */
+  private applyPogoRebound(): void {
+    this.owner.velocity.y = -this.pogoForce;
+    this.owner.position.y -= 2;
+    this.hasHitEnemyThisSwing = true;
+    this.owner.hasDoubleJump = true;
+
+    const dash = this.owner.getComponent(DashComponent);
+    if (dash) {
+      dash.resetDashCharge();
+    }
+    
+    eventBroker.publish("PLAYER_POGOED", undefined);
+  }
+
+  private gatherAwaitingTargets(): BaseEntity[] {
     const targets: BaseEntity[] = [];
     if (this.owner.world.boss && !this.owner.world.boss.isDead) {
       targets.push(this.owner.world.boss as BaseEntity);
@@ -186,103 +305,12 @@ export class MeleeComponent implements IEntityComponent {
         targets.push(minion as BaseEntity);
       }
     }
+    return targets;
+  }
 
-    for (const target of targets) {
-      const halfW = target.size.width / 2;
-      const halfH = target.size.height / 2;
-
-      const isHit = (
-        pogoHitbox.x + pogoHitbox.width > target.position.x - halfW &&
-        pogoHitbox.x < target.position.x + halfW &&
-        pogoHitbox.y + pogoHitbox.height > target.position.y - halfH &&
-        pogoHitbox.y < target.position.y + halfH
-      );
-
-      if (isHit) {
-        const health = target.getComponent(HealthComponent);
-        if (health) {
-          health.takeDamage(1);
-          this.owner.registerDamageDealt?.();
-        }
-
-        this.owner.velocity.y = -this.pogoForce;
-        this.owner.position.y -= 2;
-        this.hasHitEnemyThisSwing = true;
-        
-        this.owner.hasDoubleJump = true;
-
-        const dash = this.owner.getComponent(DashComponent);
-        if (dash) {
-          dash.resetDashCharge();
-        }
-        
-        eventBroker.publish("PLAYER_POGOED", undefined);
-        return;
-      }
-    }
-
-    const activeProjectiles = this.owner.world.getProjectiles();
-    for (const proj of activeProjectiles) {
-      if (proj.isActive && proj.ownerId === "boss") {
-        const pW = proj.size.width / 2;
-        const pH = proj.size.height / 2;
-
-        const isHit = (
-          pogoHitbox.x + pogoHitbox.width > proj.position.x - pW &&
-          pogoHitbox.x < proj.position.x + pW &&
-          pogoHitbox.y + pogoHitbox.height > proj.position.y - pH &&
-          pogoHitbox.y < proj.position.y + pH
-        );
-
-        if (isHit) {
-          this.owner.world.releaseProjectile(proj);
-          this.owner.registerDamageDealt?.();
-
-          this.owner.velocity.y = -this.pogoForce;
-          this.owner.position.y -= 2;
-          this.hasHitEnemyThisSwing = true;
-          
-          this.owner.hasDoubleJump = true;
-
-          const dash = this.owner.getComponent(DashComponent);
-          if (dash) {
-            dash.resetDashCharge();
-          }
-          
-          eventBroker.publish("PLAYER_POGOED", undefined);
-          return;
-        }
-      }
-    }
-
-    const surfaces = [
-      ...this.owner.world.physicsWorld.solids, 
-      ...this.owner.world.physicsWorld.onewayPlatforms,
-      ...this.owner.world.physicsWorld.hazards
-    ];
-    
-    for (const solid of surfaces) {
-      const isHit = (
-        pogoHitbox.x + pogoHitbox.width > solid.x &&
-        pogoHitbox.x < solid.x + solid.width &&
-        pogoHitbox.y + pogoHitbox.height > solid.y &&
-        pogoHitbox.y < solid.y + solid.height
-      );
-
-      if (isHit) {
-        this.owner.velocity.y = -this.pogoForce;
-        this.owner.position.y -= 2;
-        
-        this.owner.hasDoubleJump = true;
-
-        const dash = this.owner.getComponent(DashComponent);
-        if (dash) {
-          dash.resetDashCharge();
-        }
-        
-        eventBroker.publish("PLAYER_POGOED", undefined);
-        break;
-      }
-    }
+  private calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x1 - x2;
+    const dy = y1 - y2;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 }
