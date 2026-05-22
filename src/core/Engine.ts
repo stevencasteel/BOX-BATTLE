@@ -16,6 +16,7 @@ import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
+import { BattleDirector } from "@/core/BattleDirector";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -30,17 +31,7 @@ export class Engine {
   private activeSpawners: Spawner[] = [];
   private renderer!: WorldRenderer;
 
-  private hasTriggeredFirstHit: boolean = false;
-  private hasTriggeredPhase2: boolean = false;
-  private hasTriggeredPhase3: boolean = false;
-  private isCinematicActive: boolean = false;
-
-  private bossDeathTimer: number = -1;
-  private bossDeathPos: { x: number; y: number } | null = null;
-  private deathTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private dialogueTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private dialogueStaggerTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private dialogueClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private battleDirector!: BattleDirector;
 
   public isPaused: boolean = false;
 
@@ -116,6 +107,7 @@ export class Engine {
     window.addEventListener("keydown", this.handlePauseKey);
 
     this.particleSystem = new ParticleSystem();
+    this.battleDirector = new BattleDirector(() => this.stop());
 
     this.loop = new GameLoop(
       (dt) => this.update(dt),
@@ -166,11 +158,9 @@ export class Engine {
 
     Camera.update(dt);
 
-    if (this.bossDeathTimer >= 0) {
-      this.bossDeathTimer += dt;
-    }
+    this.battleDirector.update(dt, this.player, this.boss);
 
-    if (this.isCinematicActive) {
+    if (this.battleDirector.isCinematicActive()) {
       this.player.velocity = { x: 0, y: 0 };
       this.boss.velocity = { x: 0, y: 0 };
 
@@ -228,77 +218,7 @@ export class Engine {
       activeProjectiles[i].update(dt);
     }
 
-    const bHealth = this.boss.getComponent(HealthComponent);
-    if (bHealth && bHealth.currentHealth < 30 && !this.hasTriggeredFirstHit) {
-      this.hasTriggeredFirstHit = true;
-      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
-    }
 
-    if (bHealth && bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
-      this.hasTriggeredPhase2 = true;
-      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
-      eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-    }
-
-    if (bHealth && bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
-      this.hasTriggeredPhase3 = true;
-      eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
-      eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-    }
-
-    const sessionState = useSessionStore.getState();
-    if (this.player.isDead && !this.isCinematicActive) {
-      this.isCinematicActive = true;
-      eventBroker.publish("CLEAR_DIALOGUES", undefined);
-      soundSynth.clearAllSlides();
-      soundSynth.stopChargeDrone();
-      soundSynth.stopHealDrone();
-      soundSynth.playPlayerExplosion();
-      this.bossDeathTimer = 0;
-      this.bossDeathPos = { x: this.player.position.x, y: this.player.position.y };
-
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
-
-      this.deathTimeoutId = setTimeout(() => {
-        sessionState.setGameResult("GAMEOVER");
-        this.stop();
-        this.dialogueTimeoutId = setTimeout(() => {
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
-        }, 500);
-        this.dialogueStaggerTimeoutId = setTimeout(() => {
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
-        }, 1800);
-        this.dialogueClearTimeoutId = setTimeout(() => {
-          eventBroker.publish("CLEAR_DIALOGUES", undefined);
-        }, 5200);
-      }, 2000);
-    } else if (this.boss.isDead && !this.isCinematicActive) {
-      this.isCinematicActive = true;
-      eventBroker.publish("CLEAR_DIALOGUES", undefined);
-      soundSynth.clearAllSlides();
-      soundSynth.stopChargeDrone();
-      soundSynth.stopHealDrone();
-      soundSynth.playBossExplosion();
-      this.bossDeathTimer = 0;
-      this.bossDeathPos = { x: this.boss.position.x, y: this.boss.position.y };
-
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
-
-      this.deathTimeoutId = setTimeout(() => {
-        sessionState.setGameResult("VICTORY");
-        this.stop();
-        this.dialogueTimeoutId = setTimeout(() => {
-          
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
-        }, 500);
-        this.dialogueStaggerTimeoutId = setTimeout(() => {
-          eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
-        }, 2800);
-        this.dialogueClearTimeoutId = setTimeout(() => {
-          eventBroker.publish("CLEAR_DIALOGUES", undefined);
-        }, 5200);
-      }, 2000);
-    }
 
     inputProvider.postUpdate();
   }
@@ -312,28 +232,13 @@ export class Engine {
       this.hazards,
       this.pool,
       this.isPaused,
-      this.bossDeathTimer,
-      this.bossDeathPos
+      this.battleDirector.getDeathVisuals().timer,
+      this.battleDirector.getDeathVisuals().pos
     );
   }
 
   public cleanup() {
-    if (this.deathTimeoutId !== null) {
-      clearTimeout(this.deathTimeoutId);
-      this.deathTimeoutId = null;
-    }
-    if (this.dialogueTimeoutId !== null) {
-      clearTimeout(this.dialogueTimeoutId);
-      this.dialogueTimeoutId = null;
-    }
-    if (this.dialogueStaggerTimeoutId !== null) {
-      clearTimeout(this.dialogueStaggerTimeoutId);
-      this.dialogueStaggerTimeoutId = null;
-    }
-    if (this.dialogueClearTimeoutId !== null) {
-      clearTimeout(this.dialogueClearTimeoutId);
-      this.dialogueClearTimeoutId = null;
-    }
+    this.battleDirector.cleanup();
     this.loop.cleanup();
     this.player.teardown();
     this.boss.teardown();
