@@ -124,7 +124,7 @@ export class Engine {
     window.addEventListener("keydown", this.handlePauseKey);
 
     this.particleSystem = new ParticleSystem();
-    this.battleDirector = new BattleDirector(() => this.stop());
+    this.battleDirector = new BattleDirector(() => {});
 
     this.loop = new GameLoop(
       (dt) => this.update(dt),
@@ -164,6 +164,11 @@ export class Engine {
     this.accumulator = 0;
     Camera.reset();
     this.pool.clear();
+
+    const overlay = this.ctx.canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+    if (overlay) {
+      overlay.classList.remove("vignette-pulse");
+    }
   }
 
   private resetSpawnersAndMinions() {
@@ -238,7 +243,7 @@ export class Engine {
     this.particleSystem = new ParticleSystem();
 
     this.battleDirector.cleanup();
-    this.battleDirector = new BattleDirector(() => this.stop());
+    this.battleDirector = new BattleDirector(() => {});
 
     const sessionState = useSessionStore.getState();
     sessionState.setGameResult("PLAYING");
