@@ -20,38 +20,43 @@ import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 
 export class Engine {
+  // Rendering & UI Bridges
   private ctx: CanvasRenderingContext2D;
   private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
+  private renderer!: WorldRenderer;
 
+  // Simulation Core Loops & Systems
   private loop!: GameLoop;
   private systems!: SimulationSystems;
   private world!: World;
+  private battleDirector!: BattleDirector;
+  private particleSystem!: ParticleSystem;
+
+  // Pools & Entity Registries
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
-  private renderer!: WorldRenderer;
 
+  // Local Reactive Performance Cache Boundaries
   private cachedPlayerHP: number = -1;
   private cachedBossHP: number = -1;
   private cachedHealingCharges: number = -1;
   private cachedDetermination: number = -1;
 
-  private battleDirector!: BattleDirector;
-
+  // Main Loop Accumulation Controls
   public isPaused: boolean = false;
-
-  private unsubDialogue!: () => void;
-
-  private particleSystem!: ParticleSystem;
-
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
+  // Level Geography Configuration
   private levelConfig: LevelConfig;
   private solids: Rectangle[] = [];
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
+
+  // Cleanup Event Handles
+  private unsubDialogue!: () => void;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -73,6 +78,9 @@ export class Engine {
     this.init();
   }
 
+  /**
+   * Performs the initial system configuration and allocates entities.
+   */
   private init() {
     this.systems = new SimulationSystems();
     this.systems.setup(
@@ -132,13 +140,33 @@ export class Engine {
     this.loop.stop();
   }
 
+  /**
+   * Reset orchestrator. Restores all gameplay states back to baseline values.
+   */
   public reset() {
+    this.resetEnvironment();
+    this.resetSpawnersAndMinions();
+    this.resetPlayerState();
+    this.resetBossState();
+    this.resetSystemStates();
+    
+    // Force an immediate synchronous repaint to show the refreshed starting frame
+    this.render();
+
+    // Defer game loop restart until after React finishes DOM reconciliation
+    requestAnimationFrame(() => {
+      this.start();
+    });
+  }
+
+  private resetEnvironment() {
     this.isPaused = false;
     this.accumulator = 0;
-
     Camera.reset();
     this.pool.clear();
+  }
 
+  private resetSpawnersAndMinions() {
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
     }
@@ -146,7 +174,9 @@ export class Engine {
     this.activeSpawners = this.levelConfig.spawners.map(
       (s) => new Spawner(s.type, s.x, s.y, this.world)
     );
+  }
 
+  private resetPlayerState() {
     this.player.isDead = false;
     this.player.position = { ...this.levelConfig.playerStart };
     this.player.previousPosition = { ...this.levelConfig.playerStart };
@@ -163,24 +193,30 @@ export class Engine {
       pHealth.reset();
     }
 
+    // Restore dash parameters
     this.player.dashComponent.isDashing = false;
     this.player.dashComponent.dashTimer = 0;
     this.player.dashComponent.dashCooldown = 0;
     this.player.dashComponent.canDash = true;
     this.player.dashComponent.ghosts = [];
 
+    // Restore melee properties
     this.player.meleeComponent.attackCooldownTimer = 0;
     this.player.meleeComponent.attackActiveTimer = 0;
     this.player.meleeComponent.attackActive = false;
     this.player.meleeComponent.attackDirection = null;
     this.player.meleeComponent.hasHitEnemyThisSwing = false;
 
+    // Restore fireball charge states
     this.player.fireballComponent.isCharging = false;
     this.player.fireballComponent.chargeTimer = 0;
 
+    // Restore healing controls
     this.player.healComponent.isHealing = false;
     this.player.healComponent.healTimer = 0;
+  }
 
+  private resetBossState() {
     this.boss.isDead = false;
     this.boss.position = { ...this.levelConfig.bossStart };
     this.boss.previousPosition = { ...this.levelConfig.bossStart };
@@ -195,7 +231,9 @@ export class Engine {
       bHealth.reset();
     }
     this.boss.stateMachine.changeState(this.boss.cooldownState);
+  }
 
+  private resetSystemStates() {
     this.particleSystem.cleanup();
     this.particleSystem = new ParticleSystem();
 
@@ -210,6 +248,10 @@ export class Engine {
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
   }
 
+  /**
+   * Projects changing inner gameplay states to the global Zustand cache.
+   * Leverages selective check boundaries to skip redundant rendering updates.
+   */
   private projectState() {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
@@ -251,6 +293,9 @@ export class Engine {
     }
   };
 
+  /**
+   * Accumulates frame-duration deltas and triggers discrete fixed-rate steps.
+   */
   private update(dt: number) {
     if (this.isPaused) {
       return;
@@ -266,6 +311,9 @@ export class Engine {
     }
   }
 
+  /**
+   * High-precision 60Hz physics and game logic step cascade.
+   */
   private fixedUpdate(dt: number) {
     inputProvider.update();
     if (Camera.hitStopTimer > 0) {
@@ -277,6 +325,7 @@ export class Engine {
 
     this.battleDirector.update(dt, this.player, this.boss);
 
+    // Cache pre-integration positions for accurate renderer interpolations
     this.player.previousPosition = { ...this.player.position };
     this.boss.previousPosition = { ...this.boss.position };
     for (const minion of this.world.minions) {
