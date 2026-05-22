@@ -14,7 +14,6 @@ export class SFXHelper {
     callback: (now: number) => void
   ): void {
     try {
-      this.ctxManager.resumeContext();
       if (!this.ctxManager.initialized) return;
       if (!this.checkThrottle(key, throttleMs)) return;
 

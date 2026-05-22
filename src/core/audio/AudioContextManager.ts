@@ -110,7 +110,6 @@ export class AudioContextManager {
   }
 
   public setCabinetMuffle(active: boolean) {
-    this.resumeContext();
     if (!this.initialized || !this.cabinetFilter) return;
 
     const targetFreq = active ? 600 : 20000;

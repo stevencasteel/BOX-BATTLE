@@ -35,7 +35,6 @@ export class DroneManager {
   }
 
   public playHealStart(x?: number) {
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopHealDrone();
 
@@ -65,7 +64,6 @@ export class DroneManager {
 
     gain.gain.setValueAtTime(0, now);
     
-    // Utilize Tone's Context timer instead of main thread window.setTimeout
     Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
@@ -85,7 +83,6 @@ export class DroneManager {
   }
 
   public playChargeStart(x?: number) {
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopChargeDrone();
 
@@ -158,7 +155,6 @@ export class DroneManager {
 
     gain.gain.setValueAtTime(0, now);
     
-    // Utilize Tone's Context timer instead of main thread window.setTimeout
     Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
@@ -183,7 +179,6 @@ export class DroneManager {
 
   public playHealComplete() {
     this.stopHealDrone();
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
 
     const chimeNotes = ["C5", "E5", "G5", "C6"];

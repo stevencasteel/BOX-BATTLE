@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 2:09:28 PM
+ [SYSTEM] Generated: 5/22/2026, 2:12:25 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -6601,7 +6601,6 @@ export class AudioContextManager {
   }
 
   public setCabinetMuffle(active: boolean) {
-    this.resumeContext();
     if (!this.initialized || !this.cabinetFilter) return;
 
     const targetFreq = active ? 600 : 20000;
@@ -6650,7 +6649,6 @@ export class DroneManager {
   }
 
   public playHealStart(x?: number) {
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopHealDrone();
 
@@ -6680,7 +6678,6 @@ export class DroneManager {
 
     gain.gain.setValueAtTime(0, now);
     
-    // Utilize Tone's Context timer instead of main thread window.setTimeout
     Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
@@ -6700,7 +6697,6 @@ export class DroneManager {
   }
 
   public playChargeStart(x?: number) {
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
     this.stopChargeDrone();
 
@@ -6773,7 +6769,6 @@ export class DroneManager {
 
     gain.gain.setValueAtTime(0, now);
     
-    // Utilize Tone's Context timer instead of main thread window.setTimeout
     Tone.getContext().setTimeout(() => {
       try {
         osc.stop();
@@ -6798,7 +6793,6 @@ export class DroneManager {
 
   public playHealComplete() {
     this.stopHealDrone();
-    this.ctxManager.resumeContext();
     if (!this.ctxManager.initialized) return;
 
     const chimeNotes = ["C5", "E5", "G5", "C6"];
@@ -7434,7 +7428,6 @@ export class SFXHelper {
     callback: (now: number) => void
   ): void {
     try {
-      this.ctxManager.resumeContext();
       if (!this.ctxManager.initialized) return;
       if (!this.checkThrottle(key, throttleMs)) return;
 
