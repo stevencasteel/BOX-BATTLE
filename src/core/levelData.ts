@@ -42,3 +42,29 @@ export const defaultLevelConfig: LevelConfig = {
   playerStart: { x: 150, y: 1000 },
   bossStart: { x: 1050, y: 1000 }
 };
+
+export class LevelLoader {
+  public static parse(jsonString: string): LevelConfig {
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (
+        parsed &&
+        Array.isArray(parsed.solids) &&
+        Array.isArray(parsed.onewayPlatforms) &&
+        Array.isArray(parsed.hazards) &&
+        Array.isArray(parsed.spawners) &&
+        parsed.playerStart &&
+        parsed.bossStart
+      ) {
+        return parsed as LevelConfig;
+      }
+    } catch (e) {
+      console.error("Failed to parse dynamic LevelConfig:", e);
+    }
+    return defaultLevelConfig;
+  }
+
+  public static stringify(config: LevelConfig): string {
+    return JSON.stringify(config, null, 2);
+  }
+}

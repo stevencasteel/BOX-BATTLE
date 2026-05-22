@@ -14,7 +14,7 @@ import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
 import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { defaultLevelConfig } from "@/core/levelData";
+import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
@@ -48,13 +48,15 @@ export class Engine {
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
-  private readonly solids: Rectangle[] = defaultLevelConfig.solids;
-  private readonly onewayPlatforms: Rectangle[] = defaultLevelConfig.onewayPlatforms;
-  private readonly hazards: Rectangle[] = defaultLevelConfig.hazards;
+  private levelConfig: LevelConfig;
+  private solids: Rectangle[] = [];
+  private onewayPlatforms: Rectangle[] = [];
+  private hazards: Rectangle[] = [];
 
   constructor(
     canvas: HTMLCanvasElement,
-    triggerDialogue: (speaker: "player" | "boss", text: string) => void
+    triggerDialogue: (speaker: "player" | "boss", text: string) => void,
+    levelConfig: LevelConfig = defaultLevelConfig
   ) {
     const context = canvas.getContext("2d");
     if (!context) {
@@ -62,6 +64,11 @@ export class Engine {
     }
     this.ctx = context;
     this.triggerDialogue = triggerDialogue;
+    this.levelConfig = levelConfig;
+    
+    this.solids = this.levelConfig.solids;
+    this.onewayPlatforms = this.levelConfig.onewayPlatforms;
+    this.hazards = this.levelConfig.hazards;
 
     this.init();
   }
@@ -81,17 +88,17 @@ export class Engine {
     this.world.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
-    this.player.position = { ...defaultLevelConfig.playerStart };
-    this.player.previousPosition = { ...defaultLevelConfig.playerStart };
+    this.player.position = { ...this.levelConfig.playerStart };
+    this.player.previousPosition = { ...this.levelConfig.playerStart };
 
     this.boss = new Boss("boss-01", this.world);
-    this.boss.position = { ...defaultLevelConfig.bossStart };
-    this.boss.previousPosition = { ...defaultLevelConfig.bossStart };
+    this.boss.position = { ...this.levelConfig.bossStart };
+    this.boss.previousPosition = { ...this.levelConfig.bossStart };
 
     this.world.player = this.player;
     this.world.boss = this.boss;
 
-    this.activeSpawners = defaultLevelConfig.spawners.map(
+    this.activeSpawners = this.levelConfig.spawners.map(
       (s) => new Spawner(s.type, s.x, s.y, this.world)
     );
 
@@ -136,13 +143,13 @@ export class Engine {
       spawner.cleanup();
     }
     this.world.minions = [];
-    this.activeSpawners = defaultLevelConfig.spawners.map(
+    this.activeSpawners = this.levelConfig.spawners.map(
       (s) => new Spawner(s.type, s.x, s.y, this.world)
     );
 
     this.player.isDead = false;
-    this.player.position = { ...defaultLevelConfig.playerStart };
-    this.player.previousPosition = { ...defaultLevelConfig.playerStart };
+    this.player.position = { ...this.levelConfig.playerStart };
+    this.player.previousPosition = { ...this.levelConfig.playerStart };
     this.player.velocity = { x: 0, y: 0 };
     this.player.facingDirection = 1;
     this.player.hasDoubleJump = true;
@@ -175,8 +182,8 @@ export class Engine {
     this.player.healComponent.healTimer = 0;
 
     this.boss.isDead = false;
-    this.boss.position = { ...defaultLevelConfig.bossStart };
-    this.boss.previousPosition = { ...defaultLevelConfig.bossStart };
+    this.boss.position = { ...this.levelConfig.bossStart };
+    this.boss.previousPosition = { ...this.levelConfig.bossStart };
     this.boss.velocity = { x: 0, y: 0 };
     this.boss.facingDirection = -1;
     this.boss.currentPhase = 1;
