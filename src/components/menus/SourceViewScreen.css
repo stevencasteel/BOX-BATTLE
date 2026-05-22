@@ -37,7 +37,7 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 768px) {
   .source-view-workspace {
     flex-direction: column;
     gap: 12px;

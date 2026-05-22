@@ -528,7 +528,7 @@ export default function App() {
           )
         )}
 
-        <div className="game-viewport-container" ref={viewportRef} style={isTouchDevice ? (isPlayingScreen ? {
+        <div className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"}`} ref={viewportRef} style={isTouchDevice ? (isPlayingScreen ? {
           flexGrow: 0,
           flexShrink: 0,
           width: "100%",
@@ -538,7 +538,8 @@ export default function App() {
         } : {
           flexGrow: 1,
           width: "100%",
-          height: "100%"
+          height: "0px",
+          aspectRatio: "auto"
         }) : undefined}>
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>

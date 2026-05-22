@@ -28,6 +28,11 @@
   padding: 24px !important;
 }
 
+.cabinet-wide-source .cabinet-status-panel,
+.cabinet-wide-source .dialogue-console {
+  display: none !important;
+}
+
 .cabinet-wide-source .game-viewport-container {
   aspect-ratio: auto !important;
   flex-grow: 1 !important;
@@ -167,20 +172,21 @@
 }
 
 @media (max-width: 768px) {
-  .cabinet-outer {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-    padding: 12px;
-    box-shadow: none;
-    border: none;
+  .cabinet-outer,
+  .cabinet-wide-source {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   .screen-inner {
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 0;
+    padding: 12px 10px;
   }
 
   .title-banner {

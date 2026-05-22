@@ -258,6 +258,9 @@
 }
 
 @media (max-width: 768px) {
+  .title-screen-container {
+    padding: 8px 12px;
+  }
   .neo-btn-large {
     padding: 16px 20px;
     border-radius: 10px;

@@ -49,10 +49,10 @@
 
 @media (max-width: 768px) {
   .slot-list {
-    gap: 12px;
+    gap: 10px;
   }
   .slot-card {
-    padding: 16px 20px;
+    padding: 12px 16px;
     border-radius: 10px;
   }
 }
