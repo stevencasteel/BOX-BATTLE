@@ -13,7 +13,7 @@ export class WorldRenderer {
 
   public render(
     world: World,
-    particles: Particle[],
+    particles: readonly Particle[],
     solids: Rectangle[],
     onewayPlatforms: Rectangle[],
     hazards: Rectangle[],

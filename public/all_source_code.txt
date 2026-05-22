@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 11:19:26 AM
+ [SYSTEM] Generated: 5/22/2026, 11:23:29 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -55,6 +55,7 @@
 │   │   ├── Interfaces.ts
 │   │   ├── levelData.ts
 │   │   ├── ObjectPool.ts
+│   │   ├── ParticleSystem.ts
 │   │   ├── PhysicsWorld.ts
 │   │   ├── SaveManager.ts
 │   │   ├── schemas.ts
@@ -4027,9 +4028,10 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
-import { Rectangle, EntityStatus, Particle } from "@/core/Interfaces";
+import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { defaultLevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
+import { ParticleSystem } from "@/core/ParticleSystem";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -4060,8 +4062,7 @@ export class Engine {
 
   private unsubDialogue!: () => void;
 
-  private particles: Particle[] = [];
-  private unsubEvents: (() => void)[] = [];
+  private particleSystem!: ParticleSystem;
 
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
@@ -4130,70 +4131,7 @@ export class Engine {
 
     window.addEventListener("keydown", this.handlePauseKey);
 
-    this.particles = [];
-
-    this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
-        const sparkCount = count || 12;
-        for (let i = 0; i < sparkCount; i++) {
-          const pAngle = radial 
-            ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
-            : angle + (Math.random() * 0.9 - 0.45);
-          const pSpeed = radial
-            ? 100 + Math.random() * 300
-            : 160 + Math.random() * 280;
-          this.particles.push({
-            x,
-            y,
-            vx: Math.cos(pAngle) * pSpeed,
-            vy: Math.sin(pAngle) * pSpeed,
-            color: color || "hsl(142, 71%, 58%)",
-            size: 2.5 + Math.random() * 3.5,
-            life: 0.22,
-            maxLife: 0.22,
-            shape: "spark"
-          });
-        }
-      })
-    );
-
-    this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
-        const count = 10;
-        for (let i = 0; i < count; i++) {
-          const dir = i % 2 === 0 ? 1 : -1;
-          const pSpeedX = dir * (50 + Math.random() * 110);
-          const pSpeedY = -8 - Math.random() * 30;
-          this.particles.push({
-            x,
-            y,
-            vx: pSpeedX,
-            vy: pSpeedY,
-            color: "rgba(255, 255, 255, 0.40)",
-            size: 3 + Math.random() * 3,
-            life: 0.24,
-            maxLife: 0.24,
-            shape: "dust"
-          });
-        }
-      })
-    );
-
-    this.unsubEvents.push(
-      eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
-        this.particles.push({
-          x,
-          y,
-          vx: 0,
-          vy: 0,
-          color,
-          size: 8,
-          life: 0.16,
-          maxLife: 0.16,
-          shape: "ring"
-        });
-      })
-    );
+    this.particleSystem = new ParticleSystem();
 
     this.loop = new GameLoop(
       (dt) => this.update(dt),
@@ -4260,16 +4198,7 @@ export class Engine {
       return;
     }
 
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.life -= dt;
-      if (p.life <= 0) {
-        this.particles.splice(i, 1);
-        continue;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-    }
+    this.particleSystem.update(dt);
 
     this.player.update(dt);
     this.boss.update(dt);
@@ -4393,7 +4322,7 @@ export class Engine {
   private render() {
     this.renderer.render(
       this.world,
-      this.particles,
+      this.particleSystem.getParticles(),
       this.solids,
       this.onewayPlatforms,
       this.hazards,
@@ -4428,9 +4357,7 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.unsubDialogue();
-    this.unsubEvents.forEach((unsub) => unsub());
-    this.unsubEvents = [];
-    this.particles = [];
+    this.particleSystem.cleanup();
     window.removeEventListener("keydown", this.handlePauseKey);
 
     for (const spawner of this.activeSpawners) {
@@ -4851,6 +4778,110 @@ export class ObjectPool<T extends IPoolable> {
   public clear() {
     this.inactivePool = [];
     this.activePool = [];
+  }
+}
+
+
+
+● ./src/core/ParticleSystem.ts
+────────────────────────────────────────────────────
+import { Particle } from "./Interfaces";
+import { eventBroker } from "./eventBroker";
+
+export class ParticleSystem {
+  private particles: Particle[] = [];
+  private unsubs: (() => void)[] = [];
+
+  constructor() {
+    this.setupListeners();
+  }
+
+  private setupListeners() {
+    this.unsubs.push(
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
+        const sparkCount = count || 12;
+        for (let i = 0; i < sparkCount; i++) {
+          const pAngle = radial 
+            ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
+            : angle + (Math.random() * 0.9 - 0.45);
+          const pSpeed = radial
+            ? 100 + Math.random() * 300
+            : 160 + Math.random() * 280;
+          this.particles.push({
+            x,
+            y,
+            vx: Math.cos(pAngle) * pSpeed,
+            vy: Math.sin(pAngle) * pSpeed,
+            color: color || "hsl(142, 71%, 58%)",
+            size: 2.5 + Math.random() * 3.5,
+            life: 0.22,
+            maxLife: 0.22,
+            shape: "spark"
+          });
+        }
+      })
+    );
+
+    this.unsubs.push(
+      eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
+        const count = 10;
+        for (let i = 0; i < count; i++) {
+          const dir = i % 2 === 0 ? 1 : -1;
+          const pSpeedX = dir * (50 + Math.random() * 110);
+          const pSpeedY = -8 - Math.random() * 30;
+          this.particles.push({
+            x,
+            y,
+            vx: pSpeedX,
+            vy: pSpeedY,
+            color: "rgba(255, 255, 255, 0.40)",
+            size: 3 + Math.random() * 3,
+            life: 0.24,
+            maxLife: 0.24,
+            shape: "dust"
+          });
+        }
+      })
+    );
+
+    this.unsubs.push(
+      eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
+        this.particles.push({
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+          color,
+          size: 8,
+          life: 0.16,
+          maxLife: 0.16,
+          shape: "ring"
+        });
+      })
+    );
+  }
+
+  public update(dt: number) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+        continue;
+      }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+  }
+
+  public getParticles(): readonly Particle[] {
+    return this.particles;
+  }
+
+  public cleanup() {
+    this.unsubs.forEach((unsub) => unsub());
+    this.unsubs = [];
+    this.particles = [];
   }
 }
 
@@ -5640,7 +5671,7 @@ export class WorldRenderer {
 
   public render(
     world: World,
-    particles: Particle[],
+    particles: readonly Particle[],
     solids: Rectangle[],
     onewayPlatforms: Rectangle[],
     hazards: Rectangle[],
