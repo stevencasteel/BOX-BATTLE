@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:24:24 PM
+ [SYSTEM] Generated: 5/22/2026, 1:29:46 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -6941,10 +6941,9 @@ export class InterfaceSFX {
 
   public playMenuConfirm() {
     this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
-      const notes = [440, 554, 659, 880];
-      notes.forEach((freq, idx) => {
-        this.dialogueSynthPlayer.triggerAttackRelease(freq, "32n", now + idx * 0.04);
-      });
+      this.dialogueSynthPlayer.triggerAttackRelease(440, "16n", now);
+      this.dialogueSynthPlayer.frequency.setValueAtTime(440, now);
+      this.dialogueSynthPlayer.frequency.rampTo(880, 0.12, now);
     });
   }
 
@@ -7473,7 +7472,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 3) {
         navTo("SOURCE_VIEW");
       }
-      soundSynth.playMenuConfirm();
     }
   },
   PLAYING: {
@@ -7486,7 +7484,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         } else {
           navTo("TITLE");
         }
-        soundSynth.playMenuConfirm();
       }
     }
   },
@@ -7505,13 +7502,11 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 5) {
         resetActions();
         navTo("TITLE");
-        soundSynth.playMenuBack();
       }
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   },
   OPTIONS: {
@@ -7525,12 +7520,10 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         navTo("TITLE");
         setMenuIndex(1);
       }
-      soundSynth.playMenuConfirm();
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   },
   SOUND: {
@@ -7540,7 +7533,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         resetSettings?.();
       } else if (menuIndex === 4) {
         navTo("OPTIONS");
-        soundSynth.playMenuBack();
       }
     },
     onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
@@ -7558,7 +7550,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-      soundSynth.playMenuBack();
     }
   },
   CONTROLS: {
@@ -7571,7 +7562,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       if (isTouch) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playMenuBack();
         return;
       }
       if (menuIndex === 0) {
@@ -7589,7 +7579,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 10) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playMenuBack();
       } else {
         const actionIndex = menuIndex - 3;
         const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
@@ -7599,18 +7588,15 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-      soundSynth.playMenuBack();
     }
   },
   CREDITS: {
     getMaxIndex: () => 0,
     onSelect: ({ navTo }) => {
       navTo("TITLE");
-      soundSynth.playMenuBack();
     },
     onBack: ({ navTo }) => {
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   }
 };
@@ -10583,9 +10569,21 @@ createRoot(document.getElementById('root')!).render(
 ● ./src/store/useGameStore.ts
 ────────────────────────────────────────────────────
 import { create } from "zustand";
+import { soundSynth } from "@/core/SoundSynth";
 
 export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "SOURCE_VIEW" | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
+
+const SCREEN_DEPTHS: Record<ScreenState, number> = {
+  TITLE: 0,
+  SAVE_SELECT: 1,
+  OPTIONS: 1,
+  CREDITS: 1,
+  SOURCE_VIEW: 1,
+  SOUND: 2,
+  CONTROLS: 2,
+  PLAYING: 2,
+};
 
 interface SessionState {
   currentScreen: ScreenState;
@@ -10598,12 +10596,26 @@ interface SessionState {
   incrementRetry: () => void;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
   currentScreen: "TITLE",
   menuIndex: 0,
   gameResult: "PLAYING",
   retryCount: 0,
   navTo: (screen) => {
+    const current = get().currentScreen;
+
+    // Trigger context-backed sound sweeps centrally based on numerical screen hierarchy depth checks
+    if (soundSynth.initialized && current !== screen) {
+      const currentDepth = SCREEN_DEPTHS[current] ?? 0;
+      const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
+
+      if (targetDepth < currentDepth) {
+        soundSynth.playMenuBack();
+      } else {
+        soundSynth.playMenuConfirm();
+      }
+    }
+
     set((state) => ({
       currentScreen: screen,
       menuIndex: 0,

@@ -41,7 +41,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 3) {
         navTo("SOURCE_VIEW");
       }
-      soundSynth.playMenuConfirm();
     }
   },
   PLAYING: {
@@ -54,7 +53,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         } else {
           navTo("TITLE");
         }
-        soundSynth.playMenuConfirm();
       }
     }
   },
@@ -73,13 +71,11 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 5) {
         resetActions();
         navTo("TITLE");
-        soundSynth.playMenuBack();
       }
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   },
   OPTIONS: {
@@ -93,12 +89,10 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         navTo("TITLE");
         setMenuIndex(1);
       }
-      soundSynth.playMenuConfirm();
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   },
   SOUND: {
@@ -108,7 +102,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         resetSettings?.();
       } else if (menuIndex === 4) {
         navTo("OPTIONS");
-        soundSynth.playMenuBack();
       }
     },
     onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
@@ -126,7 +119,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-      soundSynth.playMenuBack();
     }
   },
   CONTROLS: {
@@ -139,7 +131,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       if (isTouch) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playMenuBack();
         return;
       }
       if (menuIndex === 0) {
@@ -157,7 +148,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 10) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playMenuBack();
       } else {
         const actionIndex = menuIndex - 3;
         const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
@@ -167,18 +157,15 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-      soundSynth.playMenuBack();
     }
   },
   CREDITS: {
     getMaxIndex: () => 0,
     onSelect: ({ navTo }) => {
       navTo("TITLE");
-      soundSynth.playMenuBack();
     },
     onBack: ({ navTo }) => {
       navTo("TITLE");
-      soundSynth.playMenuBack();
     }
   }
 };

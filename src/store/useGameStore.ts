@@ -1,7 +1,19 @@
 import { create } from "zustand";
+import { soundSynth } from "@/core/SoundSynth";
 
 export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "SOURCE_VIEW" | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
+
+const SCREEN_DEPTHS: Record<ScreenState, number> = {
+  TITLE: 0,
+  SAVE_SELECT: 1,
+  OPTIONS: 1,
+  CREDITS: 1,
+  SOURCE_VIEW: 1,
+  SOUND: 2,
+  CONTROLS: 2,
+  PLAYING: 2,
+};
 
 interface SessionState {
   currentScreen: ScreenState;
@@ -14,12 +26,26 @@ interface SessionState {
   incrementRetry: () => void;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
   currentScreen: "TITLE",
   menuIndex: 0,
   gameResult: "PLAYING",
   retryCount: 0,
   navTo: (screen) => {
+    const current = get().currentScreen;
+
+    // Trigger context-backed sound sweeps centrally based on numerical screen hierarchy depth checks
+    if (soundSynth.initialized && current !== screen) {
+      const currentDepth = SCREEN_DEPTHS[current] ?? 0;
+      const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
+
+      if (targetDepth < currentDepth) {
+        soundSynth.playMenuBack();
+      } else {
+        soundSynth.playMenuConfirm();
+      }
+    }
+
     set((state) => ({
       currentScreen: screen,
       menuIndex: 0,

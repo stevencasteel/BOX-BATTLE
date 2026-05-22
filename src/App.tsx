@@ -532,19 +532,15 @@ export default function App() {
                   menuIndex={menuIndex}
                   onPlay={() => {
                     reloadSaveSlots();
-                    soundSynth.playMenuConfirm();
                     navTo("SAVE_SELECT");
                   }}
                   onSettings={() => {
-                    soundSynth.playMenuConfirm();
                     navTo("OPTIONS");
                   }}
                   onCredits={() => {
-                    soundSynth.playMenuConfirm();
                     navTo("CREDITS");
                   }}
                   onSource={() => {
-                    soundSynth.playMenuConfirm();
                     navTo("SOURCE_VIEW");
                   }}
                   playHoverTick={playHoverTick}
@@ -564,7 +560,6 @@ export default function App() {
                   toggleEraseMode={toggleEraseMode}
                   onBack={() => {
                     resetActions();
-                    soundSynth.playMenuBack();
                     navTo("TITLE");
                   }}
                   playHoverTick={playHoverTick}
@@ -576,15 +571,12 @@ export default function App() {
                 <SettingsScreen
                   menuIndex={menuIndex}
                   onAudio={() => {
-                    soundSynth.playMenuConfirm();
                     navTo("SOUND");
                   }}
                   onControls={() => {
-                    soundSynth.playMenuConfirm();
                     navTo("CONTROLS");
                   }}
                   onBack={() => {
-                    soundSynth.playMenuBack();
                     navTo("TITLE");
                     setMenuIndex(1);
                   }}
@@ -600,7 +592,6 @@ export default function App() {
                   handleVolumeChange={handleVolumeChange}
                   resetSettings={resetSettings}
                   onBack={() => {
-                    soundSynth.playMenuBack();
                     navTo("OPTIONS");
                   }}
                   playHoverTick={playHoverTick}
@@ -613,7 +604,6 @@ export default function App() {
                   menuIndex={menuIndex}
                   rebindTarget={rebindTarget}
                   onBack={() => {
-                    soundSynth.playMenuBack();
                     navTo("OPTIONS");
                     setMenuIndex(1);
                   }}
@@ -627,7 +617,6 @@ export default function App() {
               {currentScreen === "CREDITS" && (
                 <CreditsScreen
                   onBack={() => {
-                    soundSynth.playMenuBack();
                     navTo("TITLE");
                     setMenuIndex(2);
                   }}
@@ -637,7 +626,6 @@ export default function App() {
               {currentScreen === "SOURCE_VIEW" && (
                 <SourceViewScreen
                   onBack={() => {
-                    soundSynth.playMenuBack();
                     navTo("TITLE");
                     setMenuIndex(3);
                   }}
