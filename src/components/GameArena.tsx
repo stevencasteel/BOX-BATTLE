@@ -1,5 +1,5 @@
 import "./GameArena.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
@@ -14,18 +14,25 @@ export function GameArena({
   playHoverTick,
 }: GameArenaProps) {
   const triggerRef = useRef(triggerDialogue);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
-  const [canvasNode, setCanvasNode] = useState<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     triggerRef.current = triggerDialogue;
   }, [triggerDialogue]);
 
   useEffect(() => {
-    if (!canvasNode) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const engine = new Engine(canvas, (speaker, text) => {
+      triggerRef.current(speaker, text);
+    });
+    engineRef.current = engine;
+    engine.start();
 
     const updateVignette = (hp: number) => {
-      const overlay = canvasNode.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+      const overlay = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
       if (overlay) {
         if (hp === 1) {
           overlay.classList.add("vignette-pulse");
@@ -35,10 +42,10 @@ export function GameArena({
       }
     };
 
-    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }: { currentHealth: number }) => {
+    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", ({ currentHealth }) => {
       updateVignette(currentHealth);
     });
-    const unsubHealed = eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }: { currentHealth: number }) => {
+    const unsubHealed = eventBroker.subscribe("PLAYER_HEALED", ({ currentHealth }) => {
       updateVignette(currentHealth);
     });
 
@@ -48,23 +55,10 @@ export function GameArena({
     return () => {
       unsubHurt();
       unsubHealed();
-    };
-  }, [canvasNode]);
-
-  useEffect(() => {
-    if (!canvasNode) return;
-
-    const engine = new Engine(canvasNode, (speaker, text) => {
-      triggerRef.current(speaker, text);
-    });
-    engineRef.current = engine;
-    engine.start();
-
-    return () => {
       engine.cleanup();
       engineRef.current = null;
     };
-  }, [canvasNode]);
+  }, []);
 
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -100,7 +94,7 @@ export function GameArena({
           height: "100%"
         }}>
           <canvas
-            ref={setCanvasNode}
+            ref={canvasRef}
             width={1250}
             height={1250}
             className="crt-scanlines crt-flicker"
