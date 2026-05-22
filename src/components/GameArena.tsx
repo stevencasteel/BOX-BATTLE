@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
@@ -17,13 +17,6 @@ export function GameArena({
 }: GameArenaProps) {
   const triggerRef = useRef(triggerDialogue);
   
-  const [isMobileDevice] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(pointer: coarse)").matches;
-    }
-    return false;
-  });
-
   useEffect(() => {
     triggerRef.current = triggerDialogue;
   }, [triggerDialogue]);
@@ -99,8 +92,8 @@ export function GameArena({
   const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   return (
-    <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
+    <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
+      <div style={{ flexGrow: 1, position: "relative", display: "flex", width: "100%", overflow: "hidden", minHeight: 0 }}>
 
         <div style={{
           position: "relative",

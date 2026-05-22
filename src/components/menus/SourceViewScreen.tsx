@@ -469,67 +469,139 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
       </div>
 
-      <div 
-        className="source-view-footer" 
-        style={{ 
-          display: "flex", 
-          flexDirection: "row", 
-          gap: isMobile ? "8px" : "16px", 
-          width: "100%", 
-          justifyContent: "space-between", 
-          boxSizing: "border-box", 
-          marginTop: "12px",
-          flexShrink: 0
-        }}
-      >
-        <div style={{ flex: 1, display: "flex" }}>
+      {!isMobile ? (
+        <div 
+          className="source-view-footer" 
+          style={{ 
+            display: "flex", 
+            flexDirection: "row", 
+            gap: "16px", 
+            width: "100%", 
+            boxSizing: "border-box", 
+            marginTop: "12px",
+            flexShrink: 0
+          }}
+        >
           <a 
             href="https://github.com/stevencasteel/BOX-BATTLE" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className={`neo-btn ${activeIndex === visibleNodes.length ? "neo-btn-focused" : ""}`}
-            style={{ 
-              width: "100%", 
-              padding: isMobile ? "12px" : "16px 28px", 
-              fontSize: isMobile ? "12px" : "14px", 
-              textDecoration: "none", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center",
-              boxSizing: "border-box"
-            }}
+            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length); }}
+            className={`neo-btn-large ${activeIndex === visibleNodes.length ? "neo-btn-large-focused" : ""}`}
+            style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
           >
-            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>▶</span>}
-            <svg 
-              viewBox="0 0 24 24" 
-              width={isMobile ? "22" : "14"} 
-              height={isMobile ? "22" : "14"} 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              fill="none" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              style={{ display: "inline-block", marginRight: isMobile ? "0" : "8px" }}
-            >
-              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-            </svg>
-            {!isMobile && <>GITHUB REPO <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length ? "visible" : "hidden" }}>◀</span></>}
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg 
+                  viewBox="0 0 24 24" 
+                  width="18" 
+                  height="18" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
+                GITHUB REPO
+              </span>
+              <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
+            </div>
+            {activeIndex === visibleNodes.length && <span className="cursor-arrow-large">▶</span>}
           </a>
-        </div>
 
-        <div style={{ flex: 1, display: "flex" }}>
           <button
             onClick={handleDownload}
-            className={`neo-btn ${activeIndex === visibleNodes.length + 1 ? "neo-btn-focused" : ""}`}
-            style={{ 
-              width: "100%", 
-              padding: isMobile ? "12px" : "16px 28px", 
-              fontSize: isMobile ? "12px" : "14px",
-              boxSizing: "border-box"
-            }}
+            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length + 1); }}
+            className={`neo-btn-large ${activeIndex === visibleNodes.length + 1 ? "neo-btn-large-focused" : ""}`}
+            style={{ flex: 1, boxSizing: "border-box" }}
           >
-            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>▶</span>}
-            {isMobile ? (
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg 
+                  viewBox="0 0 24 24" 
+                  width="18" 
+                  height="18" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                DOWNLOAD SOURCE
+              </span>
+              <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
+            </div>
+            {activeIndex === visibleNodes.length + 1 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+
+          <button
+            onClick={onBack}
+            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length + 2); }}
+            className={`neo-btn-large ${activeIndex === visibleNodes.length + 2 ? "neo-btn-large-focused" : ""}`}
+            style={{ flex: 1, boxSizing: "border-box" }}
+          >
+            <div className="btn-indicator-light" />
+            <div className="btn-label-group">
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg 
+                  viewBox="0 0 24 24" 
+                  width="18" 
+                  height="18" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                BACK TO MENU
+              </span>
+              <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
+            </div>
+            {activeIndex === visibleNodes.length + 2 && <span className="cursor-arrow-large">▶</span>}
+          </button>
+        </div>
+      ) : (
+        <div 
+          className="source-view-footer" 
+          style={{ 
+            display: "flex", 
+            flexDirection: "row", 
+            gap: "8px", 
+            width: "100%", 
+            justifyContent: "space-between", 
+            boxSizing: "border-box", 
+            marginTop: "12px",
+            flexShrink: 0
+          }}
+        >
+          <div style={{ flex: 1, display: "flex" }}>
+            <a 
+              href="https://github.com/stevencasteel/BOX-BATTLE" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="neo-btn"
+              style={{ 
+                width: "100%", 
+                padding: "12px", 
+                fontSize: "12px", 
+                textDecoration: "none", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                boxSizing: "border-box"
+              }}
+            >
               <svg 
                 viewBox="0 0 24 24" 
                 width="22" 
@@ -539,34 +611,51 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                 fill="none" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
-                style={{ display: "inline-block" }}
+              >
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+            </a>
+          </div>
+
+          <div style={{ flex: 1, display: "flex" }}>
+            <button
+              onClick={handleDownload}
+              className="neo-btn"
+              style={{ 
+                width: "100%", 
+                padding: "12px", 
+                fontSize: "12px",
+                boxSizing: "border-box"
+              }}
+            >
+              <svg 
+                viewBox="0 0 24 24" 
+                width="22" 
+                height="22" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            ) : (
-              <>
-                DOWNLOAD SOURCE (.TXT)
-                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 1 ? "visible" : "hidden" }}>◀</span>
-              </>
-            )}
-          </button>
-        </div>
+            </button>
+          </div>
 
-        <div style={{ flex: 1, display: "flex" }}>
-          <button
-            onClick={onBack}
-            className={`neo-btn ${activeIndex === visibleNodes.length + 2 ? "neo-btn-focused" : ""}`}
-            style={{ 
-              width: "100%", 
-              padding: isMobile ? "12px" : "16px 32px", 
-              fontSize: isMobile ? "12px" : "14px",
-              boxSizing: "border-box"
-            }}
-          >
-            {!isMobile && <span className="cursor-arrow" style={{ marginRight: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>▶</span>}
-            {isMobile ? (
+          <div style={{ flex: 1, display: "flex" }}>
+            <button
+              onClick={onBack}
+              className="neo-btn"
+              style={{ 
+                width: "100%", 
+                padding: "12px", 
+                fontSize: "12px",
+                boxSizing: "border-box"
+              }}
+            >
               <svg 
                 viewBox="0 0 24 24" 
                 width="22" 
@@ -576,20 +665,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                 fill="none" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
-                style={{ display: "inline-block" }}
               >
                 <line x1="19" y1="12" x2="5" y2="12" />
                 <polyline points="12 19 5 12 12 5" />
               </svg>
-            ) : (
-              <>
-                Back
-                <span className="cursor-arrow" style={{ marginLeft: "8px", visibility: activeIndex === visibleNodes.length + 2 ? "visible" : "hidden" }}>◀</span>
-              </>
-            )}
-          </button>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
