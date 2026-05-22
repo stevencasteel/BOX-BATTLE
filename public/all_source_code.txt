@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 1:22:20 PM
+ [SYSTEM] Generated: 5/22/2026, 1:24:24 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -918,7 +918,6 @@ export default function App() {
       } else if (isBackKey) {
         e.preventDefault();
         if (config.onBack) {
-          soundSynth.playErrorTick();
           config.onBack(context);
         }
       }
@@ -5765,6 +5764,14 @@ class SoundSynth {
     this.sfx.playFireballLvl2(x);
   }
 
+  public playMenuConfirm(): void {
+    this.sfx.playMenuConfirm();
+  }
+
+  public playMenuBack(): void {
+    this.sfx.playMenuBack();
+  }
+
   public playJump(x?: number): void {
     this.sfx.playJump(x);
   }
@@ -6734,6 +6741,8 @@ export class SFXManager {
   public playLanding(x?: number) { this.playerSFX.playLanding(x); }
   public playFireballLvl1(x?: number) { this.playerSFX.playFireballLvl1(x); }
   public playFireballLvl2(x?: number) { this.playerSFX.playFireballLvl2(x); }
+  public playMenuConfirm() { this.interfaceSFX.playMenuConfirm(); }
+  public playMenuBack() { this.interfaceSFX.playMenuBack(); }
   public playJump(x?: number) { this.playerSFX.playJump(x); }
   public playDash(x?: number) { this.playerSFX.playDash(x); }
   public playSlash(direction?: "side" | "up" | "down", x?: number) { this.playerSFX.playSlash(direction, x); }
@@ -6927,6 +6936,23 @@ export class InterfaceSFX {
     this.helper.execute("error_tick", 30, undefined, undefined, (now) => {
       this.dialogueSynthBoss.triggerAttackRelease(260, "16n", now);
       this.dialogueSynthBoss.triggerAttackRelease(160, "16n", now + 0.05);
+    });
+  }
+
+  public playMenuConfirm() {
+    this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
+      const notes = [440, 554, 659, 880];
+      notes.forEach((freq, idx) => {
+        this.dialogueSynthPlayer.triggerAttackRelease(freq, "32n", now + idx * 0.04);
+      });
+    });
+  }
+
+  public playMenuBack() {
+    this.helper.execute("menu_back", 80, undefined, undefined, (now) => {
+      this.dialogueSynthBoss.triggerAttackRelease(587, "16n", now);
+      this.dialogueSynthBoss.frequency.setValueAtTime(587, now);
+      this.dialogueSynthBoss.frequency.rampTo(293, 0.12, now);
     });
   }
 
@@ -7447,7 +7473,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 3) {
         navTo("SOURCE_VIEW");
       }
-      soundSynth.playHitConfirm();
+      soundSynth.playMenuConfirm();
     }
   },
   PLAYING: {
@@ -7460,7 +7486,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         } else {
           navTo("TITLE");
         }
-        soundSynth.playHitConfirm();
+        soundSynth.playMenuConfirm();
       }
     }
   },
@@ -7479,12 +7505,13 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 5) {
         resetActions();
         navTo("TITLE");
-        soundSynth.playErrorTick();
+        soundSynth.playMenuBack();
       }
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
+      soundSynth.playMenuBack();
     }
   },
   OPTIONS: {
@@ -7498,11 +7525,12 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         navTo("TITLE");
         setMenuIndex(1);
       }
-      soundSynth.playHitConfirm();
+      soundSynth.playMenuConfirm();
     },
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
+      soundSynth.playMenuBack();
     }
   },
   SOUND: {
@@ -7512,7 +7540,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         resetSettings?.();
       } else if (menuIndex === 4) {
         navTo("OPTIONS");
-        soundSynth.playErrorTick();
+        soundSynth.playMenuBack();
       }
     },
     onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
@@ -7530,6 +7558,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
+      soundSynth.playMenuBack();
     }
   },
   CONTROLS: {
@@ -7542,7 +7571,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       if (isTouch) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playErrorTick();
+        soundSynth.playMenuBack();
         return;
       }
       if (menuIndex === 0) {
@@ -7560,7 +7589,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 10) {
         navTo("OPTIONS");
         setMenuIndex(1);
-        soundSynth.playErrorTick();
+        soundSynth.playMenuBack();
       } else {
         const actionIndex = menuIndex - 3;
         const action = (Object.keys(settingsManager.getKeyMap()) as Action[])[actionIndex];
@@ -7570,16 +7599,18 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
+      soundSynth.playMenuBack();
     }
   },
   CREDITS: {
     getMaxIndex: () => 0,
     onSelect: ({ navTo }) => {
       navTo("TITLE");
-      soundSynth.playErrorTick();
+      soundSynth.playMenuBack();
     },
     onBack: ({ navTo }) => {
       navTo("TITLE");
+      soundSynth.playMenuBack();
     }
   }
 };

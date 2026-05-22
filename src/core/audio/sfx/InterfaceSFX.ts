@@ -46,6 +46,22 @@ export class InterfaceSFX {
     });
   }
 
+  public playMenuConfirm() {
+    this.helper.execute("menu_confirm", 80, undefined, undefined, (now) => {
+      this.dialogueSynthPlayer.triggerAttackRelease(440, "16n", now);
+      this.dialogueSynthPlayer.frequency.setValueAtTime(440, now);
+      this.dialogueSynthPlayer.frequency.rampTo(880, 0.12, now);
+    });
+  }
+
+  public playMenuBack() {
+    this.helper.execute("menu_back", 80, undefined, undefined, (now) => {
+      this.dialogueSynthBoss.triggerAttackRelease(587, "16n", now);
+      this.dialogueSynthBoss.frequency.setValueAtTime(587, now);
+      this.dialogueSynthBoss.frequency.rampTo(293, 0.12, now);
+    });
+  }
+
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     if (!char) return;
     this.helper.execute("dialogue_tick", 35, undefined, undefined, (now) => {

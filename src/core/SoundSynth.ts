@@ -92,6 +92,14 @@ class SoundSynth {
     this.sfx.playFireballLvl2(x);
   }
 
+  public playMenuConfirm(): void {
+    this.sfx.playMenuConfirm();
+  }
+
+  public playMenuBack(): void {
+    this.sfx.playMenuBack();
+  }
+
   public playJump(x?: number): void {
     this.sfx.playJump(x);
   }

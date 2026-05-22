@@ -31,6 +31,8 @@ export class SFXManager {
   public playLanding(x?: number) { this.playerSFX.playLanding(x); }
   public playFireballLvl1(x?: number) { this.playerSFX.playFireballLvl1(x); }
   public playFireballLvl2(x?: number) { this.playerSFX.playFireballLvl2(x); }
+  public playMenuConfirm() { this.interfaceSFX.playMenuConfirm(); }
+  public playMenuBack() { this.interfaceSFX.playMenuBack(); }
   public playJump(x?: number) { this.playerSFX.playJump(x); }
   public playDash(x?: number) { this.playerSFX.playDash(x); }
   public playSlash(direction?: "side" | "up" | "down", x?: number) { this.playerSFX.playSlash(direction, x); }
