@@ -3,6 +3,7 @@ import { settingsManager } from "@/core/SettingsManager";
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
+  private pauseJustPressed: boolean = false;
   private pressTimestamps: Record<Action, number> = {
     MOVE_LEFT: 0,
     MOVE_RIGHT: 0,
@@ -82,6 +83,11 @@ class InputProvider {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === "KeyP") {
+      e.preventDefault();
+      this.pauseJustPressed = true;
+      return;
+    }
     const action = this.getActionFromCode(e.code);
     if (action) {
       e.preventDefault();
@@ -100,6 +106,7 @@ class InputProvider {
   };
 
   private handleBlur = () => {
+    this.pauseJustPressed = false;
     for (const key in this.keyboardPressed) {
       const action = key as Action;
       this.keyboardPressed[action] = false;
@@ -202,11 +209,16 @@ class InputProvider {
   }
 
   public postUpdate() {
+    this.pauseJustPressed = false;
     for (const key in this.justPressed) {
       const action = key as Action;
       this.justPressed[action] = false;
       this.justReleased[action] = false;
     }
+  }
+
+  public isPauseJustPressed(): boolean {
+    return this.pauseJustPressed;
   }
 
   public cleanup() {
