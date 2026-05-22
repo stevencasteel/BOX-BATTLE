@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 11:45:01 AM
+ [SYSTEM] Generated: 5/22/2026, 11:47:10 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -5736,6 +5736,7 @@ export class World implements IWorld {
 
 ● ./src/core/WorldRenderer.ts
 ────────────────────────────────────────────────────
+import { Player } from "@/entities/Player";
 import { Camera } from "./Camera";
 import { World } from "./World";
 import { Rectangle, Particle } from "./Interfaces";
@@ -5743,6 +5744,138 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 
 export class WorldRenderer {
+  private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player) {
+    const facing = player.facingDirection;
+    ctx.lineCap = "round";
+
+    const progress = 1.0 - (player.meleeComponent.attackActiveTimer / 0.09);
+    const opacity = Math.max(0, player.meleeComponent.attackActiveTimer / 0.09);
+
+    if (player.attackDirection === "side") {
+      const offset = facing * 35;
+      const baseStart = -Math.PI / 2;
+      const angleLength = Math.PI;
+      const currentSweepAngle = angleLength * progress;
+
+      const cx = player.position.x + offset;
+      const cy = player.position.y;
+
+      ctx.save();
+      ctx.lineCap = "butt";
+
+      const trailAngle = currentSweepAngle * 0.75;
+      
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        88,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
+      );
+      ctx.stroke();
+
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        65,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
+      );
+      ctx.stroke();
+
+      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+      
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        95,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing < 0
+      );
+      ctx.arc(
+        cx,
+        cy,
+        25,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    else if (player.attackDirection === "up") {
+      const cx = player.position.x;
+      const cy = player.position.y - 35;
+
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
+      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    else if (player.attackDirection === "down") {
+      const cx = player.position.x;
+      const cy = player.position.y + 35;
+
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
+      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
   private ctx: CanvasRenderingContext2D;
 
   constructor(ctx: CanvasRenderingContext2D) {
@@ -5829,6 +5962,10 @@ export class WorldRenderer {
 
     if (world.player) {
       world.player.draw(this.ctx);
+      const player = world.player as Player;
+      if (player.attackActive) {
+        this.drawPlayerAttackVisual(this.ctx, player);
+      }
     }
 
     for (const minion of world.minions) {
@@ -8677,159 +8814,10 @@ export class Player extends BaseEntity implements IDamageRecorder {
       ctx.stroke();
     }
 
-    if (this.attackActive) {
-      this.drawAttackVisual(ctx);
-    }
+
   }
 
-  private drawAttackVisual(ctx: CanvasRenderingContext2D) {
-    const facing = this.facingDirection;
-    ctx.lineCap = "round";
 
-    /* Swipe & Smear calculations: Compute elapsed progress of the active sword slash */
-    const progress = 1.0 - (this.meleeComponent.attackActiveTimer / 0.09);
-    const opacity = Math.max(0, this.meleeComponent.attackActiveTimer / 0.09);
-
-    if (this.attackDirection === "side") {
-      const offset = facing * 35;
-      const baseStart = -Math.PI / 2;
-      const angleLength = Math.PI;
-      const currentSweepAngle = angleLength * progress;
-
-      const cx = this.position.x + offset;
-      const cy = this.position.y;
-
-      ctx.save();
-      /* Apply flat lineCap to cleanly terminate lines, eliminating any capsule-shaped endpoints poking out */
-      ctx.lineCap = "butt";
-
-      /* Layer 1: Dual Razor-Sharp Trailing Speedlines (Draws sleek, thin speed trails mimicking wind friction) */
-      const trailAngle = currentSweepAngle * 0.75;
-      
-      /* Outer Edge Speedline (Radius 88px, Width 4px) */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(
-        cx,
-        cy,
-        88,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
-        facing < 0
-      );
-      ctx.stroke();
-
-      /* Mid-Blade Speedline (Radius 65px, Width 2px) */
-      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(
-        cx,
-        cy,
-        65,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
-        facing < 0
-      );
-      ctx.stroke();
-
-      /* Layer 2: Unified, Single-Filled Radial Gradient Wedge (Fuses white-hot core and green blade into one seamless object) */
-      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");                               // Inner transparent hollow
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);                      // Intense white-hot core (39px radius)
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);               // Glowing neon-lime transition (60px radius)
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);                // Rich green blade edge (84px radius)
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");                                 // Soft outer fade-out (95px reach)
-
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
-      
-      ctx.beginPath();
-      /* Draw Outer boundary arc (95px reach) */
-      ctx.arc(
-        cx,
-        cy,
-        95,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing < 0
-      );
-      /* Draw Inner boundary arc (25px reach) backward to close path */
-      ctx.arc(
-        cx,
-        cy,
-        25,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0
-      );
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-    else if (this.attackDirection === "up") {
-      /* Upward Splash: The 180-degree overhead canopy expands in radius rather than sweeping angles */
-      const cx = this.position.x;
-      const cy = this.position.y - 35;
-
-      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
-      const currentRadius = 30 + progress * 65;
-      const currentInnerRadius = 15 + progress * 15;
-
-      ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
-
-      ctx.beginPath();
-      /* Draw Outer expanding semi-circle pointing straight up (-PI to 0) */
-      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
-      /* Draw Inner boundary arc backward to close path */
-      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-    else if (this.attackDirection === "down") {
-      /* Downward Splash: The 180-degree pogo thruster expands rapidly downward */
-      const cx = this.position.x;
-      const cy = this.position.y + 35;
-
-      /* Burst expansion math: Explode radius outward from 30px to 95px over the active window */
-      const currentRadius = 30 + progress * 65;
-      const currentInnerRadius = 15 + progress * 15;
-
-      ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
-
-      ctx.beginPath();
-      /* Draw Outer expanding semi-circle pointing straight down (0 to PI) */
-      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
-      /* Draw Inner boundary arc backward to close path */
-      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-  }
 
   public teardown() {
     this.unsubHurt();

@@ -1,3 +1,4 @@
+import { Player } from "@/entities/Player";
 import { Camera } from "./Camera";
 import { World } from "./World";
 import { Rectangle, Particle } from "./Interfaces";
@@ -5,6 +6,138 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 
 export class WorldRenderer {
+  private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player) {
+    const facing = player.facingDirection;
+    ctx.lineCap = "round";
+
+    const progress = 1.0 - (player.meleeComponent.attackActiveTimer / 0.09);
+    const opacity = Math.max(0, player.meleeComponent.attackActiveTimer / 0.09);
+
+    if (player.attackDirection === "side") {
+      const offset = facing * 35;
+      const baseStart = -Math.PI / 2;
+      const angleLength = Math.PI;
+      const currentSweepAngle = angleLength * progress;
+
+      const cx = player.position.x + offset;
+      const cy = player.position.y;
+
+      ctx.save();
+      ctx.lineCap = "butt";
+
+      const trailAngle = currentSweepAngle * 0.75;
+      
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.45})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        88,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
+      );
+      ctx.stroke();
+
+      ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.30})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        65,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + trailAngle : Math.PI - (baseStart + trailAngle),
+        facing < 0
+      );
+      ctx.stroke();
+
+      const gradient = ctx.createRadialGradient(cx, cy, 25, cx, cy, 95);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+      
+      ctx.beginPath();
+      ctx.arc(
+        cx,
+        cy,
+        95,
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing < 0
+      );
+      ctx.arc(
+        cx,
+        cy,
+        25,
+        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
+        facing > 0 ? baseStart : Math.PI - baseStart,
+        facing > 0
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    else if (player.attackDirection === "up") {
+      const cx = player.position.x;
+      const cy = player.position.y - 35;
+
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
+      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    else if (player.attackDirection === "down") {
+      const cx = player.position.x;
+      const cy = player.position.y + 35;
+
+      const currentRadius = 30 + progress * 65;
+      const currentInnerRadius = 15 + progress * 15;
+
+      ctx.save();
+      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
+      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
+      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
+      ctx.shadowBlur = 20 * opacity;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
+      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
   private ctx: CanvasRenderingContext2D;
 
   constructor(ctx: CanvasRenderingContext2D) {
@@ -91,6 +224,10 @@ export class WorldRenderer {
 
     if (world.player) {
       world.player.draw(this.ctx);
+      const player = world.player as Player;
+      if (player.attackActive) {
+        this.drawPlayerAttackVisual(this.ctx, player);
+      }
     }
 
     for (const minion of world.minions) {
