@@ -145,17 +145,17 @@ export default function App() {
     const triggerOnFirstGesture = () => {
       soundSynth.startMusic();
       window.removeEventListener("click", triggerOnFirstGesture);
-      window.removeEventListener("touchstart", triggerOnFirstGesture);
+      window.removeEventListener("touchend", triggerOnFirstGesture);
     };
 
     window.addEventListener("click", triggerOnFirstGesture);
-    window.addEventListener("touchstart", triggerOnFirstGesture);
+    window.addEventListener("touchend", triggerOnFirstGesture);
 
     reloadSaveSlots();
 
     return () => {
       window.removeEventListener("click", triggerOnFirstGesture);
-      window.removeEventListener("touchstart", triggerOnFirstGesture);
+      window.removeEventListener("touchend", triggerOnFirstGesture);
       soundSynth.stopMusic();
     };
   }, []);

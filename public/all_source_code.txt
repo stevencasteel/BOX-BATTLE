@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/22/2026, 10:05:58 AM
+ [SYSTEM] Generated: 5/22/2026, 10:16:49 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2376,7 +2376,6 @@ const TouchButton = ({ action, label, style }: { action: Action; label: string; 
       inputProvider.triggerTouchEnd(action);
     };
 
-    // Attach as non-passive to fully support preventDefault() and zero-latency triggers
     el.addEventListener("touchstart", handleStart, { passive: false });
     el.addEventListener("touchend", handleEnd, { passive: false });
     el.addEventListener("touchcancel", handleEnd, { passive: false });
@@ -2463,24 +2462,38 @@ export default function App() {
   });
 
   const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
+  const isPlayingScreen = currentScreen === "PLAYING";
 
   useEffect(() => {
-    if (currentScreen === "PLAYING") {
+    if (isPlayingScreen) {
       soundSynth.stopMusic();
     } else {
       soundSynth.setCabinetMuffle(true);
-      soundSynth.startMusic();
+      if (soundSynth.hasUserGestured) {
+        soundSynth.startMusic();
+      }
     }
-  }, [currentScreen]);
+  }, [isPlayingScreen, currentScreen]);
 
   const playHoverTick = () => {
     soundSynth.playSelectTick();
   };
 
   useEffect(() => {
-    soundSynth.startMusic();
+    const triggerOnFirstGesture = () => {
+      soundSynth.startMusic();
+      window.removeEventListener("click", triggerOnFirstGesture);
+      window.removeEventListener("touchend", triggerOnFirstGesture);
+    };
+
+    window.addEventListener("click", triggerOnFirstGesture);
+    window.addEventListener("touchend", triggerOnFirstGesture);
+
     reloadSaveSlots();
+
     return () => {
+      window.removeEventListener("click", triggerOnFirstGesture);
+      window.removeEventListener("touchend", triggerOnFirstGesture);
       soundSynth.stopMusic();
     };
   }, []);
@@ -2556,7 +2569,7 @@ export default function App() {
   }, [rebindTarget]);
 
   useEffect(() => {
-    if ((currentScreen === "PLAYING" && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
+    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
       const config = screenConfigs[currentScreen];
@@ -2580,7 +2593,7 @@ export default function App() {
       };
 
       const maxIndex = config.getMaxIndex(context);
-      const isHorizontalEndScreen = currentScreen === "PLAYING" && gameResult !== "PLAYING";
+      const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
 
       const keyMap = settingsManager.getKeyMap();
       const jumpKeys = keyMap["JUMP"] || [];
@@ -2648,7 +2661,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult]);
+  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult, isPlayingScreen]);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -2689,11 +2702,11 @@ export default function App() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${i < playerHP ? "led-green" : ""}`}
+                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
                       style={{
                         width: "8px",
                         height: "8px",
-                        background: i < playerHP ? "" : "#07080b",
+                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
                         border: "1px solid rgba(0,0,0,0.5)"
                       }}
                     />
@@ -2703,11 +2716,11 @@ export default function App() {
                   {[...Array(3)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${i < healingCharges ? "led-yellow" : ""}`}
+                      className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
                       style={{
                         width: "4px",
                         height: "4px",
-                        background: i < healingCharges ? "" : "#07080b"
+                        background: isPlayingScreen && i < healingCharges ? "" : "#07080b"
                       }}
                     />
                   ))}
@@ -2727,7 +2740,7 @@ export default function App() {
                   <div style={{
                     height: "100%",
                     borderRadius: "1.5px",
-                    width: `${(determination / 5) * 100}%`,
+                    width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
                     transition: "width 0.15s ease",
                     background: "hsl(280, 80%, 65%)",
                     boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
@@ -2743,7 +2756,7 @@ export default function App() {
                     style={{
                       height: "100%",
                       borderRadius: "1.5px",
-                      width: `${(bossHP / 30) * 100}%`,
+                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
                       transition: "all 0.15s ease"
                     }}
                   />
@@ -2758,9 +2771,9 @@ export default function App() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className={`led-dot ${currentScreen === "PLAYING" && i < playerHP ? "led-green" : ""}`}
+                      className={`led-dot ${isPlayingScreen && i < playerHP ? "led-green" : ""}`}
                       style={{
-                        background: currentScreen === "PLAYING" && i < playerHP ? "" : "#07080b",
+                        background: isPlayingScreen && i < playerHP ? "" : "#07080b",
                         border: "1px solid rgba(0,0,0,0.5)"
                       }}
                     />
@@ -2772,9 +2785,9 @@ export default function App() {
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className={`led-dot ${currentScreen === "PLAYING" && i < healingCharges ? "led-yellow" : ""}`}
+                        className={`led-dot ${isPlayingScreen && i < healingCharges ? "led-yellow" : ""}`}
                         style={{
-                          background: currentScreen === "PLAYING" && i < healingCharges ? "" : "#07080b",
+                          background: isPlayingScreen && i < healingCharges ? "" : "#07080b",
                           border: "1px solid rgba(0,0,0,0.5)",
                           width: "6px",
                           height: "6px"
@@ -2794,7 +2807,7 @@ export default function App() {
                     <div style={{
                       height: "100%",
                       borderRadius: "2px",
-                      width: currentScreen === "PLAYING" ? `${(determination / 5) * 100}%` : "0%",
+                      width: isPlayingScreen ? `${(determination / 5) * 100}%` : "0%",
                       transition: "width 0.15s ease",
                       background: "hsl(280, 80%, 65%)",
                       boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
@@ -2804,7 +2817,7 @@ export default function App() {
               </div>
 
               <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
-                {currentScreen === "PLAYING" ? (
+                {isPlayingScreen ? (
                   <div style={{
                     display: "flex",
                     alignItems: "center",
@@ -2836,13 +2849,13 @@ export default function App() {
                 <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
                 <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
                   <div
-                    className={currentScreen === "PLAYING" ? "led-red" : ""}
+                    className={isPlayingScreen ? "led-red" : ""}
                     style={{
                       height: "100%",
                       borderRadius: "2px",
-                      width: currentScreen === "PLAYING" ? `${(bossHP / 30) * 100}%` : "0%",
+                      width: isPlayingScreen ? `${(bossHP / 30) * 100}%` : "0%",
                       transition: "all 0.15s ease",
-                      background: currentScreen === "PLAYING" ? "" : "#07080b"
+                      background: isPlayingScreen ? "" : "#07080b"
                     }}
                   />
                 </div>
@@ -2851,15 +2864,19 @@ export default function App() {
           )
         )}
 
-        <div className="game-viewport-container" ref={viewportRef} style={isTouchDevice ? {
+        <div className="game-viewport-container" ref={viewportRef} style={isTouchDevice ? (isPlayingScreen ? {
           flexGrow: 0,
           flexShrink: 0,
           width: "100%",
           aspectRatio: "1/1",
           maxHeight: "calc(100vh - 250px)",
           height: "auto"
-        } : undefined}>
-          {currentScreen === "PLAYING" ? (
+        } : {
+          flexGrow: 1,
+          width: "100%",
+          height: "100%"
+        }) : undefined}>
+          {isPlayingScreen ? (
             <div className="w-full h-full" style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex" }}>
                 <GameArena
@@ -3025,7 +3042,7 @@ export default function App() {
         )}
 
         {/* Custom Ergonomic Touch Overlay for Mobile Game Arena Controls */}
-        {currentScreen === "PLAYING" && isTouchDevice && (
+        {isPlayingScreen && isTouchDevice && (
           <div style={{
             display: "flex",
             width: "100%",
@@ -6237,8 +6254,8 @@ class SoundSynth {
     return this.ctxManager.initialized;
   }
 
-  public resumeContext(): void {
-    this.ctxManager.resumeContext();
+  public resumeContext(force?: boolean): void {
+    this.ctxManager.resumeContext(force);
   }
 
   public updateVolumes(): void {
@@ -6506,13 +6523,13 @@ export class AudioContextManager {
 
         window.removeEventListener("click", resumeOnGesture);
         window.removeEventListener("keydown", resumeOnGesture);
-        window.removeEventListener("touchstart", resumeOnGesture);
+        window.removeEventListener("touchend", resumeOnGesture);
         window.removeEventListener("mousedown", resumeOnGesture);
       };
-      window.addEventListener("click", resumeOnGesture, { passive: true });
-      window.addEventListener("keydown", resumeOnGesture, { passive: true });
-      window.addEventListener("touchstart", resumeOnGesture, { passive: true });
-      window.addEventListener("mousedown", resumeOnGesture, { passive: true });
+      window.addEventListener("click", resumeOnGesture);
+      window.addEventListener("keydown", resumeOnGesture);
+      window.addEventListener("touchend", resumeOnGesture);
+      window.addEventListener("mousedown", resumeOnGesture);
     }
   }
 
@@ -6524,7 +6541,10 @@ export class AudioContextManager {
     }
   }
 
-  public resumeContext() {
+  public resumeContext(force = false) {
+    if (force) {
+      this.hasUserGestured = true;
+    }
     if (this.hasUserGestured) {
       Tone.start();
       this.init();
@@ -6880,7 +6900,7 @@ export class MusicSequencer {
   }
 
   public startMusic() {
-    this.ctxManager.resumeContext();
+    this.ctxManager.resumeContext(true);
     if (this.isMusicPlaying) return;
     this.isMusicPlaying = true;
 

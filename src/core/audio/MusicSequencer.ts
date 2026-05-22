@@ -77,7 +77,7 @@ export class MusicSequencer {
   }
 
   public startMusic() {
-    this.ctxManager.resumeContext();
+    this.ctxManager.resumeContext(true);
     if (this.isMusicPlaying) return;
     this.isMusicPlaying = true;
 

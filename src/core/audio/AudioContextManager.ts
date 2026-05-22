@@ -21,13 +21,13 @@ export class AudioContextManager {
 
         window.removeEventListener("click", resumeOnGesture);
         window.removeEventListener("keydown", resumeOnGesture);
-        window.removeEventListener("touchstart", resumeOnGesture);
+        window.removeEventListener("touchend", resumeOnGesture);
         window.removeEventListener("mousedown", resumeOnGesture);
       };
-      window.addEventListener("click", resumeOnGesture, { passive: true });
-      window.addEventListener("keydown", resumeOnGesture, { passive: true });
-      window.addEventListener("touchstart", resumeOnGesture, { passive: true });
-      window.addEventListener("mousedown", resumeOnGesture, { passive: true });
+      window.addEventListener("click", resumeOnGesture);
+      window.addEventListener("keydown", resumeOnGesture);
+      window.addEventListener("touchend", resumeOnGesture);
+      window.addEventListener("mousedown", resumeOnGesture);
     }
   }
 
@@ -39,7 +39,10 @@ export class AudioContextManager {
     }
   }
 
-  public resumeContext() {
+  public resumeContext(force = false) {
+    if (force) {
+      this.hasUserGestured = true;
+    }
     if (this.hasUserGestured) {
       Tone.start();
       this.init();
