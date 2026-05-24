@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/23/2026, 9:53:28 PM
+ [SYSTEM] Generated: 5/23/2026, 9:59:58 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -32458,6 +32458,10 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
+  public visualScale = { x: 1, y: 1 };
+  public targetVisualScale = { x: 1, y: 1 };
+  public squashPivot: "center" | "feet" = "center";
+
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
@@ -32490,6 +32494,9 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
+    this.visualScale.x += (this.targetVisualScale.x - this.visualScale.x) * 12 * dt;
+    this.visualScale.y += (this.targetVisualScale.y - this.visualScale.y) * 12 * dt;
+
     for (const component of this.components.values()) {
       if (component.update) {
         component.update(dt);
@@ -32504,13 +32511,29 @@ export class BaseEntity implements IEntity {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
+    ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
-    );
+    
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+
+    if (this.squashPivot === "feet") {
+      const feetY = drawY + this.size.height / 2;
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        feetY - vHeight,
+        vWidth,
+        vHeight
+      );
+    } else {
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        drawY - vHeight / 2,
+        vWidth,
+        vHeight
+      );
+    }
+    ctx.restore();
   }
 
   public teardown() {
@@ -32564,6 +32587,7 @@ export class Boss extends BaseEntity {
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 60, height: 60 };
+    this.squashPivot = "feet";
     
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -32749,6 +32773,7 @@ export class Boss extends BaseEntity {
 
     const activeState = this.activeStateName;
 
+    ctx.save();
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else if (activeState === "TELEGRAPH") {
@@ -32763,14 +32788,19 @@ export class Boss extends BaseEntity {
       }
     }
 
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+    const feetY = drawY + this.size.height / 2;
+
     ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
+      drawX - vWidth / 2,
+      feetY - vHeight,
+      vWidth,
+      vHeight
     );
 
     ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }
 
@@ -32815,6 +32845,7 @@ export class BossCooldownState extends BossState {
     } else {
       this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
     }
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
   }
 
   public update(dt: number): void {
@@ -32831,6 +32862,7 @@ export class BossPatrolState extends BossState {
   private duration: number = 2.0;
 
   public enter(): void {
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
     this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
@@ -32963,6 +32995,8 @@ export class BossTelegraphState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.owner.visualScale = { x: 1.25, y: 0.75 };
+    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
     eventBroker.publish("BOSS_TELEGRAPH", undefined);
   }
 
@@ -32987,6 +33021,8 @@ export class BossLungeState extends BossState {
 
   public enter(): void {
     this.duration = 0.5;
+    this.owner.visualScale = { x: 1.35, y: 0.65 };
+    this.owner.targetVisualScale = { x: 1.2, y: 0.8 };
     eventBroker.publish("BOSS_LUNGED", undefined);
   }
 
@@ -33004,6 +33040,8 @@ export class BossLungeState extends BossState {
 
   public exit(): void {
     this.owner.velocity.x = 0;
+    this.owner.visualScale = { x: 0.8, y: 1.2 };
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
   }
 }
 
@@ -33088,6 +33126,7 @@ export class Minion extends BaseEntity {
         invincibilityDuration: 0.15
       });
       this.physics.gravity = 0;
+      this.squashPivot = "feet";
       this.behavior = new TurretBehavior();
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
@@ -33095,6 +33134,7 @@ export class Minion extends BaseEntity {
         maxHealth: 4,
         invincibilityDuration: 0.15
       });
+      this.squashPivot = "feet";
       this.behavior = new LancerBehavior();
     } else {
       this.size = { width: 36, height: 36 };
@@ -33106,6 +33146,7 @@ export class Minion extends BaseEntity {
       
       this.pointA = { ...startPos };
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
+      this.squashPivot = "center";
       this.behavior = new FlyerBehavior();
     }
     eventBroker.publish("MINION_SPAWNING", undefined);
@@ -33291,12 +33332,25 @@ export class Minion extends BaseEntity {
       ctx.shadowBlur = 14;
     }
 
-    ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
-    );
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+
+    if (this.squashPivot === "feet") {
+      const feetY = drawY + this.size.height / 2;
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        feetY - vHeight,
+        vWidth,
+        vHeight
+      );
+    } else {
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        drawY - vHeight / 2,
+        vWidth,
+        vHeight
+      );
+    }
 
     ctx.shadowBlur = 0;
 
@@ -33336,7 +33390,7 @@ export class TurretBehavior implements IMinionBehavior {
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 400 && minion.shootTimer <= 0) {
           minion.attackState = "TELEGRAPH";
-          minion.stateTimer = 0.5; // 500ms warning
+          minion.stateTimer = 0.5; 
         }
       }
     }
@@ -33345,7 +33399,7 @@ export class TurretBehavior implements IMinionBehavior {
         if (playerValid) {
           minion.fireSingleShotAtPlayer(player);
         }
-        minion.shootTimer = 2.5; // Cooldown
+        minion.shootTimer = 2.5; 
         minion.attackState = "PATROL";
       }
     }
@@ -33372,6 +33426,8 @@ export class LancerBehavior implements IMinionBehavior {
           minion.attackState = "TELEGRAPH";
           minion.stateTimer = 0.4;
           minion.velocity.x = 0;
+          minion.visualScale = { x: 1.18, y: 0.82 };
+          minion.targetVisualScale = { x: 1.1, y: 0.9 };
         }
       }
     } 
@@ -33381,6 +33437,8 @@ export class LancerBehavior implements IMinionBehavior {
         minion.attackState = "ATTACK";
         minion.stateTimer = 0.2;
         minion.velocity.x = minion.facingDirection * 400;
+        minion.visualScale = { x: 1.26, y: 0.74 };
+        minion.targetVisualScale = { x: 1.15, y: 0.85 };
       }
     } 
     else if (minion.attackState === "ATTACK") {
@@ -33389,12 +33447,15 @@ export class LancerBehavior implements IMinionBehavior {
         minion.attackState = "COOLDOWN";
         minion.stateTimer = 1.2;
         minion.velocity.x = 0;
+        minion.visualScale = { x: 0.85, y: 1.15 };
+        minion.targetVisualScale = { x: 1.0, y: 1.0 };
       }
     } 
     else if (minion.attackState === "COOLDOWN") {
       minion.velocity.x = 0;
       if (minion.stateTimer <= 0) {
         minion.attackState = "PATROL";
+        minion.targetVisualScale = { x: 1.0, y: 1.0 };
       }
     }
   }
@@ -33404,6 +33465,11 @@ export class FlyerBehavior implements IMinionBehavior {
   public update(minion: Minion, dt: number): void {
     const player = minion.world.player;
     const playerValid = player && !player.isDead;
+
+    // Organic breathing wave pulsation
+    const cycle = performance.now() * 0.006;
+    minion.targetVisualScale.x = 1.0 + Math.sin(cycle) * 0.06;
+    minion.targetVisualScale.y = 1.0 - Math.sin(cycle) * 0.06;
 
     if (minion.attackState === "PATROL") {
       const targetPos = minion.flyerTarget === "A" ? minion.pointA : minion.pointB;
@@ -33424,8 +33490,8 @@ export class FlyerBehavior implements IMinionBehavior {
         const playerDist = Math.sqrt(dxP * dxP + dyP * dyP);
         if (playerDist < 480 && minion.shootTimer <= 0 && minion.volleyCount === 0) {
           minion.attackState = "TELEGRAPH";
-          minion.stateTimer = 0.6; // 600ms warning
-          minion.velocity = { x: 0, y: 0 }; // Halt patrol
+          minion.stateTimer = 0.6; 
+          minion.velocity = { x: 0, y: 0 }; 
         }
       }
     }
@@ -33435,7 +33501,7 @@ export class FlyerBehavior implements IMinionBehavior {
         minion.attackState = "ATTACK";
         minion.volleyCount = 3;
         minion.volleyTimer = 0;
-        minion.shootTimer = 3.5; // Overall cooldown
+        minion.shootTimer = 3.5; 
       }
     }
     else if (minion.attackState === "ATTACK") {
@@ -33492,8 +33558,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
-
-  public visualScale = { x: 1, y: 1 };
   private airtimeDuration: number = 0;
 
   public determinationCounter: number = 0;
@@ -33507,6 +33571,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
+    this.squashPivot = "feet";
 
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -33578,8 +33643,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       }
     }
 
-    this.visualScale.x += (targetScaleX - this.visualScale.x) * 12 * dt;
-    this.visualScale.y += (targetScaleY - this.visualScale.y) * 12 * dt;
+    this.targetVisualScale = { x: targetScaleX, y: targetScaleY };
 
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;

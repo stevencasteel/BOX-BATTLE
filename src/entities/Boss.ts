@@ -35,6 +35,7 @@ export class Boss extends BaseEntity {
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 60, height: 60 };
+    this.squashPivot = "feet";
     
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -220,6 +221,7 @@ export class Boss extends BaseEntity {
 
     const activeState = this.activeStateName;
 
+    ctx.save();
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else if (activeState === "TELEGRAPH") {
@@ -234,13 +236,18 @@ export class Boss extends BaseEntity {
       }
     }
 
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+    const feetY = drawY + this.size.height / 2;
+
     ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
+      drawX - vWidth / 2,
+      feetY - vHeight,
+      vWidth,
+      vHeight
     );
 
     ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }

@@ -35,6 +35,7 @@ export class BossCooldownState extends BossState {
     } else {
       this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
     }
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
   }
 
   public update(dt: number): void {
@@ -51,6 +52,7 @@ export class BossPatrolState extends BossState {
   private duration: number = 2.0;
 
   public enter(): void {
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
     this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
@@ -183,6 +185,8 @@ export class BossTelegraphState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.owner.visualScale = { x: 1.25, y: 0.75 };
+    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
     eventBroker.publish("BOSS_TELEGRAPH", undefined);
   }
 
@@ -207,6 +211,8 @@ export class BossLungeState extends BossState {
 
   public enter(): void {
     this.duration = 0.5;
+    this.owner.visualScale = { x: 1.35, y: 0.65 };
+    this.owner.targetVisualScale = { x: 1.2, y: 0.8 };
     eventBroker.publish("BOSS_LUNGED", undefined);
   }
 
@@ -224,6 +230,8 @@ export class BossLungeState extends BossState {
 
   public exit(): void {
     this.owner.velocity.x = 0;
+    this.owner.visualScale = { x: 0.8, y: 1.2 };
+    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
   }
 }
 

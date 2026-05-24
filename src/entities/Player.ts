@@ -29,8 +29,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
-
-  public visualScale = { x: 1, y: 1 };
   private airtimeDuration: number = 0;
 
   public determinationCounter: number = 0;
@@ -44,6 +42,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
+    this.squashPivot = "feet";
 
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -115,8 +114,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       }
     }
 
-    this.visualScale.x += (targetScaleX - this.visualScale.x) * 12 * dt;
-    this.visualScale.y += (targetScaleY - this.visualScale.y) * 12 * dt;
+    this.targetVisualScale = { x: targetScaleX, y: targetScaleY };
 
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;

@@ -10,6 +10,10 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
+  public visualScale = { x: 1, y: 1 };
+  public targetVisualScale = { x: 1, y: 1 };
+  public squashPivot: "center" | "feet" = "center";
+
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
@@ -42,6 +46,9 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
+    this.visualScale.x += (this.targetVisualScale.x - this.visualScale.x) * 12 * dt;
+    this.visualScale.y += (this.targetVisualScale.y - this.visualScale.y) * 12 * dt;
+
     for (const component of this.components.values()) {
       if (component.update) {
         component.update(dt);
@@ -56,13 +63,29 @@ export class BaseEntity implements IEntity {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
+    ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
-    );
+    
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+
+    if (this.squashPivot === "feet") {
+      const feetY = drawY + this.size.height / 2;
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        feetY - vHeight,
+        vWidth,
+        vHeight
+      );
+    } else {
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        drawY - vHeight / 2,
+        vWidth,
+        vHeight
+      );
+    }
+    ctx.restore();
   }
 
   public teardown() {

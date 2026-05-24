@@ -53,6 +53,7 @@ export class Minion extends BaseEntity {
         invincibilityDuration: 0.15
       });
       this.physics.gravity = 0;
+      this.squashPivot = "feet";
       this.behavior = new TurretBehavior();
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
@@ -60,6 +61,7 @@ export class Minion extends BaseEntity {
         maxHealth: 4,
         invincibilityDuration: 0.15
       });
+      this.squashPivot = "feet";
       this.behavior = new LancerBehavior();
     } else {
       this.size = { width: 36, height: 36 };
@@ -71,6 +73,7 @@ export class Minion extends BaseEntity {
       
       this.pointA = { ...startPos };
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
+      this.squashPivot = "center";
       this.behavior = new FlyerBehavior();
     }
     eventBroker.publish("MINION_SPAWNING", undefined);
@@ -256,12 +259,25 @@ export class Minion extends BaseEntity {
       ctx.shadowBlur = 14;
     }
 
-    ctx.fillRect(
-      drawX - this.size.width / 2,
-      drawY - this.size.height / 2,
-      this.size.width,
-      this.size.height
-    );
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+
+    if (this.squashPivot === "feet") {
+      const feetY = drawY + this.size.height / 2;
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        feetY - vHeight,
+        vWidth,
+        vHeight
+      );
+    } else {
+      ctx.fillRect(
+        drawX - vWidth / 2,
+        drawY - vHeight / 2,
+        vWidth,
+        vHeight
+      );
+    }
 
     ctx.shadowBlur = 0;
 
