@@ -6,10 +6,10 @@ import { DashComponent } from "@/entities/components/DashComponent";
 import { MeleeComponent, IMeleeCapable } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent, IHealCapable } from "@/entities/components/HealComponent";
-import { IWorld, IDamageRecorder } from "@/core/Interfaces";
+import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 
-export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable, IHealCapable {
+export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
@@ -39,6 +39,7 @@ export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable
 
   public hurtTimer: number = 0;
   private unsubHurt!: () => void;
+  private wasOnWall: boolean = false;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
@@ -84,8 +85,38 @@ export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable
       return;
     }
 
-    this.visualScale.x += (1 - this.visualScale.x) * 12 * dt;
-    this.visualScale.y += (1 - this.visualScale.y) * 12 * dt;
+    const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+    const currentOnWall = this.physics.isOnWallLeft || this.physics.isOnWallRight;
+    const isPressedAgainstWall = currentOnWall && moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal;
+    const isSliding = !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
+
+    let targetScaleX = 1.0;
+    let targetScaleY = 1.0;
+
+    if (isPressedAgainstWall) {
+      targetScaleX = 0.91;
+      targetScaleY = 1.09;
+
+      if (isSliding) {
+        targetScaleX = 0.85;
+        targetScaleY = 1.15;
+
+        // Spawn subtle friction dust particles
+        if (Math.random() < 0.12) {
+          const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+          eventBroker.publish("SPAWN_SPARKS", {
+            x: contactX,
+            y: this.position.y + (Math.random() * 30 - 15),
+            angle: this.lastWallNormal === 1 ? 0 : Math.PI,
+            color: "rgba(255, 255, 255, 0.35)",
+            count: 2
+          });
+        }
+      }
+    }
+
+    this.visualScale.x += (targetScaleX - this.visualScale.x) * 12 * dt;
+    this.visualScale.y += (targetScaleY - this.visualScale.y) * 12 * dt;
 
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;
@@ -124,6 +155,21 @@ export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable
 
     super.update(dt);
 
+    if (currentOnWall && !this.wasOnWall && !this.physics.isGrounded) {
+      // Just clung to wall - squash horizontally and stretch vertically on impact
+      this.visualScale = { x: 0.76, y: 1.24 };
+
+      const impactSide = this.physics.isOnWallLeft ? -1 : 1;
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x + impactSide * (this.size.width / 2),
+        y: this.position.y,
+        angle: impactSide > 0 ? Math.PI : 0,
+        color: "rgba(255, 255, 255, 0.55)",
+        count: 6
+      });
+    }
+    this.wasOnWall = currentOnWall;
+
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
@@ -157,8 +203,6 @@ export class Player extends BaseEntity implements IDamageRecorder, IMeleeCapable
       this.wallCoyoteTimer -= dt;
     }
 
-    const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-    
     if (this.meleeComponent.attackActive) {
       const friction = 2000.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
