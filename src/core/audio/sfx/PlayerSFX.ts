@@ -44,17 +44,17 @@ export class PlayerSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay }
+      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
       oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay }
+      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
       oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay }
+      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
     }).connect(this.playerPanner);
 
     this.dashNoise = new Tone.Noise("white");
@@ -63,32 +63,55 @@ export class PlayerSFX {
       attack: 0.01,
       decay: presets.dash.noiseDecay,
       sustain: 0,
-      release: presets.dash.noiseDecay
+      release: presets.dash.noiseDecay,
     });
     this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay }
+      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
     }).connect(this.hurtPanner);
 
     this.landingNoise = new Tone.Noise("white");
-    this.landingFilter = new Tone.Filter({ frequency: presets.landing.noiseFreq, type: "bandpass", Q: presets.landing.noiseQ });
-    this.landingEnv = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.landing.noiseDecay, sustain: 0, release: presets.landing.noiseDecay });
+    this.landingFilter = new Tone.Filter({
+      frequency: presets.landing.noiseFreq,
+      type: "bandpass",
+      Q: presets.landing.noiseQ,
+    });
+    this.landingEnv = new Tone.AmplitudeEnvelope({
+      attack: 0.01,
+      decay: presets.landing.noiseDecay,
+      sustain: 0,
+      release: presets.landing.noiseDecay,
+    });
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
     this.slashNoiseSide = new Tone.Noise("white");
     this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
-    this.slashEnvSide = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: presets.slash_side.noiseDecay, sustain: 0, release: presets.slash_side.noiseDecay });
+    this.slashEnvSide = new Tone.AmplitudeEnvelope({
+      attack: 0.005,
+      decay: presets.slash_side.noiseDecay,
+      sustain: 0,
+      release: presets.slash_side.noiseDecay,
+    });
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
     this.slashNoisePuff = new Tone.Noise("pink");
-    this.slashFilterPuff = new Tone.Filter({ frequency: presets.slash_puff.noiseFreq, type: "bandpass", Q: presets.slash_puff.noiseQ });
-    this.slashEnvPuff = new Tone.AmplitudeEnvelope({ attack: 0.01, decay: presets.slash_puff.noiseDecay, sustain: 0, release: presets.slash_puff.noiseDecay });
+    this.slashFilterPuff = new Tone.Filter({
+      frequency: presets.slash_puff.noiseFreq,
+      type: "bandpass",
+      Q: presets.slash_puff.noiseQ,
+    });
+    this.slashEnvPuff = new Tone.AmplitudeEnvelope({
+      attack: 0.01,
+      decay: presets.slash_puff.noiseDecay,
+      sustain: 0,
+      release: presets.slash_puff.noiseDecay,
+    });
     this.slashNoisePuff.chain(this.slashFilterPuff, this.slashEnvPuff, this.playerPanner);
     this.slashNoisePuff.start();
   }

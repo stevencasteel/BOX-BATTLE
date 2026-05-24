@@ -14,10 +14,17 @@ export class WorldRenderer {
     this.ctx = ctx;
 
     // Allocate the radial gradient once at startup to prevent GC spikes in high-frame-rate loops
-    this.cachedMeleeGradient = ctx.createRadialGradient(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, 0, 0, UNITS.MELEE_MAX_REACH);
+    this.cachedMeleeGradient = ctx.createRadialGradient(
+      0,
+      0,
+      UNITS.MELEE_SWEEP_INNER_RADIUS,
+      0,
+      0,
+      UNITS.MELEE_MAX_REACH
+    );
     this.cachedMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-    this.cachedMeleeGradient.addColorStop(0.20, "rgba(255, 255, 255, 1.0)");
-    this.cachedMeleeGradient.addColorStop(0.50, "rgba(132, 239, 158, 0.95)");
+    this.cachedMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+    this.cachedMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
     this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
     this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
   }
@@ -26,7 +33,7 @@ export class WorldRenderer {
     const facing = player.facingDirection;
     ctx.lineCap = "round";
 
-    const progress = 1.0 - (player.meleeComponent.attackActiveTimer / 0.09);
+    const progress = 1.0 - player.meleeComponent.attackActiveTimer / 0.09;
     const opacity = Math.max(0, player.meleeComponent.attackActiveTimer / 0.09);
 
     if (opacity <= 0.01) return;
@@ -45,14 +52,14 @@ export class WorldRenderer {
       const cy = drawY;
 
       ctx.save();
-      
+
       // Shift origin space to (cx, cy) to draw pre-compiled cached gradient centered at (0, 0)
       ctx.translate(cx, cy);
       ctx.globalAlpha = opacity;
       ctx.fillStyle = this.cachedMeleeGradient;
       ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
       ctx.shadowBlur = 20;
-      
+
       ctx.beginPath();
       ctx.arc(
         0,
@@ -73,8 +80,7 @@ export class WorldRenderer {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-    }
-    else if (player.attackDirection === "up") {
+    } else if (player.attackDirection === "up") {
       const cx = drawX;
       const cy = drawY - UNITS.MELEE_VERTICAL_OFFSET;
 
@@ -84,8 +90,8 @@ export class WorldRenderer {
       ctx.save();
       const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
       gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
       gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
       gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
 
@@ -99,8 +105,7 @@ export class WorldRenderer {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-    }
-    else if (player.attackDirection === "down") {
+    } else if (player.attackDirection === "down") {
       const cx = drawX;
       const cy = drawY + UNITS.MELEE_VERTICAL_OFFSET;
 
@@ -110,8 +115,8 @@ export class WorldRenderer {
       ctx.save();
       const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
       gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.20, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.50, `rgba(132, 239, 158, ${opacity * 0.95})`);
+      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
+      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
       gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
       gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
 
@@ -181,20 +186,18 @@ export class WorldRenderer {
     for (const p of particles) {
       const pct = p.life / p.maxLife;
       this.ctx.save();
-      
+
       if (p.shape === "spark") {
         this.ctx.fillStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.shadowColor = p.color;
         this.ctx.shadowBlur = 8;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      } 
-      else if (p.shape === "dust") {
+      } else if (p.shape === "dust") {
         this.ctx.fillStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } 
-      else if (p.shape === "ring") {
+      } else if (p.shape === "ring") {
         const radius = p.size + (1.0 - pct) * 44;
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
@@ -274,7 +277,7 @@ export class WorldRenderer {
         this.ctx.shadowBlur = 15;
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
-          const distance = t * particleSpeed * (0.6 + 0.4 * (i % 3) / 3);
+          const distance = t * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
           const x = px + Math.cos(angle) * distance;
           const y = py + Math.sin(angle) * distance;
 

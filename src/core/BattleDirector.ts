@@ -36,7 +36,7 @@ export class BattleDirector {
   public getDeathVisuals() {
     return {
       timer: this.bossDeathTimer,
-      pos: this.bossDeathPos
+      pos: this.bossDeathPos,
     };
   }
 
@@ -59,13 +59,19 @@ export class BattleDirector {
 
       if (bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You won't beat me! Watch out for my rapid fire!" });
+        eventBroker.publish("DIALOGUE_TRIGGERED", {
+          speaker: "boss",
+          text: "You won't beat me! Watch out for my rapid fire!",
+        });
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
       if (bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "This is my final stand! Prepare yourself!" });
+        eventBroker.publish("DIALOGUE_TRIGGERED", {
+          speaker: "boss",
+          text: "This is my final stand! Prepare yourself!",
+        });
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
     }
@@ -73,78 +79,95 @@ export class BattleDirector {
     const sessionState = useSessionStore.getState();
 
     if (player.isDead && !this.cinematicActive) {
-      this.startCinematicSequence(player.position, () => {
-        soundSynth.playPlayerExplosion();
-      }, [
-        {
-          triggerTime: 2.0,
-          fired: false,
-          action: () => {
-            sessionState.setGameResult("GAMEOVER");
-          }
+      this.startCinematicSequence(
+        player.position,
+        () => {
+          soundSynth.playPlayerExplosion();
         },
-        {
-          triggerTime: 2.5,
-          fired: false,
-          action: () => {
-            eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
-          }
+        [
+          {
+            triggerTime: 2.0,
+            fired: false,
+            action: () => {
+              sessionState.setGameResult("GAMEOVER");
+            },
+          },
+          {
+            triggerTime: 2.5,
+            fired: false,
+            action: () => {
+              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+            },
+          },
+          {
+            triggerTime: 3.8,
+            fired: false,
+            action: () => {
+              eventBroker.publish("DIALOGUE_TRIGGERED", {
+                speaker: "boss",
+                text: "You fought well... but I am victorious.",
+              });
+            },
+          },
+          {
+            triggerTime: 7.2,
+            fired: false,
+            action: () => {
+              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.onBattleEnd();
+            },
+          },
+        ]
+      );
+    } else if (boss.isDead && !this.cinematicActive) {
+      this.startCinematicSequence(
+        boss.position,
+        () => {
+          soundSynth.playBossExplosion();
         },
-        {
-          triggerTime: 3.8,
-          fired: false,
-          action: () => {
-            eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "You fought well... but I am victorious." });
-          }
-        },
-        {
-          triggerTime: 7.2,
-          fired: false,
-          action: () => {
-            eventBroker.publish("CLEAR_DIALOGUES", undefined);
-            this.onBattleEnd();
-          }
-        }
-      ]);
-    } 
-    else if (boss.isDead && !this.cinematicActive) {
-      this.startCinematicSequence(boss.position, () => {
-        soundSynth.playBossExplosion();
-      }, [
-        {
-          triggerTime: 2.0,
-          fired: false,
-          action: () => {
-            sessionState.setGameResult("VICTORY");
-          }
-        },
-        {
-          triggerTime: 2.5,
-          fired: false,
-          action: () => {
-            eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... How could I lose this fight..." });
-          }
-        },
-        {
-          triggerTime: 4.8,
-          fired: false,
-          action: () => {
-            eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
-          }
-        },
-        {
-          triggerTime: 7.2,
-          fired: false,
-          action: () => {
-            eventBroker.publish("CLEAR_DIALOGUES", undefined);
-            this.onBattleEnd();
-          }
-        }
-      ]);
+        [
+          {
+            triggerTime: 2.0,
+            fired: false,
+            action: () => {
+              sessionState.setGameResult("VICTORY");
+            },
+          },
+          {
+            triggerTime: 2.5,
+            fired: false,
+            action: () => {
+              eventBroker.publish("DIALOGUE_TRIGGERED", {
+                speaker: "boss",
+                text: "No... How could I lose this fight...",
+              });
+            },
+          },
+          {
+            triggerTime: 4.8,
+            fired: false,
+            action: () => {
+              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+            },
+          },
+          {
+            triggerTime: 7.2,
+            fired: false,
+            action: () => {
+              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.onBattleEnd();
+            },
+          },
+        ]
+      );
     }
   }
 
-  private startCinematicSequence(pos: { x: number; y: number }, initialExplosion: () => void, events: CinematicEvent[]) {
+  private startCinematicSequence(
+    pos: { x: number; y: number },
+    initialExplosion: () => void,
+    events: CinematicEvent[]
+  ) {
     this.cinematicActive = true;
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
     soundSynth.clearAllSlides();

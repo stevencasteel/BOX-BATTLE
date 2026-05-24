@@ -65,25 +65,15 @@ export class BaseEntity implements IEntity {
 
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    
+
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
 
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(
-        drawX - vWidth / 2,
-        feetY - vHeight,
-        vWidth,
-        vHeight
-      );
+      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(
-        drawX - vWidth / 2,
-        drawY - vHeight / 2,
-        vWidth,
-        vHeight
-      );
+      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
     }
     ctx.restore();
   }

@@ -4,7 +4,7 @@ import { eventBroker } from "@/core/eventBroker";
 
 export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
-  
+
   public isCharging: boolean = false;
   public chargeTimer: number = 0;
 

@@ -10,10 +10,10 @@ export interface IHealCapable extends IEntity {
 
 export class HealComponent implements IEntityComponent {
   public owner!: IHealCapable;
-  
+
   public isHealing: boolean = false;
   public healTimer: number = 0;
-  
+
   private readonly healDuration: number = 2.0;
 
   public setup(owner: BaseEntity): void {
@@ -56,7 +56,7 @@ export class HealComponent implements IEntityComponent {
       eventBroker.publish("PLAYER_HEALED", {
         amount: 1,
         currentHealth: health.currentHealth,
-        maxHealth: health.maxHealth
+        maxHealth: health.maxHealth,
       });
     }
     eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });

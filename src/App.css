@@ -80,8 +80,12 @@
 }
 
 @keyframes crt-flicker-animation {
-  0% { opacity: 0.985; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.985;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .vignette-overlay {
@@ -100,8 +104,12 @@
 }
 
 @keyframes vignette-heartbeat {
-  0% { opacity: 0.15; }
-  100% { opacity: 0.55; }
+  0% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0.55;
+  }
 }
 
 .filter-chromatic {
@@ -165,8 +173,12 @@
 }
 
 @keyframes crt-pulse {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 768px) and (pointer: coarse) {

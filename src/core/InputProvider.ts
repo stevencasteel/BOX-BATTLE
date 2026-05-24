@@ -11,7 +11,7 @@ class InputProvider {
     MOVE_DOWN: 0,
     JUMP: 0,
     ATTACK: 0,
-    DASH: 0
+    DASH: 0,
   };
 
   private keyboardPressed: Record<Action, boolean> = {
@@ -21,7 +21,7 @@ class InputProvider {
     MOVE_DOWN: false,
     JUMP: false,
     ATTACK: false,
-    DASH: false
+    DASH: false,
   };
 
   private gamepadPressed: Record<Action, boolean> = {
@@ -31,7 +31,7 @@ class InputProvider {
     MOVE_DOWN: false,
     JUMP: false,
     ATTACK: false,
-    DASH: false
+    DASH: false,
   };
 
   private pressed: Record<Action, boolean> = {
@@ -41,7 +41,7 @@ class InputProvider {
     MOVE_DOWN: false,
     JUMP: false,
     ATTACK: false,
-    DASH: false
+    DASH: false,
   };
 
   private justPressed: Record<Action, boolean> = {
@@ -51,7 +51,7 @@ class InputProvider {
     MOVE_DOWN: false,
     JUMP: false,
     ATTACK: false,
-    DASH: false
+    DASH: false,
   };
 
   private justReleased: Record<Action, boolean> = {
@@ -61,7 +61,7 @@ class InputProvider {
     MOVE_DOWN: false,
     JUMP: false,
     ATTACK: false,
-    DASH: false
+    DASH: false,
   };
 
   constructor() {
@@ -160,7 +160,7 @@ class InputProvider {
     if (typeof navigator === "undefined" || !navigator.getGamepads) return;
 
     const gamepads = navigator.getGamepads();
-    
+
     const currentGamepadPressed: Record<Action, boolean> = {
       MOVE_LEFT: false,
       MOVE_RIGHT: false,
@@ -168,7 +168,7 @@ class InputProvider {
       MOVE_DOWN: false,
       JUMP: false,
       ATTACK: false,
-      DASH: false
+      DASH: false,
     };
 
     for (let i = 0; i < gamepads.length; i++) {
@@ -177,7 +177,8 @@ class InputProvider {
 
       if (gp.buttons[0]?.pressed) currentGamepadPressed["JUMP"] = true;
       if (gp.buttons[2]?.pressed || gp.buttons[3]?.pressed) currentGamepadPressed["ATTACK"] = true;
-      if (gp.buttons[1]?.pressed || gp.buttons[5]?.pressed || gp.buttons[7]?.pressed) currentGamepadPressed["DASH"] = true;
+      if (gp.buttons[1]?.pressed || gp.buttons[5]?.pressed || gp.buttons[7]?.pressed)
+        currentGamepadPressed["DASH"] = true;
 
       const axisThreshold = 0.35;
       if (gp.axes[0] < -axisThreshold || gp.buttons[14]?.pressed) currentGamepadPressed["MOVE_LEFT"] = true;

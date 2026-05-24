@@ -70,7 +70,7 @@ export class Engine {
     this.ctx = context;
     this.triggerDialogue = triggerDialogue;
     this.levelConfig = levelConfig;
-    
+
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
     this.hazards = this.levelConfig.hazards;
@@ -86,7 +86,7 @@ export class Engine {
     this.systems.setup(
       () => this.player.position.x,
       () => this.boss.position.x,
-      (id) => this.world.minions.find(m => m.id === id)?.position.x ?? 625
+      (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
     );
 
     this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
@@ -106,9 +106,7 @@ export class Engine {
     this.world.player = this.player;
     this.world.boss = this.boss;
 
-    this.activeSpawners = this.levelConfig.spawners.map(
-      (s) => new Spawner(s.type, s.x, s.y, this.world)
-    );
+    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
     Camera.reset();
 
@@ -149,7 +147,7 @@ export class Engine {
     this.resetPlayerState();
     this.resetBossState();
     this.resetSystemStates();
-    
+
     // Force an immediate synchronous repaint to show the refreshed starting frame
     this.render();
 
@@ -176,9 +174,7 @@ export class Engine {
       spawner.cleanup();
     }
     this.world.minions = [];
-    this.activeSpawners = this.levelConfig.spawners.map(
-      (s) => new Spawner(s.type, s.x, s.y, this.world)
-    );
+    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
   }
 
   private resetPlayerState() {
@@ -192,7 +188,7 @@ export class Engine {
     this.player.healingCharges = 0;
     this.player.hurtTimer = 0;
     this.player.visualScale = { x: 1, y: 1 };
-    
+
     const pHealth = this.player.getComponent(HealthComponent);
     if (pHealth) {
       pHealth.reset();
@@ -249,7 +245,7 @@ export class Engine {
     sessionState.setGameResult("PLAYING");
 
     this.projectState();
-    
+
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
   }
 
@@ -260,12 +256,11 @@ export class Engine {
   private projectState() {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
-    
+
     const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
     const nextBossHP = bHealth ? bHealth.currentHealth : 30;
     const nextHealingCharges = this.player.healingCharges;
     const nextDetermination = this.player.determinationCounter;
-
 
     if (
       nextPlayerHP !== this.cachedPlayerHP ||
@@ -282,7 +277,7 @@ export class Engine {
         playerHP: nextPlayerHP,
         bossHP: nextBossHP,
         healingCharges: nextHealingCharges,
-        determination: nextDetermination
+        determination: nextDetermination,
       });
     }
   }
@@ -375,12 +370,11 @@ export class Engine {
         const mW = minion.size.width / 2;
         const mH = minion.size.height / 2;
 
-        const isColliding = (
+        const isColliding =
           this.player.position.x + pW > minion.position.x - mW &&
           this.player.position.x - pW < minion.position.x + mW &&
           this.player.position.y + pH > minion.position.y - mH &&
-          this.player.position.y - pH < minion.position.y + mH
-        );
+          this.player.position.y - pH < minion.position.y + mH;
 
         if (isColliding) {
           const playerHealth = this.player.getComponent(HealthComponent);

@@ -14,7 +14,7 @@ export interface IMeleeCapable extends IEntity {
 
 export class MeleeComponent implements IEntityComponent {
   public owner!: IMeleeCapable;
-  
+
   // High-frequency timing registers
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
@@ -86,26 +86,26 @@ export class MeleeComponent implements IEntityComponent {
       let distanceToTarget = 0;
 
       if (this.attackDirection === "side") {
-        const centerReachX = this.owner.position.x + (facing * this.sideReachOffset);
+        const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
         const centerReachY = this.owner.position.y;
-        
+
         distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + (target.size.width / 2);
-        const withinDirection = (facing > 0 && target.position.x >= centerReachX - 25) || 
-                                (facing < 0 && target.position.x <= centerReachX + 25);
+        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.width / 2;
+        const withinDirection =
+          (facing > 0 && target.position.x >= centerReachX - 25) ||
+          (facing < 0 && target.position.x <= centerReachX + 25);
 
         if (withinReach && withinDirection) {
           isWithinSwingArc = true;
         }
-      } 
-      else if (this.attackDirection === "up") {
+      } else if (this.attackDirection === "up") {
         const centerReachX = this.owner.position.x;
         const centerReachY = this.owner.position.y - this.verticalReachOffset;
 
         distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + (target.size.height / 2);
+        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.height / 2;
         const withinDirection = target.position.y <= centerReachY + 25;
 
         if (withinReach && withinDirection) {
@@ -131,7 +131,7 @@ export class MeleeComponent implements IEntityComponent {
               x: target.position.x,
               y: target.position.y,
               angle: facing > 0 ? 0 : Math.PI,
-              color: "hsl(142, 71%, 58%)"
+              color: "hsl(142, 71%, 58%)",
             });
           }
         }
@@ -151,24 +151,24 @@ export class MeleeComponent implements IEntityComponent {
         let isDeflected = false;
 
         if (this.attackDirection === "side") {
-          const centerReachX = this.owner.position.x + (facing * this.sideReachOffset);
+          const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
           const centerReachY = this.owner.position.y;
           const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + (proj.size.width / 2);
-          const withinDirection = (facing > 0 && proj.position.x >= centerReachX - 25) || 
-                                  (facing < 0 && proj.position.x <= centerReachX + 25);
+          const withinReach = distance <= this.meleeRangeLimit + proj.size.width / 2;
+          const withinDirection =
+            (facing > 0 && proj.position.x >= centerReachX - 25) ||
+            (facing < 0 && proj.position.x <= centerReachX + 25);
 
           if (withinReach && withinDirection) {
             isDeflected = true;
           }
-        } 
-        else if (this.attackDirection === "up") {
+        } else if (this.attackDirection === "up") {
           const centerReachX = this.owner.position.x;
           const centerReachY = this.owner.position.y - this.verticalReachOffset;
           const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + (proj.size.height / 2);
+          const withinReach = distance <= this.meleeRangeLimit + proj.size.height / 2;
           const withinDirection = proj.position.y <= centerReachY + 25;
 
           if (withinReach && withinDirection) {
@@ -194,7 +194,7 @@ export class MeleeComponent implements IEntityComponent {
       x: this.owner.position.x + UNITS.POGO_HITBOX_X_OFFSET,
       y: this.owner.position.y + UNITS.POGO_HITBOX_Y_OFFSET,
       width: UNITS.POGO_HITBOX_WIDTH,
-      height: UNITS.POGO_HITBOX_HEIGHT
+      height: UNITS.POGO_HITBOX_HEIGHT,
     };
 
     if (this.pogoEnemies(pogoHitbox)) return;
@@ -209,12 +209,11 @@ export class MeleeComponent implements IEntityComponent {
       const halfW = target.size.width / 2;
       const halfH = target.size.height / 2;
 
-      const isColliding = (
+      const isColliding =
         pogoBox.x + pogoBox.width > target.position.x - halfW &&
         pogoBox.x < target.position.x + halfW &&
         pogoBox.y + pogoBox.height > target.position.y - halfH &&
-        pogoBox.y < target.position.y + halfH
-      );
+        pogoBox.y < target.position.y + halfH;
 
       if (isColliding) {
         const health = target.getComponent(HealthComponent);
@@ -238,12 +237,11 @@ export class MeleeComponent implements IEntityComponent {
         const pW = proj.size.width / 2;
         const pH = proj.size.height / 2;
 
-        const isColliding = (
+        const isColliding =
           pogoBox.x + pogoBox.width > proj.position.x - pW &&
           pogoBox.x < proj.position.x + pW &&
           pogoBox.y + pogoBox.height > proj.position.y - pH &&
-          pogoBox.y < proj.position.y + pH
-        );
+          pogoBox.y < proj.position.y + pH;
 
         if (isColliding) {
           this.owner.world.releaseProjectile(proj);
@@ -258,18 +256,17 @@ export class MeleeComponent implements IEntityComponent {
 
   private pogoEnvironmentSurfaces(pogoBox: { x: number; y: number; width: number; height: number }): void {
     const surfaces = [
-      ...this.owner.world.physicsWorld.solids, 
+      ...this.owner.world.physicsWorld.solids,
       ...this.owner.world.physicsWorld.onewayPlatforms,
-      ...this.owner.world.physicsWorld.hazards
+      ...this.owner.world.physicsWorld.hazards,
     ];
-    
+
     for (const solid of surfaces) {
-      const isColliding = (
+      const isColliding =
         pogoBox.x + pogoBox.width > solid.x &&
         pogoBox.x < solid.x + solid.width &&
         pogoBox.y + pogoBox.height > solid.y &&
-        pogoBox.y < solid.y + solid.height
-      );
+        pogoBox.y < solid.y + solid.height;
 
       if (isColliding) {
         this.applyPogoRebound();
@@ -292,7 +289,7 @@ export class MeleeComponent implements IEntityComponent {
     if (dash) {
       dash.resetDashCharge();
     }
-    
+
     eventBroker.publish("PLAYER_POGOED", undefined);
   }
 

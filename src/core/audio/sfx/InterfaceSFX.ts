@@ -25,17 +25,17 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
+      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthBoss = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 }
+      envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 },
     }).connect(this.bossDialoguePanner);
 
     this.menuSynth = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 }
+      envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 },
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthPlayer.maxPolyphony = 4;

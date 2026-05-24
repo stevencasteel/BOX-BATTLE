@@ -55,7 +55,7 @@ export class AudioContextManager {
 
   public getPanFromX(x: number): number {
     const clampedX = Math.max(0, Math.min(UNITS.WORLD_SIZE, x));
-    const rawPan = (clampedX / UNITS.WORLD_HALF_SIZE) - 1.0;
+    const rawPan = clampedX / UNITS.WORLD_HALF_SIZE - 1.0;
     const scaledPan = rawPan * UNITS.AUDIO_MAX_PAN_SCALE;
     return Math.max(-UNITS.AUDIO_MAX_PAN_SCALE, Math.min(UNITS.AUDIO_MAX_PAN_SCALE, scaledPan));
   }
@@ -75,7 +75,7 @@ export class AudioContextManager {
     this.cabinetFilter = new Tone.Filter({
       frequency: 20000,
       type: "lowpass",
-      Q: 1.0
+      Q: 1.0,
     });
 
     this.sfxGain = new Tone.Volume(-120);
@@ -99,7 +99,7 @@ export class AudioContextManager {
 
     const masterDb = config.masterVolume <= 0 ? -120 : Tone.gainToDb(config.masterVolume * 0.35);
     const sfxDb = config.sfxVolume <= 0 ? -120 : Tone.gainToDb(config.sfxVolume * 0.85);
-    const musicDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.30);
+    const musicDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.3);
 
     this.masterVolume.mute = config.masterMuted || config.masterVolume <= 0;
     this.sfxGain.mute = config.sfxMuted || config.sfxVolume <= 0;

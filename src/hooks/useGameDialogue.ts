@@ -9,8 +9,18 @@ export interface DialogueState {
 }
 
 export function useGameDialogue() {
-  const [playerDialogue, setPlayerDialogue] = useState<DialogueState>({ text: "", displayed: "", active: false, isTyping: false });
-  const [bossDialogue, setBossDialogue] = useState<DialogueState>({ text: "", displayed: "", active: false, isTyping: false });
+  const [playerDialogue, setPlayerDialogue] = useState<DialogueState>({
+    text: "",
+    displayed: "",
+    active: false,
+    isTyping: false,
+  });
+  const [bossDialogue, setBossDialogue] = useState<DialogueState>({
+    text: "",
+    displayed: "",
+    active: false,
+    isTyping: false,
+  });
 
   useEffect(() => {
     if (!playerDialogue.text || !playerDialogue.active) return;
@@ -21,14 +31,14 @@ export function useGameDialogue() {
         const char = playerDialogue.text[idx];
         setPlayerDialogue((prev) => ({
           ...prev,
-          displayed: playerDialogue.text.substring(0, idx + 1)
+          displayed: playerDialogue.text.substring(0, idx + 1),
         }));
         soundSynth.playDialogueTick("player", char);
         idx++;
       } else {
         setPlayerDialogue((prev) => ({ ...prev, isTyping: false }));
         clearInterval(interval);
-        
+
         setTimeout(() => {
           setPlayerDialogue((prev) => ({ ...prev, active: false }));
         }, 3000);
@@ -47,7 +57,7 @@ export function useGameDialogue() {
         const char = bossDialogue.text[idx];
         setBossDialogue((prev) => ({
           ...prev,
-          displayed: bossDialogue.text.substring(0, idx + 1)
+          displayed: bossDialogue.text.substring(0, idx + 1),
         }));
         soundSynth.playDialogueTick("boss", char);
         idx++;

@@ -164,7 +164,9 @@
 
 .neo-btn-large-focused .btn-indicator-light {
   background: var(--signal-green);
-  box-shadow: 0 0 10px var(--signal-green), 0 0 20px var(--signal-green-glow);
+  box-shadow:
+    0 0 10px var(--signal-green),
+    0 0 20px var(--signal-green-glow);
 }
 
 .btn-label-group {
@@ -236,7 +238,13 @@
 
 .footer-deco-line {
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.05) 80%, transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.05) 80%,
+    transparent
+  );
   width: 100%;
   margin-bottom: 0.8vmin;
 }
@@ -348,7 +356,7 @@
   .footer-center-prompt {
     display: none;
   }
-  
+
   .title-screen-container .neo-btn-large {
     padding: 14px 20px;
     border-radius: 10px;

@@ -2,10 +2,10 @@ export const UNITS = {
   // World space coordinates (1 World Unit = 1 Pixel)
   WORLD_SIZE: 1250,
   WORLD_HALF_SIZE: 625,
-  
+
   // Audio spatialization parameters
   AUDIO_MAX_PAN_SCALE: 0.45,
-  
+
   // Spatial hashing configuration
   SPATIAL_GRID_CELL_SIZE: 250,
 

@@ -59,7 +59,7 @@ export class BossPatrolState extends BossState {
   public update(dt: number): void {
     this.duration -= dt;
     const physics = this.owner.getComponent(PhysicsComponent);
-    
+
     this.owner.velocity.x = this.owner.facingDirection * this.owner.patrolSpeed;
 
     if (physics) {
@@ -221,7 +221,7 @@ export class BossLungeState extends BossState {
     this.owner.velocity.x = this.owner.facingDirection * this.owner.lungeSpeed;
 
     const physics = this.owner.getComponent(PhysicsComponent);
-    const hitWall = physics ? (physics.isOnWallLeft || physics.isOnWallRight) : false;
+    const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
 
     if (this.duration <= 0 || hitWall) {
       this.owner.stateMachine.changeState(this.owner.cooldownState);

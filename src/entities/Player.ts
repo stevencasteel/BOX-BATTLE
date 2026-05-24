@@ -50,7 +50,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
-      invincibilityDuration: 1.5
+      invincibilityDuration: 1.5,
     });
 
     this.inputReceiver = this.addComponent(InputReceiverComponent, new InputReceiverComponent());
@@ -70,13 +70,27 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     });
   }
 
-  public get isDashing(): boolean { return this.dashComponent.isDashing; }
-  public get canDash(): boolean { return this.dashComponent.canDash; }
-  public get isHealing(): boolean { return this.healComponent.isHealing; }
-  public get isCharging(): boolean { return this.fireballComponent.isCharging; }
-  public get chargeTimer(): number { return this.fireballComponent.chargeTimer; }
-  public get attackActive(): boolean { return this.meleeComponent.attackActive; }
-  public get attackDirection(): "side" | "up" | "down" | null { return this.meleeComponent.attackDirection; }
+  public get isDashing(): boolean {
+    return this.dashComponent.isDashing;
+  }
+  public get canDash(): boolean {
+    return this.dashComponent.canDash;
+  }
+  public get isHealing(): boolean {
+    return this.healComponent.isHealing;
+  }
+  public get isCharging(): boolean {
+    return this.fireballComponent.isCharging;
+  }
+  public get chargeTimer(): number {
+    return this.fireballComponent.chargeTimer;
+  }
+  public get attackActive(): boolean {
+    return this.meleeComponent.attackActive;
+  }
+  public get attackDirection(): "side" | "up" | "down" | null {
+    return this.meleeComponent.attackDirection;
+  }
 
   public update(dt: number) {
     if (this.isDead) {
@@ -87,7 +101,8 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     const currentOnWall = this.physics.isOnWallLeft || this.physics.isOnWallRight;
     const isPressedAgainstWall = currentOnWall && moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal;
-    const isSliding = !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
+    const isSliding =
+      !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
 
     let targetScaleX = 1.0;
     let targetScaleY = 1.0;
@@ -108,7 +123,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
             y: this.position.y + (Math.random() * 30 - 15),
             angle: this.lastWallNormal === 1 ? 0 : Math.PI,
             color: "rgba(255, 255, 255, 0.35)",
-            count: 2
+            count: 2,
           });
         }
       }
@@ -146,7 +161,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       this.velocity.y += this.physics.gravity * dt;
       const knockbackFriction = 800.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
-      
+
       super.update(dt);
       return;
     }
@@ -163,7 +178,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         y: this.position.y,
         angle: impactSide > 0 ? Math.PI : 0,
         color: "rgba(255, 255, 255, 0.55)",
-        count: 6
+        count: 6,
       });
     }
     this.wasOnWall = currentOnWall;
@@ -218,7 +233,11 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       }
     }
 
-    if (this.inputReceiver.consumeBufferedAction("DASH", 100) && this.dashComponent.canDash && this.dashComponent.dashCooldown <= 0) {
+    if (
+      this.inputReceiver.consumeBufferedAction("DASH", 100) &&
+      this.dashComponent.canDash &&
+      this.dashComponent.dashCooldown <= 0
+    ) {
       let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
       let dirY = 0;
       if (this.inputReceiver.isPressed("MOVE_UP")) {
@@ -226,15 +245,15 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       } else if (this.inputReceiver.isPressed("MOVE_DOWN")) {
         dirY = 1;
       }
-      
+
       if (dirX === 0 && dirY === 0) {
         dirX = this.facingDirection;
       }
-      
+
       const len = Math.sqrt(dirX * dirX + dirY * dirY);
       const normX = dirX / len;
       const normY = dirY / len;
-      
+
       this.dashComponent.triggerDash(normX, normY);
       this.visualScale = { x: 1.25, y: 0.75 };
       super.update(dt);
@@ -254,12 +273,15 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         this.velocity.y = 180;
         this.physics.isGrounded = false;
         this.jumpBufferTimer = 0;
-      }
-      else if (this.inputReceiver.isPressed("MOVE_DOWN") && this.physics.isGrounded && this.healingCharges > 0 && this.health.currentHealth < this.health.maxHealth) {
+      } else if (
+        this.inputReceiver.isPressed("MOVE_DOWN") &&
+        this.physics.isGrounded &&
+        this.healingCharges > 0 &&
+        this.health.currentHealth < this.health.maxHealth
+      ) {
         this.healComponent.startHealing();
         this.jumpBufferTimer = 0;
-      }
-      else if (this.coyoteTimer > 0) {
+      } else if (this.coyoteTimer > 0) {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
@@ -304,7 +326,11 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
     if (this.inputReceiver.isJustReleased("ATTACK")) {
       const dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-      const dirY = this.inputReceiver.isPressed("MOVE_UP") ? -1 : (this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded ? 1 : 0);
+      const dirY = this.inputReceiver.isPressed("MOVE_UP")
+        ? -1
+        : this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded
+          ? 1
+          : 0;
       this.fireballComponent.releaseCharge(dirX, dirY, this.facingDirection);
     }
 
@@ -345,12 +371,11 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const halfH = this.size.height / 2;
 
     for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit = (
+      const isHit =
         this.position.x + halfW > hazard.x &&
         this.position.x - halfW < hazard.x + hazard.width &&
         this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height
-      );
+        this.position.y - halfH < hazard.y + hazard.height;
 
       if (isHit) {
         if (this.healComponent.isHealing) {
@@ -380,12 +405,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       const gWidth = this.size.width * this.visualScale.x;
       const gHeight = this.size.height * this.visualScale.y;
       const gFeetY = ghost.y + this.size.height / 2;
-      ctx.fillRect(
-        ghost.x - gWidth / 2,
-        gFeetY - gHeight,
-        gWidth,
-        gHeight
-      );
+      ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
     }
 
     if (this.health.isFlashing()) {
@@ -401,12 +421,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
-    ctx.fillRect(
-      drawX - vWidth / 2,
-      feetY - vHeight,
-      vWidth,
-      vHeight
-    );
+    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
 
     ctx.shadowBlur = 0;
 
@@ -433,13 +448,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
-      ctx.arc(
-        drawX,
-        drawY,
-        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
-        0,
-        Math.PI * 2
-      );
+      ctx.arc(drawX, drawY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
       ctx.stroke();
     }
   }

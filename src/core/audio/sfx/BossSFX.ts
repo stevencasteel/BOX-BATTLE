@@ -32,34 +32,34 @@ export class BossSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay }
+      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay }
+      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
       harmonicity: 5.1,
-      resonance: 4000
+      resonance: 4000,
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
       oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay }
+      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
       oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay }
+      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 }
+      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
     }).connect(this.impactPanner);
   }
 

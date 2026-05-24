@@ -55,12 +55,10 @@ export class ParticleSystem {
       eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
-          const pAngle = radial 
+          const pAngle = radial
             ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
             : angle + (Math.random() * 0.9 - 0.45);
-          const pSpeed = radial
-            ? 100 + Math.random() * 300
-            : 160 + Math.random() * 280;
+          const pSpeed = radial ? 100 + Math.random() * 300 : 160 + Math.random() * 280;
 
           const vx = Math.cos(pAngle) * pSpeed;
           const vy = Math.sin(pAngle) * pSpeed;

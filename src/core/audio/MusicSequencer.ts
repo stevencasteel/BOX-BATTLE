@@ -4,7 +4,7 @@ import { settingsManager } from "@/core/SettingsManager";
 
 export class MusicSequencer {
   private ctxManager: AudioContextManager;
-  
+
   private musicBassSynth!: Tone.MonoSynth;
   public musicArpSynth!: Tone.PolySynth;
   private bassSeq!: Tone.Sequence<string>;
@@ -24,12 +24,12 @@ export class MusicSequencer {
       oscillator: { type: "sawtooth" },
       filter: { type: "lowpass", frequency: 350, Q: 1.0 },
       envelope: { attack: 0.02, decay: 0.12, sustain: 0.4, release: 0.15 },
-      filterEnvelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.15, baseFrequency: 350, octaves: 1.5 }
+      filterEnvelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.15, baseFrequency: 350, octaves: 1.5 },
     }).connect(musicGain);
 
     this.musicArpSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
-      envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.25 }
+      envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.25 },
     }).connect(musicGain);
 
     const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -61,9 +61,14 @@ export class MusicSequencer {
     const arpProgression = ["C4", "C4", "G3", "G3", "F3", "F3", "G#3", "A#3"];
     this.arpSeq = new Tone.Sequence<string>(
       (time, baseNote) => {
-        const chord = (baseNote === "G3" || baseNote === "A#3")
-          ? [baseNote, Tone.Frequency(baseNote).transpose(4).toNote(), Tone.Frequency(baseNote).transpose(7).toNote()]
-          : [baseNote, Tone.Frequency(baseNote).transpose(3).toNote(), Tone.Frequency(baseNote).transpose(7).toNote()];
+        const chord =
+          baseNote === "G3" || baseNote === "A#3"
+            ? [baseNote, Tone.Frequency(baseNote).transpose(4).toNote(), Tone.Frequency(baseNote).transpose(7).toNote()]
+            : [
+                baseNote,
+                Tone.Frequency(baseNote).transpose(3).toNote(),
+                Tone.Frequency(baseNote).transpose(7).toNote(),
+              ];
 
         chord.forEach((note, index) => {
           this.musicArpSynth.triggerAttackRelease(note, "8n", time + index * 0.05);
@@ -101,17 +106,20 @@ export class MusicSequencer {
   public fadeOutMusic(duration: number = 1.5) {
     if (!this.ctxManager.initialized || !this.isMusicPlaying) return;
     this.ctxManager.musicGain.volume.rampTo(-120, duration);
-    setTimeout(() => {
-      this.stopMusic();
-      this.ctxManager.updateVolumes();
-    }, duration * 1000 + 100);
+    setTimeout(
+      () => {
+        this.stopMusic();
+        this.ctxManager.updateVolumes();
+      },
+      duration * 1000 + 100
+    );
   }
 
   public fadeInMusic(duration: number = 0.4) {
     if (!this.ctxManager.initialized || !this.isMusicPlaying) return;
     const config = settingsManager.getAudio();
-    const targetDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.30);
-    
+    const targetDb = config.musicVolume <= 0 ? -120 : Tone.gainToDb(config.musicVolume * 0.3);
+
     this.ctxManager.musicGain.volume.setValueAtTime(-120, Tone.now());
     this.ctxManager.musicGain.volume.rampTo(targetDb, duration);
   }

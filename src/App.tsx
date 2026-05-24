@@ -16,7 +16,9 @@ import { SettingsScreen } from "@/components/menus/SettingsScreen";
 import { AudioScreen } from "@/components/menus/AudioScreen";
 import { ControlsScreen } from "@/components/menus/ControlsScreen";
 import { CreditsScreen } from "@/components/menus/CreditsScreen";
-const SourceViewScreen = lazy(() => import("@/components/menus/SourceViewScreen").then(m => ({ default: m.SourceViewScreen })));
+const SourceViewScreen = lazy(() =>
+  import("@/components/menus/SourceViewScreen").then((m) => ({ default: m.SourceViewScreen }))
+);
 import { GameArena } from "@/components/GameArena";
 
 import "./App.css";
@@ -55,7 +57,7 @@ const TouchButton = ({ action, label, style }: { action: Action; label: string; 
         alignItems: "center",
         justifyContent: "center",
         boxSizing: "border-box",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)"
+        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)",
       }}
     >
       {label}
@@ -105,14 +107,14 @@ export default function App() {
       // Determination Bar
       const detD = document.getElementById("hud-d-det-bar");
       const detM = document.getElementById("hud-m-det-bar");
-      const detWidth = (determination / 5 * 100) + "%";
+      const detWidth = (determination / 5) * 100 + "%";
       if (detD) detD.style.width = detWidth;
       if (detM) detM.style.width = detWidth;
 
       // Boss HP
       const bossD = document.getElementById("hud-d-boss-bar");
       const bossM = document.getElementById("hud-m-boss-bar");
-      const bossWidth = (bossHP / 30 * 100) + "%";
+      const bossWidth = (bossHP / 30) * 100 + "%";
       if (bossD) {
         bossD.style.width = bossWidth;
         if (bossHP > 0) bossD.classList.add("led-red");
@@ -126,8 +128,6 @@ export default function App() {
     });
     return unsub;
   }, []);
-
-
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -216,7 +216,7 @@ export default function App() {
       }),
       eventBroker.subscribe("CLEAR_DIALOGUES", () => {
         resetDialogues();
-      })
+      }),
     ];
 
     return () => {
@@ -247,7 +247,8 @@ export default function App() {
   }, [rebindTarget]);
 
   useEffect(() => {
-    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null) return;
+    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
+      return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
       const config = screenConfigs[currentScreen];
@@ -267,7 +268,7 @@ export default function App() {
         handleVolumeChange,
         resetSettings,
         setRebindTarget,
-        gameResult
+        gameResult,
       };
 
       const maxIndex = config.getMaxIndex(context);
@@ -325,10 +326,13 @@ export default function App() {
         }
       }
 
-      if (isSoundSliderZone && (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")) {
+      if (
+        isSoundSliderZone &&
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")
+      ) {
         if (config.onHorizontal) {
           e.preventDefault();
-          const direction = (e.key === "ArrowRight" || e.key === "KeyD") ? 1 : -1;
+          const direction = e.key === "ArrowRight" || e.key === "KeyD" ? 1 : -1;
           config.onHorizontal(direction, context);
         }
       }
@@ -338,7 +342,18 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [currentScreen, menuIndex, audio, isCopyMode, isEraseMode, copySourceIndex, slots, rebindTarget, gameResult, isPlayingScreen]);
+  }, [
+    currentScreen,
+    menuIndex,
+    audio,
+    isCopyMode,
+    isEraseMode,
+    copySourceIndex,
+    slots,
+    rebindTarget,
+    gameResult,
+    isPlayingScreen,
+  ]);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -352,27 +367,36 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      <div className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""}`} style={isTouchDevice ? {
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "10px",
-        height: "100vh"
-      } : undefined}>
-
-        {!isFullHeightScreen && (
-          isTouchDevice ? (
-            <div className="cabinet-status-panel neo-pressed" style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "6px 12px",
-              height: "36px",
-              marginBottom: "4px",
-              boxSizing: "border-box",
-              flexShrink: 0,
-              borderRadius: "8px"
-            }}>
+      <div
+        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""}`}
+        style={
+          isTouchDevice
+            ? {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                padding: "10px",
+                height: "100vh",
+              }
+            : undefined
+        }
+      >
+        {!isFullHeightScreen &&
+          (isTouchDevice ? (
+            <div
+              className="cabinet-status-panel neo-pressed"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "6px 12px",
+                height: "36px",
+                marginBottom: "4px",
+                boxSizing: "border-box",
+                flexShrink: 0,
+                borderRadius: "8px",
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                 <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold" }}>HP</span>
                 <div className="flex-row" style={{ gap: "3px" }}>
@@ -384,7 +408,7 @@ export default function App() {
                       style={{
                         width: "8px",
                         height: "8px",
-                        border: "1px solid rgba(0,0,0,0.5)"
+                        border: "1px solid rgba(0,0,0,0.5)",
                       }}
                     />
                   ))}
@@ -398,37 +422,55 @@ export default function App() {
                       style={{
                         width: "4px",
                         height: "4px",
-                        background: "#07080b"
+                        background: "#07080b",
                       }}
                     />
                   ))}
                 </div>
-                <div className="neo-pressed" style={{
-                  width: "36px",
-                  height: "6px",
-                  borderRadius: "3px",
-                  padding: "1px",
-                  boxSizing: "border-box",
-                  overflow: "hidden",
-                  background: "#07080b",
-                  marginLeft: "4px",
-                  display: "flex",
-                  alignItems: "center"
-                }}>
-                  <div id="hud-m-det-bar" style={{
-                    height: "100%",
-                    borderRadius: "1.5px",
-                    width: "0%",
-                    transition: "width 0.15s ease",
-                    background: "hsl(280, 80%, 65%)",
-                    boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
-                  }} />
+                <div
+                  className="neo-pressed"
+                  style={{
+                    width: "36px",
+                    height: "6px",
+                    borderRadius: "3px",
+                    padding: "1px",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
+                    background: "#07080b",
+                    marginLeft: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    id="hud-m-det-bar"
+                    style={{
+                      height: "100%",
+                      borderRadius: "1.5px",
+                      width: "0%",
+                      transition: "width 0.15s ease",
+                      background: "hsl(280, 80%, 65%)",
+                      boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
+                    }}
+                  />
                 </div>
               </div>
-              <span style={{ fontSize: "9px", color: "#718096", fontWeight: "bold", letterSpacing: "0.1em" }}>BOX BATTLE</span>
+              <span style={{ fontSize: "9px", color: "#718096", fontWeight: "bold", letterSpacing: "0.1em" }}>
+                BOX BATTLE
+              </span>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
-                <div className="neo-pressed" style={{ width: "80px", height: "8px", borderRadius: "3px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
+                <div
+                  className="neo-pressed"
+                  style={{
+                    width: "80px",
+                    height: "8px",
+                    borderRadius: "3px",
+                    padding: "1px",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
+                  }}
+                >
                   <div
                     id="hud-m-boss-bar"
                     className="led-red"
@@ -436,7 +478,7 @@ export default function App() {
                       height: "100%",
                       borderRadius: "1.5px",
                       width: "0%",
-                      transition: "all 0.15s ease"
+                      transition: "all 0.15s ease",
                     }}
                   />
                 </div>
@@ -453,7 +495,7 @@ export default function App() {
                       id={`hud-d-php-${i}`}
                       className="led-dot led-green"
                       style={{
-                        border: "1px solid rgba(0,0,0,0.5)"
+                        border: "1px solid rgba(0,0,0,0.5)",
                       }}
                     />
                   ))}
@@ -469,64 +511,98 @@ export default function App() {
                         style={{
                           border: "1px solid rgba(0,0,0,0.5)",
                           width: "6px",
-                          height: "6px"
+                          height: "6px",
                         }}
                       />
                     ))}
                   </div>
-                  <div className="neo-pressed" style={{
-                    width: "54px",
-                    height: "6px",
-                    borderRadius: "3px",
-                    padding: "1px",
-                    boxSizing: "border-box",
-                    overflow: "hidden",
-                    background: "#07080b"
-                  }}>
-                    <div id="hud-d-det-bar" style={{
-                      height: "100%",
-                      borderRadius: "2px",
-                      width: "0%",
-                      transition: "width 0.15s ease",
-                      background: "hsl(280, 80%, 65%)",
-                      boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)"
-                    }} />
+                  <div
+                    className="neo-pressed"
+                    style={{
+                      width: "54px",
+                      height: "6px",
+                      borderRadius: "3px",
+                      padding: "1px",
+                      boxSizing: "border-box",
+                      overflow: "hidden",
+                      background: "#07080b",
+                    }}
+                  >
+                    <div
+                      id="hud-d-det-bar"
+                      style={{
+                        height: "100%",
+                        borderRadius: "2px",
+                        width: "0%",
+                        transition: "width 0.15s ease",
+                        background: "hsl(280, 80%, 65%)",
+                        boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
+                      }}
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
                 {isPlayingScreen ? (
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                    border: "1px solid rgba(255, 255, 255, 0.03)",
-                    background: "rgba(7, 8, 11, 0.85)",
-                    padding: "8px 22px",
-                    borderRadius: "8px",
-                    boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)"
-                  }}>
-                    <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
-                    <span style={{
-                      fontSize: "16px",
-                      color: "rgba(34, 197, 94, 0.8)",
-                      fontWeight: 900,
-                      letterSpacing: "0.3em",
-                      textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
-                      textTransform: "uppercase",
-                      lineHeight: "1"
-                    }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "14px",
+                      border: "1px solid rgba(255, 255, 255, 0.03)",
+                      background: "rgba(7, 8, 11, 0.85)",
+                      padding: "8px 22px",
+                      borderRadius: "8px",
+                      boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        background: "rgba(34, 197, 94, 0.45)",
+                        boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "16px",
+                        color: "rgba(34, 197, 94, 0.8)",
+                        fontWeight: 900,
+                        letterSpacing: "0.3em",
+                        textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
+                        textTransform: "uppercase",
+                        lineHeight: "1",
+                      }}
+                    >
                       BOX BATTLE
                     </span>
-                    <div style={{ width: "6px", height: "6px", background: "rgba(34, 197, 94, 0.45)", boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)" }} />
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        background: "rgba(34, 197, 94, 0.45)",
+                        boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
+                      }}
+                    />
                   </div>
                 ) : null}
               </div>
 
               <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
                 <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
-                <div className="neo-pressed" style={{ width: "160px", height: "10px", borderRadius: "4px", padding: "1px", boxSizing: "border-box", overflow: "hidden" }}>
+                <div
+                  className="neo-pressed"
+                  style={{
+                    width: "160px",
+                    height: "10px",
+                    borderRadius: "4px",
+                    padding: "1px",
+                    boxSizing: "border-box",
+                    overflow: "hidden",
+                  }}
+                >
                   <div
                     id="hud-d-boss-bar"
                     className="led-red"
@@ -534,35 +610,41 @@ export default function App() {
                       height: "100%",
                       borderRadius: "2px",
                       width: "0%",
-                      transition: "all 0.15s ease"
+                      transition: "all 0.15s ease",
                     }}
                   />
                 </div>
               </div>
             </div>
-          )
-        )}
+          ))}
 
-        <div className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"}`} ref={viewportRef} style={isTouchDevice ? (isPlayingScreen ? {
-          flexGrow: 0,
-          flexShrink: 0,
-          width: "100%",
-          aspectRatio: "1/1",
-          maxHeight: "calc(100vh - 250px)",
-          height: "auto"
-        } : {
-          flexGrow: 1,
-          width: "100%",
-          height: "0px",
-          aspectRatio: "auto"
-        }) : undefined}>
+        <div
+          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"}`}
+          ref={viewportRef}
+          style={
+            isTouchDevice
+              ? isPlayingScreen
+                ? {
+                    flexGrow: 0,
+                    flexShrink: 0,
+                    width: "100%",
+                    aspectRatio: "1/1",
+                    maxHeight: "calc(100vh - 250px)",
+                    height: "auto",
+                  }
+                : {
+                    flexGrow: 1,
+                    width: "100%",
+                    height: "0px",
+                    aspectRatio: "auto",
+                  }
+              : undefined
+          }
+        >
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
-                <GameArena
-                  triggerDialogue={() => {}}
-                  playHoverTick={playHoverTick}
-                />
+                <GameArena triggerDialogue={() => {}} playHoverTick={playHoverTick} />
               </div>
             </div>
           ) : (
@@ -664,12 +746,29 @@ export default function App() {
               )}
 
               {currentScreen === "SOURCE_VIEW" && (
-                <Suspense fallback={
-                  <div className="flex-col-center h-full w-full" style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}>
-                    <div className="led-dot led-green" style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }} />
-                    <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase" }}>COMPILING SOURCE ARCHIVE...</span>
-                  </div>
-                }>
+                <Suspense
+                  fallback={
+                    <div
+                      className="flex-col-center h-full w-full"
+                      style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}
+                    >
+                      <div
+                        className="led-dot led-green"
+                        style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }}
+                      />
+                      <span
+                        style={{
+                          color: "#718096",
+                          fontSize: "11px",
+                          letterSpacing: "0.2em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        COMPILING SOURCE ARCHIVE...
+                      </span>
+                    </div>
+                  }
+                >
                   <SourceViewScreen
                     onBack={() => {
                       navTo("TITLE");
@@ -683,69 +782,119 @@ export default function App() {
         </div>
 
         {!isFullHeightScreen && (
-          <div className="dialogue-console" style={isTouchDevice ? {
-            height: "54px",
-            marginTop: "0px",
-            gap: "4px",
-            padding: "0",
-            flexShrink: 0
-          } : undefined}>
-            <div className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`} style={isTouchDevice ? {
-              padding: "4px 8px",
-              gap: "8px",
-              borderRadius: "6px",
-              height: "100%"
-            } : undefined}>
-              <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`} style={{
-                background: playerDialogue.active ? "" : "#07080b",
-                width: isTouchDevice ? "32px" : "64px",
-                height: isTouchDevice ? "32px" : "64px"
-              }} />
+          <div
+            className="dialogue-console"
+            style={
+              isTouchDevice
+                ? {
+                    height: "54px",
+                    marginTop: "0px",
+                    gap: "4px",
+                    padding: "0",
+                    flexShrink: 0,
+                  }
+                : undefined
+            }
+          >
+            <div
+              className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}
+              style={
+                isTouchDevice
+                  ? {
+                      padding: "4px 8px",
+                      gap: "8px",
+                      borderRadius: "6px",
+                      height: "100%",
+                    }
+                  : undefined
+              }
+            >
+              <div
+                className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`}
+                style={{
+                  background: playerDialogue.active ? "" : "#07080b",
+                  width: isTouchDevice ? "32px" : "64px",
+                  height: isTouchDevice ? "32px" : "64px",
+                }}
+              />
               <div className="dialogue-text-container">
-                <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px" } : undefined}>PLAYER</div>
-                <div className="dialogue-body-text" style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}>{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px" } : undefined}>
+                  PLAYER
+                </div>
+                <div
+                  className="dialogue-body-text"
+                  style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
+                >
+                  {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
+                </div>
               </div>
             </div>
 
-            <div className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`} style={isTouchDevice ? {
-              padding: "4px 8px",
-              gap: "8px",
-              borderRadius: "6px",
-              height: "100%"
-            } : undefined}>
+            <div
+              className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}
+              style={
+                isTouchDevice
+                  ? {
+                      padding: "4px 8px",
+                      gap: "8px",
+                      borderRadius: "6px",
+                      height: "100%",
+                    }
+                  : undefined
+              }
+            >
               <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-                <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}>BOSS</div>
-                <div className="dialogue-body-text" style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}>{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                <div
+                  className="dialogue-speaker-label"
+                  style={
+                    isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }
+                  }
+                >
+                  BOSS
+                </div>
+                <div
+                  className="dialogue-body-text"
+                  style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
+                >
+                  {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
+                </div>
               </div>
-              <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`} style={{
-                background: bossDialogue.active ? "" : "#07080b",
-                width: isTouchDevice ? "32px" : "64px",
-                height: isTouchDevice ? "32px" : "64px"
-              }} />
+              <div
+                className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`}
+                style={{
+                  background: bossDialogue.active ? "" : "#07080b",
+                  width: isTouchDevice ? "32px" : "64px",
+                  height: isTouchDevice ? "32px" : "64px",
+                }}
+              />
             </div>
           </div>
         )}
 
         {/* Custom Ergonomic Touch Overlay for Mobile Game Arena Controls */}
         {isPlayingScreen && isTouchDevice && (
-          <div style={{
-            display: "flex",
-            width: "100%",
-            gap: "8px",
-            background: "#0c0e12",
-            boxSizing: "border-box",
-            flexGrow: 1,
-            height: "0px",
-            paddingTop: "6px"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              gap: "8px",
+              background: "#0c0e12",
+              boxSizing: "border-box",
+              flexGrow: 1,
+              height: "0px",
+              paddingTop: "6px",
+            }}
+          >
             {/* Left Hand: Movement Panel (flex: 1.3) */}
-            <div style={{
-              flex: 1.3,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: "6px",
-              height: "100%"
-            }}>
+            <div
+              style={{
+                flex: 1.3,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: "6px",
+                height: "100%",
+              }}
+            >
               <TouchButton action="MOVE_LEFT" label="◀" style={{ height: "100%", fontSize: "24px" }} />
               <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
                 <TouchButton action="MOVE_UP" label="▲" style={{ flex: 1, fontSize: "20px" }} />
@@ -755,22 +904,45 @@ export default function App() {
             </div>
 
             {/* Right Hand: Action Panel (flex: 1) */}
-            <div style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              height: "100%"
-            }}>
-              <TouchButton action="DASH" label="DASH" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-yellow)", color: "var(--signal-yellow)" }} />
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                height: "100%",
+              }}
+            >
+              <TouchButton
+                action="DASH"
+                label="DASH"
+                style={{
+                  flex: 1,
+                  fontSize: "14px",
+                  borderColor: "var(--signal-yellow)",
+                  color: "var(--signal-yellow)",
+                }}
+              />
               <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
-                <TouchButton action="ATTACK" label="ATK" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-red)", color: "var(--signal-red)" }} />
-                <TouchButton action="JUMP" label="JMP" style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-green)", color: "var(--signal-green)" }} />
+                <TouchButton
+                  action="ATTACK"
+                  label="ATK"
+                  style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
+                />
+                <TouchButton
+                  action="JUMP"
+                  label="JMP"
+                  style={{
+                    flex: 1,
+                    fontSize: "14px",
+                    borderColor: "var(--signal-green)",
+                    color: "var(--signal-green)",
+                  }}
+                />
               </div>
             </div>
           </div>
         )}
-
       </div>
 
       <svg style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}>
@@ -778,15 +950,29 @@ export default function App() {
           <filter id="chromatic-aberration">
             <feOffset dx="6" dy="0" in="SourceGraphic" result="red" />
             <feOffset dx="-6" dy="0" in="SourceGraphic" result="blue" />
-            <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="red" result="red-only" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="green-only" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="blue" result="blue-only" />
+            <feColorMatrix
+              type="matrix"
+              values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+              in="red"
+              result="red-only"
+            />
+            <feColorMatrix
+              type="matrix"
+              values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+              in="SourceGraphic"
+              result="green-only"
+            />
+            <feColorMatrix
+              type="matrix"
+              values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+              in="blue"
+              result="blue-only"
+            />
             <feBlend mode="screen" in="red-only" in2="green-only" result="rg" />
             <feBlend mode="screen" in="rg" in2="blue-only" />
           </filter>
         </defs>
       </svg>
-
     </div>
   );
 }

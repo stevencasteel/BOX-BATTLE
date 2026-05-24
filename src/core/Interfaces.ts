@@ -4,7 +4,7 @@ export enum EntityStatus {
   SPAWNING = "SPAWNING",
   ACTIVE = "ACTIVE",
   DYING = "DYING",
-  DEAD = "DEAD"
+  DEAD = "DEAD",
 }
 
 export interface Vector2D {
@@ -85,7 +85,13 @@ export interface IPhysicsWorld {
   hazards: Rectangle[];
   onewayPlatforms: Rectangle[];
   isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean;
-  getOverlapCandidates(x: number, y: number, width: number, height: number, type: "solid" | "platform" | "hazard"): Rectangle[];
+  getOverlapCandidates(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    type: "solid" | "platform" | "hazard"
+  ): Rectangle[];
 }
 
 export interface IWorld {

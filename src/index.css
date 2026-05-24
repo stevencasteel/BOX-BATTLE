@@ -16,7 +16,9 @@
   --shadow-inset-dark: inset 3px 3px 10px rgba(0, 0, 0, 0.9);
 }
 
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   width: 100vw;
@@ -31,7 +33,7 @@ html, body, #root {
 
 body {
   background-color: var(--void-bg);
-  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-family: "SF Mono", Monaco, Consolas, monospace;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;

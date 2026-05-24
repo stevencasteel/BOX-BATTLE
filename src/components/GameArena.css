@@ -102,15 +102,21 @@
 .dialogue-active-green {
   opacity: 1;
   border-color: rgba(34, 197, 94, 0.25);
-  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(34, 197, 94, 0.08);
-  transform: scale(1.0);
+  box-shadow:
+    var(--shadow-inset-light),
+    var(--shadow-inset-dark),
+    0 0 12px rgba(34, 197, 94, 0.08);
+  transform: scale(1);
 }
 
 .dialogue-active-red {
   opacity: 1;
   border-color: rgba(239, 68, 68, 0.25);
-  box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark), 0 0 12px rgba(239, 68, 68, 0.08);
-  transform: scale(1.0);
+  box-shadow:
+    var(--shadow-inset-light),
+    var(--shadow-inset-dark),
+    0 0 12px rgba(239, 68, 68, 0.08);
+  transform: scale(1);
 }
 
 .dialogue-inactive {
@@ -159,12 +165,24 @@
 }
 
 @keyframes rumble-anim {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  20% { transform: translate(-1px, -1px) rotate(-1deg); }
-  40% { transform: translate(-1px, 1px) rotate(1deg); }
-  60% { transform: translate(1px, -1px) rotate(0deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  100% { transform: translate(1px, 1px) rotate(-1deg); }
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  20% {
+    transform: translate(-1px, -1px) rotate(-1deg);
+  }
+  40% {
+    transform: translate(-1px, 1px) rotate(1deg);
+  }
+  60% {
+    transform: translate(1px, -1px) rotate(0deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  100% {
+    transform: translate(1px, 1px) rotate(-1deg);
+  }
 }
 
 @media (max-width: 768px) and (pointer: coarse) {

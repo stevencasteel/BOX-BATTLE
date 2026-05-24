@@ -21,7 +21,7 @@ export class ObjectPool<T extends IPoolable> {
   }
 
   /**
-   * Retrieves an inactive instance from the pool, activates it, 
+   * Retrieves an inactive instance from the pool, activates it,
    * and tracks it in the active list.
    */
   public get(...args: any[]): T {

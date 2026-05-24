@@ -23,7 +23,7 @@ export class Minion extends BaseEntity {
   public patrolSpeed: number = 100;
   public facingDirection: number = 1;
   public stateTimer: number = 0;
-  
+
   public pointA: { x: number; y: number } = { x: 0, y: 0 };
   public pointB: { x: number; y: number } = { x: 0, y: 0 };
   public flyerTarget: "A" | "B" = "B";
@@ -45,12 +45,12 @@ export class Minion extends BaseEntity {
     this.previousPosition = { ...startPos };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
-    
+
     if (type === "TURRET") {
       this.size = { width: 44, height: 44 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 3,
-        invincibilityDuration: 0.15
+        invincibilityDuration: 0.15,
       });
       this.physics.gravity = 0;
       this.squashPivot = "feet";
@@ -59,7 +59,7 @@ export class Minion extends BaseEntity {
       this.size = { width: 40, height: 50 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 4,
-        invincibilityDuration: 0.15
+        invincibilityDuration: 0.15,
       });
       this.squashPivot = "feet";
       this.behavior = new LancerBehavior();
@@ -67,10 +67,10 @@ export class Minion extends BaseEntity {
       this.size = { width: 36, height: 36 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 2,
-        invincibilityDuration: 0.15
+        invincibilityDuration: 0.15,
       });
       this.physics.gravity = 0;
-      
+
       this.pointA = { ...startPos };
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
       this.squashPivot = "center";
@@ -84,10 +84,13 @@ export class Minion extends BaseEntity {
     this.isDying = true;
     this.dissolveTimer = 0.5;
     this.velocity = { x: 0, y: 0 };
-    
-    const mColor = this.minionType === "LANCER" 
-      ? "hsl(280, 70%, 65%)" 
-      : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+
+    const mColor =
+      this.minionType === "LANCER"
+        ? "hsl(280, 70%, 65%)"
+        : this.minionType === "FLYER"
+          ? "hsl(200, 80%, 65%)"
+          : "hsl(215, 20%, 65%)";
 
     eventBroker.publish("SPAWN_SPARKS", {
       x: this.position.x,
@@ -95,13 +98,13 @@ export class Minion extends BaseEntity {
       angle: 0,
       color: mColor,
       radial: true,
-      count: 24
+      count: 24,
     });
 
     eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
-      color: mColor
+      color: mColor,
     });
   }
 
@@ -112,9 +115,12 @@ export class Minion extends BaseEntity {
       this.spawnTimer -= dt;
       this.velocity = { x: 0, y: 0 };
 
-      const mColor = this.minionType === "LANCER" 
-        ? "hsl(280, 70%, 65%)" 
-        : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+      const mColor =
+        this.minionType === "LANCER"
+          ? "hsl(280, 70%, 65%)"
+          : this.minionType === "FLYER"
+            ? "hsl(200, 80%, 65%)"
+            : "hsl(215, 20%, 65%)";
 
       if (Math.random() < 0.5) {
         const angle = Math.random() * Math.PI * 2;
@@ -123,7 +129,7 @@ export class Minion extends BaseEntity {
           x: this.position.x + Math.cos(angle) * dist,
           y: this.position.y + Math.sin(angle) * dist,
           angle: angle + Math.PI,
-          color: mColor
+          color: mColor,
         });
       }
 
@@ -138,16 +144,19 @@ export class Minion extends BaseEntity {
       this.dissolveTimer -= dt;
       this.velocity = { x: 0, y: 0 };
 
-      const mColor = this.minionType === "LANCER" 
-        ? "hsl(280, 70%, 65%)" 
-        : (this.minionType === "FLYER" ? "hsl(200, 80%, 65%)" : "hsl(215, 20%, 65%)");
+      const mColor =
+        this.minionType === "LANCER"
+          ? "hsl(280, 70%, 65%)"
+          : this.minionType === "FLYER"
+            ? "hsl(200, 80%, 65%)"
+            : "hsl(215, 20%, 65%)";
 
       if (Math.random() < 0.6) {
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
           y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
           angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2),
-          color: mColor
+          color: mColor,
         });
       }
 
@@ -196,12 +205,11 @@ export class Minion extends BaseEntity {
     const halfH = this.size.height / 2;
 
     for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit = (
+      const isHit =
         this.position.x + halfW > hazard.x &&
         this.position.x - halfW < hazard.x + hazard.width &&
         this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height
-      );
+        this.position.y - halfH < hazard.y + hazard.height;
 
       if (isHit) {
         eventBroker.publish("PLAYER_SPIKED", undefined);
@@ -227,13 +235,12 @@ export class Minion extends BaseEntity {
     ctx.save();
 
     if (this.isSpawning) {
-      const pct = 1.0 - (this.spawnTimer / 0.6);
+      const pct = 1.0 - this.spawnTimer / 0.6;
       ctx.globalAlpha = pct;
       ctx.translate(drawX, drawY);
       ctx.scale(pct, pct);
       ctx.translate(-drawX, -drawY);
-    } 
-    else if (this.isDying) {
+    } else if (this.isDying) {
       const pct = this.dissolveTimer / 0.5;
       ctx.globalAlpha = pct;
       ctx.translate(drawX, drawY);
@@ -264,31 +271,16 @@ export class Minion extends BaseEntity {
 
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(
-        drawX - vWidth / 2,
-        feetY - vHeight,
-        vWidth,
-        vHeight
-      );
+      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(
-        drawX - vWidth / 2,
-        drawY - vHeight / 2,
-        vWidth,
-        vHeight
-      );
+      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
     }
 
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
-    ctx.fillRect(
-      drawX + (faceDirection * 8) - 2,
-      drawY - 12,
-      6,
-      4
-    );
+    ctx.fillRect(drawX + faceDirection * 8 - 2, drawY - 12, 6, 4);
 
     ctx.restore();
   }

@@ -10,7 +10,7 @@ export interface GhostFrame {
 
 export class DashComponent implements IEntityComponent {
   public owner!: BaseEntity;
-  
+
   public isDashing: boolean = false;
   public dashTimer: number = 0;
   public dashCooldown: number = 0;
@@ -46,7 +46,7 @@ export class DashComponent implements IEntityComponent {
         this.ghosts.push({
           x: this.owner.position.x,
           y: this.owner.position.y,
-          opacity: 0.6
+          opacity: 0.6,
         });
         this.ghostSpawnTimer = 0.025;
       }

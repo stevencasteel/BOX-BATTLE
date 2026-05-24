@@ -1,7 +1,7 @@
-import fs from 'fs';
+import fs from "fs";
 
-const filePath = 'src/core/Engine.ts';
-let fileContent = fs.readFileSync(filePath, 'utf8');
+const filePath = "src/core/Engine.ts";
+let fileContent = fs.readFileSync(filePath, "utf8");
 
 const oldInitListener = `    window.addEventListener("keydown", this.handlePauseKey);\n\n    this.particleSystem = new ParticleSystem();`;
 const newInitListener = `    this.particleSystem = new ParticleSystem();`;
@@ -72,15 +72,21 @@ const newFixedUpdate = `  private fixedUpdate(dt: number) {
     }
     if (Camera.hitStopTimer > 0) {`;
 
-if (fileContent.includes(oldInitListener) && fileContent.includes(oldCleanupListener) && fileContent.includes(oldPauseMethod) && fileContent.includes(oldUpdate) && fileContent.includes(oldFixedUpdate)) {
+if (
+  fileContent.includes(oldInitListener) &&
+  fileContent.includes(oldCleanupListener) &&
+  fileContent.includes(oldPauseMethod) &&
+  fileContent.includes(oldUpdate) &&
+  fileContent.includes(oldFixedUpdate)
+) {
   fileContent = fileContent.replace(oldInitListener, newInitListener);
   fileContent = fileContent.replace(oldCleanupListener, newCleanupListener);
-  fileContent = fileContent.replace(oldPauseMethod, '');
+  fileContent = fileContent.replace(oldPauseMethod, "");
   fileContent = fileContent.replace(oldUpdate, newUpdate);
   fileContent = fileContent.replace(oldFixedUpdate, newFixedUpdate);
-  fs.writeFileSync(filePath, fileContent, 'utf8');
-  console.log('Successfully patched Engine.ts.');
+  fs.writeFileSync(filePath, fileContent, "utf8");
+  console.log("Successfully patched Engine.ts.");
 } else {
-  console.error('Error: Could not locate expected structures in Engine.ts');
+  console.error("Error: Could not locate expected structures in Engine.ts");
   process.exit(1);
 }

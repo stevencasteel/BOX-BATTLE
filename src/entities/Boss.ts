@@ -4,14 +4,14 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { eventBroker } from "@/core/eventBroker";
-import { 
-  BossCooldownState, 
-  BossPatrolState, 
-  BossMeleeState, 
-  BossAttackState, 
-  BossTelegraphState, 
-  BossLungeState, 
-  BossDeadState 
+import {
+  BossCooldownState,
+  BossPatrolState,
+  BossMeleeState,
+  BossAttackState,
+  BossTelegraphState,
+  BossLungeState,
+  BossDeadState,
 } from "./BossStates";
 
 export class Boss extends BaseEntity {
@@ -28,7 +28,7 @@ export class Boss extends BaseEntity {
 
   public patrolSpeed: number = 200;
   public lungeSpeed: number = 1200;
-  
+
   public facingDirection: number = -1;
   public currentPhase: number = 1;
 
@@ -36,14 +36,14 @@ export class Boss extends BaseEntity {
     super(id, world);
     this.size = { width: 60, height: 60 };
     this.squashPivot = "feet";
-    
+
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 30,
-      invincibilityDuration: 0.25 
+      invincibilityDuration: 0.25,
     });
 
     this.cooldownState = new BossCooldownState(this);
@@ -103,7 +103,7 @@ export class Boss extends BaseEntity {
       dirY,
       "boss",
       1,
-      250, 
+      250,
       10.0
     );
   }
@@ -124,7 +124,7 @@ export class Boss extends BaseEntity {
         dirY,
         "boss",
         1,
-        280, 
+        280,
         4.0
       );
     }
@@ -132,11 +132,11 @@ export class Boss extends BaseEntity {
 
   private evaluatePhaseShifts() {
     const hpRatio = this.health.currentHealth / this.health.maxHealth;
-    
+
     if (hpRatio <= 0.4 && this.currentPhase < 3) {
       this.currentPhase = 3;
-      this.patrolSpeed = 350; 
-      this.lungeSpeed = 1400; 
+      this.patrolSpeed = 350;
+      this.lungeSpeed = 1400;
     } else if (hpRatio <= 0.7 && this.currentPhase < 2) {
       this.currentPhase = 2;
       this.patrolSpeed = 260;
@@ -164,19 +164,18 @@ export class Boss extends BaseEntity {
     const bossHalfW = this.size.width / 2;
     const bossHalfH = this.size.height / 2;
 
-    const isColliding = (
+    const isColliding =
       this.position.x + bossHalfW > player.position.x - playerHalfW &&
       this.position.x - bossHalfW < player.position.x + playerHalfW &&
       this.position.y + bossHalfH > player.position.y - playerHalfH &&
-      this.position.y - bossHalfH < player.position.y + playerHalfH
-    );
+      this.position.y - bossHalfH < player.position.y + playerHalfH;
 
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = (activeState === "LUNGE" || activeState === "MELEE") ? 2 : 1;
+        const damageAmount = activeState === "LUNGE" || activeState === "MELEE" ? 2 : 1;
         const damaged = playerHealth.takeDamage(damageAmount);
-        
+
         if (damaged) {
           const knockbackDir = Math.sign(player.position.x - this.position.x);
           player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 500;
@@ -193,12 +192,11 @@ export class Boss extends BaseEntity {
     const halfH = this.size.height / 2;
 
     for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit = (
+      const isHit =
         this.position.x + halfW > hazard.x &&
         this.position.x - halfW < hazard.x + hazard.width &&
         this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height
-      );
+        this.position.y - halfH < hazard.y + hazard.height;
 
       if (isHit) {
         eventBroker.publish("PLAYER_SPIKED", undefined);
@@ -225,11 +223,11 @@ export class Boss extends BaseEntity {
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else if (activeState === "TELEGRAPH") {
-      ctx.fillStyle = "hsl(45, 100%, 50%)"; 
+      ctx.fillStyle = "hsl(45, 100%, 50%)";
       ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
       ctx.shadowBlur = 20;
     } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)"; 
+      ctx.fillStyle = "hsl(350, 80%, 60%)";
       if (this.currentPhase === 3) {
         ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
         ctx.shadowBlur = 25;
@@ -240,12 +238,7 @@ export class Boss extends BaseEntity {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
-    ctx.fillRect(
-      drawX - vWidth / 2,
-      feetY - vHeight,
-      vWidth,
-      vHeight
-    );
+    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
 
     ctx.shadowBlur = 0;
     ctx.restore();

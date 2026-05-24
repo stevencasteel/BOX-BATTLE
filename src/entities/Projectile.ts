@@ -9,7 +9,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public isActive: boolean = false;
   public ownerId: "player" | "boss" = "player";
   public damage: number = 1;
-  
+
   private lifespan: number = 0;
   private onRelease?: (proj: Projectile) => void;
 
@@ -33,13 +33,13 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.position = { x, y };
     this.previousPosition = { x, y };
     this.velocity = { x: dirX * speed, y: dirY * speed };
-    
+
     this.ownerId = ownerId;
     this.damage = damage;
     this.lifespan = lifespan;
     this.onRelease = onRelease;
     this.world = world;
-    
+
     this.isActive = true;
     this.isDead = false;
   }
@@ -102,12 +102,11 @@ export class Projectile extends BaseEntity implements IPoolable {
     );
 
     for (const solid of solidCandidates) {
-      const isHit = (
+      const isHit =
         this.position.x + halfW > solid.x &&
         this.position.x - halfW < solid.x + solid.width &&
         this.position.y + halfH > solid.y &&
-        this.position.y - halfH < solid.y + solid.height
-      );
+        this.position.y - halfH < solid.y + solid.height;
 
       if (isHit) {
         return true;
@@ -133,12 +132,11 @@ export class Projectile extends BaseEntity implements IPoolable {
     );
 
     for (const platform of platformCandidates) {
-      const isHit = (
+      const isHit =
         this.position.x + halfW > platform.x &&
         this.position.x - halfW < platform.x + platform.width &&
         this.position.y + halfH > platform.y &&
-        this.position.y - halfH < platform.y + platform.height
-      );
+        this.position.y - halfH < platform.y + platform.height;
 
       if (isHit) {
         if (prevY + halfH - 4 <= platform.y) {
@@ -162,12 +160,11 @@ export class Projectile extends BaseEntity implements IPoolable {
         const oW = other.size.width / 2;
         const oH = other.size.height / 2;
 
-        const isColliding = (
+        const isColliding =
           this.position.x + pW > other.position.x - oW &&
           this.position.x - pW < other.position.x + oW &&
           this.position.y + pH > other.position.y - oH &&
-          this.position.y - pH < other.position.y + oH
-        );
+          this.position.y - pH < other.position.y + oH;
 
         if (isColliding) {
           const incomingDamage = other.damage || 1;
@@ -184,7 +181,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   private checkEntityCollisions(): boolean {
     const targets = [];
-    
+
     if (this.ownerId === "boss") {
       if (this.world.player && !this.world.player.isDead) {
         targets.push(this.world.player);
@@ -207,12 +204,11 @@ export class Projectile extends BaseEntity implements IPoolable {
       const tW = target.size.width / 2;
       const tH = target.size.height / 2;
 
-      const isColliding = (
+      const isColliding =
         this.position.x + pW > target.position.x - tW &&
         this.position.x - pW < target.position.x + tW &&
         this.position.y + pH > target.position.y - tH &&
-        this.position.y - pH < target.position.y + tH
-      );
+        this.position.y - pH < target.position.y + tH;
 
       if (isColliding) {
         const targetHealth = target.getComponent(HealthComponent);
@@ -229,7 +225,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
-      color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)"
+      color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)",
     });
     if (this.onRelease) {
       this.onRelease(this);

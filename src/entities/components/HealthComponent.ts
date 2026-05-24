@@ -12,10 +12,10 @@ export class HealthComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public maxHealth: number = 5;
   public currentHealth: number = 5;
-  
+
   public invincibilityDuration: number = 0.15;
   private invincibilityTimer: number = 0;
-  
+
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
@@ -58,20 +58,20 @@ export class HealthComponent implements IEntityComponent {
       eventBroker.publish("PLAYER_HURT", {
         amount,
         currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
+        maxHealth: this.maxHealth,
       });
     } else if (this.owner.id === "boss-01") {
       eventBroker.publish("BOSS_HURT", {
         amount,
         currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
+        maxHealth: this.maxHealth,
       });
     } else if (this.owner.id.startsWith("minion-")) {
       eventBroker.publish("MINION_HURT", {
         id: this.owner.id,
         amount,
         currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth
+        maxHealth: this.maxHealth,
       });
     }
 

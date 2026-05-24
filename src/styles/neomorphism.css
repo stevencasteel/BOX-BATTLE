@@ -58,17 +58,23 @@
 
 .led-green {
   background: var(--signal-green);
-  box-shadow: 0 0 8px var(--signal-green), 0 0 16px var(--signal-green-glow);
+  box-shadow:
+    0 0 8px var(--signal-green),
+    0 0 16px var(--signal-green-glow);
 }
 
 .led-red {
   background: var(--signal-red);
-  box-shadow: 0 0 8px var(--signal-red), 0 0 16px var(--signal-red-glow);
+  box-shadow:
+    0 0 8px var(--signal-red),
+    0 0 16px var(--signal-red-glow);
 }
 
 .led-yellow {
   background: var(--signal-yellow);
-  box-shadow: 0 0 8px var(--signal-yellow), 0 0 16px var(--signal-yellow-glow);
+  box-shadow:
+    0 0 8px var(--signal-yellow),
+    0 0 16px var(--signal-yellow-glow);
 }
 
 .custom-range-slider {
@@ -98,7 +104,9 @@
     4px 4px 10px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: transform 0.1s ease, border-color 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    border-color 0.1s ease;
 }
 
 .custom-range-slider:focus::-webkit-slider-thumb,
@@ -118,7 +126,9 @@
     4px 4px 10px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: transform 0.1s ease, border-color 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    border-color 0.1s ease;
 }
 
 .custom-range-slider:focus::-moz-range-thumb,

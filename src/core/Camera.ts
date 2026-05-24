@@ -26,7 +26,7 @@ export class Camera {
     // 2. Tick Screen Shake
     if (Camera.shakeTimer > 0) {
       Camera.shakeTimer -= dt;
-      
+
       if (Camera.shakeTimer <= 0) {
         Camera.offsetX = 0;
         Camera.offsetY = 0;

@@ -40,7 +40,13 @@ export class PhysicsWorld implements IPhysicsWorld {
     }
   }
 
-  public getOverlapCandidates(x: number, y: number, width: number, height: number, type: "solid" | "platform" | "hazard"): Rectangle[] {
+  public getOverlapCandidates(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    type: "solid" | "platform" | "hazard"
+  ): Rectangle[] {
     const grid = type === "solid" ? this.solidGrid : type === "platform" ? this.platformGrid : this.hazardGrid;
     const fallback = type === "solid" ? this.solids : type === "platform" ? this.onewayPlatforms : this.hazards;
 
@@ -87,12 +93,7 @@ export class PhysicsWorld implements IPhysicsWorld {
     const bottom = y + halfH;
 
     for (const rect of rects) {
-      if (
-        right > rect.x &&
-        left < rect.x + rect.width &&
-        bottom > rect.y &&
-        top < rect.y + rect.height
-      ) {
+      if (right > rect.x && left < rect.x + rect.width && bottom > rect.y && top < rect.y + rect.height) {
         return true;
       }
     }

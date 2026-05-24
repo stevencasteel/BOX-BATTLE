@@ -36,7 +36,7 @@ function buildTree(paths: string[]): FileNode {
           path: isDir ? currentPath : p,
           isDir,
           children: [],
-          depth: i
+          depth: i,
         };
         current.children.push(child);
       }
@@ -73,29 +73,29 @@ function flattenVisible(node: FileNode, expanded: Record<string, boolean>, list:
 }
 
 function getLanguageFromPath(filePath: string): string {
-  const ext = filePath.split('.').pop() || '';
-  if (ext === 'tsx') return 'tsx';
-  if (ext === 'ts') return 'typescript';
-  if (ext === 'js' || ext === 'jsx') return 'javascript';
-  if (ext === 'css') return 'css';
-  if (ext === 'json') return 'json';
-  if (ext === 'md') return 'markdown';
-  return 'text';
+  const ext = filePath.split(".").pop() || "";
+  if (ext === "tsx") return "tsx";
+  if (ext === "ts") return "typescript";
+  if (ext === "js" || ext === "jsx") return "javascript";
+  if (ext === "css") return "css";
+  if (ext === "json") return "json";
+  if (ext === "md") return "markdown";
+  return "text";
 }
 
 export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [manifest] = useState<Record<string, string>>(sourceCodeManifest);
   const [expandedDirs, setExpandedDirs] = useState<Record<string, boolean>>({
-    "src": true,
+    src: true,
     "src/components": true,
-    "src/core": true
+    "src/core": true,
   });
-  
+
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
-  
+
   const listRef = useRef<HTMLDivElement>(null);
 
   const treeRoot = useMemo(() => {
@@ -253,7 +253,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           if (node.isDir) {
             setExpandedDirs((prev) => ({
               ...prev,
-              [node.path]: !prev[node.path]
+              [node.path]: !prev[node.path],
             }));
           } else {
             setSelectedFile(node.path);
@@ -306,29 +306,41 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, [activeIndex, visibleNodes.length]);
 
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}>
-      
+    <div
+      className="flex-col h-full w-full"
+      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}
+    >
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2 style={{ fontSize: "1.8rem", margin: 0, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.15em", color: "#fff" }}>SOURCE VIEWER</h2>
+        <h2
+          style={{
+            fontSize: "1.8rem",
+            margin: 0,
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            letterSpacing: "0.15em",
+            color: "#fff",
+          }}
+        >
+          SOURCE VIEWER
+        </h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          {isMobile 
-            ? mobileView === "TOC" 
-              ? "TAP FILE TO VIEW  •  DRAG TO SCROLL" 
+          {isMobile
+            ? mobileView === "TOC"
+              ? "TAP FILE TO VIEW  •  DRAG TO SCROLL"
               : "SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE"
             : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
         </p>
       </div>
 
       <div className="source-view-workspace">
-        
         {(!isMobile || mobileView === "TOC") && (
-          <div 
-            ref={listRef} 
-            className="directory-tree-pane neo-pressed" 
-            style={{ 
+          <div
+            ref={listRef}
+            className="directory-tree-pane neo-pressed"
+            style={{
               WebkitOverflowScrolling: "touch",
               width: isMobile ? "100%" : "24%",
-              height: isMobile ? "100%" : ""
+              height: isMobile ? "100%" : "",
             }}
           >
             {visibleNodes.map((node, idx) => {
@@ -364,36 +376,30 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
-                    color: isActive 
-                      ? "var(--signal-green)" 
-                      : isCurrentlySelected 
-                        ? "#ffffff" 
-                        : node.isDir 
-                          ? "#718096" 
+                    color: isActive
+                      ? "var(--signal-green)"
+                      : isCurrentlySelected
+                        ? "#ffffff"
+                        : node.isDir
+                          ? "#718096"
                           : "#4a5568",
-                    background: isActive 
-                      ? "rgba(34, 197, 94, 0.08)" 
-                      : isCurrentlySelected 
-                        ? "rgba(255, 255, 255, 0.03)" 
+                    background: isActive
+                      ? "rgba(34, 197, 94, 0.08)"
+                      : isCurrentlySelected
+                        ? "rgba(255, 255, 255, 0.03)"
                         : "transparent",
-                    border: isActive 
-                      ? "1px solid rgba(34, 197, 94, 0.25)" 
-                      : "1px solid transparent",
+                    border: isActive ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid transparent",
                     textShadow: isActive ? "0 0 6px var(--signal-green-glow)" : "none",
                     wordBreak: "break-all",
                     transition: "all 0.12s ease",
-                    textAlign: "left"
+                    textAlign: "left",
                   }}
                 >
                   <span style={{ minWidth: "12px", fontSize: "10px" }}>
                     {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
                   </span>
-                  <span style={{ fontSize: "13px" }}>
-                    {node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}
-                  </span>
-                  <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>
-                    {node.name}
-                  </span>
+                  <span style={{ fontSize: "13px" }}>{node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}</span>
+                  <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>{node.name}</span>
                 </div>
               );
             })}
@@ -401,14 +407,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         )}
 
         {(!isMobile || mobileView === "CODE") && (
-          <div 
-            className="code-viewer-pane neo-pressed" 
-            style={{ 
+          <div
+            className="code-viewer-pane neo-pressed"
+            style={{
               WebkitOverflowScrolling: "touch",
               width: isMobile ? "100%" : "76%",
               height: isMobile ? "100%" : "",
               display: "flex",
-              flexDirection: "column"
+              flexDirection: "column",
             }}
           >
             {isMobile && (
@@ -430,7 +436,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px"
+                  gap: "8px",
                 }}
               >
                 📁 BACK TO DIRECTORY
@@ -438,8 +444,27 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             )}
 
             {selectedFile ? (
-              <div style={{ textAlign: "left", fontSize: "11px", fontFamily: "monospace", display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-                <div style={{ color: "hsl(142, 70%, 75%)", marginBottom: "14px", fontFamily: "monospace", flexShrink: 0, fontSize: isMobile ? "10px" : "11px", wordBreak: "break-all" }}>
+              <div
+                style={{
+                  textAlign: "left",
+                  fontSize: "11px",
+                  fontFamily: "monospace",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    color: "hsl(142, 70%, 75%)",
+                    marginBottom: "14px",
+                    fontFamily: "monospace",
+                    flexShrink: 0,
+                    fontSize: isMobile ? "10px" : "11px",
+                    wordBreak: "break-all",
+                  }}
+                >
                   // FILE: {selectedFile}
                 </div>
                 <div style={{ flexGrow: 1, overflow: "auto" }}>
@@ -459,44 +484,45 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                 </div>
               </div>
             ) : (
-              <span style={{ color: "#4a5568", fontSize: "11px" }}>Select a file in the directory tree to view content.</span>
+              <span style={{ color: "#4a5568", fontSize: "11px" }}>
+                Select a file in the directory tree to view content.
+              </span>
             )}
           </div>
         )}
-
       </div>
 
       {!isMobile ? (
-        <div 
-          className="source-view-footer" 
-          style={{ 
-            display: "flex", 
-            flexDirection: "row", 
-            gap: "16px", 
-            width: "100%", 
-            boxSizing: "border-box", 
+        <div
+          className="source-view-footer"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "16px",
+            width: "100%",
+            boxSizing: "border-box",
             marginTop: "12px",
-            flexShrink: 0
+            flexShrink: 0,
           }}
         >
-          <a 
-            href="https://github.com/stevencasteel/BOX-BATTLE" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <a
+            href="https://github.com/stevencasteel/BOX-BATTLE"
+            target="_blank"
+            rel="noopener noreferrer"
             className={`neo-btn-large ${activeIndex === visibleNodes.length ? "neo-btn-large-focused" : ""}`}
             style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
               <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg 
-                  viewBox="0 0 24 24" 
-                  width="18" 
-                  height="18" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  fill="none" 
-                  strokeLinecap="round" 
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
@@ -516,14 +542,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
               <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg 
-                  viewBox="0 0 24 24" 
-                  width="18" 
-                  height="18" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  fill="none" 
-                  strokeLinecap="round" 
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -545,14 +571,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
               <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg 
-                  viewBox="0 0 24 24" 
-                  width="18" 
-                  height="18" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  fill="none" 
-                  strokeLinecap="round" 
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <line x1="19" y1="12" x2="5" y2="12" />
@@ -566,44 +592,44 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           </button>
         </div>
       ) : (
-        <div 
-          className="source-view-footer" 
-          style={{ 
-            display: "flex", 
-            flexDirection: "row", 
-            gap: "8px", 
-            width: "100%", 
-            justifyContent: "space-between", 
-            boxSizing: "border-box", 
+        <div
+          className="source-view-footer"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "8px",
+            width: "100%",
+            justifyContent: "space-between",
+            boxSizing: "border-box",
             marginTop: "12px",
-            flexShrink: 0
+            flexShrink: 0,
           }}
         >
           <div style={{ flex: 1, display: "flex" }}>
-            <a 
-              href="https://github.com/stevencasteel/BOX-BATTLE" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://github.com/stevencasteel/BOX-BATTLE"
+              target="_blank"
+              rel="noopener noreferrer"
               className="neo-btn"
-              style={{ 
-                width: "100%", 
-                padding: "12px", 
-                fontSize: "12px", 
-                textDecoration: "none", 
-                display: "flex", 
-                alignItems: "center", 
+              style={{
+                width: "100%",
+                padding: "12px",
+                fontSize: "12px",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
               }}
             >
-              <svg 
-                viewBox="0 0 24 24" 
-                width="22" 
-                height="22" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                fill="none" 
-                strokeLinecap="round" 
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
@@ -615,21 +641,21 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             <button
               onClick={handleDownload}
               className="neo-btn"
-              style={{ 
-                width: "100%", 
-                padding: "12px", 
+              style={{
+                width: "100%",
+                padding: "12px",
                 fontSize: "12px",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
               }}
             >
-              <svg 
-                viewBox="0 0 24 24" 
-                width="22" 
-                height="22" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                fill="none" 
-                strokeLinecap="round" 
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -643,21 +669,21 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             <button
               onClick={onBack}
               className="neo-btn"
-              style={{ 
-                width: "100%", 
-                padding: "12px", 
+              style={{
+                width: "100%",
+                padding: "12px",
                 fontSize: "12px",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
               }}
             >
-              <svg 
-                viewBox="0 0 24 24" 
-                width="22" 
-                height="22" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                fill="none" 
-                strokeLinecap="round" 
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <line x1="19" y1="12" x2="5" y2="12" />
@@ -667,7 +693,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
           </div>
         </div>
       )}
-
     </div>
   );
 }

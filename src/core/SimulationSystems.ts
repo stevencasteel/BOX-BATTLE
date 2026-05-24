@@ -9,11 +9,7 @@ export class SimulationSystems {
   private getBossX!: () => number;
   private getMinionX!: (id: string) => number;
 
-  public setup(
-    getPlayerX: () => number,
-    getBossX: () => number,
-    getMinionX: (id: string) => number
-  ): void {
+  public setup(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void {
     this.getPlayerX = getPlayerX;
     this.getBossX = getBossX;
     this.getMinionX = getMinionX;

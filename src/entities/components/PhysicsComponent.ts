@@ -128,8 +128,8 @@ export class PhysicsComponent implements IEntityComponent {
           this.isGrounded = true;
           hasCollided = true;
         } else if (this.owner.velocity.y < 0) {
-          const overlapRight = (this.owner.position.x + ownerHalfWidth) - solid.x;
-          const overlapLeft = (solid.x + solid.width) - (this.owner.position.x - ownerHalfWidth);
+          const overlapRight = this.owner.position.x + ownerHalfWidth - solid.x;
+          const overlapLeft = solid.x + solid.width - (this.owner.position.x - ownerHalfWidth);
 
           if (overlapRight > 0 && overlapRight <= this.cornerNudgeThreshold) {
             this.owner.position.x -= overlapRight;
@@ -137,8 +137,7 @@ export class PhysicsComponent implements IEntityComponent {
               continue;
             }
             this.owner.position.x += overlapRight;
-          } 
-          else if (overlapLeft > 0 && overlapLeft <= this.cornerNudgeThreshold) {
+          } else if (overlapLeft > 0 && overlapLeft <= this.cornerNudgeThreshold) {
             this.owner.position.x += overlapLeft;
             if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
               continue;
@@ -226,12 +225,7 @@ export class PhysicsComponent implements IEntityComponent {
     const top = y - halfHeight;
     const bottom = y + halfHeight;
 
-    return (
-      right > rect.x &&
-      left < rect.x + rect.width &&
-      bottom > rect.y &&
-      top < rect.y + rect.height
-    );
+    return right > rect.x && left < rect.x + rect.width && bottom > rect.y && top < rect.y + rect.height;
   }
 
   public teardown(): void {

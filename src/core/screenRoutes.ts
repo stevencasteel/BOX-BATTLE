@@ -41,7 +41,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       } else if (menuIndex === 3) {
         navTo("SOURCE_VIEW");
       }
-    }
+    },
   },
   PLAYING: {
     getMaxIndex: ({ gameResult }) => (gameResult !== "PLAYING" ? 1 : 0),
@@ -54,11 +54,19 @@ export const screenConfigs: Record<string, ScreenConfig> = {
           navTo("TITLE");
         }
       }
-    }
+    },
   },
   SAVE_SELECT: {
     getMaxIndex: () => 5,
-    onSelect: ({ menuIndex, handleSlotAction, navTo, resetGameSession, toggleCopyMode, toggleEraseMode, resetActions }) => {
+    onSelect: ({
+      menuIndex,
+      handleSlotAction,
+      navTo,
+      resetGameSession,
+      toggleCopyMode,
+      toggleEraseMode,
+      resetActions,
+    }) => {
       if (menuIndex >= 0 && menuIndex <= 2) {
         handleSlotAction(menuIndex, () => {
           resetGameSession();
@@ -76,7 +84,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-    }
+    },
   },
   OPTIONS: {
     getMaxIndex: () => 2,
@@ -93,7 +101,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     onBack: ({ resetActions, navTo }) => {
       resetActions();
       navTo("TITLE");
-    }
+    },
   },
   SOUND: {
     getMaxIndex: () => 4,
@@ -119,7 +127,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-    }
+    },
   },
   CONTROLS: {
     getMaxIndex: () => {
@@ -157,7 +165,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("OPTIONS");
-    }
+    },
   },
   CREDITS: {
     getMaxIndex: () => 0,
@@ -166,6 +174,6 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     },
     onBack: ({ navTo }) => {
       navTo("TITLE");
-    }
-  }
+    },
+  },
 };

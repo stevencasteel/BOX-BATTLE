@@ -56,7 +56,7 @@ export class DroneManager {
     }
 
     const now = Tone.now();
-    
+
     this.healOsc.frequency.setValueAtTime(220, now);
     this.healFilter.frequency.setValueAtTime(440, now);
 
@@ -104,18 +104,16 @@ export class DroneManager {
       this.chargeLfo.frequency.setTargetAtTime(6.0, now, 0.05);
       this.chargeLfo.amplitude.setTargetAtTime(110 / 360, now, 0.05);
       this.chargeGain.gain.setTargetAtTime(0.25, now, 0.05);
-    } 
-    else if (timer >= 0.25 && timer < 1.12) {
+    } else if (timer >= 0.25 && timer < 1.12) {
       this.currentChargeLevel = 1;
       const range = (timer - 0.25) / (1.12 - 0.25);
-              
+
       this.chargeOsc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
       this.chargeFilter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
       this.chargeLfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
       this.chargeLfo.amplitude.setTargetAtTime((120 + range * 120) / 360, now, 0.06);
       this.chargeGain.gain.setTargetAtTime(0.45, now, 0.05);
-    } 
-    else if (timer >= 1.12) {
+    } else if (timer >= 1.12) {
       if (this.currentChargeLevel < 2) {
         this.currentChargeLevel = 2;
         this.playChargeCompleteDing();

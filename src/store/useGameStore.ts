@@ -1,7 +1,15 @@
 import { create } from "zustand";
 import { soundSynth } from "@/core/SoundSynth";
 
-export type ScreenState = "TITLE" | "SAVE_SELECT" | "OPTIONS" | "SOUND" | "CONTROLS" | "CREDITS" | "SOURCE_VIEW" | "PLAYING";
+export type ScreenState =
+  | "TITLE"
+  | "SAVE_SELECT"
+  | "OPTIONS"
+  | "SOUND"
+  | "CONTROLS"
+  | "CREDITS"
+  | "SOURCE_VIEW"
+  | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 
 const SCREEN_DEPTHS: Record<ScreenState, number> = {

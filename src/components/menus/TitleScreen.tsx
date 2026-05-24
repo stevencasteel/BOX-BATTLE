@@ -39,7 +39,10 @@ export function TitleScreen({
         <div className="btn-container-overhauled">
           <button
             onClick={onPlay}
-            onMouseEnter={() => { playHoverTick(); setMenuIndex(0); }}
+            onMouseEnter={() => {
+              playHoverTick();
+              setMenuIndex(0);
+            }}
             className={`neo-btn-large ${menuIndex === 0 ? "neo-btn-large-focused" : ""}`}
           >
             <div className="btn-indicator-light" />
@@ -52,7 +55,10 @@ export function TitleScreen({
 
           <button
             onClick={onSettings}
-            onMouseEnter={() => { playHoverTick(); setMenuIndex(1); }}
+            onMouseEnter={() => {
+              playHoverTick();
+              setMenuIndex(1);
+            }}
             className={`neo-btn-large ${menuIndex === 1 ? "neo-btn-large-focused" : ""}`}
           >
             <div className="btn-indicator-light" />
@@ -65,7 +71,10 @@ export function TitleScreen({
 
           <button
             onClick={onCredits}
-            onMouseEnter={() => { playHoverTick(); setMenuIndex(2); }}
+            onMouseEnter={() => {
+              playHoverTick();
+              setMenuIndex(2);
+            }}
             className={`neo-btn-large ${menuIndex === 2 ? "neo-btn-large-focused" : ""}`}
           >
             <div className="btn-indicator-light" />
@@ -78,7 +87,10 @@ export function TitleScreen({
 
           <button
             onClick={onSource}
-            onMouseEnter={() => { playHoverTick(); setMenuIndex(3); }}
+            onMouseEnter={() => {
+              playHoverTick();
+              setMenuIndex(3);
+            }}
             className={`neo-btn-large ${menuIndex === 3 ? "neo-btn-large-focused" : ""}`}
           >
             <div className="btn-indicator-light" />
@@ -95,7 +107,7 @@ export function TitleScreen({
         <div className="footer-deco-line" />
         <div className="footer-status-bar">
           <span>CONTROL METHOD: KEYBOARD</span>
-          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD  •  SELECT: ENTER / SPACE</span>
+          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD • SELECT: ENTER / SPACE</span>
           <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>

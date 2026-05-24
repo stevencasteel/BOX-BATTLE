@@ -5,7 +5,7 @@ export class Spawner {
   public position: { x: number; y: number };
   public spawnType: MinionType;
   public world: IWorld;
-  
+
   private activeMinion: Minion | null = null;
   private respawnTimer: number = 0;
   private readonly respawnDelay: number = 5.0;
