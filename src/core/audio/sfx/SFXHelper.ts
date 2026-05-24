@@ -23,7 +23,7 @@ export class SFXHelper {
       }
 
       callback(now);
-    } catch (e) {
+    } catch {
       // Safe global exception boundary
     }
   }

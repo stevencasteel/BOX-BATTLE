@@ -7,7 +7,7 @@
     "predev": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
     "dev": "vite",
     "prebuild": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
-    "build": "tsc -b && vite build",
+    "build": "eslint . && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

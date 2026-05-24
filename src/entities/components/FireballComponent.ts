@@ -45,7 +45,7 @@ export class FireballComponent implements IEntityComponent {
 
   private fire(dirX: number, dirY: number, facingDirection: number): void {
     let finalDirX = dirX;
-    let finalDirY = dirY;
+    const finalDirY = dirY;
 
     if (finalDirX === 0 && finalDirY === 0) {
       finalDirX = facingDirection;

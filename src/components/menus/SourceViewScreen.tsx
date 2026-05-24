@@ -1,5 +1,5 @@
 import "./SourceViewScreen.css";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { soundSynth } from "@/core/SoundSynth";
 import { settingsManager } from "@/core/SettingsManager";
 import { sourceCodeManifest } from "@/core/sourceCodeManifest";
@@ -85,20 +85,38 @@ function getLanguageFromPath(filePath: string): string {
 
 export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [manifest] = useState<Record<string, string>>(sourceCodeManifest);
-  const [treeRoot, setTreeRoot] = useState<FileNode | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Record<string, boolean>>({
     "src": true,
     "src/components": true,
     "src/core": true
   });
   
-  const [visibleNodes, setVisibleNodes] = useState<FileNode[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string>("");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
   
   const listRef = useRef<HTMLDivElement>(null);
+
+  const treeRoot = useMemo(() => {
+    const paths = Object.keys(sourceCodeManifest);
+    return buildTree(paths);
+  }, []);
+
+  const visibleNodes = useMemo(() => {
+    if (!treeRoot) return [];
+    return flattenVisible(treeRoot, expandedDirs);
+  }, [treeRoot, expandedDirs]);
+
+  const handleDownload = () => {
+    soundSynth.playHitConfirm();
+    const link = document.createElement("a");
+    link.href = "./all_source_code.txt";
+    link.download = "all_source_code.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -112,22 +130,15 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    const paths = Object.keys(sourceCodeManifest);
-    const root = buildTree(paths);
-    setTreeRoot(root);
-    
-    const sortedPaths = paths.sort();
-    if (sortedPaths.length > 0) {
-      setSelectedFile(sortedPaths[0]);
+    const paths = Object.keys(sourceCodeManifest).sort();
+    if (paths.length > 0) {
+      setSelectedFile(paths[0]);
     }
   }, []);
 
   useEffect(() => {
-    if (!treeRoot) return;
-    const list = flattenVisible(treeRoot, expandedDirs);
-    setVisibleNodes(list);
-    setActiveIndex((prev) => Math.min(prev, Math.max(0, list.length - 1)));
-  }, [treeRoot, expandedDirs]);
+    setActiveIndex((prev) => Math.min(prev, Math.max(0, visibleNodes.length - 1)));
+  }, [visibleNodes]);
 
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
@@ -293,16 +304,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       }
     }
   }, [activeIndex, visibleNodes.length]);
-
-  const handleDownload = () => {
-    soundSynth.playHitConfirm();
-    const link = document.createElement("a");
-    link.href = "./all_source_code.txt";
-    link.download = "all_source_code.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}>
@@ -482,7 +483,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             href="https://github.com/stevencasteel/BOX-BATTLE" 
             target="_blank" 
             rel="noopener noreferrer" 
-            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length); }}
             className={`neo-btn-large ${activeIndex === visibleNodes.length ? "neo-btn-large-focused" : ""}`}
             style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
           >
@@ -510,7 +510,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
           <button
             onClick={handleDownload}
-            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length + 1); }}
             className={`neo-btn-large ${activeIndex === visibleNodes.length + 1 ? "neo-btn-large-focused" : ""}`}
             style={{ flex: 1, boxSizing: "border-box" }}
           >
@@ -540,7 +539,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
           <button
             onClick={onBack}
-            onMouseEnter={() => { soundSynth.playSelectTick(); setActiveIndex(visibleNodes.length + 2); }}
             className={`neo-btn-large ${activeIndex === visibleNodes.length + 2 ? "neo-btn-large-focused" : ""}`}
             style={{ flex: 1, boxSizing: "border-box" }}
           >
