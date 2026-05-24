@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
+import { UNITS } from "@/core/Units";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -15,10 +16,10 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
-  private readonly maxStepSize: number = 6;
-  private readonly cornerNudgeThreshold: number = 6;
-  private readonly groundDetectionOffset: number = 1;
-  private readonly frameDurationEstimate: number = 0.016;
+  private readonly maxStepSize: number = UNITS.CCD_STEP_LIMIT_DEFAULT;
+  private readonly cornerNudgeThreshold: number = UNITS.CORNER_NUDGE_MAX_OVERLAP;
+  private readonly groundDetectionOffset: number = UNITS.GROUND_DETECTION_OFFSET;
+  private readonly frameDurationEstimate: number = UNITS.CANONICAL_DELTA_TIME;
 
   public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
     this.owner = owner;
@@ -84,8 +85,8 @@ export class PhysicsComponent implements IEntityComponent {
     const solidCandidates = physicsWorld.getOverlapCandidates(
       this.owner.position.x,
       this.owner.position.y,
-      this.owner.size.width + 12,
-      this.owner.size.height + 12,
+      this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+      this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
       "solid"
     );
 
@@ -114,8 +115,8 @@ export class PhysicsComponent implements IEntityComponent {
     const solidCandidates = physicsWorld.getOverlapCandidates(
       this.owner.position.x,
       this.owner.position.y,
-      this.owner.size.width + 24,
-      this.owner.size.height + 24,
+      this.owner.size.width + UNITS.BROAD_PHASE_PADDING_LARGE,
+      this.owner.size.height + UNITS.BROAD_PHASE_PADDING_LARGE,
       "solid"
     );
 
@@ -158,8 +159,8 @@ export class PhysicsComponent implements IEntityComponent {
       const platformCandidates = physicsWorld.getOverlapCandidates(
         this.owner.position.x,
         this.owner.position.y,
-        this.owner.size.width + 12,
-        this.owner.size.height + 12,
+        this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+        this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
         "platform"
       );
 
@@ -187,8 +188,8 @@ export class PhysicsComponent implements IEntityComponent {
       const solidCandidates = physicsWorld.getOverlapCandidates(
         this.owner.position.x,
         testPosY,
-        this.owner.size.width + 12,
-        this.owner.size.height + 12,
+        this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+        this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
         "solid"
       );
       for (const solid of solidCandidates) {
@@ -202,8 +203,8 @@ export class PhysicsComponent implements IEntityComponent {
         const platformCandidates = physicsWorld.getOverlapCandidates(
           this.owner.position.x,
           testPosY,
-          this.owner.size.width + 12,
-          this.owner.size.height + 12,
+          this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+          this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
           "platform"
         );
         for (const platform of platformCandidates) {

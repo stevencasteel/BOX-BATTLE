@@ -4,6 +4,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
 import { EntityStatus, IEntity } from "@/core/Interfaces";
 import { DashComponent } from "@/entities/components/DashComponent";
+import { UNITS } from "@/core/Units";
 
 export interface IMeleeCapable extends IEntity {
   facingDirection: number;
@@ -23,10 +24,10 @@ export class MeleeComponent implements IEntityComponent {
 
   // Balancing & Reach parameters
   private readonly pogoForce: number = 450;
-  private readonly meleeRangeLimit: number = 95;
-  private readonly closeRangeThreshold: number = 75;
-  private readonly sideReachOffset: number = 35;
-  private readonly verticalReachOffset: number = 35;
+  private readonly meleeRangeLimit: number = UNITS.MELEE_MAX_REACH;
+  private readonly closeRangeThreshold: number = UNITS.MELEE_CLOSE_RANGE_THRESHOLD;
+  private readonly sideReachOffset: number = UNITS.MELEE_SIDE_OFFSET;
+  private readonly verticalReachOffset: number = UNITS.MELEE_VERTICAL_OFFSET;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner as unknown as IMeleeCapable;
@@ -190,10 +191,10 @@ export class MeleeComponent implements IEntityComponent {
    */
   private checkPogoAttack(): void {
     const pogoHitbox = {
-      x: this.owner.position.x - 45,
-      y: this.owner.position.y + 40,
-      width: 90,
-      height: 44.5
+      x: this.owner.position.x + UNITS.POGO_HITBOX_X_OFFSET,
+      y: this.owner.position.y + UNITS.POGO_HITBOX_Y_OFFSET,
+      width: UNITS.POGO_HITBOX_WIDTH,
+      height: UNITS.POGO_HITBOX_HEIGHT
     };
 
     if (this.pogoEnemies(pogoHitbox)) return;

@@ -1,11 +1,12 @@
 import { Rectangle, IPhysicsWorld } from "./Interfaces";
+import { UNITS } from "@/core/Units";
 
 export class PhysicsWorld implements IPhysicsWorld {
   public solids: Rectangle[] = [];
   public hazards: Rectangle[] = [];
   public onewayPlatforms: Rectangle[] = [];
 
-  private static readonly CELL_SIZE = 250;
+  private static readonly CELL_SIZE = UNITS.SPATIAL_GRID_CELL_SIZE;
   private solidGrid: Map<string, Rectangle[]> = new Map();
   private platformGrid: Map<string, Rectangle[]> = new Map();
   private hazardGrid: Map<string, Rectangle[]> = new Map();

@@ -1,5 +1,6 @@
 import * as Tone from "tone";
 import { settingsManager } from "@/core/SettingsManager";
+import { UNITS } from "@/core/Units";
 
 export class AudioContextManager {
   public hasUserGestured: boolean = false;
@@ -53,10 +54,10 @@ export class AudioContextManager {
   }
 
   public getPanFromX(x: number): number {
-    const clampedX = Math.max(0, Math.min(1250, x));
-    const rawPan = (clampedX / 625) - 1.0;
-    const scaledPan = rawPan * 0.45;
-    return Math.max(-0.45, Math.min(0.45, scaledPan));
+    const clampedX = Math.max(0, Math.min(UNITS.WORLD_SIZE, x));
+    const rawPan = (clampedX / UNITS.WORLD_HALF_SIZE) - 1.0;
+    const scaledPan = rawPan * UNITS.AUDIO_MAX_PAN_SCALE;
+    return Math.max(-UNITS.AUDIO_MAX_PAN_SCALE, Math.min(UNITS.AUDIO_MAX_PAN_SCALE, scaledPan));
   }
 
   private init() {

@@ -3,6 +3,7 @@ import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export class Projectile extends BaseEntity implements IPoolable {
   public isActive: boolean = false;
@@ -60,7 +61,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     const dx = this.velocity.x * dt;
     const dy = this.velocity.y * dt;
-    const maxStepSize = 5;
+    const maxStepSize = UNITS.CCD_STEP_LIMIT_PROJECTILE;
 
     const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) / maxStepSize));
     const substepX = dx / steps;
@@ -95,8 +96,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     const solidCandidates = physicsWorld.getOverlapCandidates(
       this.position.x,
       this.position.y,
-      this.size.width + 12,
-      this.size.height + 12,
+      this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+      this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
       "solid"
     );
 
@@ -120,14 +121,14 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     const halfW = this.size.width / 2;
     const halfH = this.size.height / 2;
-    const prevY = this.position.y - this.velocity.y * 0.016;
+    const prevY = this.position.y - this.velocity.y * UNITS.CANONICAL_DELTA_TIME;
     const physicsWorld = this.world.physicsWorld;
 
     const platformCandidates = physicsWorld.getOverlapCandidates(
       this.position.x,
       this.position.y,
-      this.size.width + 12,
-      this.size.height + 12,
+      this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
+      this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
       "platform"
     );
 

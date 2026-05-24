@@ -4,6 +4,7 @@ import { World } from "./World";
 import { Rectangle, Particle } from "./Interfaces";
 import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
+import { UNITS } from "@/core/Units";
 
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -13,7 +14,7 @@ export class WorldRenderer {
     this.ctx = ctx;
 
     // Allocate the radial gradient once at startup to prevent GC spikes in high-frame-rate loops
-    this.cachedMeleeGradient = ctx.createRadialGradient(0, 0, 25, 0, 0, 95);
+    this.cachedMeleeGradient = ctx.createRadialGradient(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, 0, 0, UNITS.MELEE_MAX_REACH);
     this.cachedMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
     this.cachedMeleeGradient.addColorStop(0.20, "rgba(255, 255, 255, 1.0)");
     this.cachedMeleeGradient.addColorStop(0.50, "rgba(132, 239, 158, 0.95)");
@@ -35,7 +36,7 @@ export class WorldRenderer {
     const drawY = player.previousPosition.y + (player.position.y - player.previousPosition.y) * alphaVal;
 
     if (player.attackDirection === "side") {
-      const offset = facing * 35;
+      const offset = facing * UNITS.MELEE_SIDE_OFFSET;
       const baseStart = -Math.PI / 2;
       const angleLength = Math.PI;
       const currentSweepAngle = angleLength * progress;
@@ -56,7 +57,7 @@ export class WorldRenderer {
       ctx.arc(
         0,
         0,
-        95,
+        UNITS.MELEE_MAX_REACH,
         facing > 0 ? baseStart : Math.PI - baseStart,
         facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
         facing < 0
@@ -64,7 +65,7 @@ export class WorldRenderer {
       ctx.arc(
         0,
         0,
-        25,
+        UNITS.MELEE_SWEEP_INNER_RADIUS,
         facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
         facing > 0 ? baseStart : Math.PI - baseStart,
         facing > 0
@@ -75,7 +76,7 @@ export class WorldRenderer {
     }
     else if (player.attackDirection === "up") {
       const cx = drawX;
-      const cy = drawY - 35;
+      const cy = drawY - UNITS.MELEE_VERTICAL_OFFSET;
 
       const currentRadius = 30 + progress * 65;
       const currentInnerRadius = 15 + progress * 15;
@@ -101,7 +102,7 @@ export class WorldRenderer {
     }
     else if (player.attackDirection === "down") {
       const cx = drawX;
-      const cy = drawY + 35;
+      const cy = drawY + UNITS.MELEE_VERTICAL_OFFSET;
 
       const currentRadius = 30 + progress * 65;
       const currentInnerRadius = 15 + progress * 15;
@@ -140,7 +141,7 @@ export class WorldRenderer {
     alpha: number
   ) {
     this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, 1250, 1250);
+    this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);
@@ -232,7 +233,7 @@ export class WorldRenderer {
       if (t < 0.25) {
         const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
         this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
-        this.ctx.fillRect(0, 0, 1250, 1250);
+        this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
       }
 
       const ringCount = 3;
@@ -288,16 +289,16 @@ export class WorldRenderer {
 
     if (isPaused) {
       this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
-      this.ctx.fillRect(0, 0, 1250, 1250);
+      this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
       this.ctx.fillStyle = "#ffffff";
       this.ctx.font = "bold 44px monospace";
       this.ctx.textAlign = "center";
-      this.ctx.fillText("SIMULATION PAUSED", 625, 600);
+      this.ctx.fillText("SIMULATION PAUSED", UNITS.WORLD_HALF_SIZE, 600);
 
       this.ctx.font = "bold 18px monospace";
       this.ctx.fillStyle = "var(--signal-green)";
-      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", 625, 650);
+      this.ctx.fillText("PRESS 'P' TO RESUME RUNTIME STEPPERS", UNITS.WORLD_HALF_SIZE, 650);
     }
 
     this.ctx.restore();
