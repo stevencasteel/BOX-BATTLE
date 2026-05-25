@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-B89raw7G.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-sK94vd26.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7340,9 +7340,9 @@ export class BossSFX {
 
   public playSpikeStrike(x?: number) {
     const nowPerformance = performance.now();
-    // Escalate pitch on consecutive spike hits within 2.5 seconds
+    // Escalate pitch on consecutive spike hits within 2.5 seconds (uncapped)
     if (nowPerformance - this.lastSpikeTime < 2500) {
-      this.spikeSequenceCount = Math.min(5, this.spikeSequenceCount + 1);
+      this.spikeSequenceCount = this.spikeSequenceCount + 1;
     } else {
       this.spikeSequenceCount = 0;
     }
@@ -7369,7 +7369,7 @@ export class BossSFX {
     }
 
     if (nowPerformance - combo.lastHitTime < 1500) {
-      combo.hitSequenceCount = Math.min(5, combo.hitSequenceCount + 1);
+      combo.hitSequenceCount = combo.hitSequenceCount + 1; // Uncapped combo pitch escalation
     } else {
       combo.hitSequenceCount = 0;
     }
