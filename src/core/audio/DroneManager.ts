@@ -19,6 +19,10 @@ export class DroneManager {
   private isChargeDroneRunning: boolean = false;
   private currentChargeLevel: number = 0;
 
+  private heartbeatSynth!: Tone.MembraneSynth;
+  private heartbeatLoop!: Tone.Loop;
+  private isHeartbeatRunning: boolean = false;
+
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
     this.musicSeq = musicSeq;
@@ -45,6 +49,16 @@ export class DroneManager {
     this.chargeOsc.connect(this.chargeFilter);
     this.chargeFilter.connect(this.chargeGain);
     this.chargeGain.connect(this.panner);
+
+    this.heartbeatSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.15 },
+      oscillator: { type: "sine" }
+    }).connect(this.ctxManager.sfxGain);
+
+    this.heartbeatLoop = new Tone.Loop((time) => {
+      this.heartbeatSynth.triggerAttackRelease("A0", "8n", time);
+      this.heartbeatSynth.triggerAttackRelease("G0", "8n", time + 0.18);
+    }, "1.1s");
   }
 
   public playHealStart(x?: number) {
@@ -149,5 +163,16 @@ export class DroneManager {
     chimeNotes.forEach((note, idx) => {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
     });
+  }
+
+  public setHeartbeat(active: boolean) {
+    if (!this.ctxManager.initialized || !this.heartbeatLoop) return;
+    if (active === this.isHeartbeatRunning) return;
+    this.isHeartbeatRunning = active;
+    if (active) {
+      this.heartbeatLoop.start(0);
+    } else {
+      this.heartbeatLoop.stop();
+    }
   }
 }

@@ -110,10 +110,29 @@ export class AudioContextManager {
     this.musicGain.volume.setTargetAtTime(musicDb, Tone.now(), 0.05);
   }
 
-  public setCabinetMuffle(active: boolean) {
-    if (!this.initialized || !this.cabinetFilter) return;
+  private isLowHP: boolean = false;
+  private isCabinetMuffled: boolean = false;
 
-    const targetFreq = active ? 600 : 20000;
-    this.cabinetFilter.frequency.rampTo(targetFreq, 0.3);
+  public setCabinetMuffle(active: boolean) {
+    this.isCabinetMuffled = active;
+    this.resolveCabinetFilter();
+  }
+
+  public setLowHPStatus(active: boolean) {
+    this.isLowHP = active;
+    this.resolveCabinetFilter();
+  }
+
+  private resolveCabinetFilter() {
+    if (!this.initialized || !this.cabinetFilter) return;
+    
+    let targetFreq = 20000;
+    if (this.isCabinetMuffled) {
+      targetFreq = 600;
+    } else if (this.isLowHP) {
+      targetFreq = 1800;
+    }
+    
+    this.cabinetFilter.frequency.rampTo(targetFreq, 0.4);
   }
 }

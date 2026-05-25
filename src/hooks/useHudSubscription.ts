@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useGameplayStore } from "@/store/useGameStore";
+import { soundSynth } from "@/core/SoundSynth";
 
 // Keep track of player health changes across update ticks
 let lastPlayerHP = 5;
@@ -11,6 +12,10 @@ export function useHudSubscription() {
 
       // Check if player HP dropped
       const tookDamage = playerHP < lastPlayerHP;
+
+      if (soundSynth.initialized) {
+        soundSynth.setLowHPStatus(playerHP === 1);
+      }
 
       for (let i = 0; i < 5; i++) {
         const isLit = i < playerHP;

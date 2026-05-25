@@ -179,6 +179,12 @@ class SoundSynth {
   public playHealComplete(): void {
     this.drones.playHealComplete();
   }
+
+  public setLowHPStatus(active: boolean): void {
+    if (!this.initialized) return;
+    this.ctxManager.setLowHPStatus(active);
+    this.drones.setHeartbeat(active);
+  }
 }
 
 export const soundSynth = new SoundSynth();
