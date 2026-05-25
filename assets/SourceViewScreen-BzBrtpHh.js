@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-BLZegRg_.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-DWwfaMak.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9104,6 +9104,7 @@ export class Minion extends BaseEntity {
   public spawnTimer: number = 0.6;
   public isDying: boolean = false;
   public dissolveTimer: number = 0.5;
+  private exhaustTimer: number = 0;
 
   constructor(id: string, type: MinionType, startPos: { x: number; y: number }, world: IWorld) {
     super(id, world);
@@ -9247,8 +9248,56 @@ export class Minion extends BaseEntity {
     // Highly visible standardized target lean based on minion move state
     if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
       this.targetRotation = this.facingDirection * 0.21; // Aggressive charging lean (~12deg)
+    } else if (this.attackState === "TELEGRAPH" && !this.isDying) {
+      // Direct inject high-frequency wobble to bypass the spring-damper lowpass filter
+      this.targetRotation = 0;
+      this.rotation = Math.sin(performance.now() * 0.055) * 0.25;
+      this.rotationVelocity = 0;
     } else {
       this.targetRotation = Math.sign(this.velocity.x) * 0.12; // Standard running tilt (~7deg)
+    }
+
+    // Spawn engine exhaust / thrust details
+    this.exhaustTimer -= dt;
+    if (this.exhaustTimer <= 0) {
+      const isTelegraph = this.attackState === "TELEGRAPH";
+      
+      if (this.minionType === "FLYER") {
+        this.exhaustTimer = isTelegraph ? 0.04 : 0.08; // Faster thrust rate
+        const sparkColor = isTelegraph ? "hsl(45, 100%, 60%)" : "hsl(200, 80%, 65%)";
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: this.position.x,
+          y: this.position.y + this.size.height / 2,
+          angle: Math.PI / 2, // jetting straight downwards
+          color: sparkColor,
+          count: isTelegraph ? 6 : 2 // Spawn a visible stream
+        });
+      } else if (this.minionType === "LANCER") {
+        // Lancers leave ground scrapes / running sparks
+        if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
+          this.exhaustTimer = isTelegraph ? 0.05 : 0.15;
+          const scrapeColor = isTelegraph ? "hsl(45, 100%, 60%)" : "rgba(255, 255, 255, 0.4)";
+          eventBroker.publish("SPAWN_SPARKS", {
+            x: this.position.x - this.facingDirection * (this.size.width / 2),
+            y: this.position.y + this.size.height / 2,
+            angle: Math.atan2(0.5, -this.facingDirection) + (Math.random() * 0.3 - 0.15),
+            color: scrapeColor,
+            count: isTelegraph ? 3 : 1
+          });
+        }
+      } else if (this.minionType === "TURRET") {
+        // Shoot plasma sparks straight up representing high pressure venting
+        if (isTelegraph) {
+          this.exhaustTimer = 0.06;
+          eventBroker.publish("SPAWN_SPARKS", {
+            x: this.position.x + (Math.random() * 16 - 8),
+            y: this.position.y - this.size.height / 2,
+            angle: -Math.PI / 2 + (Math.random() * 0.2 - 0.1),
+            color: "hsl(0, 100%, 65%)",
+            count: 2
+          });
+        }
+      }
     }
 
     this.checkHazardContact();
