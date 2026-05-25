@@ -211,6 +211,9 @@ export class Boss extends BaseEntity {
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
+          // Springy, elastic visual stretch launcher
+          this.visualScale = { x: 0.5, y: 1.5 };
+          this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
         break;
       }
