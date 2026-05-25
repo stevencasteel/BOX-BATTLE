@@ -130,9 +130,9 @@ export class BossSFX {
 
   public playSpikeStrike(x?: number) {
     const nowPerformance = performance.now();
-    // Escalate pitch on consecutive spike hits within 2.5 seconds
+    // Escalate pitch on consecutive spike hits within 2.5 seconds (uncapped)
     if (nowPerformance - this.lastSpikeTime < 2500) {
-      this.spikeSequenceCount = Math.min(5, this.spikeSequenceCount + 1);
+      this.spikeSequenceCount = this.spikeSequenceCount + 1;
     } else {
       this.spikeSequenceCount = 0;
     }
@@ -159,7 +159,7 @@ export class BossSFX {
     }
 
     if (nowPerformance - combo.lastHitTime < 1500) {
-      combo.hitSequenceCount = Math.min(5, combo.hitSequenceCount + 1);
+      combo.hitSequenceCount = combo.hitSequenceCount + 1; // Uncapped combo pitch escalation
     } else {
       combo.hitSequenceCount = 0;
     }
