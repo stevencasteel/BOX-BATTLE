@@ -188,7 +188,10 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       this.airtimeDuration += dt;
     } else {
       if (this.airtimeDuration > 0.08) {
-        this.visualScale = { x: 1.22, y: 0.78 };
+        const factor = Math.min(1, Math.max(0, (this.airtimeDuration - 0.08) / 0.62));
+        this.visualScale = { x: 1.0 + 0.22 * factor, y: 1.0 - 0.22 * factor };
+        this.scaleVelocity = { x: 8 * factor, y: -15 * factor };
+        this.velocity.x *= (1.0 - 0.75 * factor);
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
         eventBroker.publish("PLAYER_LANDED", undefined);
       }

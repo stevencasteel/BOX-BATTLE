@@ -232,6 +232,7 @@ export class BossLungeState extends BossState {
     this.owner.velocity.x = 0;
     this.owner.visualScale = { x: 0.8, y: 1.2 };
     this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    this.owner.rotationVelocity = -this.owner.facingDirection * 15;
   }
 }
 

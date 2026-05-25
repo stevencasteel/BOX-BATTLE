@@ -63,6 +63,26 @@ export class MeleeComponent implements IEntityComponent {
     this.hasHitEnemyThisSwing = false;
     this.attackDirection = direction;
 
+    const entity = this.owner;
+    if (entity.visualScale && entity.scaleVelocity) {
+      if (direction === "side") {
+        entity.visualScale.y = 0.94;
+        entity.visualScale.x = 1.06;
+        entity.scaleVelocity.x = this.owner.facingDirection * 4;
+        entity.scaleVelocity.y = 1.5;
+      } else if (direction === "up") {
+        entity.visualScale.y = 1.08;
+        entity.visualScale.x = 0.92;
+        entity.scaleVelocity.y = -5;
+        entity.scaleVelocity.x = 1.5;
+      } else if (direction === "down") {
+        entity.visualScale.y = 1.08;
+        entity.visualScale.x = 0.92;
+        entity.scaleVelocity.y = 5;
+        entity.scaleVelocity.x = 1.5;
+      }
+    }
+
     eventBroker.publish("PLAYER_ATTACKED", { direction });
   }
 

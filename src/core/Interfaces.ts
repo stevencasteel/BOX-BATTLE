@@ -46,6 +46,9 @@ export interface IEntity {
   isDead: boolean;
   status: EntityStatus;
   world: IWorld;
+  visualScale?: Vector2D;
+  targetVisualScale?: Vector2D;
+  scaleVelocity?: Vector2D;
   update(dt: number): void;
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
