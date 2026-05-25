@@ -240,6 +240,18 @@ export class Projectile extends BaseEntity implements IPoolable {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
+    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const angle = Math.atan2(this.velocity.y, this.velocity.x);
+
+    const maxStretchSpeed = 1000;
+    const stretchFactor = Math.min(1.5, 1.0 + (speed / maxStretchSpeed) * 0.5);
+    const squashFactor = 1 / stretchFactor;
+
+    ctx.save();
+    ctx.translate(drawX, drawY);
+    ctx.rotate(angle);
+    ctx.scale(stretchFactor, squashFactor);
+
     if (this.ownerId === "player") {
       ctx.fillStyle = "hsl(142, 71%, 58%)";
       ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
@@ -250,8 +262,8 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(drawX, drawY, this.size.width / 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }

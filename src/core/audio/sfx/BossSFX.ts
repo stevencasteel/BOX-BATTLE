@@ -16,6 +16,13 @@ export class BossSFX {
   private teleportSynth!: Tone.Synth;
   private dialogueSynthPlayer!: Tone.Synth;
 
+  // Track combos independently for each unique target entity
+  private entityComboMap = new Map<string, { lastHitTime: number; hitSequenceCount: number }>();
+
+  // Track spike bounces
+  private lastSpikeTime = 0;
+  private spikeSequenceCount = 0;
+
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
     ctxManager.registerOnInit(() => this.init(ctxManager));
@@ -122,18 +129,50 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
+    const nowPerformance = performance.now();
+    // Escalate pitch on consecutive spike hits within 2.5 seconds
+    if (nowPerformance - this.lastSpikeTime < 2500) {
+      this.spikeSequenceCount = Math.min(5, this.spikeSequenceCount + 1);
+    } else {
+      this.spikeSequenceCount = 0;
+    }
+    this.lastSpikeTime = nowPerformance;
+
     const preset = SFX_PRESETS.boss.spike_strike;
+    const comboMultiplier = 1.0 + this.spikeSequenceCount * 0.15;
+    const adjustedFreq = preset.frequency * comboMultiplier;
+    const adjustedTargetFreq = (preset.targetFrequency || 700) * comboMultiplier;
+
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
-      this.spikeSynth.triggerAttackRelease(preset.frequency, "16n", now);
-      this.spikeSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      this.spikeSynth.triggerAttackRelease(adjustedFreq, "16n", now);
+      this.spikeSynth.frequency.rampTo(adjustedTargetFreq, preset.rampDuration, now);
     });
   }
 
-  public playHitConfirm(x?: number) {
+  public playHitConfirm(x?: number, entityId?: string) {
+    const nowPerformance = performance.now();
+    const targetId = entityId || "unknown";
+
+    let combo = this.entityComboMap.get(targetId);
+    if (!combo) {
+      combo = { lastHitTime: 0, hitSequenceCount: 0 };
+    }
+
+    if (nowPerformance - combo.lastHitTime < 1500) {
+      combo.hitSequenceCount = Math.min(5, combo.hitSequenceCount + 1);
+    } else {
+      combo.hitSequenceCount = 0;
+    }
+    combo.lastHitTime = nowPerformance;
+    this.entityComboMap.set(targetId, combo);
+
     const preset = SFX_PRESETS.boss.hit_confirm;
+    const comboMultiplier = 1.0 + combo.hitSequenceCount * 0.12;
+    const pitchAdjustedFreq = preset.synthFreq * comboMultiplier;
+
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
       this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(preset.synthFreq, "16n", now + preset.synthDelay);
+      this.dialogueSynthPlayer.triggerAttackRelease(pitchAdjustedFreq, "16n", now + preset.synthDelay);
     });
   }
 }

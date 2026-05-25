@@ -1,6 +1,7 @@
 import { eventBroker } from "@/core/eventBroker";
 import { Camera } from "@/core/Camera";
 import { soundSynth } from "@/core/SoundSynth";
+import { inputProvider } from "@/core/InputProvider";
 
 export class SimulationSystems {
   private unsubscribes: (() => void)[] = [];
@@ -19,18 +20,21 @@ export class SimulationSystems {
         soundSynth.playHurt(this.getPlayerX());
         Camera.shake(15, 0.3);
         Camera.triggerHitStop(0.08);
+        inputProvider.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm(this.getBossX());
+        soundSynth.playHitConfirm(this.getBossX(), "boss-01");
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6);
           Camera.triggerHitStop(0.15);
+          inputProvider.triggerHapticFeedback("heavy");
         } else {
           Camera.shake(8, 0.15);
           Camera.triggerHitStop(0.04);
+          inputProvider.triggerHapticFeedback("light");
         }
       })
     );
@@ -38,13 +42,15 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
         const mX = this.getMinionX(id);
-        soundSynth.playHitConfirm(mX);
+        soundSynth.playHitConfirm(mX, id);
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15);
           Camera.triggerHitStop(0.03);
+          inputProvider.triggerHapticFeedback("medium");
         } else {
           Camera.shake(2, 0.08);
           Camera.triggerHitStop(0.01);
+          inputProvider.triggerHapticFeedback("light");
         }
       })
     );
@@ -59,6 +65,7 @@ export class SimulationSystems {
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash(this.getPlayerX());
         Camera.triggerHitStop(0.035);
+        inputProvider.triggerHapticFeedback("light");
       })
     );
 
@@ -123,6 +130,7 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
         soundSynth.playSpikeStrike(this.getPlayerX());
+        inputProvider.triggerHapticFeedback("heavy");
       })
     );
 

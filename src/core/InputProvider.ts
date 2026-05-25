@@ -3,7 +3,7 @@ import { settingsManager } from "@/core/SettingsManager";
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
-  private pauseJustPressed: boolean = false;
+  private pauseJustPressed = false;
   private pressTimestamps: Record<Action, number> = {
     MOVE_LEFT: 0,
     MOVE_RIGHT: 0,
@@ -63,6 +63,8 @@ class InputProvider {
     ATTACK: false,
     DASH: false,
   };
+
+  private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -128,7 +130,7 @@ class InputProvider {
     this.keyboardPressed[action] = false;
   }
 
-  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+  public consumeBufferedAction(action: Action, windowMs = 100): boolean {
     const elapsed = performance.now() - this.pressTimestamps[action];
     if (elapsed <= windowMs) {
       this.pressTimestamps[action] = 0;
@@ -188,6 +190,47 @@ class InputProvider {
     }
 
     this.gamepadPressed = currentGamepadPressed;
+  }
+
+  public triggerHapticFeedback(strength: "light" | "medium" | "heavy") {
+    // 1. Mobile Web Vibration API
+    if (this.hasVibrationSupport) {
+      if (strength === "light") {
+        navigator.vibrate(30);
+      } else if (strength === "medium") {
+        navigator.vibrate(80);
+      } else if (strength === "heavy") {
+        navigator.vibrate([150, 50, 150]);
+      }
+    }
+
+    // 2. Gamepad API Dual-Rumble
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    const gamepads = navigator.getGamepads();
+    for (const gp of gamepads) {
+      if (gp && gp.vibrationActuator && gp.vibrationActuator.playEffect) {
+        let weak = 0.2;
+        let strong = 0.0;
+        let duration = 100;
+
+        if (strength === "medium") {
+          weak = 0.5;
+          strong = 0.3;
+          duration = 200;
+        } else if (strength === "heavy") {
+          weak = 0.9;
+          strong = 0.9;
+          duration = 400;
+        }
+
+        gp.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: duration,
+          weakMagnitude: weak,
+          strongMagnitude: strong,
+        }).catch(() => {});
+      }
+    }
   }
 
   public update() {

@@ -14,6 +14,11 @@ export class BaseEntity implements IEntity {
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
+  // Hooke's Law Spring-Damper parameters for physical elastic stretch/squash
+  public scaleVelocity = { x: 0, y: 0 };
+  public springStiffness = 180; // 'k' constant
+  public springDamping = 12;    // 'c' constant
+
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
@@ -49,8 +54,22 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    this.visualScale.x += (this.targetVisualScale.x - this.visualScale.x) * 12 * dt;
-    this.visualScale.y += (this.targetVisualScale.y - this.visualScale.y) * 12 * dt;
+    // Apply continuous spring-damper tracking: F = -k*x - c*v
+    const dispX = this.visualScale.x - this.targetVisualScale.x;
+    const dispY = this.visualScale.y - this.targetVisualScale.y;
+
+    const forceX = -this.springStiffness * dispX - this.springDamping * this.scaleVelocity.x;
+    const forceY = -this.springStiffness * dispY - this.springDamping * this.scaleVelocity.y;
+
+    this.scaleVelocity.x += forceX * dt;
+    this.scaleVelocity.y += forceY * dt;
+
+    this.visualScale.x += this.scaleVelocity.x * dt;
+    this.visualScale.y += this.scaleVelocity.y * dt;
+
+    // Safety boundary to prevent inversion or scaling rendering failures
+    this.visualScale.x = Math.max(0.1, this.visualScale.x);
+    this.visualScale.y = Math.max(0.1, this.visualScale.y);
 
     for (const component of this.components.values()) {
       if (component.update) {

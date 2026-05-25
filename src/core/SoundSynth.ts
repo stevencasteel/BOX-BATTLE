@@ -112,8 +112,8 @@ class SoundSynth {
     this.sfx.playSlash(direction, x);
   }
 
-  public playHitConfirm(x?: number): void {
-    this.sfx.playHitConfirm(x);
+  public playHitConfirm(x?: number, entityId?: string): void {
+    this.sfx.playHitConfirm(x, entityId);
   }
 
   public playPogo(x?: number): void {

@@ -1,11 +1,12 @@
 export class Camera {
-  public static offsetX: number = 0;
-  public static offsetY: number = 0;
-  public static hitStopTimer: number = 0;
+  public static offsetX = 0;
+  public static offsetY = 0;
+  public static hitStopTimer = 0;
 
-  private static shakeTimer: number = 0;
-  private static shakeDuration: number = 0;
-  private static shakeAmplitude: number = 0;
+  private static shakeTimer = 0;
+  private static shakeDuration = 0;
+  private static shakeAmplitude = 0;
+  private static noiseTime = 0;
 
   public static shake(amplitude: number, duration: number) {
     Camera.shakeAmplitude = amplitude;
@@ -17,28 +18,37 @@ export class Camera {
     Camera.hitStopTimer = duration;
   }
 
+  // Fractional sine noise lookup to replace jerky Math.random() with coherent camera tremors
+  private static noise(t: number): number {
+    return Math.sin(t * 17.1) * 0.43 + Math.sin(t * 31.7) * 0.27 + Math.sin(t * 7.3) * 0.3;
+  }
+
   public static update(dt: number) {
     // 1. Tick Hit Stop
     if (Camera.hitStopTimer > 0) {
       Camera.hitStopTimer -= dt;
     }
 
+    this.noiseTime += dt * 45; // Coherent noise update speed
+
     // 2. Tick Screen Shake
+    let shakeX = 0;
+    let shakeY = 0;
+
     if (Camera.shakeTimer > 0) {
       Camera.shakeTimer -= dt;
 
-      if (Camera.shakeTimer <= 0) {
-        Camera.offsetX = 0;
-        Camera.offsetY = 0;
-      } else {
+      if (Camera.shakeTimer > 0) {
         const decay = Camera.shakeTimer / Camera.shakeDuration;
-        Camera.offsetX = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
-        Camera.offsetY = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
+        const currentAmp = Camera.shakeAmplitude * decay;
+        shakeX = this.noise(this.noiseTime) * currentAmp;
+        shakeY = this.noise(this.noiseTime + 100) * currentAmp;
       }
-    } else {
-      Camera.offsetX = 0;
-      Camera.offsetY = 0;
     }
+
+    // Centered camera offset only driven by screen shake
+    Camera.offsetX = shakeX;
+    Camera.offsetY = shakeY;
   }
 
   public static reset() {
@@ -46,5 +56,6 @@ export class Camera {
     Camera.offsetY = 0;
     Camera.shakeTimer = 0;
     Camera.hitStopTimer = 0;
+    Camera.noiseTime = 0;
   }
 }

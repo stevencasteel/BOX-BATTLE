@@ -74,8 +74,8 @@ export class SFXManager {
   public playSlash(direction?: "side" | "up" | "down", x?: number) {
     this.playerSFX.playSlash(direction, x);
   }
-  public playHitConfirm(x?: number) {
-    this.bossSFX.playHitConfirm(x);
+  public playHitConfirm(x?: number, entityId?: string) {
+    this.bossSFX.playHitConfirm(x, entityId);
   }
   public playPogo(x?: number) {
     this.playerSFX.playPogo(x);
