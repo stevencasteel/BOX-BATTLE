@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-DWwfaMak.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-DF3ADVwG.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6363,6 +6363,12 @@ class SoundSynth {
   public playHealComplete(): void {
     this.drones.playHealComplete();
   }
+
+  public setLowHPStatus(active: boolean): void {
+    if (!this.initialized) return;
+    this.ctxManager.setLowHPStatus(active);
+    this.drones.setHeartbeat(active);
+  }
 }
 
 export const soundSynth = new SoundSynth();
@@ -6904,11 +6910,30 @@ export class AudioContextManager {
     this.musicGain.volume.setTargetAtTime(musicDb, Tone.now(), 0.05);
   }
 
-  public setCabinetMuffle(active: boolean) {
-    if (!this.initialized || !this.cabinetFilter) return;
+  private isLowHP: boolean = false;
+  private isCabinetMuffled: boolean = false;
 
-    const targetFreq = active ? 600 : 20000;
-    this.cabinetFilter.frequency.rampTo(targetFreq, 0.3);
+  public setCabinetMuffle(active: boolean) {
+    this.isCabinetMuffled = active;
+    this.resolveCabinetFilter();
+  }
+
+  public setLowHPStatus(active: boolean) {
+    this.isLowHP = active;
+    this.resolveCabinetFilter();
+  }
+
+  private resolveCabinetFilter() {
+    if (!this.initialized || !this.cabinetFilter) return;
+    
+    let targetFreq = 20000;
+    if (this.isCabinetMuffled) {
+      targetFreq = 600;
+    } else if (this.isLowHP) {
+      targetFreq = 1800;
+    }
+    
+    this.cabinetFilter.frequency.rampTo(targetFreq, 0.4);
   }
 }
 `,"src/core/audio/DroneManager.ts":`import * as Tone from "tone";
@@ -6931,6 +6956,10 @@ export class DroneManager {
   private chargeGain!: Tone.Gain;
   private isChargeDroneRunning: boolean = false;
   private currentChargeLevel: number = 0;
+
+  private heartbeatSynth!: Tone.MembraneSynth;
+  private heartbeatLoop!: Tone.Loop;
+  private isHeartbeatRunning: boolean = false;
 
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
@@ -6958,6 +6987,16 @@ export class DroneManager {
     this.chargeOsc.connect(this.chargeFilter);
     this.chargeFilter.connect(this.chargeGain);
     this.chargeGain.connect(this.panner);
+
+    this.heartbeatSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.15 },
+      oscillator: { type: "sine" }
+    }).connect(this.ctxManager.sfxGain);
+
+    this.heartbeatLoop = new Tone.Loop((time) => {
+      this.heartbeatSynth.triggerAttackRelease("A0", "8n", time);
+      this.heartbeatSynth.triggerAttackRelease("G0", "8n", time + 0.18);
+    }, "1.1s");
   }
 
   public playHealStart(x?: number) {
@@ -7062,6 +7101,17 @@ export class DroneManager {
     chimeNotes.forEach((note, idx) => {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
     });
+  }
+
+  public setHeartbeat(active: boolean) {
+    if (!this.ctxManager.initialized || !this.heartbeatLoop) return;
+    if (active === this.isHeartbeatRunning) return;
+    this.isHeartbeatRunning = active;
+    if (active) {
+      this.heartbeatLoop.start(0);
+    } else {
+      this.heartbeatLoop.stop();
+    }
   }
 }
 `,"src/core/audio/MusicSequencer.ts":`import * as Tone from "tone";
@@ -11635,6 +11685,7 @@ export function useGameDialogue() {
 }
 `,"src/hooks/useHudSubscription.ts":`import { useEffect } from "react";
 import { useGameplayStore } from "@/store/useGameStore";
+import { soundSynth } from "@/core/SoundSynth";
 
 // Keep track of player health changes across update ticks
 let lastPlayerHP = 5;
@@ -11646,6 +11697,10 @@ export function useHudSubscription() {
 
       // Check if player HP dropped
       const tookDamage = playerHP < lastPlayerHP;
+
+      if (soundSynth.initialized) {
+        soundSynth.setLowHPStatus(playerHP === 1);
+      }
 
       for (let i = 0; i < 5; i++) {
         const isLit = i < playerHP;
