@@ -115,8 +115,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
-    link.href = "./all_source_code.txt";
-    link.download = "all_source_code.txt";
+    link.href = "./boxbattle_source_code.txt";
+    link.download = "boxbattle_source_code.txt";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

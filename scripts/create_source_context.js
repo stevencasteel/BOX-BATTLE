@@ -10,13 +10,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const docsDir = path.join(rootDir, 'docs');
-const outputFile = path.join(docsDir, 'all_source_code.txt');
+const outputFile = path.join(docsDir, 'boxbattle_source_code.txt');
 
 function shouldInclude(filePath) {
   const relPath = path.relative(rootDir, filePath).split(path.sep).join('/');
   
   if (
-    path.basename(filePath) === 'all_source_code.txt' || 
+    path.basename(filePath) === 'boxbattle_source_code.txt' || 
     path.basename(filePath) === 'source_code_manifest.json' ||
     path.basename(filePath) === 'sourceCodeManifest.ts'
   ) {
@@ -136,7 +136,7 @@ async function main() {
     }
 
     await fsp.writeFile(outputFile, content, 'utf8');
-    const publicOutputFile = path.join(rootDir, 'public', 'all_source_code.txt');
+    const publicOutputFile = path.join(rootDir, 'public', 'boxbattle_source_code.txt');
     await fsp.writeFile(publicOutputFile, content, 'utf8');
     process.stdout.write('\r\x1b[K');
 
@@ -162,7 +162,7 @@ async function main() {
     console.log(`\x1b[32m  │      Total Chars:   \x1b[1;37m${String(totalChars.toLocaleString()).padEnd(34)}\x1b[32m │\x1b[0m`);
     console.log(`\x1b[32m  │      File Size:     \x1b[1;37m${sizeStr.padEnd(34)}\x1b[32m │\x1b[0m`);
     console.log('\x1b[32m  │                                                        │\x1b[0m');
-    console.log('\x1b[32m  │      Output: \x1b[37mdocs/all_source_code.txt\x1b[32m                  │\x1b[0m');
+    console.log('\x1b[32m  │      Output: \x1b[37mdocs/boxbattle_source_code.txt\x1b[32m            │\x1b[0m');
     console.log('\x1b[32m  │                                                        │\x1b[0m');
     console.log('\x1b[32m  └────────────────────────────────────────────────────────┘\x1b[0m\n');
 
