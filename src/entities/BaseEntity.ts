@@ -14,10 +14,17 @@ export class BaseEntity implements IEntity {
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
-  // Hooke's Law Spring-Damper parameters for physical elastic stretch/squash
+  // Standard Hooke's Law Spring-Damper parameters for visual scaling
   public scaleVelocity = { x: 0, y: 0 };
-  public springStiffness = 180; // 'k' constant
-  public springDamping = 12;    // 'c' constant
+  public springStiffness = 180;
+  public springDamping = 12;
+
+  // Standard DRY rotation spring fields
+  public rotation = 0;
+  public rotationVelocity = 0;
+  public targetRotation = 0;
+  public springStiffnessRot = 240;
+  public springDampingRot = 16;
 
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
@@ -54,7 +61,7 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    // Apply continuous spring-damper tracking: F = -k*x - c*v
+    // Standard Hooke's Law visual scale spring physics
     const dispX = this.visualScale.x - this.targetVisualScale.x;
     const dispY = this.visualScale.y - this.targetVisualScale.y;
 
@@ -67,9 +74,15 @@ export class BaseEntity implements IEntity {
     this.visualScale.x += this.scaleVelocity.x * dt;
     this.visualScale.y += this.scaleVelocity.y * dt;
 
-    // Safety boundary to prevent inversion or scaling rendering failures
     this.visualScale.x = Math.max(0.1, this.visualScale.x);
     this.visualScale.y = Math.max(0.1, this.visualScale.y);
+
+    // Standard Hooke's Law visual rotation spring physics
+    const dispRot = this.rotation - this.targetRotation;
+    const forceRot = -this.springStiffnessRot * dispRot - this.springDampingRot * this.rotationVelocity;
+
+    this.rotationVelocity += forceRot * dt;
+    this.rotation += this.rotationVelocity * dt;
 
     for (const component of this.components.values()) {
       if (component.update) {
@@ -93,9 +106,13 @@ export class BaseEntity implements IEntity {
 
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+      ctx.translate(drawX, feetY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
+      ctx.translate(drawX, drawY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight / 2, vWidth, vHeight);
     }
     ctx.restore();
   }

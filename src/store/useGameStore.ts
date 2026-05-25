@@ -42,7 +42,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   navTo: (screen) => {
     const current = get().currentScreen;
 
-    // Trigger context-backed sound sweeps centrally based on numerical screen hierarchy depth checks
     if (soundSynth.initialized && current !== screen) {
       const currentDepth = SCREEN_DEPTHS[current] ?? 0;
       const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
@@ -95,6 +94,15 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       set({ playerHP: hp });
       if (hp < current) {
         get().triggerGlitch(150);
+
+        // High-performance DOM-direct status panel shaking
+        if (typeof document !== "undefined") {
+          const panel = document.querySelector(".cabinet-status-panel");
+          if (panel) {
+            panel.classList.add("hud-shaking");
+            setTimeout(() => panel.classList.remove("hud-shaking"), 180);
+          }
+        }
       }
     }
   },

@@ -70,6 +70,13 @@ export class Boss extends BaseEntity {
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
+    // Standard Boss target rotation lean driven by movement velocity
+    if (this.physics.isGrounded) {
+      this.targetRotation = Math.sign(this.velocity.x) * 0.10;
+    } else {
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+    }
+
     this.stateMachine.update(dt);
 
     this.checkPlayerContact();
@@ -238,7 +245,10 @@ export class Boss extends BaseEntity {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
-    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+    // Apply feet rotation centered transform matrix
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
+    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
 
     ctx.shadowBlur = 0;
     ctx.restore();

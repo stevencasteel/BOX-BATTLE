@@ -108,6 +108,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.updateGravity(isSliding);
     this.handleHurtTimer(dt);
 
+    // Lean-angle spring updates driven by movement directions (DRY spring update solved by BaseEntity)
+    if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
+      this.targetRotation = moveAxis * 0.12; 
+    } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+    }
+
     if (this.hurtTimer > 0) {
       super.update(dt);
       return;
@@ -452,6 +459,15 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
     }
 
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+    const feetY = drawY + this.size.height / 2;
+
+    // Transform coordinate matrix to rotate the player around the feet pivot
+    ctx.save();
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
+
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
@@ -461,13 +477,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
-    const vWidth = this.size.width * this.visualScale.x;
-    const vHeight = this.size.height * this.visualScale.y;
-    const feetY = drawY + this.size.height / 2;
-
-    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
-
+    // Draw player rect (origin is now feet center, so draw upwards from bottom)
+    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
+
+    // Local center coordinates (relative to feet pivot 0,0)
+    const localCenterX = 0;
+    const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
       const cycle = performance.now() * 0.008;
@@ -479,10 +495,10 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
       const radius1 = 44 + Math.sin(cycle) * 8;
       const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(drawX, drawY, radius1, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, radius1, 0, Math.PI * 2);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(drawX, drawY, radius2, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, radius2, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
@@ -492,9 +508,11 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
-      ctx.arc(drawX, drawY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    ctx.restore();
   }
 
   public teardown() {

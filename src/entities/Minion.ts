@@ -44,6 +44,11 @@ export class Minion extends BaseEntity {
     this.position = { ...startPos };
     this.previousPosition = { ...startPos };
 
+    // Set miniature baseline scale and apply spring outward velocity kick on spawn
+    this.visualScale = { x: 0.1, y: 0.1 };
+    this.targetVisualScale = { x: 1.0, y: 1.0 };
+    this.scaleVelocity = { x: 15.0, y: 15.0 };
+
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
 
     if (type === "TURRET") {
@@ -172,6 +177,13 @@ export class Minion extends BaseEntity {
 
     this.behavior.update(this, dt);
 
+    // Highly visible standardized target lean based on minion move state
+    if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
+      this.targetRotation = this.facingDirection * 0.21; // Aggressive charging lean (~12deg)
+    } else {
+      this.targetRotation = Math.sign(this.velocity.x) * 0.12; // Standard running tilt (~7deg)
+    }
+
     this.checkHazardContact();
 
     super.update(dt);
@@ -237,9 +249,6 @@ export class Minion extends BaseEntity {
     if (this.isSpawning) {
       const pct = 1.0 - this.spawnTimer / 0.6;
       ctx.globalAlpha = pct;
-      ctx.translate(drawX, drawY);
-      ctx.scale(pct, pct);
-      ctx.translate(-drawX, -drawY);
     } else if (this.isDying) {
       const pct = this.dissolveTimer / 0.5;
       ctx.globalAlpha = pct;
@@ -269,18 +278,26 @@ export class Minion extends BaseEntity {
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
 
+    const localY = this.squashPivot === "feet" ? -this.size.height / 2 : 0;
+
+    // Apply rotation standard
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+      ctx.translate(drawX, feetY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
+      ctx.translate(drawX, drawY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight / 2, vWidth, vHeight);
     }
 
     ctx.shadowBlur = 0;
 
+    // Render eye details inside standard local coordinate space
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
-    ctx.fillRect(drawX + faceDirection * 8 - 2, drawY - 12, 6, 4);
+    ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
 
     ctx.restore();
   }

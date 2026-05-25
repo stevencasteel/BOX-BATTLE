@@ -6,12 +6,15 @@ import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
 export class Projectile extends BaseEntity implements IPoolable {
-  public isActive: boolean = false;
+  public isActive = false;
   public ownerId: "player" | "boss" = "player";
-  public damage: number = 1;
+  public damage = 1;
 
-  private lifespan: number = 0;
+  private lifespan = 0;
   private onRelease?: (proj: Projectile) => void;
+
+  // Decaying trailing coordinates
+  private trail: { x: number; y: number }[] = [];
 
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,12 +46,14 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     this.isActive = true;
     this.isDead = false;
+    this.trail = [];
   }
 
   public deactivate() {
     this.isActive = false;
     this.isDead = true;
     this.velocity = { x: 0, y: 0 };
+    this.trail = [];
   }
 
   public update(dt: number) {
@@ -58,6 +63,12 @@ export class Projectile extends BaseEntity implements IPoolable {
     if (this.lifespan <= 0) {
       this.selfRelease();
       return;
+    }
+
+    // Keep trail history updated
+    this.trail.push({ x: this.position.x, y: this.position.y });
+    if (this.trail.length > 8) {
+      this.trail.shift();
     }
 
     const dx = this.velocity.x * dt;
@@ -239,6 +250,40 @@ export class Projectile extends BaseEntity implements IPoolable {
     const alphaVal = alpha !== undefined ? alpha : 1.0;
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
+
+    // Draw smeared feathered canvas linear gradient comet trails
+    if (this.trail.length > 1) {
+      ctx.save();
+      const oldest = this.trail[0];
+
+      // Formulate a linear gradient connecting the head directly to the oldest tail coordinates
+      const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+
+      if (this.ownerId === "player") {
+        grad.addColorStop(0.0, "rgba(34, 197, 94, 0.45)");
+        grad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = "rgba(34, 197, 94, 0.5)";
+      } else {
+        grad.addColorStop(0.0, "rgba(239, 68, 68, 0.45)");
+        grad.addColorStop(1.0, "rgba(239, 68, 68, 0.0)");
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = "rgba(239, 68, 68, 0.5)";
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(drawX, drawY);
+      for (let i = this.trail.length - 1; i >= 0; i--) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+
+      ctx.lineWidth = this.size.width;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.restore();
+    }
 
     const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     const angle = Math.atan2(this.velocity.y, this.velocity.x);
