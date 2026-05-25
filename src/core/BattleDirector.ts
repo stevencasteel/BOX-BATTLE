@@ -52,12 +52,12 @@ export class BattleDirector {
 
     const bHealth = boss.getComponent(HealthComponent);
     if (bHealth) {
-      if (bHealth.currentHealth < 30 && !this.hasTriggeredFirstHit) {
+      if (bHealth.currentHealth < 38 && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
-      if (bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
+      if (bHealth.currentHealth <= 27 && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
@@ -66,7 +66,7 @@ export class BattleDirector {
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
-      if (bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
+      if (bHealth.currentHealth <= 15 && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",

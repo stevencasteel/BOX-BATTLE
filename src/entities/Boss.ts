@@ -42,7 +42,7 @@ export class Boss extends BaseEntity {
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 30,
+      maxHealth: 38,
       invincibilityDuration: 0.25,
     });
 

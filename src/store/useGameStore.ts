@@ -83,7 +83,7 @@ interface GameplayState {
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
   playerHP: 5,
-  bossHP: 30,
+  bossHP: 38,
   healingCharges: 0,
   determination: 0,
   isGlitching: false,
@@ -133,7 +133,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   resetGameSession: () => {
     set({
       playerHP: 5,
-      bossHP: 30,
+      bossHP: 38,
       healingCharges: 0,
       determination: 0,
       isGlitching: false,

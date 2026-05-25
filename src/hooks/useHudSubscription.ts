@@ -76,6 +76,12 @@ export function useHudSubscription() {
           } else {
             dotD.classList.remove("led-yellow");
           }
+
+          if (healingCharges === 3) {
+            dotD.classList.add("led-overflow-wobble");
+          } else {
+            dotD.classList.remove("led-overflow-wobble");
+          }
         }
         if (dotM) {
           const wasLit = dotM.classList.contains("led-yellow");
@@ -88,6 +94,12 @@ export function useHudSubscription() {
           } else {
             dotM.classList.remove("led-yellow");
           }
+
+          if (healingCharges === 3) {
+            dotM.classList.add("led-overflow-wobble");
+          } else {
+            dotM.classList.remove("led-overflow-wobble");
+          }
         }
       }
 
@@ -99,7 +111,7 @@ export function useHudSubscription() {
 
       const bossD = document.getElementById("hud-d-boss-bar");
       const bossM = document.getElementById("hud-m-boss-bar");
-      const bossWidth = (bossHP / 30) * 100 + "%";
+      const bossWidth = (bossHP / 38) * 100 + "%";
       if (bossD) {
         bossD.style.width = bossWidth;
         if (bossHP > 0) bossD.classList.add("led-red");

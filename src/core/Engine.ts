@@ -200,7 +200,7 @@ export class Engine {
     const bHealth = this.boss.getComponent(HealthComponent);
 
     const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
-    const nextBossHP = bHealth ? bHealth.currentHealth : 30;
+    const nextBossHP = bHealth ? bHealth.currentHealth : 38;
     const nextHealingCharges = this.player.healingCharges;
     const nextDetermination = this.player.determinationCounter;
 

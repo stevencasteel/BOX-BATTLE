@@ -171,3 +171,13 @@
     border-radius: 6px;
   }
 }
+
+
+@keyframes led-wobble {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(1px, -1px) scale(1.15); filter: brightness(1.2) drop-shadow(0 0 6px var(--signal-yellow-glow)); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.led-overflow-wobble {
+  animation: led-wobble 0.6s infinite alternate ease-in-out;
+}

@@ -42,6 +42,7 @@ export default function App() {
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
+  const retryCount = useSessionStore((state) => state.retryCount);
 
   const navTo = useSessionStore((state) => state.navTo);
   const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
@@ -213,7 +214,13 @@ export default function App() {
             : undefined
         }
       >
-        {!isFullHeightScreen && <HudPanel isTouchDevice={isTouchDevice} isPlayingScreen={isPlayingScreen} />}
+        {!isFullHeightScreen && (
+          <HudPanel
+            key={`${currentScreen}-${retryCount}`}
+            isTouchDevice={isTouchDevice}
+            isPlayingScreen={isPlayingScreen}
+          />
+        )}
 
         <div
           className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"}`}

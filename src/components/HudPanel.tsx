@@ -1,9 +1,30 @@
+import { useEffect, useRef, useState } from "react";
+import { eventBroker } from "@/core/eventBroker";
+import { motion, AnimatePresence } from "framer-motion";
+
 interface HudPanelProps {
   isTouchDevice: boolean;
   isPlayingScreen: boolean;
 }
 
 export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
+  const [bannerText, setBannerText] = useState<string | null>(null);
+  const phaseRef = useRef(1);
+
+  useEffect(() => {
+    const unsubPhase = eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+      phaseRef.current += 1;
+      setBannerText(`PHASE ${phaseRef.current}`);
+      setTimeout(() => {
+        setBannerText(null);
+      }, 2800);
+    });
+
+    return () => {
+      unsubPhase();
+    };
+  }, []);
+
   if (isTouchDevice) {
     return (
       <div
@@ -73,14 +94,49 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 width: "0%",
                 transition: "width 0.15s ease",
                 background: "hsl(280, 80%, 65%)",
-                boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
+                boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
               }}
             />
           </div>
         </div>
-        <span style={{ fontSize: "9px", color: "#718096", fontWeight: "bold", letterSpacing: "0.1em" }}>
-          BOX BATTLE
-        </span>
+
+        <AnimatePresence mode="wait">
+          {bannerText ? (
+            <motion.span
+              key="phase-warning-touch"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              style={{
+                fontSize: "11px",
+                color: "var(--signal-yellow)",
+                fontWeight: "bold",
+                letterSpacing: "0.12em",
+                textShadow: "0 0 6px var(--signal-yellow-glow)",
+                textTransform: "uppercase",
+                background: "rgba(234, 179, 8, 0.15)",
+                border: "1px solid rgba(234, 179, 8, 0.3)",
+                padding: "4px 10px",
+                borderRadius: "6px",
+                display: "inline-flex",
+                alignItems: "center"
+              }}
+            >
+              ⚠ {bannerText}
+            </motion.span>
+          ) : (
+            <motion.span
+              key="box-battle-touch"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ fontSize: "9px", color: "#718096", fontWeight: "bold", letterSpacing: "0.1em" }}
+            >
+              BOX BATTLE
+            </motion.span>
+          )}
+        </AnimatePresence>
+
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
           <div
@@ -169,51 +225,82 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </div>
       </div>
 
-      <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center" }}>
-        {isPlayingScreen ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              border: "1px solid rgba(255, 255, 255, 0.03)",
-              background: "rgba(7, 8, 11, 0.85)",
-              padding: "8px 22px",
-              borderRadius: "8px",
-              boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)",
-            }}
-          >
-            <div
+      <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center", minWidth: "280px", position: "relative" }}>
+        <AnimatePresence mode="wait">
+          {isPlayingScreen && bannerText ? (
+            <motion.div
+              key="phase-warning"
+              initial={{ scale: 0.8, opacity: 0, y: -5 }}
+              animate={{ scale: 1, opacity: 1, y: 0, transition: { type: "spring", stiffness: 350, damping: 15 } }}
+              exit={{ scale: 1.15, opacity: 0, transition: { duration: 0.15 } }}
               style={{
-                width: "6px",
-                height: "6px",
-                background: "rgba(34, 197, 94, 0.45)",
-                boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "16px",
-                color: "rgba(34, 197, 94, 0.8)",
-                fontWeight: 900,
-                letterSpacing: "0.3em",
-                textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
-                textTransform: "uppercase",
-                lineHeight: "1",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                border: "2px solid var(--signal-yellow)",
+                background: "rgba(12, 13, 17, 0.98)",
+                padding: "10px 28px",
+                borderRadius: "10px",
+                boxShadow: "0 0 20px rgba(234, 179, 8, 0.35), inset 0 0 10px rgba(234, 179, 8, 0.2)",
+                color: "var(--signal-yellow)",
+                fontWeight: "bold",
+                textShadow: "0 0 8px var(--signal-yellow-glow)",
+                letterSpacing: "0.15em",
+                fontSize: "clamp(13px, 1.8vmin, 18px)",
+                textTransform: "uppercase"
               }}
             >
-              BOX BATTLE
-            </span>
-            <div
+              <span style={{ fontSize: "clamp(15px, 2vmin, 20px)", lineHeight: "1" }}>⚠</span> WARNING: {bannerText}
+            </motion.div>
+          ) : isPlayingScreen ? (
+            <motion.div
+              key="box-battle-default"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               style={{
-                width: "6px",
-                height: "6px",
-                background: "rgba(34, 197, 94, 0.45)",
-                boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.03)",
+                background: "rgba(7, 8, 11, 0.85)",
+                padding: "8px 22px",
+                borderRadius: "8px",
+                boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)",
               }}
-            />
-          </div>
-        ) : null}
+            >
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  background: "rgba(34, 197, 94, 0.45)",
+                  boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "16px",
+                  color: "rgba(34, 197, 94, 0.8)",
+                  fontWeight: 900,
+                  letterSpacing: "0.3em",
+                  textShadow: "0 0 8px rgba(34, 197, 94, 0.35)",
+                  textTransform: "uppercase",
+                  lineHeight: "1",
+                }}
+              >
+                BOX BATTLE
+              </span>
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  background: "rgba(34, 197, 94, 0.45)",
+                  boxShadow: "0 0 6px rgba(34, 197, 94, 0.35)",
+                }}
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
