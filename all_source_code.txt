@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 7:32:11 PM
+ [SYSTEM] Generated: 5/25/2026, 7:49:50 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -72,6 +72,7 @@
 │   │   ├── InputProvider.ts
 │   │   ├── Interfaces.ts
 │   │   ├── levelData.ts
+│   │   ├── menuNavigation.ts
 │   │   ├── ObjectPool.ts
 │   │   ├── ParticleSystem.ts
 │   │   ├── PhysicsWorld.ts
@@ -1014,7 +1015,7 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
@@ -1129,40 +1130,19 @@ export default function App() {
 
       const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
-
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
 
       const isMoveForward =
         e.key === "ArrowDown" ||
-        e.key === "KeyS" ||
-        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"));
+        e.code === "KeyS" ||
+        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD"));
 
       const isMoveBackward =
         e.key === "ArrowUp" ||
-        e.key === "KeyW" ||
-        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"));
+        e.code === "KeyW" ||
+        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA"));
 
       if (isMoveForward) {
         e.preventDefault();
@@ -1172,10 +1152,10 @@ export default function App() {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         config.onSelect(context);
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (config.onBack) {
           config.onBack(context);
@@ -1184,11 +1164,11 @@ export default function App() {
 
       if (
         isSoundSliderZone &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD")
       ) {
         if (config.onHorizontal) {
           e.preventDefault();
-          const direction = e.key === "ArrowRight" || e.key === "KeyD" ? 1 : -1;
+          const direction = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : -1;
           config.onHorizontal(direction, context);
         }
       }
@@ -1996,18 +1976,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(0);
                     }}
                     className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 0
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     RETRY
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>
@@ -2019,18 +2019,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(1);
                     }}
                     className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 1
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     MENU
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>
@@ -6445,18 +6465,26 @@ class SettingsManager {
   }
 
   public getKeyMap(): KeyMap {
-    if (this.currentPreset === "DEFAULT_1" || this.currentPreset === "DEFAULT_2") {
-      return {
-        MOVE_LEFT: [...new Set([...this.presetDefault1.MOVE_LEFT, ...this.presetDefault2.MOVE_LEFT])],
-        MOVE_RIGHT: [...new Set([...this.presetDefault1.MOVE_RIGHT, ...this.presetDefault2.MOVE_RIGHT])],
-        MOVE_UP: [...new Set([...this.presetDefault1.MOVE_UP, ...this.presetDefault2.MOVE_UP])],
-        MOVE_DOWN: [...new Set([...this.presetDefault1.MOVE_DOWN, ...this.presetDefault2.MOVE_DOWN])],
-        JUMP: [...new Set([...this.presetDefault1.JUMP, ...this.presetDefault2.JUMP])],
-        ATTACK: [...new Set([...this.presetDefault1.ATTACK, ...this.presetDefault2.ATTACK])],
-        DASH: [...new Set([...this.presetDefault1.DASH, ...this.presetDefault2.DASH])],
-      };
+    const lead = this.currentPreset === "DEFAULT_2" ? this.presetDefault2 : this.presetDefault1;
+    const follow = this.currentPreset === "DEFAULT_2" ? this.presetDefault1 : this.presetDefault2;
+
+    const merged: KeyMap = {
+      MOVE_LEFT: [...new Set([...lead.MOVE_LEFT, ...follow.MOVE_LEFT])],
+      MOVE_RIGHT: [...new Set([...lead.MOVE_RIGHT, ...follow.MOVE_RIGHT])],
+      MOVE_UP: [...new Set([...lead.MOVE_UP, ...follow.MOVE_UP])],
+      MOVE_DOWN: [...new Set([...lead.MOVE_DOWN, ...follow.MOVE_DOWN])],
+      JUMP: [...new Set([...lead.JUMP, ...follow.JUMP])],
+      ATTACK: [...new Set([...lead.ATTACK, ...follow.ATTACK])],
+      DASH: [...new Set([...lead.DASH, ...follow.DASH])],
+    };
+
+    if (this.currentPreset === "CUSTOM") {
+      for (const action of Object.keys(merged) as Action[]) {
+        merged[action] = [...new Set([...(this.customKeyMap[action] || []), ...merged[action]])];
+      }
     }
-    return this.customKeyMap;
+
+    return merged;
   }
 
   public remapKey(action: Action, index: number, newCode: string) {
@@ -8651,6 +8679,40 @@ export class LevelLoader {
   public static stringify(config: LevelConfig): string {
     return JSON.stringify(config, null, 2);
   }
+}
+
+
+
+● ./src/core/menuNavigation.ts
+────────────────────────────────────────────────────
+import { settingsManager } from "./SettingsManager";
+
+export function getKeyMap() {
+  return settingsManager.getKeyMap();
+}
+
+export function isConfirmKey(e: KeyboardEvent): boolean {
+  const jumpKeys = getKeyMap()["JUMP"] || [];
+  return (
+    e.key === "Enter" ||
+    e.key === " " ||
+    e.code === "Space" ||
+    jumpKeys.includes(e.code) ||
+    jumpKeys.includes(e.key)
+  );
+}
+
+export function isBackKey(e: KeyboardEvent): boolean {
+  const attackKeys = getKeyMap()["ATTACK"] || [];
+  const dashKeys = getKeyMap()["DASH"] || [];
+  return (
+    e.key === "Escape" ||
+    e.key === "Backspace" ||
+    attackKeys.includes(e.code) ||
+    attackKeys.includes(e.key) ||
+    dashKeys.includes(e.code) ||
+    dashKeys.includes(e.key)
+  );
 }
 
 
@@ -12232,7 +12294,7 @@ export function useSaveSlots() {
 ────────────────────────────────────────────────────
 import { useEffect } from "react";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { FileNode } from "@/components/menus/SourceViewScreen";
 
 interface UseSourceViewKeyboardOptions {
@@ -12266,28 +12328,8 @@ export function useSourceViewKeyboard({
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       if (isMobile && mobileView === "CODE") {
-        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
+        if (isBackKey(e) || e.code === "ArrowLeft" || e.code === "KeyA") {
           e.preventDefault();
           soundSynth.playSelectTick();
           setMobileView("TOC");
@@ -12297,7 +12339,7 @@ export function useSourceViewKeyboard({
 
       const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
 
-      if (e.key === "ArrowDown" || e.key === "KeyS") {
+      if (e.code === "ArrowDown" || e.code === "KeyS") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -12308,7 +12350,7 @@ export function useSourceViewKeyboard({
           if (prev === visibleNodes.length - 1) return visibleNodes.length;
           return prev + 1;
         });
-      } else if (e.key === "ArrowUp" || e.key === "KeyW") {
+      } else if (e.code === "ArrowUp" || e.code === "KeyW") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -12319,7 +12361,7 @@ export function useSourceViewKeyboard({
           if (prev === 0) return visibleNodes.length + 2;
           return prev - 1;
         });
-      } else if (e.key === "ArrowRight" || e.key === "KeyD") {
+      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -12332,7 +12374,7 @@ export function useSourceViewKeyboard({
             return prev + 1;
           });
         }
-      } else if (e.key === "ArrowLeft" || e.key === "KeyA") {
+      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -12356,7 +12398,7 @@ export function useSourceViewKeyboard({
             return prev - 1;
           });
         }
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           soundSynth.playHitConfirm();
@@ -12378,7 +12420,7 @@ export function useSourceViewKeyboard({
           soundSynth.playErrorTick();
           onBack();
         }
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           if (node.isDir && expandedDirs[node.path]) {

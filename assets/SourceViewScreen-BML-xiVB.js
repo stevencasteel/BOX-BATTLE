@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-DocGpNKn.js";var s=e(n(),1),c={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-CbwrtHRh.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -460,7 +460,7 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 `,"src/App.tsx":`import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
@@ -575,40 +575,19 @@ export default function App() {
 
       const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
-
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
 
       const isMoveForward =
         e.key === "ArrowDown" ||
-        e.key === "KeyS" ||
-        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"));
+        e.code === "KeyS" ||
+        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD"));
 
       const isMoveBackward =
         e.key === "ArrowUp" ||
-        e.key === "KeyW" ||
-        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"));
+        e.code === "KeyW" ||
+        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA"));
 
       if (isMoveForward) {
         e.preventDefault();
@@ -618,10 +597,10 @@ export default function App() {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         config.onSelect(context);
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (config.onBack) {
           config.onBack(context);
@@ -630,11 +609,11 @@ export default function App() {
 
       if (
         isSoundSliderZone &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD")
       ) {
         if (config.onHorizontal) {
           e.preventDefault();
-          const direction = e.key === "ArrowRight" || e.key === "KeyD" ? 1 : -1;
+          const direction = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : -1;
           config.onHorizontal(direction, context);
         }
       }
@@ -1422,18 +1401,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(0);
                     }}
                     className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 0
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     RETRY
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>
@@ -1445,18 +1444,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(1);
                     }}
                     className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 1
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     MENU
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>
@@ -5731,18 +5750,26 @@ class SettingsManager {
   }
 
   public getKeyMap(): KeyMap {
-    if (this.currentPreset === "DEFAULT_1" || this.currentPreset === "DEFAULT_2") {
-      return {
-        MOVE_LEFT: [...new Set([...this.presetDefault1.MOVE_LEFT, ...this.presetDefault2.MOVE_LEFT])],
-        MOVE_RIGHT: [...new Set([...this.presetDefault1.MOVE_RIGHT, ...this.presetDefault2.MOVE_RIGHT])],
-        MOVE_UP: [...new Set([...this.presetDefault1.MOVE_UP, ...this.presetDefault2.MOVE_UP])],
-        MOVE_DOWN: [...new Set([...this.presetDefault1.MOVE_DOWN, ...this.presetDefault2.MOVE_DOWN])],
-        JUMP: [...new Set([...this.presetDefault1.JUMP, ...this.presetDefault2.JUMP])],
-        ATTACK: [...new Set([...this.presetDefault1.ATTACK, ...this.presetDefault2.ATTACK])],
-        DASH: [...new Set([...this.presetDefault1.DASH, ...this.presetDefault2.DASH])],
-      };
+    const lead = this.currentPreset === "DEFAULT_2" ? this.presetDefault2 : this.presetDefault1;
+    const follow = this.currentPreset === "DEFAULT_2" ? this.presetDefault1 : this.presetDefault2;
+
+    const merged: KeyMap = {
+      MOVE_LEFT: [...new Set([...lead.MOVE_LEFT, ...follow.MOVE_LEFT])],
+      MOVE_RIGHT: [...new Set([...lead.MOVE_RIGHT, ...follow.MOVE_RIGHT])],
+      MOVE_UP: [...new Set([...lead.MOVE_UP, ...follow.MOVE_UP])],
+      MOVE_DOWN: [...new Set([...lead.MOVE_DOWN, ...follow.MOVE_DOWN])],
+      JUMP: [...new Set([...lead.JUMP, ...follow.JUMP])],
+      ATTACK: [...new Set([...lead.ATTACK, ...follow.ATTACK])],
+      DASH: [...new Set([...lead.DASH, ...follow.DASH])],
+    };
+
+    if (this.currentPreset === "CUSTOM") {
+      for (const action of Object.keys(merged) as Action[]) {
+        merged[action] = [...new Set([...(this.customKeyMap[action] || []), ...merged[action]])];
+      }
     }
-    return this.customKeyMap;
+
+    return merged;
   }
 
   public remapKey(action: Action, index: number, newCode: string) {
@@ -7852,6 +7879,35 @@ export class LevelLoader {
   public static stringify(config: LevelConfig): string {
     return JSON.stringify(config, null, 2);
   }
+}
+`,"src/core/menuNavigation.ts":`import { settingsManager } from "./SettingsManager";
+
+export function getKeyMap() {
+  return settingsManager.getKeyMap();
+}
+
+export function isConfirmKey(e: KeyboardEvent): boolean {
+  const jumpKeys = getKeyMap()["JUMP"] || [];
+  return (
+    e.key === "Enter" ||
+    e.key === " " ||
+    e.code === "Space" ||
+    jumpKeys.includes(e.code) ||
+    jumpKeys.includes(e.key)
+  );
+}
+
+export function isBackKey(e: KeyboardEvent): boolean {
+  const attackKeys = getKeyMap()["ATTACK"] || [];
+  const dashKeys = getKeyMap()["DASH"] || [];
+  return (
+    e.key === "Escape" ||
+    e.key === "Backspace" ||
+    attackKeys.includes(e.code) ||
+    attackKeys.includes(e.key) ||
+    dashKeys.includes(e.code) ||
+    dashKeys.includes(e.key)
+  );
 }
 `,"src/core/schemas.ts":`import { Action } from "@/core/InputProvider";
 
@@ -11293,7 +11349,7 @@ export function useSaveSlots() {
 }
 `,"src/hooks/useSourceViewKeyboard.ts":`import { useEffect } from "react";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { FileNode } from "@/components/menus/SourceViewScreen";
 
 interface UseSourceViewKeyboardOptions {
@@ -11327,28 +11383,8 @@ export function useSourceViewKeyboard({
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       if (isMobile && mobileView === "CODE") {
-        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
+        if (isBackKey(e) || e.code === "ArrowLeft" || e.code === "KeyA") {
           e.preventDefault();
           soundSynth.playSelectTick();
           setMobileView("TOC");
@@ -11358,7 +11394,7 @@ export function useSourceViewKeyboard({
 
       const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
 
-      if (e.key === "ArrowDown" || e.key === "KeyS") {
+      if (e.code === "ArrowDown" || e.code === "KeyS") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -11369,7 +11405,7 @@ export function useSourceViewKeyboard({
           if (prev === visibleNodes.length - 1) return visibleNodes.length;
           return prev + 1;
         });
-      } else if (e.key === "ArrowUp" || e.key === "KeyW") {
+      } else if (e.code === "ArrowUp" || e.code === "KeyW") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -11380,7 +11416,7 @@ export function useSourceViewKeyboard({
           if (prev === 0) return visibleNodes.length + 2;
           return prev - 1;
         });
-      } else if (e.key === "ArrowRight" || e.key === "KeyD") {
+      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -11393,7 +11429,7 @@ export function useSourceViewKeyboard({
             return prev + 1;
           });
         }
-      } else if (e.key === "ArrowLeft" || e.key === "KeyA") {
+      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -11417,7 +11453,7 @@ export function useSourceViewKeyboard({
             return prev - 1;
           });
         }
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           soundSynth.playHitConfirm();
@@ -11439,7 +11475,7 @@ export function useSourceViewKeyboard({
           soundSynth.playErrorTick();
           onBack();
         }
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           if (node.isDir && expandedDirs[node.path]) {
@@ -11875,4 +11911,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     border-radius: 6px;
   }
 }
-`};function l({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:c,onBack:l,isMobile:u,mobileView:d,setMobileView:f,handleDownload:p}){(0,s.useEffect)(()=>{let s=s=>{if(e.length===0)return;let m=a.getKeyMap(),h=m.JUMP||[],g=m.ATTACK||[],_=m.DASH||[],v=s.key===`Enter`||s.key===` `||s.code===`Space`||h.includes(s.code)||h.includes(s.key),y=s.key===`Escape`||s.key===`Backspace`||g.includes(s.code)||g.includes(s.key)||_.includes(s.code)||_.includes(s.key);if(u&&d===`CODE`&&(y||s.key===`ArrowLeft`||s.key===`KeyA`)){s.preventDefault(),o.playSelectTick(),f(`TOC`);return}let b=e[t<e.length?t:0];if(s.key===`ArrowDown`||s.key===`KeyS`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(s.key===`ArrowUp`||s.key===`KeyW`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(s.key===`ArrowRight`||s.key===`KeyD`)s.preventDefault(),o.playSelectTick(),t<e.length?b.isDir&&!r[b.path]&&i(e=>({...e,[b.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(s.key===`ArrowLeft`||s.key===`KeyA`)if(s.preventDefault(),o.playSelectTick(),t<e.length)if(b.isDir&&r[b.path])i(e=>({...e,[b.path]:!1}));else{let t=b.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else v?(s.preventDefault(),t<e.length?(o.playHitConfirm(),b.isDir?i(e=>({...e,[b.path]:!e[b.path]})):(c(b.path),u&&f(`CODE`))):t===e.length?(o.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?p():t===e.length+2&&(o.playErrorTick(),l())):y&&(s.preventDefault(),t<e.length?b.isDir&&r[b.path]?(o.playErrorTick(),i(e=>({...e,[b.path]:!1}))):(o.playSelectTick(),n(e.length+2)):t===e.length+2?(o.playErrorTick(),l()):(o.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,s),()=>window.removeEventListener(`keydown`,s)},[e,t,r,l,u,d,n,i,c,f,p])}var u=i();function d(){return(0,u.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,u.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function f(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}),(0,u.jsx)(`polyline`,{points:`7 10 12 15 17 10`}),(0,u.jsx)(`line`,{x1:`12`,y1:`15`,x2:`12`,y2:`3`})]})}function p(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`line`,{x1:`19`,y1:`12`,x2:`5`,y2:`12`}),(0,u.jsx)(`polyline`,{points:`12 19 5 12 12 5`})]})}function m({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,u.jsx)(d,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(f,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(p,{})})})]}):(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(d,{}),`GITHUB REPO`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(f,{}),`DOWNLOAD SOURCE`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(p,{}),`BACK TO MENU`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function h(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function g(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>g(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>g(e,t,n)),n)}function _(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function v({onBack:e}){let[n]=(0,s.useState)(c),[i,a]=(0,s.useState)({src:!0,"src/components":!0,"src/core":!0}),[d,f]=(0,s.useState)((0,s.useMemo)(()=>Object.keys(c).sort(),[])[0]||``),[p,v]=(0,s.useState)(!1),[y,b]=(0,s.useState)(`TOC`),x=(0,s.useRef)(null),S=(0,s.useMemo)(()=>h(Object.keys(c)),[]),C=(0,s.useMemo)(()=>S?g(S,i):[],[S,i]),[w,T]=(0,s.useState)(0),E=Math.min(w,Math.max(0,C.length-1));return l({visibleNodes:C,activeIndex:w,setActiveIndex:T,expandedDirs:i,setExpandedDirs:a,setSelectedFile:f,onBack:e,isMobile:p,mobileView:y,setMobileView:b,handleDownload:()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,s.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,s.useEffect)(()=>{if(E<C.length){let e=x.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[E,C.length]),(0,u.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,u.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,u.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,u.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?y===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,u.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||y===`TOC`)&&(0,u.jsx)(`div`,{ref:x,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:C.map((e,t)=>{let n=t===E,r=e.isDir&&!!i[e.path],s=!e.isDir&&e.path===d;return(0,u.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{o.playSelectTick(),T(t),e.isDir?a(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),p&&b(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:s?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:s?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,u.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),(0,u.jsx)(`span`,{style:{fontSize:`13px`},children:e.isDir?r?`📂`:`📁`:`📄`}),(0,u.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||y===`CODE`)&&(0,u.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,u.jsx)(`button`,{onClick:()=>{o.playSelectTick(),b(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),d?(0,u.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,u.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,d]}),(0,u.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,u.jsx)(t,{language:_(d),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[d]||``})})]}):(0,u.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,u.jsx)(m,{onBack:e,isMobile:p,activeIndex:w,visibleNodesLength:C.length})]})}export{v as SourceViewScreen};
+`};function u({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:l,onBack:u,isMobile:d,mobileView:f,setMobileView:p,handleDownload:m}){(0,c.useEffect)(()=>{let c=c=>{if(e.length===0)return;if(d&&f===`CODE`&&(s(c)||c.code===`ArrowLeft`||c.code===`KeyA`)){c.preventDefault(),o.playSelectTick(),p(`TOC`);return}let h=e[t<e.length?t:0];if(c.code===`ArrowDown`||c.code===`KeyS`)c.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(c.code===`ArrowUp`||c.code===`KeyW`)c.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(c.code===`ArrowRight`||c.code===`KeyD`)c.preventDefault(),o.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(c.code===`ArrowLeft`||c.code===`KeyA`)if(c.preventDefault(),o.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else a(c)?(c.preventDefault(),t<e.length?(o.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(l(h.path),d&&p(`CODE`))):t===e.length?(o.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?m():t===e.length+2&&(o.playErrorTick(),u())):s(c)&&(c.preventDefault(),t<e.length?h.isDir&&r[h.path]?(o.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(o.playSelectTick(),n(e.length+2)):t===e.length+2?(o.playErrorTick(),u()):(o.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,c),()=>window.removeEventListener(`keydown`,c)},[e,t,r,u,d,f,n,i,l,p,m])}var d=i();function f(){return(0,d.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,d.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function p(){return(0,d.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,d.jsx)(`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}),(0,d.jsx)(`polyline`,{points:`7 10 12 15 17 10`}),(0,d.jsx)(`line`,{x1:`12`,y1:`15`,x2:`12`,y2:`3`})]})}function m(){return(0,d.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,d.jsx)(`line`,{x1:`19`,y1:`12`,x2:`5`,y2:`12`}),(0,d.jsx)(`polyline`,{points:`12 19 5 12 12 5`})]})}function h({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,d.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,d.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,d.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,d.jsx)(f,{})})}),(0,d.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,d.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,d.jsx)(p,{})})}),(0,d.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,d.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,d.jsx)(m,{})})})]}):(0,d.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,d.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,d.jsx)(`div`,{className:`btn-indicator-light`}),(0,d.jsxs)(`div`,{className:`btn-label-group`,children:[(0,d.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,d.jsx)(f,{}),`GITHUB REPO`]}),(0,d.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,d.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,d.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,d.jsx)(`div`,{className:`btn-indicator-light`}),(0,d.jsxs)(`div`,{className:`btn-label-group`,children:[(0,d.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,d.jsx)(p,{}),`DOWNLOAD SOURCE`]}),(0,d.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,d.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,d.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,d.jsx)(`div`,{className:`btn-indicator-light`}),(0,d.jsxs)(`div`,{className:`btn-label-group`,children:[(0,d.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,d.jsx)(m,{}),`BACK TO MENU`]}),(0,d.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,d.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function g(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function _(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>_(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>_(e,t,n)),n)}function v(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function y({onBack:e}){let[n]=(0,c.useState)(l),[i,a]=(0,c.useState)({src:!0,"src/components":!0,"src/core":!0}),[s,f]=(0,c.useState)((0,c.useMemo)(()=>Object.keys(l).sort(),[])[0]||``),[p,m]=(0,c.useState)(!1),[y,b]=(0,c.useState)(`TOC`),x=(0,c.useRef)(null),S=(0,c.useMemo)(()=>g(Object.keys(l)),[]),C=(0,c.useMemo)(()=>S?_(S,i):[],[S,i]),[w,T]=(0,c.useState)(0),E=Math.min(w,Math.max(0,C.length-1));return u({visibleNodes:C,activeIndex:w,setActiveIndex:T,expandedDirs:i,setExpandedDirs:a,setSelectedFile:f,onBack:e,isMobile:p,mobileView:y,setMobileView:b,handleDownload:()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,c.useEffect)(()=>{if(typeof window<`u`){let e=()=>{m(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,c.useEffect)(()=>{if(E<C.length){let e=x.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[E,C.length]),(0,d.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,d.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,d.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,d.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?y===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,d.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||y===`TOC`)&&(0,d.jsx)(`div`,{ref:x,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:C.map((e,t)=>{let n=t===E,r=e.isDir&&!!i[e.path],c=!e.isDir&&e.path===s;return(0,d.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{o.playSelectTick(),T(t),e.isDir?a(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),p&&b(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:c?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:c?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,d.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),(0,d.jsx)(`span`,{style:{fontSize:`13px`},children:e.isDir?r?`📂`:`📁`:`📄`}),(0,d.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||y===`CODE`)&&(0,d.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,d.jsx)(`button`,{onClick:()=>{o.playSelectTick(),b(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),s?(0,d.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,d.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,s]}),(0,d.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,d.jsx)(t,{language:v(s),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[s]||``})})]}):(0,d.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,d.jsx)(h,{onBack:e,isMobile:p,activeIndex:w,visibleNodesLength:C.length})]})}export{y as SourceViewScreen};
