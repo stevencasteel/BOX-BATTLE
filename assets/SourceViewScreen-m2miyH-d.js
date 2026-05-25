@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-CDQAR0l2.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-BmffFy_J.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -4391,13 +4391,14 @@ export class BattleDirector {
   }
 }
 `,"src/core/Camera.ts":`export class Camera {
-  public static offsetX: number = 0;
-  public static offsetY: number = 0;
-  public static hitStopTimer: number = 0;
+  public static offsetX = 0;
+  public static offsetY = 0;
+  public static hitStopTimer = 0;
 
-  private static shakeTimer: number = 0;
-  private static shakeDuration: number = 0;
-  private static shakeAmplitude: number = 0;
+  private static shakeTimer = 0;
+  private static shakeDuration = 0;
+  private static shakeAmplitude = 0;
+  private static noiseTime = 0;
 
   public static shake(amplitude: number, duration: number) {
     Camera.shakeAmplitude = amplitude;
@@ -4409,28 +4410,37 @@ export class BattleDirector {
     Camera.hitStopTimer = duration;
   }
 
+  // Fractional sine noise lookup to replace jerky Math.random() with coherent camera tremors
+  private static noise(t: number): number {
+    return Math.sin(t * 17.1) * 0.43 + Math.sin(t * 31.7) * 0.27 + Math.sin(t * 7.3) * 0.3;
+  }
+
   public static update(dt: number) {
     // 1. Tick Hit Stop
     if (Camera.hitStopTimer > 0) {
       Camera.hitStopTimer -= dt;
     }
 
+    this.noiseTime += dt * 45; // Coherent noise update speed
+
     // 2. Tick Screen Shake
+    let shakeX = 0;
+    let shakeY = 0;
+
     if (Camera.shakeTimer > 0) {
       Camera.shakeTimer -= dt;
 
-      if (Camera.shakeTimer <= 0) {
-        Camera.offsetX = 0;
-        Camera.offsetY = 0;
-      } else {
+      if (Camera.shakeTimer > 0) {
         const decay = Camera.shakeTimer / Camera.shakeDuration;
-        Camera.offsetX = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
-        Camera.offsetY = (Math.random() * 2 - 1) * Camera.shakeAmplitude * decay;
+        const currentAmp = Camera.shakeAmplitude * decay;
+        shakeX = this.noise(this.noiseTime) * currentAmp;
+        shakeY = this.noise(this.noiseTime + 100) * currentAmp;
       }
-    } else {
-      Camera.offsetX = 0;
-      Camera.offsetY = 0;
     }
+
+    // Centered camera offset only driven by screen shake
+    Camera.offsetX = shakeX;
+    Camera.offsetY = shakeY;
   }
 
   public static reset() {
@@ -4438,6 +4448,7 @@ export class BattleDirector {
     Camera.offsetY = 0;
     Camera.shakeTimer = 0;
     Camera.hitStopTimer = 0;
+    Camera.noiseTime = 0;
   }
 }
 `,"src/core/Engine.ts":`import GameLoop from "@/core/GameLoop";
@@ -4893,7 +4904,7 @@ export default GameLoop;
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
 class InputProvider {
-  private pauseJustPressed: boolean = false;
+  private pauseJustPressed = false;
   private pressTimestamps: Record<Action, number> = {
     MOVE_LEFT: 0,
     MOVE_RIGHT: 0,
@@ -4953,6 +4964,8 @@ class InputProvider {
     ATTACK: false,
     DASH: false,
   };
+
+  private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -5018,7 +5031,7 @@ class InputProvider {
     this.keyboardPressed[action] = false;
   }
 
-  public consumeBufferedAction(action: Action, windowMs: number = 100): boolean {
+  public consumeBufferedAction(action: Action, windowMs = 100): boolean {
     const elapsed = performance.now() - this.pressTimestamps[action];
     if (elapsed <= windowMs) {
       this.pressTimestamps[action] = 0;
@@ -5078,6 +5091,47 @@ class InputProvider {
     }
 
     this.gamepadPressed = currentGamepadPressed;
+  }
+
+  public triggerHapticFeedback(strength: "light" | "medium" | "heavy") {
+    // 1. Mobile Web Vibration API
+    if (this.hasVibrationSupport) {
+      if (strength === "light") {
+        navigator.vibrate(30);
+      } else if (strength === "medium") {
+        navigator.vibrate(80);
+      } else if (strength === "heavy") {
+        navigator.vibrate([150, 50, 150]);
+      }
+    }
+
+    // 2. Gamepad API Dual-Rumble
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    const gamepads = navigator.getGamepads();
+    for (const gp of gamepads) {
+      if (gp && gp.vibrationActuator && gp.vibrationActuator.playEffect) {
+        let weak = 0.2;
+        let strong = 0.0;
+        let duration = 100;
+
+        if (strength === "medium") {
+          weak = 0.5;
+          strong = 0.3;
+          duration = 200;
+        } else if (strength === "heavy") {
+          weak = 0.9;
+          strong = 0.9;
+          duration = 400;
+        }
+
+        gp.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: duration,
+          weakMagnitude: weak,
+          strongMagnitude: strong,
+        }).catch(() => {});
+      }
+    }
   }
 
   public update() {
@@ -5786,6 +5840,7 @@ export const settingsManager = new SettingsManager();
 `,"src/core/SimulationSystems.ts":`import { eventBroker } from "@/core/eventBroker";
 import { Camera } from "@/core/Camera";
 import { soundSynth } from "@/core/SoundSynth";
+import { inputProvider } from "@/core/InputProvider";
 
 export class SimulationSystems {
   private unsubscribes: (() => void)[] = [];
@@ -5804,18 +5859,21 @@ export class SimulationSystems {
         soundSynth.playHurt(this.getPlayerX());
         Camera.shake(15, 0.3);
         Camera.triggerHitStop(0.08);
+        inputProvider.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm(this.getBossX());
+        soundSynth.playHitConfirm(this.getBossX(), "boss-01");
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6);
           Camera.triggerHitStop(0.15);
+          inputProvider.triggerHapticFeedback("heavy");
         } else {
           Camera.shake(8, 0.15);
           Camera.triggerHitStop(0.04);
+          inputProvider.triggerHapticFeedback("light");
         }
       })
     );
@@ -5823,13 +5881,15 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
         const mX = this.getMinionX(id);
-        soundSynth.playHitConfirm(mX);
+        soundSynth.playHitConfirm(mX, id);
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15);
           Camera.triggerHitStop(0.03);
+          inputProvider.triggerHapticFeedback("medium");
         } else {
           Camera.shake(2, 0.08);
           Camera.triggerHitStop(0.01);
+          inputProvider.triggerHapticFeedback("light");
         }
       })
     );
@@ -5844,6 +5904,7 @@ export class SimulationSystems {
       eventBroker.subscribe("PLAYER_DASHED", () => {
         soundSynth.playDash(this.getPlayerX());
         Camera.triggerHitStop(0.035);
+        inputProvider.triggerHapticFeedback("light");
       })
     );
 
@@ -5908,6 +5969,7 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
         soundSynth.playSpikeStrike(this.getPlayerX());
+        inputProvider.triggerHapticFeedback("heavy");
       })
     );
 
@@ -6093,8 +6155,8 @@ class SoundSynth {
     this.sfx.playSlash(direction, x);
   }
 
-  public playHitConfirm(x?: number): void {
-    this.sfx.playHitConfirm(x);
+  public playHitConfirm(x?: number, entityId?: string): void {
+    this.sfx.playHitConfirm(x, entityId);
   }
 
   public playPogo(x?: number): void {
@@ -7063,8 +7125,8 @@ export class SFXManager {
   public playSlash(direction?: "side" | "up" | "down", x?: number) {
     this.playerSFX.playSlash(direction, x);
   }
-  public playHitConfirm(x?: number) {
-    this.bossSFX.playHitConfirm(x);
+  public playHitConfirm(x?: number, entityId?: string) {
+    this.bossSFX.playHitConfirm(x, entityId);
   }
   public playPogo(x?: number) {
     this.playerSFX.playPogo(x);
@@ -7099,6 +7161,13 @@ export class BossSFX {
   private spikeSynth!: Tone.Synth;
   private teleportSynth!: Tone.Synth;
   private dialogueSynthPlayer!: Tone.Synth;
+
+  // Track combos independently for each unique target entity
+  private entityComboMap = new Map<string, { lastHitTime: number; hitSequenceCount: number }>();
+
+  // Track spike bounces
+  private lastSpikeTime = 0;
+  private spikeSequenceCount = 0;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
@@ -7206,18 +7275,50 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
+    const nowPerformance = performance.now();
+    // Escalate pitch on consecutive spike hits within 2.5 seconds
+    if (nowPerformance - this.lastSpikeTime < 2500) {
+      this.spikeSequenceCount = Math.min(5, this.spikeSequenceCount + 1);
+    } else {
+      this.spikeSequenceCount = 0;
+    }
+    this.lastSpikeTime = nowPerformance;
+
     const preset = SFX_PRESETS.boss.spike_strike;
+    const comboMultiplier = 1.0 + this.spikeSequenceCount * 0.15;
+    const adjustedFreq = preset.frequency * comboMultiplier;
+    const adjustedTargetFreq = (preset.targetFrequency || 700) * comboMultiplier;
+
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
-      this.spikeSynth.triggerAttackRelease(preset.frequency, "16n", now);
-      this.spikeSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      this.spikeSynth.triggerAttackRelease(adjustedFreq, "16n", now);
+      this.spikeSynth.frequency.rampTo(adjustedTargetFreq, preset.rampDuration, now);
     });
   }
 
-  public playHitConfirm(x?: number) {
+  public playHitConfirm(x?: number, entityId?: string) {
+    const nowPerformance = performance.now();
+    const targetId = entityId || "unknown";
+
+    let combo = this.entityComboMap.get(targetId);
+    if (!combo) {
+      combo = { lastHitTime: 0, hitSequenceCount: 0 };
+    }
+
+    if (nowPerformance - combo.lastHitTime < 1500) {
+      combo.hitSequenceCount = Math.min(5, combo.hitSequenceCount + 1);
+    } else {
+      combo.hitSequenceCount = 0;
+    }
+    combo.lastHitTime = nowPerformance;
+    this.entityComboMap.set(targetId, combo);
+
     const preset = SFX_PRESETS.boss.hit_confirm;
+    const comboMultiplier = 1.0 + combo.hitSequenceCount * 0.12;
+    const pitchAdjustedFreq = preset.synthFreq * comboMultiplier;
+
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
       this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
-      this.dialogueSynthPlayer.triggerAttackRelease(preset.synthFreq, "16n", now + preset.synthDelay);
+      this.dialogueSynthPlayer.triggerAttackRelease(pitchAdjustedFreq, "16n", now + preset.synthDelay);
     });
   }
 }
@@ -8201,6 +8302,11 @@ export class BaseEntity implements IEntity {
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
+  // Hooke's Law Spring-Damper parameters for physical elastic stretch/squash
+  public scaleVelocity = { x: 0, y: 0 };
+  public springStiffness = 180; // 'k' constant
+  public springDamping = 12;    // 'c' constant
+
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
@@ -8236,8 +8342,22 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    this.visualScale.x += (this.targetVisualScale.x - this.visualScale.x) * 12 * dt;
-    this.visualScale.y += (this.targetVisualScale.y - this.visualScale.y) * 12 * dt;
+    // Apply continuous spring-damper tracking: F = -k*x - c*v
+    const dispX = this.visualScale.x - this.targetVisualScale.x;
+    const dispY = this.visualScale.y - this.targetVisualScale.y;
+
+    const forceX = -this.springStiffness * dispX - this.springDamping * this.scaleVelocity.x;
+    const forceY = -this.springStiffness * dispY - this.springDamping * this.scaleVelocity.y;
+
+    this.scaleVelocity.x += forceX * dt;
+    this.scaleVelocity.y += forceY * dt;
+
+    this.visualScale.x += this.scaleVelocity.x * dt;
+    this.visualScale.y += this.scaleVelocity.y * dt;
+
+    // Safety boundary to prevent inversion or scaling rendering failures
+    this.visualScale.x = Math.max(0.1, this.visualScale.x);
+    this.visualScale.y = Math.max(0.1, this.visualScale.y);
 
     for (const component of this.components.values()) {
       if (component.update) {
@@ -9955,6 +10075,18 @@ export class Projectile extends BaseEntity implements IPoolable {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
+    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const angle = Math.atan2(this.velocity.y, this.velocity.x);
+
+    const maxStretchSpeed = 1000;
+    const stretchFactor = Math.min(1.5, 1.0 + (speed / maxStretchSpeed) * 0.5);
+    const squashFactor = 1 / stretchFactor;
+
+    ctx.save();
+    ctx.translate(drawX, drawY);
+    ctx.rotate(angle);
+    ctx.scale(stretchFactor, squashFactor);
+
     if (this.ownerId === "player") {
       ctx.fillStyle = "hsl(142, 71%, 58%)";
       ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
@@ -9965,9 +10097,9 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(drawX, drawY, this.size.width / 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }
 `,"src/entities/Spawner.ts":`import { Minion, MinionType } from "./Minion";
