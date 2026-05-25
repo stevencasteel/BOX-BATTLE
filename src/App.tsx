@@ -252,7 +252,7 @@ export default function App() {
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
-                <GameArena triggerDialogue={() => {}} playHoverTick={playHoverTick} />
+                <GameArena playHoverTick={playHoverTick} />
               </div>
             </div>
           ) : (

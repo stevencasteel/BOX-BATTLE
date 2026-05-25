@@ -5,26 +5,19 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 
 interface GameArenaProps {
-  triggerDialogue: (speaker: "player" | "boss", text: string) => void;
+  triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
   playHoverTick: () => void;
 }
 
-export function GameArena({ triggerDialogue, playHoverTick }: GameArenaProps) {
-  const triggerRef = useRef(triggerDialogue);
+export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
-
-  useEffect(() => {
-    triggerRef.current = triggerDialogue;
-  }, [triggerDialogue]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new Engine(canvas, (speaker, text) => {
-      triggerRef.current(speaker, text);
-    });
+    const engine = new Engine(canvas);
     engineRef.current = engine;
     engine.start();
 
