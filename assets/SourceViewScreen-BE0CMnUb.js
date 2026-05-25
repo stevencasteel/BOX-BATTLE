@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{r as i}from"./vendor-motion-Cga-I72o.js";import{n as a,r as o,t as s}from"./index-DKwbd5nD.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{r as i}from"./vendor-motion-Cga-I72o.js";import{n as a,r as o,t as s}from"./index-DsjwMcqM.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -4423,6 +4423,7 @@ import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
+import { UNITS } from "@/core/Units";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -4471,12 +4472,15 @@ export class BattleDirector {
 
     const bHealth = boss.getComponent(HealthComponent);
     if (bHealth) {
-      if (bHealth.currentHealth < 38 && !this.hasTriggeredFirstHit) {
+      const phase2Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_2_HP_PCT);
+      const phase3Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_3_HP_PCT);
+
+      if (bHealth.currentHealth < UNITS.BOSS_MAX_HP && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
-      if (bHealth.currentHealth <= 27 && !this.hasTriggeredPhase2) {
+      if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
@@ -4485,7 +4489,7 @@ export class BattleDirector {
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
-      if (bHealth.currentHealth <= 15 && !this.hasTriggeredPhase3) {
+      if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
@@ -4703,6 +4707,7 @@ import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
+import { UNITS } from "@/core/Units";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -4884,8 +4889,8 @@ export class Engine {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
 
-    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
-    const nextBossHP = bHealth ? bHealth.currentHealth : 38;
+    const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;
+    const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;
     const nextHealingCharges = this.player.healingCharges;
     const nextDetermination = this.player.determinationCounter;
 
@@ -6493,6 +6498,12 @@ export class StateMachine {
   }
 }
 `,"src/core/Units.ts":`export const UNITS = {
+  // Core Gameplay Balancing Parameters
+  PLAYER_MAX_HP: 5,
+  BOSS_MAX_HP: 38,
+  BOSS_PHASE_2_HP_PCT: 0.70,
+  BOSS_PHASE_3_HP_PCT: 0.40,
+
   // World space coordinates (1 World Unit = 1 Pixel)
   WORLD_SIZE: 1250,
   WORLD_HALF_SIZE: 625,
@@ -8700,6 +8711,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -8738,7 +8750,7 @@ export class Boss extends BaseEntity {
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 38,
+      maxHealth: UNITS.BOSS_MAX_HP,
       invincibilityDuration: 0.25,
     });
 
@@ -11779,6 +11791,7 @@ export function useGameDialogue() {
 `,"src/hooks/useHudSubscription.ts":`import { useEffect } from "react";
 import { useGameplayStore } from "@/store/useGameStore";
 import { soundSynth } from "@/core/SoundSynth";
+import { UNITS } from "@/core/Units";
 
 // Keep track of player health changes across update ticks
 let lastPlayerHP = 5;
@@ -11795,7 +11808,7 @@ export function useHudSubscription() {
         soundSynth.setLowHPStatus(playerHP === 1);
       }
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
         const isLit = i < playerHP;
         const dotD = document.getElementById("hud-d-php-" + i);
         const dotM = document.getElementById("hud-m-php-" + i);
@@ -11889,7 +11902,7 @@ export function useHudSubscription() {
 
       const bossD = document.getElementById("hud-d-boss-bar");
       const bossM = document.getElementById("hud-m-boss-bar");
-      const bossWidth = (bossHP / 38) * 100 + "%";
+      const bossWidth = (bossHP / UNITS.BOSS_MAX_HP) * 100 + "%";
       if (bossD) {
         bossD.style.width = bossWidth;
         if (bossHP > 0) bossD.classList.add("led-red");
@@ -12297,6 +12310,7 @@ createRoot(document.getElementById("root")!).render(
 );
 `,"src/store/useGameStore.ts":`import { create } from "zustand";
 import { soundSynth } from "@/core/SoundSynth";
+import { UNITS } from "@/core/Units";
 
 export type ScreenState =
   | "TITLE"
@@ -12379,8 +12393,8 @@ interface GameplayState {
 }
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
-  playerHP: 5,
-  bossHP: 38,
+  playerHP: UNITS.PLAYER_MAX_HP,
+  bossHP: UNITS.BOSS_MAX_HP,
   healingCharges: 0,
   determination: 0,
   isGlitching: false,
@@ -12429,8 +12443,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   },
   resetGameSession: () => {
     set({
-      playerHP: 5,
-      bossHP: 38,
+      playerHP: UNITS.PLAYER_MAX_HP,
+      bossHP: UNITS.BOSS_MAX_HP,
       healingCharges: 0,
       determination: 0,
       isGlitching: false,
