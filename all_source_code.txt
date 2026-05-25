@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 7:49:50 PM
+ [SYSTEM] Generated: 5/25/2026, 8:01:03 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -412,7 +412,7 @@ export default defineConfig([
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>box-battle</title>
+    <title>BOX BATTLE</title>
   </head>
   <body>
     <div id="root"></div>

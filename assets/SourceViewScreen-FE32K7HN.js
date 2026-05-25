@@ -1,10 +1,10 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-CbwrtHRh.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-CC1TLprm.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>box-battle</title>
+    <title>BOX BATTLE</title>
   </head>
   <body>
     <div id="root"></div>
