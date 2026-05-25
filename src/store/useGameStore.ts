@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { soundSynth } from "@/core/SoundSynth";
+import { UNITS } from "@/core/Units";
 
 export type ScreenState =
   | "TITLE"
@@ -82,8 +83,8 @@ interface GameplayState {
 }
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
-  playerHP: 5,
-  bossHP: 38,
+  playerHP: UNITS.PLAYER_MAX_HP,
+  bossHP: UNITS.BOSS_MAX_HP,
   healingCharges: 0,
   determination: 0,
   isGlitching: false,
@@ -132,8 +133,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   },
   resetGameSession: () => {
     set({
-      playerHP: 5,
-      bossHP: 38,
+      playerHP: UNITS.PLAYER_MAX_HP,
+      bossHP: UNITS.BOSS_MAX_HP,
       healingCharges: 0,
       determination: 0,
       isGlitching: false,

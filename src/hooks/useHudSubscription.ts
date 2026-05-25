@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useGameplayStore } from "@/store/useGameStore";
 import { soundSynth } from "@/core/SoundSynth";
+import { UNITS } from "@/core/Units";
 
 // Keep track of player health changes across update ticks
 let lastPlayerHP = 5;
@@ -17,7 +18,7 @@ export function useHudSubscription() {
         soundSynth.setLowHPStatus(playerHP === 1);
       }
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
         const isLit = i < playerHP;
         const dotD = document.getElementById("hud-d-php-" + i);
         const dotM = document.getElementById("hud-m-php-" + i);
@@ -111,7 +112,7 @@ export function useHudSubscription() {
 
       const bossD = document.getElementById("hud-d-boss-bar");
       const bossM = document.getElementById("hud-m-boss-bar");
-      const bossWidth = (bossHP / 38) * 100 + "%";
+      const bossWidth = (bossHP / UNITS.BOSS_MAX_HP) * 100 + "%";
       if (bossD) {
         bossD.style.width = bossWidth;
         if (bossHP > 0) bossD.classList.add("led-red");

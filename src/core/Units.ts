@@ -1,4 +1,10 @@
 export const UNITS = {
+  // Core Gameplay Balancing Parameters
+  PLAYER_MAX_HP: 5,
+  BOSS_MAX_HP: 38,
+  BOSS_PHASE_2_HP_PCT: 0.70,
+  BOSS_PHASE_3_HP_PCT: 0.40,
+
   // World space coordinates (1 World Unit = 1 Pixel)
   WORLD_SIZE: 1250,
   WORLD_HALF_SIZE: 625,

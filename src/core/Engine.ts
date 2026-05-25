@@ -18,6 +18,7 @@ import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
+import { UNITS } from "@/core/Units";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -199,8 +200,8 @@ export class Engine {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
 
-    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
-    const nextBossHP = bHealth ? bHealth.currentHealth : 38;
+    const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;
+    const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;
     const nextHealingCharges = this.player.healingCharges;
     const nextDetermination = this.player.determinationCounter;
 

@@ -4,6 +4,7 @@ import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
+import { UNITS } from "@/core/Units";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -52,12 +53,15 @@ export class BattleDirector {
 
     const bHealth = boss.getComponent(HealthComponent);
     if (bHealth) {
-      if (bHealth.currentHealth < 38 && !this.hasTriggeredFirstHit) {
+      const phase2Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_2_HP_PCT);
+      const phase3Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_3_HP_PCT);
+
+      if (bHealth.currentHealth < UNITS.BOSS_MAX_HP && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
-      if (bHealth.currentHealth <= 27 && !this.hasTriggeredPhase2) {
+      if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
@@ -66,7 +70,7 @@ export class BattleDirector {
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
-      if (bHealth.currentHealth <= 15 && !this.hasTriggeredPhase3) {
+      if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
         eventBroker.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",

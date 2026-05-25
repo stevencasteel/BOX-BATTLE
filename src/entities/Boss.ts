@@ -4,6 +4,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -42,7 +43,7 @@ export class Boss extends BaseEntity {
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 38,
+      maxHealth: UNITS.BOSS_MAX_HP,
       invincibilityDuration: 0.25,
     });
 
