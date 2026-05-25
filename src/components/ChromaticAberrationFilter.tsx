@@ -5,12 +5,7 @@ export function ChromaticAberrationFilter() {
         <filter id="chromatic-aberration">
           <feOffset dx="6" dy="0" in="SourceGraphic" result="red" />
           <feOffset dx="-6" dy="0" in="SourceGraphic" result="blue" />
-          <feColorMatrix
-            type="matrix"
-            values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
-            in="red"
-            result="red-only"
-          />
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="red" result="red-only" />
           <feColorMatrix
             type="matrix"
             values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"

@@ -72,9 +72,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
             className="dialogue-speaker-label"
-            style={
-              isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }
-            }
+            style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}
           >
             BOSS
           </div>

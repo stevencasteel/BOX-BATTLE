@@ -48,10 +48,7 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    levelConfig: LevelConfig = defaultLevelConfig
-  ) {
+  constructor(canvas: HTMLCanvasElement, levelConfig: LevelConfig = defaultLevelConfig) {
     const context = canvas.getContext("2d");
     if (!context) {
       throw new Error("Could not construct 2D context.");

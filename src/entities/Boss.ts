@@ -72,9 +72,9 @@ export class Boss extends BaseEntity {
 
     // Standard Boss target rotation lean driven by movement velocity
     if (this.physics.isGrounded) {
-      this.targetRotation = Math.sign(this.velocity.x) * 0.10;
+      this.targetRotation = Math.sign(this.velocity.x) * 0.1;
     } else {
-      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
     }
 
     this.stateMachine.update(dt);

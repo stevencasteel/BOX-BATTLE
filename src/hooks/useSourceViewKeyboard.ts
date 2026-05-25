@@ -150,5 +150,17 @@ export function useSourceViewKeyboard({
 
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, expandedDirs, onBack, isMobile, mobileView, setActiveIndex, setExpandedDirs, setSelectedFile, setMobileView, handleDownload]);
+  }, [
+    visibleNodes,
+    activeIndex,
+    expandedDirs,
+    onBack,
+    isMobile,
+    mobileView,
+    setActiveIndex,
+    setExpandedDirs,
+    setSelectedFile,
+    setMobileView,
+    handleDownload,
+  ]);
 }

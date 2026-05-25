@@ -101,7 +101,8 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     const currentOnWall = this.physics.isOnWallLeft || this.physics.isOnWallRight;
     const isPressedAgainstWall = currentOnWall && moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal;
-    const isSliding = !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
+    const isSliding =
+      !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
 
     this.updateWallVisuals(isPressedAgainstWall, isSliding);
     this.updateAirTime(dt);
@@ -111,9 +112,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     // Lean-angle spring updates driven by movement directions
     let targetRotation = 0;
     if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
-      targetRotation = moveAxis * 0.12; 
+      targetRotation = moveAxis * 0.12;
     } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
-      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
     }
 
     this.targetRotation = targetRotation;
@@ -514,7 +515,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
+      ctx.arc(
+        localCenterX,
+        localCenterY,
+        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
+        0,
+        Math.PI * 2
+      );
       ctx.stroke();
     }
 

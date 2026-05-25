@@ -7,11 +7,7 @@ export function getKeyMap() {
 export function isConfirmKey(e: KeyboardEvent): boolean {
   const jumpKeys = getKeyMap()["JUMP"] || [];
   return (
-    e.key === "Enter" ||
-    e.key === " " ||
-    e.code === "Space" ||
-    jumpKeys.includes(e.code) ||
-    jumpKeys.includes(e.key)
+    e.key === "Enter" || e.key === " " || e.code === "Space" || jumpKeys.includes(e.code) || jumpKeys.includes(e.key)
   );
 }
 

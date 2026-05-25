@@ -379,11 +379,7 @@ export default function App() {
         </div>
 
         {!isFullHeightScreen && (
-          <DialogueConsole
-            playerDialogue={playerDialogue}
-            bossDialogue={bossDialogue}
-            isTouchDevice={isTouchDevice}
-          />
+          <DialogueConsole playerDialogue={playerDialogue} bossDialogue={bossDialogue} isTouchDevice={isTouchDevice} />
         )}
 
         {isPlayingScreen && isTouchDevice && <TouchOverlay />}

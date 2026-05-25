@@ -223,12 +223,14 @@ class InputProvider {
           duration = 400;
         }
 
-        gp.vibrationActuator.playEffect("dual-rumble", {
-          startDelay: 0,
-          duration: duration,
-          weakMagnitude: weak,
-          strongMagnitude: strong,
-        }).catch(() => {});
+        gp.vibrationActuator
+          .playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: duration,
+            weakMagnitude: weak,
+            strongMagnitude: strong,
+          })
+          .catch(() => {});
       }
     }
   }
