@@ -14,6 +14,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   private onRelease?: (proj: Projectile) => void;
 
   constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super("projectile", null as any);
     this.size = { width: 14, height: 14 };
   }

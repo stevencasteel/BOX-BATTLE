@@ -50,10 +50,13 @@ export interface IEntity {
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
   addComponent<T extends IEntityComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependencies?: Record<string, any>
   ): T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
   startDeathSequence?(): void;
   registerDamageDealt?(): void;

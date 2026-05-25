@@ -1,6 +1,6 @@
 export interface IPoolable {
   isActive: boolean;
-  activate(...args: any[]): void;
+  activate(...args: unknown[]): void;
   deactivate(): void;
 }
 
@@ -24,7 +24,7 @@ export class ObjectPool<T extends IPoolable> {
    * Retrieves an inactive instance from the pool, activates it,
    * and tracks it in the active list.
    */
-  public get(...args: any[]): T {
+  public get(...args: unknown[]): T {
     let instance: T;
 
     if (this.inactivePool.length > 0) {

@@ -16,12 +16,12 @@ export class World implements IWorld {
 
   public getProjectiles(): IProjectile[] {
     if (!this.projectilePool) return [];
-    return this.projectilePool.getActive() as any[] as IProjectile[];
+    return [...this.projectilePool.getActive()];
   }
 
   public releaseProjectile(proj: IProjectile): void {
     if (this.projectilePool) {
-      this.projectilePool.release(proj as any);
+      this.projectilePool.release(proj as Projectile);
     }
   }
 
@@ -47,8 +47,8 @@ export class World implements IWorld {
       damage,
       speed,
       lifespan,
-      (p: any) => this.releaseProjectile(p),
+      (p: Projectile) => this.releaseProjectile(p),
       this
-    ) as any as IProjectile;
+    );
   }
 }

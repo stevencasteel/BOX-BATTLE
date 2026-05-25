@@ -92,8 +92,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     "src/core": true,
   });
 
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [selectedFile, setSelectedFile] = useState<string>("");
+  const sortedPaths = useMemo(() => Object.keys(sourceCodeManifest).sort(), []);
+  const [selectedFile, setSelectedFile] = useState<string>(sortedPaths[0] || "");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
 
@@ -108,6 +108,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     if (!treeRoot) return [];
     return flattenVisible(treeRoot, expandedDirs);
   }, [treeRoot, expandedDirs]);
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -145,24 +148,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    const paths = Object.keys(sourceCodeManifest).sort();
-    if (paths.length > 0) {
-      setSelectedFile(paths[0]);
-    }
-  }, []);
-
-  useEffect(() => {
-    setActiveIndex((prev) => Math.min(prev, Math.max(0, visibleNodes.length - 1)));
-  }, [visibleNodes]);
-
-  useEffect(() => {
-    if (activeIndex < visibleNodes.length) {
+    if (clampedActiveIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [activeIndex, visibleNodes.length]);
+  }, [clampedActiveIndex, visibleNodes.length]);
 
   return (
     <div
@@ -203,7 +195,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === activeIndex;
+              const isActive = idx === clampedActiveIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 

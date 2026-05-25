@@ -196,6 +196,16 @@ export default function App() {
     rebindTarget,
     gameResult,
     isPlayingScreen,
+    navTo,
+    setMenuIndex,
+    reloadSaveSlots,
+    resetGameSession,
+    handleSlotAction,
+    toggleCopyMode,
+    toggleEraseMode,
+    resetActions,
+    handleVolumeChange,
+    resetSettings,
   ]);
 
   if (bootStage === BootStage.NONE) {

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { saveManager, SaveSlotData } from "@/core/SaveManager";
 import { soundSynth } from "@/core/SoundSynth";
 
 export function useSaveSlots() {
-  const [slots, setSlots] = useState<SaveSlotData[]>([]);
+  const [slots, setSlots] = useState<SaveSlotData[]>(() => saveManager.getSlots());
   const [copySourceIndex, setCopySourceIndex] = useState<number>(-1);
   const [isCopyMode, setIsCopyMode] = useState<boolean>(false);
   const [isEraseMode, setIsEraseMode] = useState<boolean>(false);
@@ -11,10 +11,6 @@ export function useSaveSlots() {
   const reloadSaveSlots = () => {
     setSlots(saveManager.getSlots());
   };
-
-  useEffect(() => {
-    reloadSaveSlots();
-  }, []);
 
   const handleSlotAction = (index: number, onPlay: () => void) => {
     if (isEraseMode) {

@@ -40,6 +40,7 @@ export type GameEventMap = {
 export type EventCallback<T> = (payload: T) => void;
 
 class EventBroker {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
 
   public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {

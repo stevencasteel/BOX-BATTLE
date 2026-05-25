@@ -177,7 +177,7 @@ export class Minion extends BaseEntity {
     super.update(dt);
   }
 
-  public fireSingleShotAtPlayer(player: any) {
+  public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);

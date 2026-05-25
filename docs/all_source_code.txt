@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 2:27:36 PM
+ [SYSTEM] Generated: 5/25/2026, 2:30:18 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -393,11 +393,11 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/immutability": "off",
-      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": "off",
     },
   },
@@ -1308,6 +1308,16 @@ export default function App() {
     rebindTarget,
     gameResult,
     isPlayingScreen,
+    navTo,
+    setMenuIndex,
+    reloadSaveSlots,
+    resetGameSession,
+    handleSlotAction,
+    toggleCopyMode,
+    toggleEraseMode,
+    resetActions,
+    handleVolumeChange,
+    resetSettings,
   ]);
 
   if (bootStage === BootStage.NONE) {
@@ -4134,8 +4144,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     "src/core": true,
   });
 
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [selectedFile, setSelectedFile] = useState<string>("");
+  const sortedPaths = useMemo(() => Object.keys(sourceCodeManifest).sort(), []);
+  const [selectedFile, setSelectedFile] = useState<string>(sortedPaths[0] || "");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
 
@@ -4150,6 +4160,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     if (!treeRoot) return [];
     return flattenVisible(treeRoot, expandedDirs);
   }, [treeRoot, expandedDirs]);
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -4187,24 +4200,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    const paths = Object.keys(sourceCodeManifest).sort();
-    if (paths.length > 0) {
-      setSelectedFile(paths[0]);
-    }
-  }, []);
-
-  useEffect(() => {
-    setActiveIndex((prev) => Math.min(prev, Math.max(0, visibleNodes.length - 1)));
-  }, [visibleNodes]);
-
-  useEffect(() => {
-    if (activeIndex < visibleNodes.length) {
+    if (clampedActiveIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [activeIndex, visibleNodes.length]);
+  }, [clampedActiveIndex, visibleNodes.length]);
 
   return (
     <div
@@ -4245,7 +4247,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === activeIndex;
+              const isActive = idx === clampedActiveIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
@@ -5943,10 +5945,13 @@ export interface IEntity {
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
   addComponent<T extends IEntityComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependencies?: Record<string, any>
   ): T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
   startDeathSequence?(): void;
   registerDamageDealt?(): void;
@@ -6016,7 +6021,7 @@ export interface IDamageRecorder {
 ────────────────────────────────────────────────────
 export interface IPoolable {
   isActive: boolean;
-  activate(...args: any[]): void;
+  activate(...args: unknown[]): void;
   deactivate(): void;
 }
 
@@ -6040,7 +6045,7 @@ export class ObjectPool<T extends IPoolable> {
    * Retrieves an inactive instance from the pool, activates it,
    * and tracks it in the active list.
    */
-  public get(...args: any[]): T {
+  public get(...args: unknown[]): T {
     let instance: T;
 
     if (this.inactivePool.length > 0) {
@@ -7052,12 +7057,12 @@ export class World implements IWorld {
 
   public getProjectiles(): IProjectile[] {
     if (!this.projectilePool) return [];
-    return this.projectilePool.getActive() as any[] as IProjectile[];
+    return [...this.projectilePool.getActive()];
   }
 
   public releaseProjectile(proj: IProjectile): void {
     if (this.projectilePool) {
-      this.projectilePool.release(proj as any);
+      this.projectilePool.release(proj as Projectile);
     }
   }
 
@@ -7083,9 +7088,9 @@ export class World implements IWorld {
       damage,
       speed,
       lifespan,
-      (p: any) => this.releaseProjectile(p),
+      (p: Projectile) => this.releaseProjectile(p),
       this
-    ) as any as IProjectile;
+    );
   }
 }
 
@@ -8648,6 +8653,7 @@ export type GameEventMap = {
 export type EventCallback<T> = (payload: T) => void;
 
 class EventBroker {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
 
   public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
@@ -9057,7 +9063,7 @@ export class BaseEntity implements IEntity {
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
-  private components = new Map<any, IEntityComponent>();
+  private components = new Map<string, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -9069,17 +9075,20 @@ export class BaseEntity implements IEntity {
   }
 
   public addComponent<T extends IEntityComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependencies?: Record<string, any>
   ): T {
     component.setup(this, dependencies);
-    this.components.set(componentClass, component);
+    this.components.set(componentClass.name, component);
     return component;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null {
-    const component = this.components.get(componentClass);
+    const component = this.components.get(componentClass.name);
     return (component as T) || null;
   }
 
@@ -9637,7 +9646,8 @@ export class BossDeadState extends BossState {
 import { BaseEntity } from "./BaseEntity";
 
 export interface IEntityComponent {
-  setup(owner: BaseEntity, dependencies?: any): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
   update?(dt: number): void;
   teardown?(): void;
 }
@@ -9825,7 +9835,7 @@ export class Minion extends BaseEntity {
     super.update(dt);
   }
 
-  public fireSingleShotAtPlayer(player: any) {
+  public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);
@@ -10613,6 +10623,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   private onRelease?: (proj: Projectile) => void;
 
   constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super("projectile", null as any);
     this.size = { width: 14, height: 14 };
   }
@@ -12009,6 +12020,7 @@ export function useFirstGesture(reloadSaveSlots: () => void) {
       window.removeEventListener("touchend", triggerOnFirstGesture);
       soundSynth.stopMusic();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 
@@ -12233,12 +12245,12 @@ export function useRebindCapture(
 
 ● ./src/hooks/useSaveSlots.ts
 ────────────────────────────────────────────────────
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { saveManager, SaveSlotData } from "@/core/SaveManager";
 import { soundSynth } from "@/core/SoundSynth";
 
 export function useSaveSlots() {
-  const [slots, setSlots] = useState<SaveSlotData[]>([]);
+  const [slots, setSlots] = useState<SaveSlotData[]>(() => saveManager.getSlots());
   const [copySourceIndex, setCopySourceIndex] = useState<number>(-1);
   const [isCopyMode, setIsCopyMode] = useState<boolean>(false);
   const [isEraseMode, setIsEraseMode] = useState<boolean>(false);
@@ -12246,10 +12258,6 @@ export function useSaveSlots() {
   const reloadSaveSlots = () => {
     setSlots(saveManager.getSlots());
   };
-
-  useEffect(() => {
-    reloadSaveSlots();
-  }, []);
 
   const handleSlotAction = (index: number, onPlay: () => void) => {
     if (isEraseMode) {
