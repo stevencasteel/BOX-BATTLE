@@ -3,6 +3,7 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
 import { IEntity } from "@/core/Interfaces";
+import { UNITS } from "@/core/Units";
 
 export interface IHealCapable extends IEntity {
   healingCharges: number;
@@ -14,7 +15,7 @@ export class HealComponent implements IEntityComponent {
   public isHealing: boolean = false;
   public healTimer: number = 0;
 
-  private readonly healDuration: number = 2.0;
+  private readonly healDuration: number = UNITS.HEAL_DURATION;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner as unknown as IHealCapable;

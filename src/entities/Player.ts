@@ -8,6 +8,7 @@ import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent, IHealCapable } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   public health!: HealthComponent;
@@ -18,9 +19,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   public fireballComponent!: FireballComponent;
   public healComponent!: HealComponent;
 
-  private readonly moveSpeed: number = 450;
-  private readonly jumpForce: number = 680;
-  private readonly wallSlideSpeed: number = 120;
+  private readonly moveSpeed: number = UNITS.PLAYER_MOVE_SPEED;
+  private readonly jumpForce: number = UNITS.PLAYER_JUMP_FORCE;
+  private readonly wallSlideSpeed: number = UNITS.PLAYER_WALL_SLIDE_SPEED;
 
   private coyoteTimer: number = 0;
   private jumpBufferTimer: number = 0;
@@ -441,7 +442,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         }
 
         eventBroker.publish("PLAYER_SPIKED", undefined);
-        const damaged = this.health.takeDamage(1);
+        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;

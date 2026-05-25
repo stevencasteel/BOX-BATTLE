@@ -27,8 +27,8 @@ export class Boss extends BaseEntity {
   public lungeState!: BossLungeState;
   public deadState!: BossDeadState;
 
-  public patrolSpeed: number = 200;
-  public lungeSpeed: number = 1200;
+  public patrolSpeed: number = UNITS.BOSS_PATROL_SPEED_BASE;
+  public lungeSpeed: number = UNITS.BOSS_LUNGE_SPEED_BASE;
 
   public facingDirection: number = -1;
   public currentPhase: number = 1;
@@ -141,13 +141,13 @@ export class Boss extends BaseEntity {
   private evaluatePhaseShifts() {
     const hpRatio = this.health.currentHealth / this.health.maxHealth;
 
-    if (hpRatio <= 0.4 && this.currentPhase < 3) {
+    if (hpRatio <= UNITS.BOSS_PHASE_3_HP_PCT && this.currentPhase < 3) {
       this.currentPhase = 3;
-      this.patrolSpeed = 350;
-      this.lungeSpeed = 1400;
-    } else if (hpRatio <= 0.7 && this.currentPhase < 2) {
+      this.patrolSpeed = UNITS.BOSS_PATROL_SPEED_BASE * 1.75;
+      this.lungeSpeed = UNITS.BOSS_LUNGE_SPEED_BASE * 1.15;
+    } else if (hpRatio <= UNITS.BOSS_PHASE_2_HP_PCT && this.currentPhase < 2) {
       this.currentPhase = 2;
-      this.patrolSpeed = 260;
+      this.patrolSpeed = UNITS.BOSS_PATROL_SPEED_BASE * 1.3;
     }
   }
 
@@ -181,7 +181,7 @@ export class Boss extends BaseEntity {
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = activeState === "LUNGE" || activeState === "MELEE" ? 2 : 1;
+        const damageAmount = activeState === "LUNGE" || activeState === "MELEE" ? UNITS.BOSS_LUNGE_DAMAGE : UNITS.ENEMY_CONTACT_DAMAGE;
         const damaged = playerHealth.takeDamage(damageAmount);
 
         if (damaged) {
@@ -208,7 +208,7 @@ export class Boss extends BaseEntity {
 
       if (isHit) {
         eventBroker.publish("PLAYER_SPIKED", undefined);
-        const damaged = this.health.takeDamage(1);
+        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;

@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
@@ -38,7 +39,7 @@ export class FireballComponent implements IEntityComponent {
     this.isCharging = false;
     eventBroker.publish("CHARGE_STOP", undefined);
 
-    if (this.chargeTimer >= 0.35) {
+    if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {
       this.fire(dirX, dirY, facingDirection);
     }
   }
@@ -54,8 +55,8 @@ export class FireballComponent implements IEntityComponent {
     const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
     const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
 
-    const isLvl2 = this.chargeTimer >= 1.12;
-    const damage = isLvl2 ? 3 : 1;
+    const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+    const damage = isLvl2 ? UNITS.PLAYER_FIREBALL_DAMAGE_LVL2 : UNITS.PLAYER_FIREBALL_DAMAGE_LVL1;
     const speed = isLvl2 ? 900 : 800;
     const lifespan = isLvl2 ? 3.0 : 2.0;
 

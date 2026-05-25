@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export interface GhostFrame {
   x: number;
@@ -20,7 +21,7 @@ export class DashComponent implements IEntityComponent {
   public ghosts: GhostFrame[] = [];
   public ghostSpawnTimer: number = 0;
 
-  private readonly dashSpeed: number = 1400;
+  private readonly dashSpeed: number = UNITS.PLAYER_DASH_SPEED;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner;
@@ -61,8 +62,8 @@ export class DashComponent implements IEntityComponent {
 
   public triggerDash(directionX: number, directionY: number): void {
     this.isDashing = true;
-    this.dashTimer = 0.15;
-    this.dashCooldown = 0.5;
+    this.dashTimer = UNITS.DASH_DURATION;
+    this.dashCooldown = UNITS.DASH_COOLDOWN;
     this.canDash = false;
     this.dashDirectionX = directionX;
     this.dashDirectionY = directionY;

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 6:48:41 PM
+ [SYSTEM] Generated: 5/25/2026, 6:52:35 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -7366,6 +7366,32 @@ export const UNITS = {
   BOSS_PHASE_2_HP_PCT: 0.70,
   BOSS_PHASE_3_HP_PCT: 0.40,
 
+  // Player Kinematics
+  PLAYER_MOVE_SPEED: 450,
+  PLAYER_JUMP_FORCE: 680,
+  PLAYER_WALL_SLIDE_SPEED: 120,
+  PLAYER_DASH_SPEED: 1400,
+
+  // Boss Kinematics
+  BOSS_PATROL_SPEED_BASE: 200,
+  BOSS_LUNGE_SPEED_BASE: 1200,
+
+  // Combat Damage
+  PLAYER_MELEE_DAMAGE_BASE: 1,
+  PLAYER_MELEE_DAMAGE_CLOSE: 5,
+  PLAYER_FIREBALL_DAMAGE_LVL1: 1,
+  PLAYER_FIREBALL_DAMAGE_LVL2: 3,
+  HAZARD_SPIKE_DAMAGE: 1,
+  ENEMY_CONTACT_DAMAGE: 1,
+  BOSS_LUNGE_DAMAGE: 2,
+
+  // Skill Cooldowns & Timings
+  DASH_DURATION: 0.15,
+  DASH_COOLDOWN: 0.50,
+  HEAL_DURATION: 2.0,
+  CHARGE_LVL1_TIME: 0.35,
+  CHARGE_LVL2_TIME: 1.12,
+
   // World space coordinates (1 World Unit = 1 Pixel)
   WORLD_SIZE: 1250,
   WORLD_HALF_SIZE: 625,
@@ -9686,8 +9712,8 @@ export class Boss extends BaseEntity {
   public lungeState!: BossLungeState;
   public deadState!: BossDeadState;
 
-  public patrolSpeed: number = 200;
-  public lungeSpeed: number = 1200;
+  public patrolSpeed: number = UNITS.BOSS_PATROL_SPEED_BASE;
+  public lungeSpeed: number = UNITS.BOSS_LUNGE_SPEED_BASE;
 
   public facingDirection: number = -1;
   public currentPhase: number = 1;
@@ -9800,13 +9826,13 @@ export class Boss extends BaseEntity {
   private evaluatePhaseShifts() {
     const hpRatio = this.health.currentHealth / this.health.maxHealth;
 
-    if (hpRatio <= 0.4 && this.currentPhase < 3) {
+    if (hpRatio <= UNITS.BOSS_PHASE_3_HP_PCT && this.currentPhase < 3) {
       this.currentPhase = 3;
-      this.patrolSpeed = 350;
-      this.lungeSpeed = 1400;
-    } else if (hpRatio <= 0.7 && this.currentPhase < 2) {
+      this.patrolSpeed = UNITS.BOSS_PATROL_SPEED_BASE * 1.75;
+      this.lungeSpeed = UNITS.BOSS_LUNGE_SPEED_BASE * 1.15;
+    } else if (hpRatio <= UNITS.BOSS_PHASE_2_HP_PCT && this.currentPhase < 2) {
       this.currentPhase = 2;
-      this.patrolSpeed = 260;
+      this.patrolSpeed = UNITS.BOSS_PATROL_SPEED_BASE * 1.3;
     }
   }
 
@@ -9840,7 +9866,7 @@ export class Boss extends BaseEntity {
     if (isColliding) {
       const playerHealth = player.getComponent(HealthComponent);
       if (playerHealth) {
-        const damageAmount = activeState === "LUNGE" || activeState === "MELEE" ? 2 : 1;
+        const damageAmount = activeState === "LUNGE" || activeState === "MELEE" ? UNITS.BOSS_LUNGE_DAMAGE : UNITS.ENEMY_CONTACT_DAMAGE;
         const damaged = playerHealth.takeDamage(damageAmount);
 
         if (damaged) {
@@ -9867,7 +9893,7 @@ export class Boss extends BaseEntity {
 
       if (isHit) {
         eventBroker.publish("PLAYER_SPIKED", undefined);
-        const damaged = this.health.takeDamage(1);
+        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
@@ -10708,6 +10734,7 @@ import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent, IHealCapable } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   public health!: HealthComponent;
@@ -10718,9 +10745,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   public fireballComponent!: FireballComponent;
   public healComponent!: HealComponent;
 
-  private readonly moveSpeed: number = 450;
-  private readonly jumpForce: number = 680;
-  private readonly wallSlideSpeed: number = 120;
+  private readonly moveSpeed: number = UNITS.PLAYER_MOVE_SPEED;
+  private readonly jumpForce: number = UNITS.PLAYER_JUMP_FORCE;
+  private readonly wallSlideSpeed: number = UNITS.PLAYER_WALL_SLIDE_SPEED;
 
   private coyoteTimer: number = 0;
   private jumpBufferTimer: number = 0;
@@ -11141,7 +11168,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         }
 
         eventBroker.publish("PLAYER_SPIKED", undefined);
-        const damaged = this.health.takeDamage(1);
+        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
@@ -11617,6 +11644,7 @@ export class Spawner {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export interface GhostFrame {
   x: number;
@@ -11636,7 +11664,7 @@ export class DashComponent implements IEntityComponent {
   public ghosts: GhostFrame[] = [];
   public ghostSpawnTimer: number = 0;
 
-  private readonly dashSpeed: number = 1400;
+  private readonly dashSpeed: number = UNITS.PLAYER_DASH_SPEED;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner;
@@ -11677,8 +11705,8 @@ export class DashComponent implements IEntityComponent {
 
   public triggerDash(directionX: number, directionY: number): void {
     this.isDashing = true;
-    this.dashTimer = 0.15;
-    this.dashCooldown = 0.5;
+    this.dashTimer = UNITS.DASH_DURATION;
+    this.dashCooldown = UNITS.DASH_COOLDOWN;
     this.canDash = false;
     this.dashDirectionX = directionX;
     this.dashDirectionY = directionY;
@@ -11701,6 +11729,7 @@ export class DashComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 
 export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
@@ -11738,7 +11767,7 @@ export class FireballComponent implements IEntityComponent {
     this.isCharging = false;
     eventBroker.publish("CHARGE_STOP", undefined);
 
-    if (this.chargeTimer >= 0.35) {
+    if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {
       this.fire(dirX, dirY, facingDirection);
     }
   }
@@ -11754,8 +11783,8 @@ export class FireballComponent implements IEntityComponent {
     const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
     const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
 
-    const isLvl2 = this.chargeTimer >= 1.12;
-    const damage = isLvl2 ? 3 : 1;
+    const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+    const damage = isLvl2 ? UNITS.PLAYER_FIREBALL_DAMAGE_LVL2 : UNITS.PLAYER_FIREBALL_DAMAGE_LVL1;
     const speed = isLvl2 ? 900 : 800;
     const lifespan = isLvl2 ? 3.0 : 2.0;
 
@@ -11792,6 +11821,7 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
 import { IEntity } from "@/core/Interfaces";
+import { UNITS } from "@/core/Units";
 
 export interface IHealCapable extends IEntity {
   healingCharges: number;
@@ -11803,7 +11833,7 @@ export class HealComponent implements IEntityComponent {
   public isHealing: boolean = false;
   public healTimer: number = 0;
 
-  private readonly healDuration: number = 2.0;
+  private readonly healDuration: number = UNITS.HEAL_DURATION;
 
   public setup(owner: BaseEntity): void {
     this.owner = owner as unknown as IHealCapable;
@@ -12133,7 +12163,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
-          const damageAmount = isCloseRange ? 5 : 1;
+          const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
           const registeredDamage = health.takeDamage(damageAmount);
           if (registeredDamage) {
@@ -12234,7 +12264,7 @@ export class MeleeComponent implements IEntityComponent {
       if (isColliding) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          health.takeDamage(1);
+          health.takeDamage(UNITS.PLAYER_MELEE_DAMAGE_BASE);
           this.owner.registerDamageDealt?.();
         }
 

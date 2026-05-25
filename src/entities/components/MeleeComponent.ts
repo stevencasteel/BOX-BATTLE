@@ -137,7 +137,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
-          const damageAmount = isCloseRange ? 5 : 1;
+          const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
           const registeredDamage = health.takeDamage(damageAmount);
           if (registeredDamage) {
@@ -238,7 +238,7 @@ export class MeleeComponent implements IEntityComponent {
       if (isColliding) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          health.takeDamage(1);
+          health.takeDamage(UNITS.PLAYER_MELEE_DAMAGE_BASE);
           this.owner.registerDamageDealt?.();
         }
 
