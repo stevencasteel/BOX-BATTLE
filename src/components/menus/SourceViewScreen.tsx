@@ -1,16 +1,17 @@
 import "./SourceViewScreen.css";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
 import { sourceCodeManifest } from "@/core/sourceCodeManifest";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
+import { SourceViewFooter } from "./SourceViewFooter";
 
 interface SourceViewScreenProps {
   onBack: () => void;
 }
 
-interface FileNode {
+export interface FileNode {
   name: string;
   path: string;
   isDir: boolean;
@@ -118,6 +119,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     document.body.removeChild(link);
   };
 
+  useSourceViewKeyboard({
+    visibleNodes,
+    activeIndex,
+    setActiveIndex,
+    expandedDirs,
+    setExpandedDirs,
+    setSelectedFile,
+    onBack,
+    isMobile,
+    mobileView,
+    setMobileView,
+    handleDownload,
+  });
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkRes = () => {
@@ -139,162 +154,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   useEffect(() => {
     setActiveIndex((prev) => Math.min(prev, Math.max(0, visibleNodes.length - 1)));
   }, [visibleNodes]);
-
-  useEffect(() => {
-    const handleKeys = (e: KeyboardEvent) => {
-      if (visibleNodes.length === 0) return;
-
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
-      if (isMobile && mobileView === "CODE") {
-        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
-          e.preventDefault();
-          soundSynth.playSelectTick();
-          setMobileView("TOC");
-          return;
-        }
-      }
-
-      const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
-
-      if (e.key === "ArrowDown" || e.key === "KeyS") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        setActiveIndex((prev) => {
-          if (prev >= visibleNodes.length) {
-            if (prev === visibleNodes.length + 2) {
-              return 0;
-            }
-            return prev + 1;
-          }
-          if (prev === visibleNodes.length - 1) {
-            return visibleNodes.length;
-          }
-          return prev + 1;
-        });
-      } else if (e.key === "ArrowUp" || e.key === "KeyW") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        setActiveIndex((prev) => {
-          if (prev >= visibleNodes.length) {
-            if (prev === visibleNodes.length) {
-              return visibleNodes.length - 1;
-            }
-            return prev - 1;
-          }
-          if (prev === 0) {
-            return visibleNodes.length + 2;
-          }
-          return prev - 1;
-        });
-      } else if (e.key === "ArrowRight" || e.key === "KeyD") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        if (activeIndex < visibleNodes.length) {
-          if (node.isDir && !expandedDirs[node.path]) {
-            setExpandedDirs((prev) => ({ ...prev, [node.path]: true }));
-          }
-        } else {
-          setActiveIndex((prev) => {
-            if (prev === visibleNodes.length + 2) {
-              return 0;
-            }
-            return prev + 1;
-          });
-        }
-      } else if (e.key === "ArrowLeft" || e.key === "KeyA") {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        if (activeIndex < visibleNodes.length) {
-          if (node.isDir && expandedDirs[node.path]) {
-            setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
-          } else {
-            const parts = node.path.split("/");
-            if (parts.length > 1) {
-              const parentPath = parts.slice(0, -1).join("/");
-              const parentIdx = visibleNodes.findIndex((n) => n.isDir && n.path === parentPath);
-              if (parentIdx !== -1) {
-                setActiveIndex(parentIdx);
-                return;
-              }
-            }
-            setActiveIndex(visibleNodes.length + 2);
-          }
-        } else {
-          setActiveIndex((prev) => {
-            if (prev === visibleNodes.length) {
-              return visibleNodes.length - 1;
-            }
-            return prev - 1;
-          });
-        }
-      } else if (isConfirmKey) {
-        e.preventDefault();
-        if (activeIndex < visibleNodes.length) {
-          soundSynth.playHitConfirm();
-          if (node.isDir) {
-            setExpandedDirs((prev) => ({
-              ...prev,
-              [node.path]: !prev[node.path],
-            }));
-          } else {
-            setSelectedFile(node.path);
-            if (isMobile) {
-              setMobileView("CODE");
-            }
-          }
-        } else if (activeIndex === visibleNodes.length) {
-          soundSynth.playHitConfirm();
-          window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank");
-        } else if (activeIndex === visibleNodes.length + 1) {
-          handleDownload();
-        } else if (activeIndex === visibleNodes.length + 2) {
-          soundSynth.playErrorTick();
-          onBack();
-        }
-      } else if (isBackKey) {
-        e.preventDefault();
-        if (activeIndex < visibleNodes.length) {
-          if (node.isDir && expandedDirs[node.path]) {
-            soundSynth.playErrorTick();
-            setExpandedDirs((prev) => ({ ...prev, [node.path]: false }));
-          } else {
-            soundSynth.playSelectTick();
-            setActiveIndex(visibleNodes.length + 2);
-          }
-        } else {
-          if (activeIndex === visibleNodes.length + 2) {
-            soundSynth.playErrorTick();
-            onBack();
-          } else {
-            soundSynth.playSelectTick();
-            setActiveIndex(visibleNodes.length + 2);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeys);
-    return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, expandedDirs, onBack, isMobile, mobileView]);
 
   useEffect(() => {
     if (activeIndex < visibleNodes.length) {
@@ -492,207 +351,12 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         )}
       </div>
 
-      {!isMobile ? (
-        <div
-          className="source-view-footer"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "16px",
-            width: "100%",
-            boxSizing: "border-box",
-            marginTop: "12px",
-            flexShrink: 0,
-          }}
-        >
-          <a
-            href="https://github.com/stevencasteel/BOX-BATTLE"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`neo-btn-large ${activeIndex === visibleNodes.length ? "neo-btn-large-focused" : ""}`}
-            style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg
-                  viewBox="0 0 24 24"
-                  width="18"
-                  height="18"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                </svg>
-                GITHUB REPO
-              </span>
-              <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
-            </div>
-            {activeIndex === visibleNodes.length && <span className="cursor-arrow-large">▶</span>}
-          </a>
-
-          <button
-            onClick={handleDownload}
-            className={`neo-btn-large ${activeIndex === visibleNodes.length + 1 ? "neo-btn-large-focused" : ""}`}
-            style={{ flex: 1, boxSizing: "border-box" }}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg
-                  viewBox="0 0 24 24"
-                  width="18"
-                  height="18"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                DOWNLOAD SOURCE
-              </span>
-              <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
-            </div>
-            {activeIndex === visibleNodes.length + 1 && <span className="cursor-arrow-large">▶</span>}
-          </button>
-
-          <button
-            onClick={onBack}
-            className={`neo-btn-large ${activeIndex === visibleNodes.length + 2 ? "neo-btn-large-focused" : ""}`}
-            style={{ flex: 1, boxSizing: "border-box" }}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg
-                  viewBox="0 0 24 24"
-                  width="18"
-                  height="18"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12" />
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                BACK TO MENU
-              </span>
-              <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
-            </div>
-            {activeIndex === visibleNodes.length + 2 && <span className="cursor-arrow-large">▶</span>}
-          </button>
-        </div>
-      ) : (
-        <div
-          className="source-view-footer"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "8px",
-            width: "100%",
-            justifyContent: "space-between",
-            boxSizing: "border-box",
-            marginTop: "12px",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ flex: 1, display: "flex" }}>
-            <a
-              href="https://github.com/stevencasteel/BOX-BATTLE"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="neo-btn"
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "12px",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxSizing: "border-box",
-              }}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-              </svg>
-            </a>
-          </div>
-
-          <div style={{ flex: 1, display: "flex" }}>
-            <button
-              onClick={handleDownload}
-              className="neo-btn"
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "12px",
-                boxSizing: "border-box",
-              }}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
-          </div>
-
-          <div style={{ flex: 1, display: "flex" }}>
-            <button
-              onClick={onBack}
-              className="neo-btn"
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: "12px",
-                boxSizing: "border-box",
-              }}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+      <SourceViewFooter
+        onBack={onBack}
+        isMobile={isMobile}
+        activeIndex={activeIndex}
+        visibleNodesLength={visibleNodes.length}
+      />
     </div>
   );
 }
