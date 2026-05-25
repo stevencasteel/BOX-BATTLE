@@ -184,18 +184,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(0);
                     }}
                     className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 0
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     RETRY
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 0 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>
@@ -207,18 +227,38 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       setMenuIndex(1);
                     }}
                     className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-                    style={{ flex: 1, padding: "16px 20px", fontSize: "14px", borderRadius: "10px" }}
+                    style={{
+                      flex: 1,
+                      padding: "16px 20px",
+                      fontSize: "14px",
+                      borderRadius: "10px",
+                      ...(gameResult === "GAMEOVER" && menuIndex === 1
+                        ? {
+                            color: "var(--signal-red)",
+                            borderColor: "rgba(239, 68, 68, 0.25)",
+                            textShadow: "0 0 8px var(--signal-red-glow)",
+                          }
+                        : {}),
+                    }}
                   >
                     <span
                       className="cursor-arrow"
-                      style={{ marginRight: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginRight: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ▶
                     </span>
                     MENU
                     <span
                       className="cursor-arrow"
-                      style={{ marginLeft: "6px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
+                      style={{
+                        marginLeft: "6px",
+                        visibility: menuIndex === 1 ? "visible" : "hidden",
+                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                      }}
                     >
                       ◀
                     </span>

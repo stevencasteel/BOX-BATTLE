@@ -110,18 +110,26 @@ class SettingsManager {
   }
 
   public getKeyMap(): KeyMap {
-    if (this.currentPreset === "DEFAULT_1" || this.currentPreset === "DEFAULT_2") {
-      return {
-        MOVE_LEFT: [...new Set([...this.presetDefault1.MOVE_LEFT, ...this.presetDefault2.MOVE_LEFT])],
-        MOVE_RIGHT: [...new Set([...this.presetDefault1.MOVE_RIGHT, ...this.presetDefault2.MOVE_RIGHT])],
-        MOVE_UP: [...new Set([...this.presetDefault1.MOVE_UP, ...this.presetDefault2.MOVE_UP])],
-        MOVE_DOWN: [...new Set([...this.presetDefault1.MOVE_DOWN, ...this.presetDefault2.MOVE_DOWN])],
-        JUMP: [...new Set([...this.presetDefault1.JUMP, ...this.presetDefault2.JUMP])],
-        ATTACK: [...new Set([...this.presetDefault1.ATTACK, ...this.presetDefault2.ATTACK])],
-        DASH: [...new Set([...this.presetDefault1.DASH, ...this.presetDefault2.DASH])],
-      };
+    const lead = this.currentPreset === "DEFAULT_2" ? this.presetDefault2 : this.presetDefault1;
+    const follow = this.currentPreset === "DEFAULT_2" ? this.presetDefault1 : this.presetDefault2;
+
+    const merged: KeyMap = {
+      MOVE_LEFT: [...new Set([...lead.MOVE_LEFT, ...follow.MOVE_LEFT])],
+      MOVE_RIGHT: [...new Set([...lead.MOVE_RIGHT, ...follow.MOVE_RIGHT])],
+      MOVE_UP: [...new Set([...lead.MOVE_UP, ...follow.MOVE_UP])],
+      MOVE_DOWN: [...new Set([...lead.MOVE_DOWN, ...follow.MOVE_DOWN])],
+      JUMP: [...new Set([...lead.JUMP, ...follow.JUMP])],
+      ATTACK: [...new Set([...lead.ATTACK, ...follow.ATTACK])],
+      DASH: [...new Set([...lead.DASH, ...follow.DASH])],
+    };
+
+    if (this.currentPreset === "CUSTOM") {
+      for (const action of Object.keys(merged) as Action[]) {
+        merged[action] = [...new Set([...(this.customKeyMap[action] || []), ...merged[action]])];
+      }
     }
-    return this.customKeyMap;
+
+    return merged;
   }
 
   public remapKey(action: Action, index: number, newCode: string) {

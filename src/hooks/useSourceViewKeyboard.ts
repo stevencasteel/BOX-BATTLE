@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { FileNode } from "@/components/menus/SourceViewScreen";
 
 interface UseSourceViewKeyboardOptions {
@@ -34,28 +34,8 @@ export function useSourceViewKeyboard({
     const handleKeys = (e: KeyboardEvent) => {
       if (visibleNodes.length === 0) return;
 
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       if (isMobile && mobileView === "CODE") {
-        if (isBackKey || e.key === "ArrowLeft" || e.key === "KeyA") {
+        if (isBackKey(e) || e.code === "ArrowLeft" || e.code === "KeyA") {
           e.preventDefault();
           soundSynth.playSelectTick();
           setMobileView("TOC");
@@ -65,7 +45,7 @@ export function useSourceViewKeyboard({
 
       const node = visibleNodes[activeIndex < visibleNodes.length ? activeIndex : 0];
 
-      if (e.key === "ArrowDown" || e.key === "KeyS") {
+      if (e.code === "ArrowDown" || e.code === "KeyS") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -76,7 +56,7 @@ export function useSourceViewKeyboard({
           if (prev === visibleNodes.length - 1) return visibleNodes.length;
           return prev + 1;
         });
-      } else if (e.key === "ArrowUp" || e.key === "KeyW") {
+      } else if (e.code === "ArrowUp" || e.code === "KeyW") {
         e.preventDefault();
         soundSynth.playSelectTick();
         setActiveIndex((prev) => {
@@ -87,7 +67,7 @@ export function useSourceViewKeyboard({
           if (prev === 0) return visibleNodes.length + 2;
           return prev - 1;
         });
-      } else if (e.key === "ArrowRight" || e.key === "KeyD") {
+      } else if (e.code === "ArrowRight" || e.code === "KeyD") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -100,7 +80,7 @@ export function useSourceViewKeyboard({
             return prev + 1;
           });
         }
-      } else if (e.key === "ArrowLeft" || e.key === "KeyA") {
+      } else if (e.code === "ArrowLeft" || e.code === "KeyA") {
         e.preventDefault();
         soundSynth.playSelectTick();
         if (activeIndex < visibleNodes.length) {
@@ -124,7 +104,7 @@ export function useSourceViewKeyboard({
             return prev - 1;
           });
         }
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           soundSynth.playHitConfirm();
@@ -146,7 +126,7 @@ export function useSourceViewKeyboard({
           soundSynth.playErrorTick();
           onBack();
         }
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (activeIndex < visibleNodes.length) {
           if (node.isDir && expandedDirs[node.path]) {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { settingsManager } from "@/core/SettingsManager";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
@@ -116,40 +116,19 @@ export default function App() {
 
       const maxIndex = config.getMaxIndex(context);
       const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
-
-      const keyMap = settingsManager.getKeyMap();
-      const jumpKeys = keyMap["JUMP"] || [];
-      const attackKeys = keyMap["ATTACK"] || [];
-      const dashKeys = keyMap["DASH"] || [];
-
-      const isConfirmKey =
-        e.key === "Enter" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        jumpKeys.includes(e.code) ||
-        jumpKeys.includes(e.key);
-
-      const isBackKey =
-        e.key === "Escape" ||
-        e.key === "Backspace" ||
-        attackKeys.includes(e.code) ||
-        attackKeys.includes(e.key) ||
-        dashKeys.includes(e.code) ||
-        dashKeys.includes(e.key);
-
       const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
 
       const isMoveForward =
         e.key === "ArrowDown" ||
-        e.key === "KeyS" ||
-        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.key === "KeyD"));
+        e.code === "KeyS" ||
+        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD"));
 
       const isMoveBackward =
         e.key === "ArrowUp" ||
-        e.key === "KeyW" ||
-        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.key === "KeyA"));
+        e.code === "KeyW" ||
+        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA"));
 
       if (isMoveForward) {
         e.preventDefault();
@@ -159,10 +138,10 @@ export default function App() {
         e.preventDefault();
         soundSynth.playSelectTick();
         setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (isConfirmKey) {
+      } else if (isConfirmKey(e)) {
         e.preventDefault();
         config.onSelect(context);
-      } else if (isBackKey) {
+      } else if (isBackKey(e)) {
         e.preventDefault();
         if (config.onBack) {
           config.onBack(context);
@@ -171,11 +150,11 @@ export default function App() {
 
       if (
         isSoundSliderZone &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "KeyA" || e.key === "KeyD")
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD")
       ) {
         if (config.onHorizontal) {
           e.preventDefault();
-          const direction = e.key === "ArrowRight" || e.key === "KeyD" ? 1 : -1;
+          const direction = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : -1;
           config.onHorizontal(direction, context);
         }
       }
