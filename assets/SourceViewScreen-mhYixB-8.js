@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-Ch3GTa8M.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-B89raw7G.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8691,6 +8691,9 @@ export class Boss extends BaseEntity {
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
+          // Springy, elastic visual stretch launcher
+          this.visualScale = { x: 0.5, y: 1.5 };
+          this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
         break;
       }
@@ -9221,6 +9224,9 @@ export class Minion extends BaseEntity {
             this.velocity.y = -550;
             this.physics.isGrounded = false;
           }
+          // Springy, elastic visual stretch launcher
+          this.visualScale = { x: 0.5, y: 1.5 };
+          this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
         break;
       }
@@ -9547,12 +9553,15 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.updateGravity(isSliding);
     this.handleHurtTimer(dt);
 
-    // Lean-angle spring updates driven by movement directions (DRY spring update solved by BaseEntity)
+    // Lean-angle spring updates driven by movement directions
+    let targetRotation = 0;
     if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
-      this.targetRotation = moveAxis * 0.12; 
+      targetRotation = moveAxis * 0.12; 
     } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
-      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
     }
+
+    this.targetRotation = targetRotation;
 
     if (this.hurtTimer > 0) {
       super.update(dt);
@@ -9877,6 +9886,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
+          // Springy, elastic visual stretch launcher
+          this.visualScale = { x: 0.5, y: 1.5 };
+          this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
         break;
       }
