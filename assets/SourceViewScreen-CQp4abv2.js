@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-BZPdkON9.js";var s=e(n(),1),c={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-DocGpNKn.js";var s=e(n(),1),c={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -4523,8 +4523,6 @@ export class Engine {
 
     this.projectState();
 
-    window.addEventListener("keydown", this.handlePauseKey);
-
     this.particleSystem = new ParticleSystem();
     this.battleDirector = new BattleDirector(() => {});
 
@@ -4652,20 +4650,14 @@ export class Engine {
     }
   }
 
-  private handlePauseKey = (e: KeyboardEvent) => {
-    if (e.code === "KeyP") {
-      this.isPaused = !this.isPaused;
-      if (this.isPaused) {
-        soundSynth.playErrorTick();
-        soundSynth.clearAllSlides();
-      } else {
-        soundSynth.playHitConfirm();
-      }
-    }
-  };
-
   private update(dt: number) {
     if (this.isPaused) {
+      inputProvider.update();
+      if (inputProvider.isPauseJustPressed()) {
+        this.isPaused = false;
+        soundSynth.playHitConfirm();
+      }
+      inputProvider.postUpdate();
       return;
     }
     this.accumulator += dt;
@@ -4736,6 +4728,13 @@ export class Engine {
 
   private fixedUpdate(dt: number) {
     inputProvider.update();
+    if (inputProvider.isPauseJustPressed()) {
+      this.isPaused = true;
+      soundSynth.playErrorTick();
+      soundSynth.clearAllSlides();
+      inputProvider.postUpdate();
+      return;
+    }
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;
@@ -4798,7 +4797,6 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.particleSystem.cleanup();
-    window.removeEventListener("keydown", this.handlePauseKey);
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
