@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-sK94vd26.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-BBe7isUE.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -964,7 +964,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         isTouchDevice
           ? {
               height: "54px",
-              marginTop: "0px",
+              marginTop: "4px",
               gap: "4px",
               padding: "0",
               flexShrink: 0,
@@ -989,8 +989,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
           className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""}\`}
           style={{
             background: playerDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "64px",
-            height: isTouchDevice ? "32px" : "64px",
+            width: isTouchDevice ? "32px" : "68px",
+            height: isTouchDevice ? "32px" : "68px",
           }}
         />
         <div className="dialogue-text-container">
@@ -1039,8 +1039,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
           className={\`portrait-square led-red \${bossDialogue.isTyping ? "portrait-rumble" : ""}\`}
           style={{
             background: bossDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "64px",
-            height: isTouchDevice ? "32px" : "64px",
+            width: isTouchDevice ? "32px" : "68px",
+            height: isTouchDevice ? "32px" : "68px",
           }}
         />
       </div>
@@ -1120,12 +1120,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin;
-  min-height: 50px;
-  max-height: 90px;
+  height: 8.5vmin; /* Compact sizing returned to original standards */
+  min-height: 64px;
+  max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: auto;
+  margin-top: 1vmin; /* Perfect 1vmin gap symmetry matching the top panel! */
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -1134,7 +1134,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 .dialogue-box-right {
   flex: 1;
   border-radius: 1.5vmin;
-  padding: 1vmin 1.8vmin;
+  padding: 1vmin 1.5vmin;
   display: flex;
   align-items: center;
   gap: 1.2vmin;
@@ -1174,12 +1174,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .portrait-square {
-  width: 6vmin;
-  height: 6vmin;
-  min-width: 32px;
-  min-height: 32px;
-  max-width: 50px;
-  max-height: 50px;
+  width: 6.5vmin; /* Sized down proportionally */
+  height: 6.5vmin;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 72px; /* Limits adjusted to match the compact 68px desktop layout */
+  max-height: 72px;
   border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
@@ -1194,14 +1194,14 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .dialogue-speaker-label {
-  font-size: clamp(9px, 1.2vmin, 13px);
+  font-size: clamp(10px, 1.25vmin, 13px);
   font-weight: bold;
   letter-spacing: 0.15em;
   color: var(--signal-green);
 }
 
 .dialogue-body-text {
-  font-size: clamp(10px, 1.4vmin, 14px);
+  font-size: clamp(11px, 1.5vmin, 15px);
   line-height: 1.35;
   color: #eaeaea;
   word-wrap: break-word;
