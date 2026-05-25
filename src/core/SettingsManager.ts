@@ -110,8 +110,17 @@ class SettingsManager {
   }
 
   public getKeyMap(): KeyMap {
-    if (this.currentPreset === "DEFAULT_1") return this.presetDefault1;
-    if (this.currentPreset === "DEFAULT_2") return this.presetDefault2;
+    if (this.currentPreset === "DEFAULT_1" || this.currentPreset === "DEFAULT_2") {
+      return {
+        MOVE_LEFT: [...new Set([...this.presetDefault1.MOVE_LEFT, ...this.presetDefault2.MOVE_LEFT])],
+        MOVE_RIGHT: [...new Set([...this.presetDefault1.MOVE_RIGHT, ...this.presetDefault2.MOVE_RIGHT])],
+        MOVE_UP: [...new Set([...this.presetDefault1.MOVE_UP, ...this.presetDefault2.MOVE_UP])],
+        MOVE_DOWN: [...new Set([...this.presetDefault1.MOVE_DOWN, ...this.presetDefault2.MOVE_DOWN])],
+        JUMP: [...new Set([...this.presetDefault1.JUMP, ...this.presetDefault2.JUMP])],
+        ATTACK: [...new Set([...this.presetDefault1.ATTACK, ...this.presetDefault2.ATTACK])],
+        DASH: [...new Set([...this.presetDefault1.DASH, ...this.presetDefault2.DASH])],
+      };
+    }
     return this.customKeyMap;
   }
 
