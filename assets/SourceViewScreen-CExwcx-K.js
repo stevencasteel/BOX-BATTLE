@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-DeziBc3H.js";var s=e(n(),1),c={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-BZPdkON9.js";var s=e(n(),1),c={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -176,11 +176,11 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/immutability": "off",
-      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": "off",
     },
   },
@@ -655,6 +655,16 @@ export default function App() {
     rebindTarget,
     gameResult,
     isPlayingScreen,
+    navTo,
+    setMenuIndex,
+    reloadSaveSlots,
+    resetGameSession,
+    handleSlotAction,
+    toggleCopyMode,
+    toggleEraseMode,
+    resetActions,
+    handleVolumeChange,
+    resetSettings,
   ]);
 
   if (bootStage === BootStage.NONE) {
@@ -3386,8 +3396,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     "src/core": true,
   });
 
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [selectedFile, setSelectedFile] = useState<string>("");
+  const sortedPaths = useMemo(() => Object.keys(sourceCodeManifest).sort(), []);
+  const [selectedFile, setSelectedFile] = useState<string>(sortedPaths[0] || "");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
 
@@ -3402,6 +3412,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     if (!treeRoot) return [];
     return flattenVisible(treeRoot, expandedDirs);
   }, [treeRoot, expandedDirs]);
+
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -3439,24 +3452,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    const paths = Object.keys(sourceCodeManifest).sort();
-    if (paths.length > 0) {
-      setSelectedFile(paths[0]);
-    }
-  }, []);
-
-  useEffect(() => {
-    setActiveIndex((prev) => Math.min(prev, Math.max(0, visibleNodes.length - 1)));
-  }, [visibleNodes]);
-
-  useEffect(() => {
-    if (activeIndex < visibleNodes.length) {
+    if (clampedActiveIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [activeIndex, visibleNodes.length]);
+  }, [clampedActiveIndex, visibleNodes.length]);
 
   return (
     <div
@@ -3497,7 +3499,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === activeIndex;
+              const isActive = idx === clampedActiveIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
@@ -5155,10 +5157,13 @@ export interface IEntity {
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
   addComponent<T extends IEntityComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependencies?: Record<string, any>
   ): T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null;
   startDeathSequence?(): void;
   registerDamageDealt?(): void;
@@ -5223,7 +5228,7 @@ export interface IDamageRecorder {
 }
 `,"src/core/ObjectPool.ts":`export interface IPoolable {
   isActive: boolean;
-  activate(...args: any[]): void;
+  activate(...args: unknown[]): void;
   deactivate(): void;
 }
 
@@ -5247,7 +5252,7 @@ export class ObjectPool<T extends IPoolable> {
    * Retrieves an inactive instance from the pool, activates it,
    * and tracks it in the active list.
    */
-  public get(...args: any[]): T {
+  public get(...args: unknown[]): T {
     let instance: T;
 
     if (this.inactivePool.length > 0) {
@@ -6214,12 +6219,12 @@ export class World implements IWorld {
 
   public getProjectiles(): IProjectile[] {
     if (!this.projectilePool) return [];
-    return this.projectilePool.getActive() as any[] as IProjectile[];
+    return [...this.projectilePool.getActive()];
   }
 
   public releaseProjectile(proj: IProjectile): void {
     if (this.projectilePool) {
-      this.projectilePool.release(proj as any);
+      this.projectilePool.release(proj as Projectile);
     }
   }
 
@@ -6245,9 +6250,9 @@ export class World implements IWorld {
       damage,
       speed,
       lifespan,
-      (p: any) => this.releaseProjectile(p),
+      (p: Projectile) => this.releaseProjectile(p),
       this
-    ) as any as IProjectile;
+    );
   }
 }
 `,"src/core/WorldRenderer.ts":`import { Player } from "@/entities/Player";
@@ -7755,6 +7760,7 @@ export const SFX_PRESETS = {
 export type EventCallback<T> = (payload: T) => void;
 
 class EventBroker {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
 
   public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
@@ -8144,7 +8150,7 @@ export class BaseEntity implements IEntity {
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
-  private components = new Map<any, IEntityComponent>();
+  private components = new Map<string, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -8156,17 +8162,20 @@ export class BaseEntity implements IEntity {
   }
 
   public addComponent<T extends IEntityComponent>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    dependencies?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dependencies?: Record<string, any>
   ): T {
     component.setup(this, dependencies);
-    this.components.set(componentClass, component);
+    this.components.set(componentClass.name, component);
     return component;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null {
-    const component = this.components.get(componentClass);
+    const component = this.components.get(componentClass.name);
     return (component as T) || null;
   }
 
@@ -8709,7 +8718,8 @@ export class BossDeadState extends BossState {
 `,"src/entities/EntityComponent.ts":`import { BaseEntity } from "./BaseEntity";
 
 export interface IEntityComponent {
-  setup(owner: BaseEntity, dependencies?: any): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
   update?(dt: number): void;
   teardown?(): void;
 }
@@ -8892,7 +8902,7 @@ export class Minion extends BaseEntity {
     super.update(dt);
   }
 
-  public fireSingleShotAtPlayer(player: any) {
+  public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
     const mag = Math.sqrt(dx * dx + dy * dy);
@@ -9665,6 +9675,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   private onRelease?: (proj: Projectile) => void;
 
   constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super("projectile", null as any);
     this.size = { width: 14, height: 14 };
   }
@@ -11001,6 +11012,7 @@ export function useFirstGesture(reloadSaveSlots: () => void) {
       window.removeEventListener("touchend", triggerOnFirstGesture);
       soundSynth.stopMusic();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 `,"src/hooks/useGameDialogue.ts":`import { useState, useEffect, useCallback } from "react";
@@ -11200,12 +11212,12 @@ export function useRebindCapture(
     };
   }, [rebindTarget, setRebindTarget, reloadSaveSlots]);
 }
-`,"src/hooks/useSaveSlots.ts":`import { useState, useEffect } from "react";
+`,"src/hooks/useSaveSlots.ts":`import { useState } from "react";
 import { saveManager, SaveSlotData } from "@/core/SaveManager";
 import { soundSynth } from "@/core/SoundSynth";
 
 export function useSaveSlots() {
-  const [slots, setSlots] = useState<SaveSlotData[]>([]);
+  const [slots, setSlots] = useState<SaveSlotData[]>(() => saveManager.getSlots());
   const [copySourceIndex, setCopySourceIndex] = useState<number>(-1);
   const [isCopyMode, setIsCopyMode] = useState<boolean>(false);
   const [isEraseMode, setIsEraseMode] = useState<boolean>(false);
@@ -11213,10 +11225,6 @@ export function useSaveSlots() {
   const reloadSaveSlots = () => {
     setSlots(saveManager.getSlots());
   };
-
-  useEffect(() => {
-    reloadSaveSlots();
-  }, []);
 
   const handleSlotAction = (index: number, onPlay: () => void) => {
     if (isEraseMode) {
@@ -11869,4 +11877,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     border-radius: 6px;
   }
 }
-`};function l({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:c,onBack:l,isMobile:u,mobileView:d,setMobileView:f,handleDownload:p}){(0,s.useEffect)(()=>{let s=s=>{if(e.length===0)return;let m=a.getKeyMap(),h=m.JUMP||[],g=m.ATTACK||[],_=m.DASH||[],v=s.key===`Enter`||s.key===` `||s.code===`Space`||h.includes(s.code)||h.includes(s.key),y=s.key===`Escape`||s.key===`Backspace`||g.includes(s.code)||g.includes(s.key)||_.includes(s.code)||_.includes(s.key);if(u&&d===`CODE`&&(y||s.key===`ArrowLeft`||s.key===`KeyA`)){s.preventDefault(),o.playSelectTick(),f(`TOC`);return}let b=e[t<e.length?t:0];if(s.key===`ArrowDown`||s.key===`KeyS`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(s.key===`ArrowUp`||s.key===`KeyW`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(s.key===`ArrowRight`||s.key===`KeyD`)s.preventDefault(),o.playSelectTick(),t<e.length?b.isDir&&!r[b.path]&&i(e=>({...e,[b.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(s.key===`ArrowLeft`||s.key===`KeyA`)if(s.preventDefault(),o.playSelectTick(),t<e.length)if(b.isDir&&r[b.path])i(e=>({...e,[b.path]:!1}));else{let t=b.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else v?(s.preventDefault(),t<e.length?(o.playHitConfirm(),b.isDir?i(e=>({...e,[b.path]:!e[b.path]})):(c(b.path),u&&f(`CODE`))):t===e.length?(o.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?p():t===e.length+2&&(o.playErrorTick(),l())):y&&(s.preventDefault(),t<e.length?b.isDir&&r[b.path]?(o.playErrorTick(),i(e=>({...e,[b.path]:!1}))):(o.playSelectTick(),n(e.length+2)):t===e.length+2?(o.playErrorTick(),l()):(o.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,s),()=>window.removeEventListener(`keydown`,s)},[e,t,r,l,u,d,n,i,c,f,p])}var u=i();function d(){return(0,u.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,u.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function f(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}),(0,u.jsx)(`polyline`,{points:`7 10 12 15 17 10`}),(0,u.jsx)(`line`,{x1:`12`,y1:`15`,x2:`12`,y2:`3`})]})}function p(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`line`,{x1:`19`,y1:`12`,x2:`5`,y2:`12`}),(0,u.jsx)(`polyline`,{points:`12 19 5 12 12 5`})]})}function m({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,u.jsx)(d,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(f,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(p,{})})})]}):(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(d,{}),`GITHUB REPO`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(f,{}),`DOWNLOAD SOURCE`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(p,{}),`BACK TO MENU`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function h(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function g(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>g(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>g(e,t,n)),n)}function _(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function v({onBack:e}){let[n]=(0,s.useState)(c),[i,a]=(0,s.useState)({src:!0,"src/components":!0,"src/core":!0}),[d,f]=(0,s.useState)(0),[p,v]=(0,s.useState)(``),[y,b]=(0,s.useState)(!1),[x,S]=(0,s.useState)(`TOC`),C=(0,s.useRef)(null),w=(0,s.useMemo)(()=>h(Object.keys(c)),[]),T=(0,s.useMemo)(()=>w?g(w,i):[],[w,i]);return l({visibleNodes:T,activeIndex:d,setActiveIndex:f,expandedDirs:i,setExpandedDirs:a,setSelectedFile:v,onBack:e,isMobile:y,mobileView:x,setMobileView:S,handleDownload:()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,s.useEffect)(()=>{if(typeof window<`u`){let e=()=>{b(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,s.useEffect)(()=>{let e=Object.keys(c).sort();e.length>0&&v(e[0])},[]),(0,s.useEffect)(()=>{f(e=>Math.min(e,Math.max(0,T.length-1)))},[T]),(0,s.useEffect)(()=>{if(d<T.length){let e=C.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[d,T.length]),(0,u.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,u.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,u.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,u.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:y?x===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,u.jsxs)(`div`,{className:`source-view-workspace`,children:[(!y||x===`TOC`)&&(0,u.jsx)(`div`,{ref:C,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:y?`100%`:`24%`,height:y?`100%`:``},children:T.map((e,t)=>{let n=t===d,r=e.isDir&&!!i[e.path],s=!e.isDir&&e.path===p;return(0,u.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{o.playSelectTick(),f(t),e.isDir?a(t=>({...t,[e.path]:!t[e.path]})):(v(e.path),y&&S(`CODE`))},style:{paddingTop:y?`14px`:`6px`,paddingBottom:y?`14px`:`6px`,paddingRight:y?`16px`:`10px`,paddingLeft:`${e.depth*(y?22:16)+(y?16:10)}px`,borderRadius:`6px`,fontSize:y?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:s?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:s?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,u.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),(0,u.jsx)(`span`,{style:{fontSize:`13px`},children:e.isDir?r?`📂`:`📁`:`📄`}),(0,u.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!y||x===`CODE`)&&(0,u.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:y?`100%`:`76%`,height:y?`100%`:``,display:`flex`,flexDirection:`column`},children:[y&&(0,u.jsx)(`button`,{onClick:()=>{o.playSelectTick(),S(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),p?(0,u.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,u.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:y?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,p]}),(0,u.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,u.jsx)(t,{language:_(p),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:y?`10px`:`11px`,lineHeight:`1.5`},children:n[p]||``})})]}):(0,u.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,u.jsx)(m,{onBack:e,isMobile:y,activeIndex:d,visibleNodesLength:T.length})]})}export{v as SourceViewScreen};
+`};function l({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:c,onBack:l,isMobile:u,mobileView:d,setMobileView:f,handleDownload:p}){(0,s.useEffect)(()=>{let s=s=>{if(e.length===0)return;let m=a.getKeyMap(),h=m.JUMP||[],g=m.ATTACK||[],_=m.DASH||[],v=s.key===`Enter`||s.key===` `||s.code===`Space`||h.includes(s.code)||h.includes(s.key),y=s.key===`Escape`||s.key===`Backspace`||g.includes(s.code)||g.includes(s.key)||_.includes(s.code)||_.includes(s.key);if(u&&d===`CODE`&&(y||s.key===`ArrowLeft`||s.key===`KeyA`)){s.preventDefault(),o.playSelectTick(),f(`TOC`);return}let b=e[t<e.length?t:0];if(s.key===`ArrowDown`||s.key===`KeyS`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(s.key===`ArrowUp`||s.key===`KeyW`)s.preventDefault(),o.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(s.key===`ArrowRight`||s.key===`KeyD`)s.preventDefault(),o.playSelectTick(),t<e.length?b.isDir&&!r[b.path]&&i(e=>({...e,[b.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(s.key===`ArrowLeft`||s.key===`KeyA`)if(s.preventDefault(),o.playSelectTick(),t<e.length)if(b.isDir&&r[b.path])i(e=>({...e,[b.path]:!1}));else{let t=b.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else v?(s.preventDefault(),t<e.length?(o.playHitConfirm(),b.isDir?i(e=>({...e,[b.path]:!e[b.path]})):(c(b.path),u&&f(`CODE`))):t===e.length?(o.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?p():t===e.length+2&&(o.playErrorTick(),l())):y&&(s.preventDefault(),t<e.length?b.isDir&&r[b.path]?(o.playErrorTick(),i(e=>({...e,[b.path]:!1}))):(o.playSelectTick(),n(e.length+2)):t===e.length+2?(o.playErrorTick(),l()):(o.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,s),()=>window.removeEventListener(`keydown`,s)},[e,t,r,l,u,d,n,i,c,f,p])}var u=i();function d(){return(0,u.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,u.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function f(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}),(0,u.jsx)(`polyline`,{points:`7 10 12 15 17 10`}),(0,u.jsx)(`line`,{x1:`12`,y1:`15`,x2:`12`,y2:`3`})]})}function p(){return(0,u.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,u.jsx)(`line`,{x1:`19`,y1:`12`,x2:`5`,y2:`12`}),(0,u.jsx)(`polyline`,{points:`12 19 5 12 12 5`})]})}function m({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,u.jsx)(d,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(f,{})})}),(0,u.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,u.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,u.jsx)(p,{})})})]}):(0,u.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,u.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(d,{}),`GITHUB REPO`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(f,{}),`DOWNLOAD SOURCE`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,u.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,u.jsx)(`div`,{className:`btn-indicator-light`}),(0,u.jsxs)(`div`,{className:`btn-label-group`,children:[(0,u.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,u.jsx)(p,{}),`BACK TO MENU`]}),(0,u.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,u.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function h(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function g(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>g(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>g(e,t,n)),n)}function _(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function v({onBack:e}){let[n]=(0,s.useState)(c),[i,a]=(0,s.useState)({src:!0,"src/components":!0,"src/core":!0}),[d,f]=(0,s.useState)((0,s.useMemo)(()=>Object.keys(c).sort(),[])[0]||``),[p,v]=(0,s.useState)(!1),[y,b]=(0,s.useState)(`TOC`),x=(0,s.useRef)(null),S=(0,s.useMemo)(()=>h(Object.keys(c)),[]),C=(0,s.useMemo)(()=>S?g(S,i):[],[S,i]),[w,T]=(0,s.useState)(0),E=Math.min(w,Math.max(0,C.length-1));return l({visibleNodes:C,activeIndex:w,setActiveIndex:T,expandedDirs:i,setExpandedDirs:a,setSelectedFile:f,onBack:e,isMobile:p,mobileView:y,setMobileView:b,handleDownload:()=>{o.playHitConfirm();let e=document.createElement(`a`);e.href=`./all_source_code.txt`,e.download=`all_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,s.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,s.useEffect)(()=>{if(E<C.length){let e=x.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[E,C.length]),(0,u.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,u.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,u.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,u.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?y===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,u.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||y===`TOC`)&&(0,u.jsx)(`div`,{ref:x,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:C.map((e,t)=>{let n=t===E,r=e.isDir&&!!i[e.path],s=!e.isDir&&e.path===d;return(0,u.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{o.playSelectTick(),T(t),e.isDir?a(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),p&&b(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:s?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:s?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,u.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),(0,u.jsx)(`span`,{style:{fontSize:`13px`},children:e.isDir?r?`📂`:`📁`:`📄`}),(0,u.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||y===`CODE`)&&(0,u.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,u.jsx)(`button`,{onClick:()=>{o.playSelectTick(),b(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),d?(0,u.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,u.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,d]}),(0,u.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,u.jsx)(t,{language:_(d),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[d]||``})})]}):(0,u.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,u.jsx)(m,{onBack:e,isMobile:p,activeIndex:w,visibleNodesLength:C.length})]})}export{v as SourceViewScreen};
