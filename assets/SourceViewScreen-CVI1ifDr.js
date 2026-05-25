@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-CY85CD0w.js";var s=e(n(),1),c={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,t as o}from"./index-CbsoA41W.js";var s=e(n(),1),c={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -711,7 +711,7 @@ export default function App() {
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
               <div style={{ flexGrow: 1, position: "relative", display: "flex", minHeight: 0 }}>
-                <GameArena triggerDialogue={() => {}} playHoverTick={playHoverTick} />
+                <GameArena playHoverTick={playHoverTick} />
               </div>
             </div>
           ) : (
@@ -1233,26 +1233,19 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 
 interface GameArenaProps {
-  triggerDialogue: (speaker: "player" | "boss", text: string) => void;
+  triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
   playHoverTick: () => void;
 }
 
-export function GameArena({ triggerDialogue, playHoverTick }: GameArenaProps) {
-  const triggerRef = useRef(triggerDialogue);
+export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
-
-  useEffect(() => {
-    triggerRef.current = triggerDialogue;
-  }, [triggerDialogue]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new Engine(canvas, (speaker, text) => {
-      triggerRef.current(speaker, text);
-    });
+    const engine = new Engine(canvas);
     engineRef.current = engine;
     engine.start();
 
@@ -4603,47 +4596,36 @@ import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 
 export class Engine {
-  // Rendering & UI Bridges
   private ctx: CanvasRenderingContext2D;
-  private triggerDialogue: (speaker: "player" | "boss", text: string) => void;
   private renderer!: WorldRenderer;
 
-  // Simulation Core Loops & Systems
   private loop!: GameLoop;
   private systems!: SimulationSystems;
   private world!: World;
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
 
-  // Pools & Entity Registries
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
 
-  // Local Reactive Performance Cache Boundaries
   private cachedPlayerHP: number = -1;
   private cachedBossHP: number = -1;
   private cachedHealingCharges: number = -1;
   private cachedDetermination: number = -1;
 
-  // Main Loop Accumulation Controls
   public isPaused: boolean = false;
   private accumulator: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
-  // Level Geography Configuration
   private levelConfig: LevelConfig;
   private solids: Rectangle[] = [];
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  // Cleanup Event Handles
-  private unsubDialogue!: () => void;
-
   constructor(
     canvas: HTMLCanvasElement,
-    triggerDialogue: (speaker: "player" | "boss", text: string) => void,
     levelConfig: LevelConfig = defaultLevelConfig
   ) {
     const context = canvas.getContext("2d");
@@ -4651,7 +4633,6 @@ export class Engine {
       throw new Error("Could not construct 2D context.");
     }
     this.ctx = context;
-    this.triggerDialogue = triggerDialogue;
     this.levelConfig = levelConfig;
 
     this.solids = this.levelConfig.solids;
@@ -4661,9 +4642,6 @@ export class Engine {
     this.init();
   }
 
-  /**
-   * Performs the initial system configuration and allocates entities.
-   */
   private init() {
     this.systems = new SimulationSystems();
     this.systems.setup(
@@ -4698,10 +4676,6 @@ export class Engine {
 
     this.projectState();
 
-    this.unsubDialogue = eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
-      this.triggerDialogue(speaker, text);
-    });
-
     window.addEventListener("keydown", this.handlePauseKey);
 
     this.particleSystem = new ParticleSystem();
@@ -4721,26 +4695,7 @@ export class Engine {
     this.loop.stop();
   }
 
-  /**
-   * Reset orchestrator. Restores all gameplay states back to baseline values.
-   */
   public reset() {
-    this.resetEnvironment();
-    this.resetSpawnersAndMinions();
-    this.resetPlayerState();
-    this.resetBossState();
-    this.resetSystemStates();
-
-    // Force an immediate synchronous repaint to show the refreshed starting frame
-    this.render();
-
-    // Defer game loop restart until after React finishes DOM reconciliation
-    requestAnimationFrame(() => {
-      this.start();
-    });
-  }
-
-  private resetEnvironment() {
     this.isPaused = false;
     this.accumulator = 0;
     Camera.reset();
@@ -4750,74 +4705,20 @@ export class Engine {
     if (overlay) {
       overlay.classList.remove("vignette-pulse");
     }
-  }
 
-  private resetSpawnersAndMinions() {
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
     }
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
-  }
 
-  private resetPlayerState() {
-    this.player.isDead = false;
-    this.player.position = { ...this.levelConfig.playerStart };
-    this.player.previousPosition = { ...this.levelConfig.playerStart };
-    this.player.velocity = { x: 0, y: 0 };
-    this.player.facingDirection = 1;
-    this.player.hasDoubleJump = true;
-    this.player.determinationCounter = 0;
-    this.player.healingCharges = 0;
-    this.player.hurtTimer = 0;
-    this.player.visualScale = { x: 1, y: 1 };
-
-    const pHealth = this.player.getComponent(HealthComponent);
-    if (pHealth) {
-      pHealth.reset();
-    }
-
-    // Restore dash parameters
-    this.player.dashComponent.isDashing = false;
-    this.player.dashComponent.dashTimer = 0;
-    this.player.dashComponent.dashCooldown = 0;
-    this.player.dashComponent.canDash = true;
-    this.player.dashComponent.ghosts = [];
-
-    // Restore melee properties
-    this.player.meleeComponent.attackCooldownTimer = 0;
-    this.player.meleeComponent.attackActiveTimer = 0;
-    this.player.meleeComponent.attackActive = false;
-    this.player.meleeComponent.attackDirection = null;
-    this.player.meleeComponent.hasHitEnemyThisSwing = false;
-
-    // Restore fireball charge states
-    this.player.fireballComponent.isCharging = false;
-    this.player.fireballComponent.chargeTimer = 0;
-
-    // Restore healing controls
-    this.player.healComponent.isHealing = false;
-    this.player.healComponent.healTimer = 0;
-  }
-
-  private resetBossState() {
-    this.boss.isDead = false;
-    this.boss.position = { ...this.levelConfig.bossStart };
-    this.boss.previousPosition = { ...this.levelConfig.bossStart };
-    this.boss.velocity = { x: 0, y: 0 };
-    this.boss.facingDirection = -1;
+    this.resetEntity(this.player, this.levelConfig.playerStart, 1);
+    this.resetEntity(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;
     this.boss.patrolSpeed = 200;
     this.boss.lungeSpeed = 1200;
-
-    const bHealth = this.boss.getComponent(HealthComponent);
-    if (bHealth) {
-      bHealth.reset();
-    }
     this.boss.stateMachine.changeState(this.boss.cooldownState);
-  }
 
-  private resetSystemStates() {
     this.particleSystem.cleanup();
     this.particleSystem = new ParticleSystem();
 
@@ -4828,14 +4729,53 @@ export class Engine {
     sessionState.setGameResult("PLAYING");
 
     this.projectState();
-
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
+
+    this.render();
+    requestAnimationFrame(() => {
+      this.start();
+    });
   }
 
-  /**
-   * Projects changing inner gameplay states to the global Zustand cache.
-   * Leverages selective check boundaries to skip redundant rendering updates.
-   */
+  private resetEntity(entity: Player | Boss, startPos: { x: number; y: number }, facing: number) {
+    entity.isDead = false;
+    entity.position = { ...startPos };
+    entity.previousPosition = { ...startPos };
+    entity.velocity = { x: 0, y: 0 };
+    entity.facingDirection = facing;
+
+    if (entity instanceof Player) {
+      entity.hasDoubleJump = true;
+      entity.determinationCounter = 0;
+      entity.healingCharges = 0;
+      entity.hurtTimer = 0;
+      entity.visualScale = { x: 1, y: 1 };
+
+      entity.dashComponent.isDashing = false;
+      entity.dashComponent.dashTimer = 0;
+      entity.dashComponent.dashCooldown = 0;
+      entity.dashComponent.canDash = true;
+      entity.dashComponent.ghosts = [];
+
+      entity.meleeComponent.attackCooldownTimer = 0;
+      entity.meleeComponent.attackActiveTimer = 0;
+      entity.meleeComponent.attackActive = false;
+      entity.meleeComponent.attackDirection = null;
+      entity.meleeComponent.hasHitEnemyThisSwing = false;
+
+      entity.fireballComponent.isCharging = false;
+      entity.fireballComponent.chargeTimer = 0;
+
+      entity.healComponent.isHealing = false;
+      entity.healComponent.healTimer = 0;
+    }
+
+    const health = entity.getComponent(HealthComponent);
+    if (health) {
+      health.reset();
+    }
+  }
+
   private projectState() {
     const pHealth = this.player.getComponent(HealthComponent);
     const bHealth = this.boss.getComponent(HealthComponent);
@@ -4877,9 +4817,6 @@ export class Engine {
     }
   };
 
-  /**
-   * Accumulates frame-duration deltas and triggers discrete fixed-rate steps.
-   */
   private update(dt: number) {
     if (this.isPaused) {
       return;
@@ -4895,9 +4832,61 @@ export class Engine {
     }
   }
 
-  /**
-   * High-precision 60Hz physics and game logic step cascade.
-   */
+  private cachePreIntegrationPositions() {
+    this.player.previousPosition = { ...this.player.position };
+    this.boss.previousPosition = { ...this.boss.position };
+    for (const minion of this.world.minions) {
+      (minion as BaseEntity).previousPosition = { ...minion.position };
+    }
+    for (const proj of this.pool.getActive()) {
+      proj.previousPosition = { ...proj.position };
+    }
+  }
+
+  private handleCinematicUpdate(dt: number) {
+    this.player.velocity = { x: 0, y: 0 };
+    this.boss.velocity = { x: 0, y: 0 };
+
+    const activeProjectiles = [...this.pool.getActive()];
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      activeProjectiles[i].update(dt);
+    }
+    inputProvider.postUpdate();
+    this.projectState();
+  }
+
+  private handleMinionCollisions() {
+    for (let i = this.world.minions.length - 1; i >= 0; i--) {
+      const minion = this.world.minions[i];
+      minion.update(this.fixedTimeStep);
+
+      if (this.player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
+
+      const pW = this.player.size.width / 2;
+      const pH = this.player.size.height / 2;
+      const mW = minion.size.width / 2;
+      const mH = minion.size.height / 2;
+
+      const isColliding =
+        this.player.position.x + pW > minion.position.x - mW &&
+        this.player.position.x - pW < minion.position.x + mW &&
+        this.player.position.y + pH > minion.position.y - mH &&
+        this.player.position.y - pH < minion.position.y + mH;
+
+      if (isColliding) {
+        const playerHealth = this.player.getComponent(HealthComponent);
+        if (playerHealth) {
+          const damaged = playerHealth.takeDamage(1);
+          if (damaged) {
+            const knockbackDir = Math.sign(this.player.position.x - minion.position.x);
+            this.player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+            this.player.velocity.y = -350;
+          }
+        }
+      }
+    }
+  }
+
   private fixedUpdate(dt: number) {
     inputProvider.update();
     if (Camera.hitStopTimer > 0) {
@@ -4909,27 +4898,10 @@ export class Engine {
 
     this.battleDirector.update(dt, this.player, this.boss);
 
-    // Cache pre-integration positions for accurate renderer interpolations
-    this.player.previousPosition = { ...this.player.position };
-    this.boss.previousPosition = { ...this.boss.position };
-    for (const minion of this.world.minions) {
-      (minion as BaseEntity).previousPosition = { ...minion.position };
-    }
-    const activeProjectiles = this.pool.getActive();
-    for (const proj of activeProjectiles) {
-      proj.previousPosition = { ...proj.position };
-    }
+    this.cachePreIntegrationPositions();
 
     if (this.battleDirector.isCinematicActive()) {
-      this.player.velocity = { x: 0, y: 0 };
-      this.boss.velocity = { x: 0, y: 0 };
-
-      const activeProjectiles = [...this.pool.getActive()];
-      for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-        activeProjectiles[i].update(dt);
-      }
-      inputProvider.postUpdate();
-      this.projectState();
+      this.handleCinematicUpdate(dt);
       return;
     }
 
@@ -4942,40 +4914,11 @@ export class Engine {
       spawner.update(dt);
     }
 
-    for (let i = this.world.minions.length - 1; i >= 0; i--) {
-      const minion = this.world.minions[i];
-      minion.update(dt);
+    this.handleMinionCollisions();
 
-      const isMinionHazardous = minion.status === EntityStatus.ACTIVE;
-      if (!this.player.isDead && isMinionHazardous) {
-        const pW = this.player.size.width / 2;
-        const pH = this.player.size.height / 2;
-        const mW = minion.size.width / 2;
-        const mH = minion.size.height / 2;
-
-        const isColliding =
-          this.player.position.x + pW > minion.position.x - mW &&
-          this.player.position.x - pW < minion.position.x + mW &&
-          this.player.position.y + pH > minion.position.y - mH &&
-          this.player.position.y - pH < minion.position.y + mH;
-
-        if (isColliding) {
-          const playerHealth = this.player.getComponent(HealthComponent);
-          if (playerHealth) {
-            const damaged = playerHealth.takeDamage(1);
-            if (damaged) {
-              const knockbackDir = Math.sign(this.player.position.x - minion.position.x);
-              this.player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-              this.player.velocity.y = -350;
-            }
-          }
-        }
-      }
-    }
-
-    const activeProjectilesUpdate = [...this.pool.getActive()];
-    for (let i = activeProjectilesUpdate.length - 1; i >= 0; i--) {
-      activeProjectilesUpdate[i].update(dt);
+    const activeProjectiles = [...this.pool.getActive()];
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      activeProjectiles[i].update(dt);
     }
 
     inputProvider.postUpdate();
@@ -5007,7 +4950,6 @@ export class Engine {
     this.pool.clear();
     Camera.reset();
     this.systems.teardown();
-    this.unsubDialogue();
     this.particleSystem.cleanup();
     window.removeEventListener("keydown", this.handlePauseKey);
 
