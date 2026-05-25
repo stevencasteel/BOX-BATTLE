@@ -101,9 +101,50 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     const currentOnWall = this.physics.isOnWallLeft || this.physics.isOnWallRight;
     const isPressedAgainstWall = currentOnWall && moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal;
-    const isSliding =
-      !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
+    const isSliding = !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
 
+    this.updateWallVisuals(isPressedAgainstWall, isSliding);
+    this.updateAirTime(dt);
+    this.updateGravity(isSliding);
+    this.handleHurtTimer(dt);
+
+    if (this.hurtTimer > 0) {
+      super.update(dt);
+      return;
+    }
+
+    super.update(dt);
+
+    this.handleWallCling(currentOnWall);
+    this.wasOnWall = currentOnWall;
+
+    if (this.healComponent.isHealing) {
+      if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
+        this.healComponent.cancelHealing();
+      }
+      return;
+    }
+
+    if (this.dashComponent.isDashing) {
+      return;
+    }
+
+    this.updateCoyoteAndWallTimers(dt);
+    this.updateMovement(moveAxis, dt);
+    this.handleDash();
+
+    if (this.dashComponent.isDashing) {
+      super.update(dt);
+      return;
+    }
+
+    this.handleJump(dt);
+    this.handleJumpRelease();
+    this.handleAttack();
+    this.checkHazardContact();
+  }
+
+  private updateWallVisuals(isPressedAgainstWall: boolean, isSliding: boolean) {
     let targetScaleX = 1.0;
     let targetScaleY = 1.0;
 
@@ -115,7 +156,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         targetScaleX = 0.85;
         targetScaleY = 1.15;
 
-        // Spawn subtle friction dust particles
         if (Math.random() < 0.12) {
           const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2);
           eventBroker.publish("SPAWN_SPARKS", {
@@ -130,7 +170,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     }
 
     this.targetVisualScale = { x: targetScaleX, y: targetScaleY };
+  }
 
+  private updateAirTime(dt: number) {
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;
     } else {
@@ -141,12 +183,16 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       }
       this.airtimeDuration = 0;
     }
+  }
 
+  private updateGravity(isSliding: boolean) {
     const isFalling = !this.physics.isGrounded && this.velocity.y > 0;
     const isPogoing = this.meleeComponent.attackActive && this.meleeComponent.attackDirection === "down";
     const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
 
-    if (isPogoing) {
+    if (isSliding) {
+      this.physics.gravity = 0;
+    } else if (isPogoing) {
       this.physics.gravity = 1200 * 0.85;
     } else if (isNearJumpApex) {
       this.physics.gravity = 1200 * 0.65;
@@ -155,45 +201,33 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     } else {
       this.physics.gravity = 1200;
     }
+  }
 
-    if (this.hurtTimer > 0) {
-      this.hurtTimer -= dt;
-      this.velocity.y += this.physics.gravity * dt;
-      const knockbackFriction = 800.0;
-      this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
+  private handleHurtTimer(dt: number) {
+    if (this.hurtTimer <= 0) return;
 
-      super.update(dt);
-      return;
-    }
+    this.hurtTimer -= dt;
+    this.velocity.y += this.physics.gravity * dt;
+    const knockbackFriction = 800.0;
+    this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - knockbackFriction * dt);
+  }
 
-    super.update(dt);
+  private handleWallCling(currentOnWall: boolean) {
+    if (!currentOnWall || this.wasOnWall || this.physics.isGrounded) return;
 
-    if (currentOnWall && !this.wasOnWall && !this.physics.isGrounded) {
-      // Just clung to wall - squash horizontally and stretch vertically on impact
-      this.visualScale = { x: 0.76, y: 1.24 };
+    this.visualScale = { x: 0.76, y: 1.24 };
 
-      const impactSide = this.physics.isOnWallLeft ? -1 : 1;
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x + impactSide * (this.size.width / 2),
-        y: this.position.y,
-        angle: impactSide > 0 ? Math.PI : 0,
-        color: "rgba(255, 255, 255, 0.55)",
-        count: 6,
-      });
-    }
-    this.wasOnWall = currentOnWall;
+    const impactSide = this.physics.isOnWallLeft ? -1 : 1;
+    eventBroker.publish("SPAWN_SPARKS", {
+      x: this.position.x + impactSide * (this.size.width / 2),
+      y: this.position.y,
+      angle: impactSide > 0 ? Math.PI : 0,
+      color: "rgba(255, 255, 255, 0.55)",
+      count: 6,
+    });
+  }
 
-    if (this.healComponent.isHealing) {
-      if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
-        this.healComponent.cancelHealing();
-      }
-      return;
-    }
-
-    if (this.dashComponent.isDashing) {
-      return;
-    }
-
+  private updateCoyoteAndWallTimers(dt: number) {
     if (this.physics.isGrounded) {
       this.coyoteTimer = 0.15;
       this.hasDoubleJump = true;
@@ -215,7 +249,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     } else {
       this.wallCoyoteTimer -= dt;
     }
+  }
 
+  private updateMovement(moveAxis: number, dt: number) {
     if (this.meleeComponent.attackActive) {
       const friction = 2000.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
@@ -232,84 +268,94 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         this.velocity.y = Math.min(this.velocity.y, this.wallSlideSpeed);
       }
     }
+  }
 
+  private handleDash() {
     if (
-      this.inputReceiver.consumeBufferedAction("DASH", 100) &&
-      this.dashComponent.canDash &&
-      this.dashComponent.dashCooldown <= 0
+      !this.inputReceiver.consumeBufferedAction("DASH", 100) ||
+      !this.dashComponent.canDash ||
+      this.dashComponent.dashCooldown > 0
     ) {
-      let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-      let dirY = 0;
-      if (this.inputReceiver.isPressed("MOVE_UP")) {
-        dirY = -1;
-      } else if (this.inputReceiver.isPressed("MOVE_DOWN")) {
-        dirY = 1;
-      }
-
-      if (dirX === 0 && dirY === 0) {
-        dirX = this.facingDirection;
-      }
-
-      const len = Math.sqrt(dirX * dirX + dirY * dirY);
-      const normX = dirX / len;
-      const normY = dirY / len;
-
-      this.dashComponent.triggerDash(normX, normY);
-      this.visualScale = { x: 1.25, y: 0.75 };
-      super.update(dt);
       return;
     }
 
-    if (this.inputReceiver.consumeBufferedAction("JUMP", 100)) {
-      this.jumpBufferTimer = 0.1;
-    } else {
+    let dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+    let dirY = 0;
+    if (this.inputReceiver.isPressed("MOVE_UP")) {
+      dirY = -1;
+    } else if (this.inputReceiver.isPressed("MOVE_DOWN")) {
+      dirY = 1;
+    }
+
+    if (dirX === 0 && dirY === 0) {
+      dirX = this.facingDirection;
+    }
+
+    const len = Math.sqrt(dirX * dirX + dirY * dirY);
+    const normX = dirX / len;
+    const normY = dirY / len;
+
+    this.dashComponent.triggerDash(normX, normY);
+    this.visualScale = { x: 1.25, y: 0.75 };
+  }
+
+  private handleJump(dt: number) {
+    if (!this.inputReceiver.consumeBufferedAction("JUMP", 100)) {
       this.jumpBufferTimer -= dt;
+      return;
     }
 
-    if (this.jumpBufferTimer > 0) {
-      if (this.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
-        this.physics.disablePlatformCollisionTimer = 0.25;
-        this.position.y += 12;
-        this.velocity.y = 180;
-        this.physics.isGrounded = false;
-        this.jumpBufferTimer = 0;
-      } else if (
-        this.inputReceiver.isPressed("MOVE_DOWN") &&
-        this.physics.isGrounded &&
-        this.healingCharges > 0 &&
-        this.health.currentHealth < this.health.maxHealth
-      ) {
-        this.healComponent.startHealing();
-        this.jumpBufferTimer = 0;
-      } else if (this.coyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.coyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        this.visualScale = { x: 0.82, y: 1.18 };
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      } else if (this.wallCoyoteTimer > 0) {
-        this.velocity.y = -this.jumpForce;
-        this.velocity.x = this.lastWallNormal * 1650;
-        this.wallCoyoteTimer = 0;
-        this.jumpBufferTimer = 0;
-        this.dashComponent.resetDashCharge();
-        this.visualScale = { x: 0.82, y: 1.18 };
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      } else if (this.hasDoubleJump) {
-        this.velocity.y = -this.jumpForce;
-        this.hasDoubleJump = false;
-        this.jumpBufferTimer = 0;
-        this.visualScale = { x: 0.82, y: 1.18 };
-        eventBroker.publish("PLAYER_JUMPED", undefined);
-      }
-    }
+    this.jumpBufferTimer = 0.1;
+    this.resolveJump();
+  }
 
+  private resolveJump() {
+    if (this.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
+      this.physics.disablePlatformCollisionTimer = 0.25;
+      this.position.y += 12;
+      this.velocity.y = 180;
+      this.physics.isGrounded = false;
+      this.jumpBufferTimer = 0;
+    } else if (
+      this.inputReceiver.isPressed("MOVE_DOWN") &&
+      this.physics.isGrounded &&
+      this.healingCharges > 0 &&
+      this.health.currentHealth < this.health.maxHealth
+    ) {
+      this.healComponent.startHealing();
+      this.jumpBufferTimer = 0;
+    } else if (this.coyoteTimer > 0) {
+      this.performJump();
+    } else if (this.wallCoyoteTimer > 0) {
+      this.performJump();
+      this.velocity.x = this.lastWallNormal * 1650;
+      this.wallCoyoteTimer = 0;
+      this.dashComponent.resetDashCharge();
+    } else if (this.hasDoubleJump) {
+      this.velocity.y = -this.jumpForce;
+      this.hasDoubleJump = false;
+      this.jumpBufferTimer = 0;
+      this.visualScale = { x: 0.82, y: 1.18 };
+      eventBroker.publish("PLAYER_JUMPED", undefined);
+    }
+  }
+
+  private performJump() {
+    this.velocity.y = -this.jumpForce;
+    this.coyoteTimer = 0;
+    this.jumpBufferTimer = 0;
+    this.visualScale = { x: 0.82, y: 1.18 };
+    eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+    eventBroker.publish("PLAYER_JUMPED", undefined);
+  }
+
+  private handleJumpRelease() {
     if (this.inputReceiver.isJustReleased("JUMP") && this.velocity.y < 0) {
       this.velocity.y *= 0.4;
     }
+  }
 
+  private handleAttack() {
     if (this.inputReceiver.consumeBufferedAction("ATTACK", 100)) {
       this.fireballComponent.startCharging();
 
@@ -333,8 +379,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
           : 0;
       this.fireballComponent.releaseCharge(dirX, dirY, this.facingDirection);
     }
-
-    this.checkHazardContact();
   }
 
   private isStandingOnOneway(): boolean {
