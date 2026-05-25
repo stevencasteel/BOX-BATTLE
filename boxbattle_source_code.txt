@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 10:11:54 PM
+ [SYSTEM] Generated: 5/25/2026, 10:50:02 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -1007,6 +1007,70 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
     margin: 2px 0 0;
     font-size: 10px;
   }
+}
+
+/* -- Dynamic Game Juice HUD Keyframes -- */
+@keyframes hud-cabinet-shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(0px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(2px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(2px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.hud-shaking {
+  animation: hud-cabinet-shake 0.18s ease-in-out;
+}
+
+@keyframes led-scale-pop {
+  0% { transform: scale(1.0); }
+  50% { transform: scale(1.85); filter: brightness(1.6); }
+  100% { transform: scale(1.0); }
+}
+
+.led-pop {
+  animation: led-scale-pop 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes active-led-glow {
+  0% { opacity: 0.85; }
+  100% { opacity: 1.0; filter: brightness(1.35) drop-shadow(0 0 5px rgba(234, 179, 8, 0.85)); }
+}
+
+.led-yellow {
+  animation: active-led-glow 0.8s infinite alternate ease-in-out;
+}
+
+/* -- Dynamic HP Indicator Decay shakes -- */
+@keyframes led-shake-sympathy {
+  0% { transform: translate(1px, 0px) rotate(0deg); }
+  25% { transform: translate(-1px, 1px) rotate(-1deg); }
+  50% { transform: translate(1px, -1px) rotate(1deg); }
+  75% { transform: translate(-1px, -1px) rotate(-1deg); }
+  100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+.led-shaking {
+  animation: led-shake-sympathy 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes led-shake-die-decay {
+  0% { transform: translate(2px, 2px) scale(1.3) rotate(5deg); filter: brightness(1.9) saturate(2); background: #ef4444; }
+  20% { transform: translate(-3px, -2px) scale(1.1) rotate(-8deg); background: #ef4444; }
+  40% { transform: translate(-2px, 2px) scale(1.0) rotate(8deg); }
+  60% { transform: translate(3px, -2px) scale(0.9) rotate(-4deg); }
+  80% { transform: translate(-2px, -2px) scale(0.8) rotate(4deg); }
+  100% { transform: translate(0px, 0px) scale(1.0) rotate(0deg); }
+}
+
+.led-shaking-die {
+  animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 
@@ -9123,10 +9187,17 @@ export class BaseEntity implements IEntity {
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
-  // Hooke's Law Spring-Damper parameters for physical elastic stretch/squash
+  // Standard Hooke's Law Spring-Damper parameters for visual scaling
   public scaleVelocity = { x: 0, y: 0 };
-  public springStiffness = 180; // 'k' constant
-  public springDamping = 12;    // 'c' constant
+  public springStiffness = 180;
+  public springDamping = 12;
+
+  // Standard DRY rotation spring fields
+  public rotation = 0;
+  public rotationVelocity = 0;
+  public targetRotation = 0;
+  public springStiffnessRot = 240;
+  public springDampingRot = 16;
 
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
@@ -9163,7 +9234,7 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    // Apply continuous spring-damper tracking: F = -k*x - c*v
+    // Standard Hooke's Law visual scale spring physics
     const dispX = this.visualScale.x - this.targetVisualScale.x;
     const dispY = this.visualScale.y - this.targetVisualScale.y;
 
@@ -9176,9 +9247,15 @@ export class BaseEntity implements IEntity {
     this.visualScale.x += this.scaleVelocity.x * dt;
     this.visualScale.y += this.scaleVelocity.y * dt;
 
-    // Safety boundary to prevent inversion or scaling rendering failures
     this.visualScale.x = Math.max(0.1, this.visualScale.x);
     this.visualScale.y = Math.max(0.1, this.visualScale.y);
+
+    // Standard Hooke's Law visual rotation spring physics
+    const dispRot = this.rotation - this.targetRotation;
+    const forceRot = -this.springStiffnessRot * dispRot - this.springDampingRot * this.rotationVelocity;
+
+    this.rotationVelocity += forceRot * dt;
+    this.rotation += this.rotationVelocity * dt;
 
     for (const component of this.components.values()) {
       if (component.update) {
@@ -9202,9 +9279,13 @@ export class BaseEntity implements IEntity {
 
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+      ctx.translate(drawX, feetY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
+      ctx.translate(drawX, drawY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight / 2, vWidth, vHeight);
     }
     ctx.restore();
   }
@@ -9294,6 +9375,13 @@ export class Boss extends BaseEntity {
 
     this.evaluatePhaseShifts();
     this.trackPlayer();
+
+    // Standard Boss target rotation lean driven by movement velocity
+    if (this.physics.isGrounded) {
+      this.targetRotation = Math.sign(this.velocity.x) * 0.10;
+    } else {
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+    }
 
     this.stateMachine.update(dt);
 
@@ -9463,7 +9551,10 @@ export class Boss extends BaseEntity {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
-    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+    // Apply feet rotation centered transform matrix
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
+    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
 
     ctx.shadowBlur = 0;
     ctx.restore();
@@ -9784,6 +9875,11 @@ export class Minion extends BaseEntity {
     this.position = { ...startPos };
     this.previousPosition = { ...startPos };
 
+    // Set miniature baseline scale and apply spring outward velocity kick on spawn
+    this.visualScale = { x: 0.1, y: 0.1 };
+    this.targetVisualScale = { x: 1.0, y: 1.0 };
+    this.scaleVelocity = { x: 15.0, y: 15.0 };
+
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
 
     if (type === "TURRET") {
@@ -9912,6 +10008,13 @@ export class Minion extends BaseEntity {
 
     this.behavior.update(this, dt);
 
+    // Highly visible standardized target lean based on minion move state
+    if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
+      this.targetRotation = this.facingDirection * 0.21; // Aggressive charging lean (~12deg)
+    } else {
+      this.targetRotation = Math.sign(this.velocity.x) * 0.12; // Standard running tilt (~7deg)
+    }
+
     this.checkHazardContact();
 
     super.update(dt);
@@ -9977,9 +10080,6 @@ export class Minion extends BaseEntity {
     if (this.isSpawning) {
       const pct = 1.0 - this.spawnTimer / 0.6;
       ctx.globalAlpha = pct;
-      ctx.translate(drawX, drawY);
-      ctx.scale(pct, pct);
-      ctx.translate(-drawX, -drawY);
     } else if (this.isDying) {
       const pct = this.dissolveTimer / 0.5;
       ctx.globalAlpha = pct;
@@ -10009,18 +10109,26 @@ export class Minion extends BaseEntity {
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
 
+    const localY = this.squashPivot === "feet" ? -this.size.height / 2 : 0;
+
+    // Apply rotation standard
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
-      ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
+      ctx.translate(drawX, feetY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     } else {
-      ctx.fillRect(drawX - vWidth / 2, drawY - vHeight / 2, vWidth, vHeight);
+      ctx.translate(drawX, drawY);
+      ctx.rotate(this.rotation);
+      ctx.fillRect(-vWidth / 2, -vHeight / 2, vWidth, vHeight);
     }
 
     ctx.shadowBlur = 0;
 
+    // Render eye details inside standard local coordinate space
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
-    ctx.fillRect(drawX + faceDirection * 8 - 2, drawY - 12, 6, 4);
+    ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
 
     ctx.restore();
   }
@@ -10289,6 +10397,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.updateAirTime(dt);
     this.updateGravity(isSliding);
     this.handleHurtTimer(dt);
+
+    // Lean-angle spring updates driven by movement directions (DRY spring update solved by BaseEntity)
+    if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
+      this.targetRotation = moveAxis * 0.12; 
+    } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+    }
 
     if (this.hurtTimer > 0) {
       super.update(dt);
@@ -10634,6 +10749,15 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
     }
 
+    const vWidth = this.size.width * this.visualScale.x;
+    const vHeight = this.size.height * this.visualScale.y;
+    const feetY = drawY + this.size.height / 2;
+
+    // Transform coordinate matrix to rotate the player around the feet pivot
+    ctx.save();
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
+
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
@@ -10643,13 +10767,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
-    const vWidth = this.size.width * this.visualScale.x;
-    const vHeight = this.size.height * this.visualScale.y;
-    const feetY = drawY + this.size.height / 2;
-
-    ctx.fillRect(drawX - vWidth / 2, feetY - vHeight, vWidth, vHeight);
-
+    // Draw player rect (origin is now feet center, so draw upwards from bottom)
+    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
+
+    // Local center coordinates (relative to feet pivot 0,0)
+    const localCenterX = 0;
+    const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
       const cycle = performance.now() * 0.008;
@@ -10661,10 +10785,10 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
       const radius1 = 44 + Math.sin(cycle) * 8;
       const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(drawX, drawY, radius1, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, radius1, 0, Math.PI * 2);
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(drawX, drawY, radius2, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, radius2, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
@@ -10674,9 +10798,11 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
-      ctx.arc(drawX, drawY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
+      ctx.arc(localCenterX, localCenterY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    ctx.restore();
   }
 
   public teardown() {
@@ -10697,12 +10823,15 @@ import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
 export class Projectile extends BaseEntity implements IPoolable {
-  public isActive: boolean = false;
+  public isActive = false;
   public ownerId: "player" | "boss" = "player";
-  public damage: number = 1;
+  public damage = 1;
 
-  private lifespan: number = 0;
+  private lifespan = 0;
   private onRelease?: (proj: Projectile) => void;
+
+  // Decaying trailing coordinates
+  private trail: { x: number; y: number }[] = [];
 
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -10734,12 +10863,14 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     this.isActive = true;
     this.isDead = false;
+    this.trail = [];
   }
 
   public deactivate() {
     this.isActive = false;
     this.isDead = true;
     this.velocity = { x: 0, y: 0 };
+    this.trail = [];
   }
 
   public update(dt: number) {
@@ -10749,6 +10880,12 @@ export class Projectile extends BaseEntity implements IPoolable {
     if (this.lifespan <= 0) {
       this.selfRelease();
       return;
+    }
+
+    // Keep trail history updated
+    this.trail.push({ x: this.position.x, y: this.position.y });
+    if (this.trail.length > 8) {
+      this.trail.shift();
     }
 
     const dx = this.velocity.x * dt;
@@ -10930,6 +11067,40 @@ export class Projectile extends BaseEntity implements IPoolable {
     const alphaVal = alpha !== undefined ? alpha : 1.0;
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
+
+    // Draw smeared feathered canvas linear gradient comet trails
+    if (this.trail.length > 1) {
+      ctx.save();
+      const oldest = this.trail[0];
+
+      // Formulate a linear gradient connecting the head directly to the oldest tail coordinates
+      const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+
+      if (this.ownerId === "player") {
+        grad.addColorStop(0.0, "rgba(34, 197, 94, 0.45)");
+        grad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = "rgba(34, 197, 94, 0.5)";
+      } else {
+        grad.addColorStop(0.0, "rgba(239, 68, 68, 0.45)");
+        grad.addColorStop(1.0, "rgba(239, 68, 68, 0.0)");
+        ctx.strokeStyle = grad;
+        ctx.shadowColor = "rgba(239, 68, 68, 0.5)";
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(drawX, drawY);
+      for (let i = this.trail.length - 1; i >= 0; i--) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+
+      ctx.lineWidth = this.size.width;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.restore();
+    }
 
     const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     const angle = Math.atan2(this.velocity.y, this.velocity.x);
@@ -12226,36 +12397,88 @@ export function useGameDialogue() {
 import { useEffect } from "react";
 import { useGameplayStore } from "@/store/useGameStore";
 
+// Keep track of player health changes across update ticks
+let lastPlayerHP = 5;
+
 export function useHudSubscription() {
   useEffect(() => {
     const unsub = useGameplayStore.subscribe((state) => {
       const { playerHP, bossHP, healingCharges, determination } = state;
 
+      // Check if player HP dropped
+      const tookDamage = playerHP < lastPlayerHP;
+
       for (let i = 0; i < 5; i++) {
         const isLit = i < playerHP;
         const dotD = document.getElementById("hud-d-php-" + i);
         const dotM = document.getElementById("hud-m-php-" + i);
+
         if (dotD) {
-          if (isLit) dotD.classList.add("led-green");
-          else dotD.classList.remove("led-green");
+          const wasLit = dotD.classList.contains("led-green");
+          if (isLit) {
+            dotD.classList.add("led-green");
+            // Shake remaining green dots on damage taken
+            if (tookDamage) {
+              dotD.classList.add("led-shaking");
+              setTimeout(() => dotD.classList.remove("led-shaking"), 350);
+            }
+          } else {
+            dotD.classList.remove("led-green");
+            // Violently shake and pop lost green dots
+            if (wasLit && tookDamage) {
+              dotD.classList.add("led-shaking-die");
+              setTimeout(() => dotD.classList.remove("led-shaking-die"), 450);
+            }
+          }
         }
+
         if (dotM) {
-          if (isLit) dotM.classList.add("led-green");
-          else dotM.classList.remove("led-green");
+          const wasLit = dotM.classList.contains("led-green");
+          if (isLit) {
+            dotM.classList.add("led-green");
+            if (tookDamage) {
+              dotM.classList.add("led-shaking");
+              setTimeout(() => dotM.classList.remove("led-shaking"), 350);
+            }
+          } else {
+            dotM.classList.remove("led-green");
+            if (wasLit && tookDamage) {
+              dotM.classList.add("led-shaking-die");
+              setTimeout(() => dotM.classList.remove("led-shaking-die"), 450);
+            }
+          }
         }
       }
+
+      lastPlayerHP = playerHP; // Update cache
 
       for (let i = 0; i < 3; i++) {
         const isLit = i < healingCharges;
         const dotD = document.getElementById("hud-d-heal-" + i);
         const dotM = document.getElementById("hud-m-heal-" + i);
         if (dotD) {
-          if (isLit) dotD.classList.add("led-yellow");
-          else dotD.classList.remove("led-yellow");
+          const wasLit = dotD.classList.contains("led-yellow");
+          if (isLit) {
+            dotD.classList.add("led-yellow");
+            if (!wasLit) {
+              dotD.classList.add("led-pop");
+              setTimeout(() => dotD.classList.remove("led-pop"), 300);
+            }
+          } else {
+            dotD.classList.remove("led-yellow");
+          }
         }
         if (dotM) {
-          if (isLit) dotM.classList.add("led-yellow");
-          else dotM.classList.remove("led-yellow");
+          const wasLit = dotM.classList.contains("led-yellow");
+          if (isLit) {
+            dotM.classList.add("led-yellow");
+            if (!wasLit) {
+              dotM.classList.add("led-pop");
+              setTimeout(() => dotM.classList.remove("led-pop"), 300);
+            }
+          } else {
+            dotM.classList.remove("led-yellow");
+          }
         }
       }
 
@@ -12740,7 +12963,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   navTo: (screen) => {
     const current = get().currentScreen;
 
-    // Trigger context-backed sound sweeps centrally based on numerical screen hierarchy depth checks
     if (soundSynth.initialized && current !== screen) {
       const currentDepth = SCREEN_DEPTHS[current] ?? 0;
       const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
@@ -12793,6 +13015,15 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       set({ playerHP: hp });
       if (hp < current) {
         get().triggerGlitch(150);
+
+        // High-performance DOM-direct status panel shaking
+        if (typeof document !== "undefined") {
+          const panel = document.querySelector(".cabinet-status-panel");
+          if (panel) {
+            panel.classList.add("hud-shaking");
+            setTimeout(() => panel.classList.remove("hud-shaking"), 180);
+          }
+        }
       }
     }
   },
