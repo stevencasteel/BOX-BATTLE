@@ -8,3 +8,17 @@ ACTIVE ISSUES & BUGS:
 
 COMPLETED WORKLOG:
 ------------------
+
+
+
+
+
+misc:
+------------------
+
+
+
+
+
+
+WASD needs to work for victory/defeat./titl screen menus

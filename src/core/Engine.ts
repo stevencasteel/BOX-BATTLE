@@ -100,8 +100,6 @@ export class Engine {
 
     this.projectState();
 
-    window.addEventListener("keydown", this.handlePauseKey);
-
     this.particleSystem = new ParticleSystem();
     this.battleDirector = new BattleDirector(() => {});
 
@@ -229,20 +227,14 @@ export class Engine {
     }
   }
 
-  private handlePauseKey = (e: KeyboardEvent) => {
-    if (e.code === "KeyP") {
-      this.isPaused = !this.isPaused;
-      if (this.isPaused) {
-        soundSynth.playErrorTick();
-        soundSynth.clearAllSlides();
-      } else {
-        soundSynth.playHitConfirm();
-      }
-    }
-  };
-
   private update(dt: number) {
     if (this.isPaused) {
+      inputProvider.update();
+      if (inputProvider.isPauseJustPressed()) {
+        this.isPaused = false;
+        soundSynth.playHitConfirm();
+      }
+      inputProvider.postUpdate();
       return;
     }
     this.accumulator += dt;
@@ -313,6 +305,13 @@ export class Engine {
 
   private fixedUpdate(dt: number) {
     inputProvider.update();
+    if (inputProvider.isPauseJustPressed()) {
+      this.isPaused = true;
+      soundSynth.playErrorTick();
+      soundSynth.clearAllSlides();
+      inputProvider.postUpdate();
+      return;
+    }
     if (Camera.hitStopTimer > 0) {
       Camera.update(dt);
       return;
@@ -375,7 +374,6 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.particleSystem.cleanup();
-    window.removeEventListener("keydown", this.handlePauseKey);
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
