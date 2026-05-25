@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-BBe7isUE.js";var c=e(n(),1),l={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{t as i}from"./vendor-react-Ckf8byYu.js";import{n as a,r as o,t as s}from"./index-Oebbg1Eq.js";var c=e(n(),1),l={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -460,17 +460,39 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 
 /* -- Dynamic Game Juice HUD Keyframes -- */
 @keyframes hud-cabinet-shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  10% { transform: translate(-1px, -2px) rotate(-1deg); }
-  20% { transform: translate(-3px, 0px) rotate(1deg); }
-  30% { transform: translate(0px, 2px) rotate(0deg); }
-  40% { transform: translate(1px, -1px) rotate(1deg); }
-  50% { transform: translate(-1px, 2px) rotate(-1deg); }
-  60% { transform: translate(-3px, 1px) rotate(0deg); }
-  70% { transform: translate(2px, 1px) rotate(-1deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  90% { transform: translate(2px, 2px) rotate(0deg); }
-  100% { transform: translate(1px, -2px) rotate(-1deg); }
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(0px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(2px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(2px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(1px, -2px) rotate(-1deg);
+  }
 }
 
 .hud-shaking {
@@ -478,9 +500,16 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 }
 
 @keyframes led-scale-pop {
-  0% { transform: scale(1.0); }
-  50% { transform: scale(1.85); filter: brightness(1.6); }
-  100% { transform: scale(1.0); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.85);
+    filter: brightness(1.6);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .led-pop {
@@ -488,8 +517,13 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 }
 
 @keyframes active-led-glow {
-  0% { opacity: 0.85; }
-  100% { opacity: 1.0; filter: brightness(1.35) drop-shadow(0 0 5px rgba(234, 179, 8, 0.85)); }
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1.35) drop-shadow(0 0 5px rgba(234, 179, 8, 0.85));
+  }
 }
 
 .led-yellow {
@@ -498,11 +532,21 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 
 /* -- Dynamic HP Indicator Decay shakes -- */
 @keyframes led-shake-sympathy {
-  0% { transform: translate(1px, 0px) rotate(0deg); }
-  25% { transform: translate(-1px, 1px) rotate(-1deg); }
-  50% { transform: translate(1px, -1px) rotate(1deg); }
-  75% { transform: translate(-1px, -1px) rotate(-1deg); }
-  100% { transform: translate(0px, 0px) rotate(0deg); }
+  0% {
+    transform: translate(1px, 0px) rotate(0deg);
+  }
+  25% {
+    transform: translate(-1px, 1px) rotate(-1deg);
+  }
+  50% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  75% {
+    transform: translate(-1px, -1px) rotate(-1deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
 }
 
 .led-shaking {
@@ -510,12 +554,27 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 }
 
 @keyframes led-shake-die-decay {
-  0% { transform: translate(2px, 2px) scale(1.3) rotate(5deg); filter: brightness(1.9) saturate(2); background: #ef4444; }
-  20% { transform: translate(-3px, -2px) scale(1.1) rotate(-8deg); background: #ef4444; }
-  40% { transform: translate(-2px, 2px) scale(1.0) rotate(8deg); }
-  60% { transform: translate(3px, -2px) scale(0.9) rotate(-4deg); }
-  80% { transform: translate(-2px, -2px) scale(0.8) rotate(4deg); }
-  100% { transform: translate(0px, 0px) scale(1.0) rotate(0deg); }
+  0% {
+    transform: translate(2px, 2px) scale(1.3) rotate(5deg);
+    filter: brightness(1.9) saturate(2);
+    background: #ef4444;
+  }
+  20% {
+    transform: translate(-3px, -2px) scale(1.1) rotate(-8deg);
+    background: #ef4444;
+  }
+  40% {
+    transform: translate(-2px, 2px) scale(1) rotate(8deg);
+  }
+  60% {
+    transform: translate(3px, -2px) scale(0.9) rotate(-4deg);
+  }
+  80% {
+    transform: translate(-2px, -2px) scale(0.8) rotate(4deg);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
+  }
 }
 
 .led-shaking-die {
@@ -902,11 +961,7 @@ export default function App() {
         </div>
 
         {!isFullHeightScreen && (
-          <DialogueConsole
-            playerDialogue={playerDialogue}
-            bossDialogue={bossDialogue}
-            isTouchDevice={isTouchDevice}
-          />
+          <DialogueConsole playerDialogue={playerDialogue} bossDialogue={bossDialogue} isTouchDevice={isTouchDevice} />
         )}
 
         {isPlayingScreen && isTouchDevice && <TouchOverlay />}
@@ -923,12 +978,7 @@ export default function App() {
         <filter id="chromatic-aberration">
           <feOffset dx="6" dy="0" in="SourceGraphic" result="red" />
           <feOffset dx="-6" dy="0" in="SourceGraphic" result="blue" />
-          <feColorMatrix
-            type="matrix"
-            values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
-            in="red"
-            result="red-only"
-          />
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="red" result="red-only" />
           <feColorMatrix
             type="matrix"
             values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
@@ -1022,9 +1072,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
             className="dialogue-speaker-label"
-            style={
-              isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }
-            }
+            style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}
           >
             BOSS
           </div>
@@ -3145,7 +3193,16 @@ interface SourceViewFooterProps {
 
 function GithubIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
     </svg>
   );
@@ -3153,7 +3210,16 @@ function GithubIcon() {
 
 function DownloadIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -3163,7 +3229,16 @@ function DownloadIcon() {
 
 function BackIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="19" y1="12" x2="5" y2="12" />
       <polyline points="12 19 5 12 12 5" />
     </svg>
@@ -4565,10 +4640,7 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    levelConfig: LevelConfig = defaultLevelConfig
-  ) {
+  constructor(canvas: HTMLCanvasElement, levelConfig: LevelConfig = defaultLevelConfig) {
     const context = canvas.getContext("2d");
     if (!context) {
       throw new Error("Could not construct 2D context.");
@@ -5188,12 +5260,14 @@ class InputProvider {
           duration = 400;
         }
 
-        gp.vibrationActuator.playEffect("dual-rumble", {
-          startDelay: 0,
-          duration: duration,
-          weakMagnitude: weak,
-          strongMagnitude: strong,
-        }).catch(() => {});
+        gp.vibrationActuator
+          .playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: duration,
+            weakMagnitude: weak,
+            strongMagnitude: strong,
+          })
+          .catch(() => {});
       }
     }
   }
@@ -8054,11 +8128,7 @@ export function getKeyMap() {
 export function isConfirmKey(e: KeyboardEvent): boolean {
   const jumpKeys = getKeyMap()["JUMP"] || [];
   return (
-    e.key === "Enter" ||
-    e.key === " " ||
-    e.code === "Space" ||
-    jumpKeys.includes(e.code) ||
-    jumpKeys.includes(e.key)
+    e.key === "Enter" || e.key === " " || e.code === "Space" || jumpKeys.includes(e.code) || jumpKeys.includes(e.key)
   );
 }
 
@@ -8552,9 +8622,9 @@ export class Boss extends BaseEntity {
 
     // Standard Boss target rotation lean driven by movement velocity
     if (this.physics.isGrounded) {
-      this.targetRotation = Math.sign(this.velocity.x) * 0.10;
+      this.targetRotation = Math.sign(this.velocity.x) * 0.1;
     } else {
-      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+      this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
     }
 
     this.stateMachine.update(dt);
@@ -9546,7 +9616,8 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
     const currentOnWall = this.physics.isOnWallLeft || this.physics.isOnWallRight;
     const isPressedAgainstWall = currentOnWall && moveAxis !== 0 && Math.sign(moveAxis) === -this.lastWallNormal;
-    const isSliding = !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
+    const isSliding =
+      !this.physics.isGrounded && this.velocity.y > 0 && this.wallCoyoteTimer > 0 && isPressedAgainstWall;
 
     this.updateWallVisuals(isPressedAgainstWall, isSliding);
     this.updateAirTime(dt);
@@ -9556,9 +9627,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     // Lean-angle spring updates driven by movement directions
     let targetRotation = 0;
     if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
-      targetRotation = moveAxis * 0.12; 
+      targetRotation = moveAxis * 0.12;
     } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
-      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, Math.abs(this.velocity.x) / 1000 * 0.08);
+      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
     }
 
     this.targetRotation = targetRotation;
@@ -9959,7 +10030,13 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
       ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
       ctx.lineWidth = isLvl2 ? 3 : 1.5;
       ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4, 0, Math.PI * 2);
+      ctx.arc(
+        localCenterX,
+        localCenterY,
+        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
+        0,
+        Math.PI * 2
+      );
       ctx.stroke();
     }
 
@@ -11866,7 +11943,19 @@ export function useSourceViewKeyboard({
 
     window.addEventListener("keydown", handleKeys);
     return () => window.removeEventListener("keydown", handleKeys);
-  }, [visibleNodes, activeIndex, expandedDirs, onBack, isMobile, mobileView, setActiveIndex, setExpandedDirs, setSelectedFile, setMobileView, handleDownload]);
+  }, [
+    visibleNodes,
+    activeIndex,
+    expandedDirs,
+    onBack,
+    isMobile,
+    mobileView,
+    setActiveIndex,
+    setExpandedDirs,
+    setSelectedFile,
+    setMobileView,
+    handleDownload,
+  ]);
 }
 `,"src/index.css":`:root {
   --void-bg: #07080b;
