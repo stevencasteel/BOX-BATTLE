@@ -14,7 +14,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         isTouchDevice
           ? {
               height: "54px",
-              marginTop: "0px",
+              marginTop: "4px",
               gap: "4px",
               padding: "0",
               flexShrink: 0,
@@ -39,8 +39,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
           className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`}
           style={{
             background: playerDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "64px",
-            height: isTouchDevice ? "32px" : "64px",
+            width: isTouchDevice ? "32px" : "68px",
+            height: isTouchDevice ? "32px" : "68px",
           }}
         />
         <div className="dialogue-text-container">
@@ -89,8 +89,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
           className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`}
           style={{
             background: bossDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "64px",
-            height: isTouchDevice ? "32px" : "64px",
+            width: isTouchDevice ? "32px" : "68px",
+            height: isTouchDevice ? "32px" : "68px",
           }}
         />
       </div>
