@@ -81,7 +81,6 @@
   width: 90%;
   box-sizing: border-box;
   text-align: center;
-  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
 }
 
 .gameover-box.victory-border {
