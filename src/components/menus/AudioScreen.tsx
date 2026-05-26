@@ -1,5 +1,6 @@
 import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
+import { Volume2, VolumeX, Music, Zap, RotateCcw, ArrowLeft } from "lucide-react";
 
 interface AudioScreenProps {
   audio: AudioSettings;
@@ -42,12 +43,17 @@ export function AudioScreen({
 
       <div className="mixer-board neo-pressed">
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 0 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
+              )}
+              {audio.masterMuted ? (
+                <VolumeX size={14} style={{ flexShrink: 0 }} />
+              ) : (
+                <Volume2 size={14} style={{ flexShrink: 0 }} />
               )}
               MAIN VOLUME
             </span>
@@ -74,13 +80,14 @@ export function AudioScreen({
         </div>
 
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 1 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
               )}
+              <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
             <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
@@ -106,13 +113,14 @@ export function AudioScreen({
         </div>
 
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 2 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
               )}
+              <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
             <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
@@ -152,9 +160,14 @@ export function AudioScreen({
             fontSize: "1.4vmin",
             borderRadius: "1vmin",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
           {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          <RotateCcw size={14} style={{ flexShrink: 0 }} />
           RESET ALL TO 100%
           {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -172,9 +185,14 @@ export function AudioScreen({
             fontSize: "1.4vmin",
             borderRadius: "1vmin",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
           {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          <ArrowLeft size={14} style={{ flexShrink: 0 }} />
           Back
           {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
         </button>

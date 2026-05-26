@@ -3,6 +3,18 @@ import { useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpCircle,
+  Swords,
+  Zap,
+  Cpu,
+  Keyboard,
+  Sliders
+} from "lucide-react";
 
 interface ControlsScreenProps {
   menuIndex: number;
@@ -30,6 +42,27 @@ function formatKeyDisplayName(code: string): string {
   if (upper === "Escape") return "ESC";
 
   return upper.replace(/^Key/, "");
+}
+
+function getActionIcon(action: Action) {
+  switch (action) {
+    case "MOVE_LEFT":
+      return <ArrowLeft size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_RIGHT":
+      return <ArrowRight size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_UP":
+      return <ArrowUp size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_DOWN":
+      return <ArrowDown size={14} style={{ flexShrink: 0 }} />;
+    case "JUMP":
+      return <ArrowUpCircle size={14} style={{ flexShrink: 0 }} />;
+    case "ATTACK":
+      return <Swords size={14} style={{ flexShrink: 0 }} />;
+    case "DASH":
+      return <Zap size={14} style={{ flexShrink: 0 }} />;
+    default:
+      return null;
+  }
 }
 
 export function ControlsScreen({
@@ -156,6 +189,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -172,6 +208,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Keyboard size={16} style={{ flexShrink: 0 }} />
               PRESET 1
               <span
                 className="cursor-arrow"
@@ -194,6 +231,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -210,6 +250,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Cpu size={16} style={{ flexShrink: 0 }} />
               PRESET 2
               <span
                 className="cursor-arrow"
@@ -232,6 +273,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -247,6 +291,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Sliders size={16} style={{ flexShrink: 0 }} />
               CUSTOM
               <span
                 className="cursor-arrow"
@@ -271,6 +316,7 @@ export function ControlsScreen({
                       fontSize: "14px",
                       display: "flex",
                       alignItems: "center",
+                      gap: "8px"
                     }}
                   >
                     <span
@@ -279,6 +325,7 @@ export function ControlsScreen({
                     >
                       ▶
                     </span>
+                    {getActionIcon(action)}
                     {action.replace("_", " ")}
                   </span>
                   <div className="flex-row" style={{ gap: "8px" }}>
@@ -315,7 +362,7 @@ export function ControlsScreen({
           setMenuIndex(backBtnIndex);
         }}
         className={`neo-btn ${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
         <span
           className="cursor-arrow"
@@ -323,6 +370,7 @@ export function ControlsScreen({
         >
           ▶
         </span>
+        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
         Back
         <span
           className="cursor-arrow"

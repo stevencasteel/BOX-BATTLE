@@ -1,4 +1,5 @@
 import { soundSynth } from "@/core/SoundSynth";
+import { Download, ArrowLeft } from "lucide-react";
 
 interface SourceViewFooterProps {
   onBack: () => void;
@@ -20,43 +21,6 @@ function GithubIcon() {
       strokeLinejoin="round"
     >
       <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function BackIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
     </svg>
   );
 }
@@ -119,7 +83,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
               boxSizing: "border-box",
             }}
           >
-            <DownloadIcon />
+            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
 
@@ -134,7 +98,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
               boxSizing: "border-box",
             }}
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
       </div>
@@ -180,7 +144,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <DownloadIcon />
+            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
             DOWNLOAD SOURCE
           </span>
           <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
@@ -196,7 +160,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
             BACK TO MENU
           </span>
           <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>

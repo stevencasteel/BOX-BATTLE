@@ -1,3 +1,5 @@
+import { Volume2, Keyboard, ArrowLeft } from "lucide-react";
+
 interface SettingsScreenProps {
   menuIndex: number;
   onAudio: () => void;
@@ -43,8 +45,10 @@ export function SettingsScreen({
             setMenuIndex(0);
           }}
           className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+          style={{ display: "flex", alignItems: "center", gap: "10px" }}
         >
           {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
+          <Volume2 size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           SOUND SETTINGS
           {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -55,8 +59,10 @@ export function SettingsScreen({
             setMenuIndex(1);
           }}
           className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+          style={{ display: "flex", alignItems: "center", gap: "10px" }}
         >
           {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
+          <Keyboard size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           KEYBOARD CONTROLS
           {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -69,9 +75,10 @@ export function SettingsScreen({
           setMenuIndex(2);
         }}
         className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", gap: "10px" }}
       >
         {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
+        <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
         Back
         {menuIndex === 2 && <span className="cursor-arrow">◀</span>}
       </button>

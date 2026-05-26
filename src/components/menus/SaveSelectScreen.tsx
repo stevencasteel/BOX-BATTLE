@@ -1,5 +1,6 @@
 import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
+import { Save, FolderPlus, Copy, Trash2, ArrowLeft } from "lucide-react";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -67,7 +68,6 @@ export function SaveSelectScreen({
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
-              {/* Arrow is always rendered to maintain static text alignment, toggling only visibility */}
               <span
                 className="cursor-arrow"
                 style={{
@@ -79,22 +79,29 @@ export function SaveSelectScreen({
               >
                 ▶
               </span>
-              <div className="flex-col" style={{ textAlign: "left" }}>
-                <span
-                  style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
-                >
-                  Slot {i + 1}
-                </span>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    color: menuIndex === i ? "#22c55e" : "#a0aec0",
-                    marginTop: "6px",
-                  }}
-                >
-                  {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
-                </span>
+              <div className="flex-row" style={{ alignItems: "center", gap: "8px" }}>
+                {slot.empty ? (
+                  <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
+                ) : (
+                  <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+                )}
+                <div className="flex-col" style={{ textAlign: "left" }}>
+                  <span
+                    style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
+                  >
+                    Slot {i + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      color: menuIndex === i ? "#22c55e" : "#a0aec0",
+                      marginTop: "6px",
+                    }}
+                  >
+                    {slot.empty ? "NO SAVE DATA" : `WINS: ${slot.wins} / LOSSES: ${slot.losses}`}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -140,14 +147,15 @@ export function SaveSelectScreen({
               style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ▶
-            </span>
+                </span>
+            <Copy size={16} style={{ flexShrink: 0 }} />
             <span>Copy Slot</span>
             <span
               className="cursor-arrow"
               style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ◀
-            </span>
+                </span>
           </button>
           <button
             onClick={toggleEraseMode}
@@ -171,14 +179,15 @@ export function SaveSelectScreen({
               style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ▶
-            </span>
+                </span>
+            <Trash2 size={16} style={{ flexShrink: 0 }} />
             <span>Delete Slot</span>
             <span
               className="cursor-arrow"
               style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ◀
-            </span>
+                </span>
           </button>
         </div>
         <button
@@ -202,14 +211,15 @@ export function SaveSelectScreen({
             style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
           >
             ▶
-          </span>
+              </span>
+          <ArrowLeft size={16} style={{ flexShrink: 0 }} />
           <span>Back</span>
           <span
             className="cursor-arrow"
             style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
           >
             ◀
-          </span>
+              </span>
         </button>
       </div>
     </div>

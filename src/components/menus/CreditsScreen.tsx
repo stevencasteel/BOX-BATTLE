@@ -1,4 +1,6 @@
 import "./CreditsScreen.css";
+import { Layout, Activity, Waves, Database, ArrowLeft } from "lucide-react";
+
 interface CreditsScreenProps {
   onBack: () => void;
 }
@@ -90,14 +92,20 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 
         <div className="credits-grid">
           <div className="credits-item">
-            <span className="credits-tech-title">PRESENTATION LAYOUT</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Layout size={14} style={{ flexShrink: 0 }} />
+              PRESENTATION LAYOUT
+            </span>
             <span className="credits-tech-desc">
               React 19, TypeScript 6.0, and Vite 8.0 bundle chunk splitting for low loading latencies.
             </span>
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">PHYSICS ENGINE</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Activity size={14} style={{ flexShrink: 0 }} />
+              PHYSICS ENGINE
+            </span>
             <span className="credits-tech-desc">
               Custom 60Hz Semi-Implicit Euler accumulator loops, dynamic circular sweep checks, and ceiling corner
               nudging.
@@ -105,7 +113,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">AUDIO SYNTHESIS</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Waves size={14} style={{ flexShrink: 0 }} />
+              AUDIO SYNTHESIS
+            </span>
             <span className="credits-tech-desc">
               Dynamic procedural sound wave generation using native Web Audio API oscillators, gain, and muffle lowpass
               filters.
@@ -113,7 +124,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">DATA MANAGEMENT</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Database size={14} style={{ flexShrink: 0 }} />
+              DATA MANAGEMENT
+            </span>
             <span className="credits-tech-desc">
               Zustand 5.0 reactive state managers and persistent browser registers secured with schema input checkers.
             </span>
@@ -124,9 +138,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
       <button
         onClick={onBack}
         className="neo-btn neo-btn-focused"
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
+        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
         <span className="cursor-arrow">▶</span>
+        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
         Back
         <span className="cursor-arrow">◀</span>
       </button>
