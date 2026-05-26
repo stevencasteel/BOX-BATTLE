@@ -921,9 +921,10 @@ if (this.isCharging) {
         const ringPulse = Math.sin(nowTime * 0.02 + s * 2) * 6 * progress;
         const baseRadius = (this.size.height * 0.35) + s * 14 * progress + ringPulse;
 
-        ctx.strokeStyle = isLvl2 
-          ? (s === 2 ? 'rgba(255, 255, 255, 0.95)' : 'rgba(234, 179, 8, 0.8)') 
-          : 'rgba(34, 197, 94, 0.65)';
+        const ringColor = isLvl2
+          ? (s === 0 ? "rgba(234, 179, 8, 0.85)" : s === 1 ? "rgba(134, 212, 51, 0.85)" : "rgba(34, 197, 94, 0.95)")
+          : (s === 0 ? "rgba(234, 179, 8, 0.65)" : "rgba(34, 197, 94, 0.75)");
+        ctx.strokeStyle = ringColor;;
         ctx.lineWidth = isLvl2 ? (s === 2 ? 3 : 1.5) : 1.0;
 
         ctx.beginPath();

@@ -13,12 +13,10 @@ export class Projectile extends BaseEntity implements IPoolable {
   private lifespan = 0;
   private onRelease?: (proj: Projectile) => void;
 
-  // Decaying trailing coordinates
   private trail: { x: number; y: number }[] = [];
 
   constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    super("projectile", null as any);
+    super("projectile", null as unknown as IWorld);
     this.size = { width: 14, height: 14 };
   }
 
@@ -65,10 +63,22 @@ export class Projectile extends BaseEntity implements IPoolable {
       return;
     }
 
-    // Keep trail history updated
     this.trail.push({ x: this.position.x, y: this.position.y });
     if (this.trail.length > 8) {
       this.trail.shift();
+    }
+
+    if (this.ownerId === "player" && Math.random() < 0.35) {
+      const isLvl2 = this.damage >= 3;
+      const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI + (Math.random() * 0.4 - 0.2);
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: angle,
+        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+        count: 1,
+        shape: "line",
+      });
     }
 
     const dx = this.velocity.x * dt;
@@ -235,11 +245,27 @@ export class Projectile extends BaseEntity implements IPoolable {
   }
 
   private selfRelease() {
+    const isPlayer = this.ownerId === "player";
+    const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : "hsl(350, 80%, 60%)";
+    const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
+
     eventBroker.publish("SPAWN_BLAST", {
       x: this.position.x,
       y: this.position.y,
-      color: this.ownerId === "player" ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)",
+      color: blastColor,
     });
+
+    eventBroker.publish("SPAWN_SPARKS", {
+      x: this.position.x,
+      y: this.position.y,
+      angle: angle,
+      color: blastColor,
+      radial: false,
+      count: isPlayer && this.damage >= 3 ? 18 : 8,
+      shape: "line",
+      turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
+    });
+
     if (this.onRelease) {
       this.onRelease(this);
     }
@@ -252,37 +278,94 @@ export class Projectile extends BaseEntity implements IPoolable {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
-    // Draw smeared feathered canvas linear gradient comet trails
     if (this.trail.length > 1) {
       ctx.save();
       const oldest = this.trail[0];
 
-      // Formulate a linear gradient connecting the head directly to the oldest tail coordinates
-      const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-
       if (this.ownerId === "player") {
-        grad.addColorStop(0.0, "rgba(34, 197, 94, 0.45)");
-        grad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
-        ctx.strokeStyle = grad;
-        ctx.shadowColor = "rgba(34, 197, 94, 0.5)";
+        const isLvl2 = this.damage >= 3;
+
+        if (isLvl2) {
+          const outerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+          outerGrad.addColorStop(0.0, "rgba(234, 179, 8, 0.45)");
+          outerGrad.addColorStop(0.4, "rgba(34, 197, 94, 0.35)");
+          outerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
+
+          ctx.strokeStyle = outerGrad;
+          ctx.lineWidth = this.size.width * 1.5;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          for (let i = this.trail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.stroke();
+
+          const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+          innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
+          innerGrad.addColorStop(0.4, "rgba(234, 179, 8, 0.6)");
+          innerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
+
+          ctx.strokeStyle = innerGrad;
+          ctx.lineWidth = this.size.width * 0.45;
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          for (let i = this.trail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.stroke();
+        } else {
+          const mainColor = "rgba(34, 197, 94, ";
+          const outerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+          outerGrad.addColorStop(0.0, mainColor + "0.35)");
+          outerGrad.addColorStop(1.0, mainColor + "0.0)");
+          ctx.strokeStyle = outerGrad;
+          ctx.lineWidth = this.size.width * 1.5;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          for (let i = this.trail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.stroke();
+
+          const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+          innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
+          innerGrad.addColorStop(1.0, mainColor + "0.0)");
+          ctx.strokeStyle = innerGrad;
+          ctx.lineWidth = this.size.width * 0.45;
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          for (let i = this.trail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.stroke();
+        }
       } else {
+        const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
         grad.addColorStop(0.0, "rgba(239, 68, 68, 0.45)");
         grad.addColorStop(1.0, "rgba(239, 68, 68, 0.0)");
         ctx.strokeStyle = grad;
         ctx.shadowColor = "rgba(239, 68, 68, 0.5)";
+        ctx.lineWidth = this.size.width;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(drawX, drawY);
+        for (let i = this.trail.length - 1; i >= 0; i--) {
+          ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        }
+        ctx.stroke();
       }
-
-      ctx.beginPath();
-      ctx.moveTo(drawX, drawY);
-      for (let i = this.trail.length - 1; i >= 0; i--) {
-        ctx.lineTo(this.trail[i].x, this.trail[i].y);
-      }
-
-      ctx.lineWidth = this.size.width;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.shadowBlur = 12;
-      ctx.stroke();
       ctx.restore();
     }
 
@@ -299,17 +382,60 @@ export class Projectile extends BaseEntity implements IPoolable {
     ctx.scale(stretchFactor, squashFactor);
 
     if (this.ownerId === "player") {
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+      const isLvl2 = this.damage >= 3;
+      const radius = this.size.width / 2;
+
+      if (isLvl2) {
+        ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
+        ctx.shadowBlur = 24;
+
+        const radialGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+        radialGrad.addColorStop(0.0, "hsl(45, 100%, 65%)");
+        radialGrad.addColorStop(0.65, "hsl(45, 100%, 65%)");
+        radialGrad.addColorStop(1.0, "hsl(142, 71%, 58%)");
+
+        ctx.fillStyle = radialGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius, radius * 0.75, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius * 0.45, radius * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.85, -Math.PI / 4, Math.PI / 4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.85, Math.PI * 0.75, Math.PI * 1.25);
+        ctx.stroke();
+      } else {
+        ctx.shadowColor = "rgba(34, 197, 94, 0.75)";
+        ctx.shadowBlur = 14;
+
+        ctx.fillStyle = "hsl(142, 71%, 58%)";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else {
       ctx.fillStyle = "hsl(350, 80%, 60%)";
       ctx.shadowColor = "rgba(239, 68, 68, 0.6)";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
-
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
-    ctx.fill();
     ctx.restore();
   }
 }
