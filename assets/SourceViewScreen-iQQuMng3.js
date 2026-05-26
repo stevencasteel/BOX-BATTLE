@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BBCJAms-.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Bu0EIY07.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6330,7 +6330,7 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  shape: "spark" | "dust" | "ring";
+  shape: "spark" | "dust" | "ring" | "line";
   drag?: number;
   startColor?: string;
   endColor?: string;
@@ -6502,7 +6502,7 @@ export class PoolableParticle implements Particle, IPoolable {
   public size = 0;
   public life = 0;
   public maxLife = 0;
-  public shape: "spark" | "dust" | "ring" = "spark";
+  public shape: "spark" | "dust" | "ring" | "line" = "spark";
   public drag = 1.0;
   public startColor = "";
   public endColor = "";
@@ -6517,7 +6517,7 @@ export class PoolableParticle implements Particle, IPoolable {
     color: string,
     size: number,
     life: number,
-    shape: "spark" | "dust" | "ring",
+    shape: "spark" | "dust" | "ring" | "line",
     drag: number = 1.0,
     startColor: string = "",
     endColor: string = "",
@@ -6559,7 +6559,7 @@ export class ParticleSystem {
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence }) => {
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -6584,7 +6584,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol, turbulence || 0);
+          this.pool.get(x, y, vx, vy, pColor, size, life, shape || "spark", drag, sCol, eCol, turbulence || 0);
         }
       })
     );
@@ -7776,6 +7776,20 @@ export class WorldRenderer {
         this.ctx.fillStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+      } else if (p.shape === "line") {
+        const angle = Math.atan2(p.vy, p.vx);
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(angle);
+        this.ctx.strokeStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.lineWidth = p.size;
+        this.ctx.lineCap = "round";
+        this.ctx.beginPath();
+        this.ctx.moveTo(-p.size * 6, 0); // Stretched line shape backwards
+        this.ctx.lineTo(p.size * 6, 0);  // Stretched line shape forwards
+        this.ctx.stroke();
+        this.ctx.restore();
       } else if (p.shape === "ring") {
         const radius = p.size + (1.0 - pct) * 44;
         this.ctx.beginPath();
@@ -9269,7 +9283,7 @@ export type GameEventMap = {
   GAME_OVER: void;
   VICTORY: void;
   CLEAR_DIALOGUES: void;
-  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number };
+  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line" };
   SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
   SPAWN_BLAST: { x: number; y: number; color: string };
   PLAYER_LANDED: void;
