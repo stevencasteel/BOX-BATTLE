@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Bu0EIY07.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DgrzpAtS.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1380,7 +1380,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   align-items: center;
   justify-content: center;
   z-index: 99;
-  padding: 24px;
+  padding: clamp(12px, 3vmin, 24px);
   box-sizing: border-box;
   animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   opacity: 0;
@@ -1403,11 +1403,11 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: clamp(16px, 4.5vmin, 40px);
   border-radius: 20px;
   background: rgba(12, 14, 18, 0.96);
   max-width: 440px;
-  width: 85%;
+  width: 90%;
   box-sizing: border-box;
   text-align: center;
   transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
@@ -1423,55 +1423,182 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1);
 }
 
+.gameover-icon {
+  width: clamp(40px, 8vmin, 64px) !important;
+  height: clamp(40px, 8vmin, 64px) !important;
+  margin-bottom: clamp(8px, 2vmin, 16px) !important;
+}
+
+.gameover-stat-card {
+  width: 100%;
+  margin-top: clamp(10px, 2.5vmin, 24px);
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  background: rgba(7, 8, 11, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.5vmin, 10px);
+  box-sizing: border-box;
+}
+
+.gameover-stat-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  color: #718096;
+}
+
+.gameover-stat-title {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.gameover-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gameover-stat-label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.gameover-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.gameover-stat-win {
+  color: var(--signal-green);
+}
+
+.gameover-stat-loss {
+  color: var(--signal-red);
+}
+
+.gameover-divider {
+  height: 1px;
+  width: 60px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: clamp(12px, 2.5vmin, 24px) 0;
+}
+
 .gameover-btn-container {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: clamp(10px, 2vmin, 16px);
   width: 100%;
   justify-content: center;
 }
 
-.gameover-btn {
+.neo-btn.gameover-btn {
   flex: 1;
-  padding: 16px 20px;
-  font-size: 14px;
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  font-size: clamp(11px, 1.5vmin, 14px);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 0.1em;
+  height: auto;
+  min-height: 0;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+.gameover-inline-arrow {
+  display: inline-block;
+  font-family: monospace;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  font-size: clamp(10px, 1.3vmin, 14px);
+  line-height: 1;
+}
+
+@media (max-width: 768px), (max-height: 750px) {
   .gameover-box {
-    padding: 24px !important;
-    width: 90% !important;
+    padding: clamp(12px, 3.5vmin, 24px);
+    width: 90%;
+    max-width: 360px;
+    border-radius: 14px;
+  }
+  .gameover-icon {
+    width: 44px !important;
+    height: 44px !important;
+    margin-bottom: 8px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.8rem;
+  }
+  .gameover-stat-card {
+    margin-top: 12px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .gameover-stat-label {
+    font-size: 11px;
+  }
+  .gameover-stat-value {
+    font-size: 15px;
+  }
+  .gameover-divider {
+    margin: 12px 0;
   }
   .gameover-btn-container {
-    gap: 12px !important;
-    padding: 0 10px !important;
+    gap: 10px;
   }
-  .gameover-btn {
-    padding: 12px 12px !important;
-    font-size: 12px !important;
-    border-radius: 8px !important;
+  .neo-btn.gameover-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 8px;
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 380px), (max-height: 560px) {
   .gameover-box {
-    padding: 16px !important;
-    width: 95% !important;
+    padding: 12px;
+    width: 95%;
+    max-width: 320px;
+  }
+  .gameover-icon {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 4px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.4rem;
+  }
+  .gameover-stat-card {
+    margin-top: 8px;
+    padding: 6px 10px;
+    gap: 4px;
+  }
+  .gameover-stat-label {
+    font-size: 10px;
+  }
+  .gameover-stat-value {
+    font-size: 13px;
+  }
+  .gameover-divider {
+    margin: 8px 0;
   }
   .gameover-btn-container {
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding: 0 !important;
+    flex-direction: row;
+    gap: 8px;
   }
-  .gameover-btn {
-    width: 100% !important;
-    padding: 12px 16px !important;
-    font-size: 12px !important;
+  .neo-btn.gameover-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -1601,24 +1728,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 @keyframes rumble-anim {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-  20% {
-    transform: translate(-1px, -1px) rotate(-1deg);
-  }
-  40% {
-    transform: translate(-1px, 1px) rotate(1deg);
-  }
-  60% {
-    transform: translate(1px, -1px) rotate(0deg);
-  }
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-  100% {
-    transform: translate(1px, 1px) rotate(-1deg);
-  }
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  20% { transform: translate(-1px, -1px) rotate(-1deg); }
+  40% { transform: translate(-1px, 1px) rotate(1deg); }
+  60% { transform: translate(1px, -1px) rotate(0deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
 @media (max-width: 768px) and (pointer: coarse) {
@@ -1684,12 +1799,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
 
-  // Staggered state sequence: 0 (Hidden), 1 (Fading Base), 2 (Header Pop & Sound), 3 (Tallying Stats), 4 (Buttons Visible)
   const [stagger, setStagger] = useState(0);
   const [displayWins, setDisplayWins] = useState(0);
   const [displayLosses, setDisplayLosses] = useState(0);
 
-  // Grouped selector bindings
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -1735,7 +1848,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, []);
 
-  // Staggered animation triggers on game conclusion
   useEffect(() => {
     if (gameResult === "PLAYING") {
       queueMicrotask(() => {
@@ -1746,13 +1858,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       return;
     }
 
-    // Step 1: Base panel entry
     const t1 = setTimeout(() => {
       setStagger(1);
       soundSynth.playMenuConfirm();
     }, 200);
 
-    // Step 2: Primary banner pop & screen shake
     const t2 = setTimeout(() => {
       setStagger(2);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
@@ -1763,7 +1873,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }
     }, 750);
 
-    // Step 3: Run stat ticks count-up
     const t3 = setTimeout(() => {
       setStagger(3);
       const slotIdx = saveManager.getCurrentSlotIndex();
@@ -1789,8 +1898,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               soundSynth.playSelectTick();
             } else {
               clearInterval(lossTimer);
-              
-              // Step 4: Display retry buttons smoothly
               setStagger(4);
               soundSynth.playDashRecharge();
             }
@@ -1864,24 +1971,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Skull
                           size={64}
-                          className="defeat-icon-anim"
-                          style={{
-                            color: "var(--signal-red)",
-                            marginBottom: "16px",
-                          }}
+                          className="defeat-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-red)" }}
                         />
-                        <h1
-                          className="defeat-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-red)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
                           DEFEATED
                         </h1>
                       </div>
@@ -1889,24 +1982,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Trophy
                           size={64}
-                          className="victory-icon-anim"
-                          style={{
-                            color: "var(--signal-green)",
-                            marginBottom: "16px",
-                          }}
+                          className="victory-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-green)" }}
                         />
-                        <h1
-                          className="victory-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-green)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
                           VICTORY
                         </h1>
                       </div>
@@ -1914,54 +1993,28 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </>
                 )}
 
-                {/* Save Stats Tally */}
                 {stagger >= 3 && (
-                  <div
-                    className="stat-card-anim"
-                    style={{
-                      width: "100%",
-                      marginTop: "24px",
-                      padding: "16px 20px",
-                      background: "rgba(7, 8, 11, 0.6)",
-                      border: "1px solid rgba(255,255,255,0.03)",
-                      borderRadius: "10px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center", color: "#718096" }}>
+                  <div className="stat-card-anim gameover-stat-card">
+                    <div className="gameover-stat-title-row">
                       <BarChart2 size={14} />
-                      <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                      <span className="gameover-stat-title">
                         SAVE SLOT PERFORMANCE
                       </span>
                     </div>
-                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL WINS</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-green)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayWins}
-                      </span>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL WINS</span>
+                      <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL LOSSES</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-red)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayLosses}
-                      </span>
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL LOSSES</span>
+                      <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
                     </div>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    height: "1px",
-                    width: "60px",
-                    background: "rgba(255,255,255,0.08)",
-                    margin: "24px 0",
-                  }}
-                />
+                <div className="gameover-divider" />
 
-                {/* Navigation Buttons */}
                 <div
                   className="gameover-btn-container button-reveal-anim"
                   style={{
@@ -1991,9 +2044,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2003,9 +2056,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2031,9 +2084,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2043,9 +2096,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2593,7 +2646,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Layer A — Aura (optional prismatic ring) */}
       <motion.div
         style={{
           position: "absolute",
@@ -2613,7 +2665,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         transition={{ type: "spring", stiffness: 180, damping: 15 }}
       />
 
-      {/* Layer B — Icon Bubble */}
       <motion.div
         style={{
           position: "absolute",
@@ -2691,18 +2742,17 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Layer C — Triangle Pointer positioned at exact tracking center with offset compensation */}
       {variant.isBase && (
         <motion.div
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            x: "-5.5px",
-            y: "-3.2px",
+            x: -5.5,
+            y: -3.2,
             zIndex: 3,
             pointerEvents: "none",
-            transformOrigin: "top left",
+            transformOrigin: "5.5px 3.2px",
           }}
           animate={{
             scale: isPressed ? 0.85 : 1,
