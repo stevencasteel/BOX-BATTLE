@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-jcmj6UPu.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Z7HnSHzc.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1410,7 +1410,6 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   width: 90%;
   box-sizing: border-box;
   text-align: center;
-  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
 }
 
 .gameover-box.victory-border {
@@ -1789,6 +1788,7 @@ import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
 import { saveManager } from "@/core/SaveManager";
 import { Trophy, Skull, RotateCcw, Home, BarChart2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GameArenaProps {
   triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
@@ -1848,6 +1848,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, []);
 
+  const tickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (gameResult === "PLAYING") {
       queueMicrotask(() => {
@@ -1883,33 +1885,53 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       let currentW = 0;
       let currentL = 0;
 
-      const winTimer = setInterval(() => {
+      const getDelay = (current: number, target: number) => {
+        if (target <= 1) return 180;
+        const progress = current / target;
+        const minDelay = 25;
+        const maxDelay = 260;
+        return minDelay + (maxDelay - minDelay) * Math.pow(progress, 2);
+      };
+
+      const tickWins = () => {
         if (currentW < targetWins) {
+          const delay = getDelay(currentW, targetWins);
           currentW++;
           setDisplayWins(currentW);
           soundSynth.playSelectTick();
+          tickTimeoutRef.current = setTimeout(tickWins, delay);
         } else {
-          clearInterval(winTimer);
-          
-          const lossTimer = setInterval(() => {
-            if (currentL < targetLosses) {
-              currentL++;
-              setDisplayLosses(currentL);
-              soundSynth.playSelectTick();
-            } else {
-              clearInterval(lossTimer);
-              setStagger(4);
-              soundSynth.playDashRecharge();
-            }
-          }, 120);
+          tickTimeoutRef.current = setTimeout(tickLosses, 150);
         }
-      }, 120);
-    }, 1500);
+      };
+
+      const tickLosses = () => {
+        if (currentL < targetLosses) {
+          const delay = getDelay(currentL, targetLosses);
+          currentL++;
+          setDisplayLosses(currentL);
+          soundSynth.playSelectTick();
+          tickTimeoutRef.current = setTimeout(tickLosses, delay);
+        } else {
+          setStagger(4);
+          soundSynth.playDashRecharge();
+        }
+      };
+
+      if (targetWins > 0) {
+        tickWins();
+      } else {
+        tickLosses();
+      }
+    }, 5200);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      if (tickTimeoutRef.current) {
+        clearTimeout(tickTimeoutRef.current);
+      }
     };
   }, [gameResult]);
 
@@ -1957,157 +1979,182 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           <div className="vignette-overlay" />
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
-            <div className="gameover-overlay" style={{ opacity: 1, transition: "opacity 0.4s ease" }}>
-              <div
-                className={\`gameover-box neo-elevated \${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}\`}
-                style={{
-                  transform: stagger >= 2 ? "scale(1)" : "scale(0.92)",
-                  opacity: stagger >= 2 ? 1 : 0.8,
-                }}
-              >
-                {stagger >= 2 && (
-                  <>
-                    {gameResult === "GAMEOVER" ? (
-                      <div className="flex-col-center">
-                        <Skull
-                          size={64}
-                          className="defeat-icon-anim gameover-icon"
-                          style={{ color: "var(--signal-red)" }}
-                        />
-                        <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
-                          DEFEATED
-                        </h1>
-                      </div>
-                    ) : (
-                      <div className="flex-col-center">
-                        <Trophy
-                          size={64}
-                          className="victory-icon-anim gameover-icon"
-                          style={{ color: "var(--signal-green)" }}
-                        />
-                        <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
-                          VICTORY
-                        </h1>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {stagger >= 3 && (
-                  <div className="stat-card-anim gameover-stat-card">
-                    <div className="gameover-stat-title-row">
-                      <BarChart2 size={14} />
-                      <span className="gameover-stat-title">
-                        SAVE SLOT PERFORMANCE
-                      </span>
-                    </div>
-                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
-                    <div className="gameover-stat-row">
-                      <span className="gameover-stat-label">TOTAL WINS</span>
-                      <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
-                    </div>
-                    <div className="gameover-stat-row">
-                      <span className="gameover-stat-label">TOTAL LOSSES</span>
-                      <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="gameover-divider" />
-
-                <div
-                  className="gameover-btn-container button-reveal-anim"
-                  style={{
-                    opacity: stagger >= 4 ? 1 : 0,
-                    transform: stagger >= 4 ? "translateY(0)" : "translateY(15px)",
-                    transition: "opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)",
-                  }}
+            <div className="gameover-overlay">
+              <AnimatePresence>
+                <motion.div
+                  layout
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className={\`gameover-box neo-elevated \${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}\`}
+                  transition={{ type: "spring", stiffness: 220, damping: 26 }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
                 >
-                  <button
-                    onClick={() => {
-                      resetGameSession();
-                      navTo("PLAYING");
-                    }}
-                    onMouseEnter={() => {
-                      playHoverTick();
-                      setMenuIndex(0);
-                    }}
-                    className={\`neo-btn gameover-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
-                    style={
-                      gameResult === "GAMEOVER" && menuIndex === 0
-                        ? {
-                            color: "var(--signal-red)",
-                            borderColor: "rgba(239, 68, 68, 0.25)",
-                            textShadow: "0 0 8px var(--signal-red-glow)",
-                          }
-                        : {}
-                    }
-                  >
-                    <span
-                      className="gameover-inline-arrow"
-                      style={{
-                        marginRight: "6px",
-                        visibility: menuIndex === 0 ? "visible" : "hidden",
-                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
-                      }}
-                    >
-                      ▶
-                    </span>
-                    <RotateCcw size={16} style={{ flexShrink: 0 }} />
-                    RETRY
-                    <span
-                      className="gameover-inline-arrow"
-                      style={{
-                        marginLeft: "6px",
-                        visibility: menuIndex === 0 ? "visible" : "hidden",
-                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
-                      }}
-                    >
-                      ◀
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => navTo("TITLE")}
-                    onMouseEnter={() => {
-                      playHoverTick();
-                      setMenuIndex(1);
-                    }}
-                    className={\`neo-btn gameover-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
-                    style={
-                      gameResult === "GAMEOVER" && menuIndex === 1
-                        ? {
-                            color: "var(--signal-red)",
-                            borderColor: "rgba(239, 68, 68, 0.25)",
-                            textShadow: "0 0 8px var(--signal-red-glow)",
-                          }
-                        : {}
-                    }
-                  >
-                    <span
-                      className="gameover-inline-arrow"
-                      style={{
-                        marginRight: "6px",
-                        visibility: menuIndex === 1 ? "visible" : "hidden",
-                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
-                      }}
-                    >
-                      ▶
-                    </span>
-                    <Home size={16} style={{ flexShrink: 0 }} />
-                    MENU
-                    <span
-                      className="gameover-inline-arrow"
-                      style={{
-                        marginLeft: "6px",
-                        visibility: menuIndex === 1 ? "visible" : "hidden",
-                        color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
-                      }}
-                    >
-                      ◀
-                    </span>
-                  </button>
-                </div>
-              </div>
+                  <AnimatePresence mode="wait">
+                    {stagger >= 2 && (
+                      <motion.div
+                        key="title-section"
+                        initial={{ opacity: 0, y: -20, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                        className="flex-col-center"
+                      >
+                        {gameResult === "GAMEOVER" ? (
+                          <div className="flex-col-center">
+                            <Skull
+                              size={64}
+                              className="defeat-icon-anim gameover-icon"
+                              style={{ color: "var(--signal-red)" }}
+                            />
+                            <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
+                              DEFEATED
+                            </h1>
+                          </div>
+                        ) : (
+                          <div className="flex-col-center">
+                            <Trophy
+                              size={64}
+                              className="victory-icon-anim gameover-icon"
+                              style={{ color: "var(--signal-green)" }}
+                            />
+                            <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
+                              VICTORY
+                            </h1>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {stagger >= 3 && (
+                      <motion.div
+                        key="stats-section"
+                        initial={{ opacity: 0, height: 0, y: 15 }}
+                        animate={{ opacity: 1, height: "auto", y: 0 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 24 }}
+                        className="stat-card-anim gameover-stat-card w-full"
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div className="gameover-stat-title-row">
+                          <BarChart2 size={14} />
+                          <span className="gameover-stat-title">
+                            SAVE SLOT PERFORMANCE
+                          </span>
+                        </div>
+                        <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
+                        <div className="gameover-stat-row">
+                          <span className="gameover-stat-label">TOTAL WINS</span>
+                          <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
+                        </div>
+                        <div className="gameover-stat-row">
+                          <span className="gameover-stat-label">TOTAL LOSSES</span>
+                          <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {stagger >= 3 && (
+                      <motion.div
+                        key="buttons-section"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 22 }}
+                        style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+                      >
+                        <div className="gameover-divider" />
+
+                        <div className="gameover-btn-container">
+                          <button
+                            onClick={() => {
+                              resetGameSession();
+                              navTo("PLAYING");
+                            }}
+                            onMouseEnter={() => {
+                              playHoverTick();
+                              setMenuIndex(0);
+                            }}
+                            className={\`neo-btn gameover-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
+                            style={
+                              gameResult === "GAMEOVER" && menuIndex === 0
+                                ? {
+                                    color: "var(--signal-red)",
+                                    borderColor: "rgba(239, 68, 68, 0.25)",
+                                    textShadow: "0 0 8px var(--signal-red-glow)",
+                                  }
+                                : {}
+                            }
+                          >
+                            <span
+                              className="gameover-inline-arrow"
+                              style={{
+                                marginRight: "6px",
+                                visibility: menuIndex === 0 ? "visible" : "hidden",
+                                color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                              }}
+                            >
+                              ▶
+                            </span>
+                            <RotateCcw size={16} style={{ flexShrink: 0 }} />
+                            RETRY
+                            <span
+                              className="gameover-inline-arrow"
+                              style={{
+                                marginLeft: "6px",
+                                visibility: menuIndex === 0 ? "visible" : "hidden",
+                                color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                              }}
+                            >
+                              ◀
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => navTo("TITLE")}
+                            onMouseEnter={() => {
+                              playHoverTick();
+                              setMenuIndex(1);
+                            }}
+                            className={\`neo-btn gameover-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
+                            style={
+                              gameResult === "GAMEOVER" && menuIndex === 1
+                                ? {
+                                    color: "var(--signal-red)",
+                                    borderColor: "rgba(239, 68, 68, 0.25)",
+                                    textShadow: "0 0 8px var(--signal-red-glow)",
+                                  }
+                                : {}
+                            }
+                          >
+                            <span
+                              className="gameover-inline-arrow"
+                              style={{
+                                marginRight: "6px",
+                                visibility: menuIndex === 1 ? "visible" : "hidden",
+                                color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                              }}
+                            >
+                              ▶
+                            </span>
+                            <Home size={16} style={{ flexShrink: 0 }} />
+                            MENU
+                            <span
+                              className="gameover-inline-arrow"
+                              style={{
+                                marginLeft: "6px",
+                                visibility: menuIndex === 1 ? "visible" : "hidden",
+                                color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
+                              }}
+                            >
+                              ◀
+                            </span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
             </div>
           )}
         </div>
