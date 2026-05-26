@@ -30,4 +30,3 @@ In our cabinet middle header in the arena, we should start by showing the zxc on
 
 
 
-When SAVE SLOT PERFORMANCE BOX APPEARS, the UI elements should stagger in quickly, and the tics should wait a beat before beginning instead of starting the same time save slot performance box appears.
