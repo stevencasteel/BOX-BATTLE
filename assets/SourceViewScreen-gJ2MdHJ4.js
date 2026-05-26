@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{a as i,i as a,o,r as s}from"./vendor-react-J69hWAP7.js";import{r as c}from"./vendor-motion-Cga-I72o.js";import{n as l,r as u,t as d}from"./index-BmLAQuFF.js";var f=e(n(),1),p={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{O as i,_ as a,g as o,m as s,v as c,y as l}from"./vendor-react-Dzuep97J.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-CI4_JwIF.js";var m=e(n(),1),h={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2112,6 +2112,7 @@ export function TouchOverlay() {
 }
 `,"src/components/menus/AudioScreen.tsx":`import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
+import { Volume2, VolumeX, Music, Zap, RotateCcw, ArrowLeft } from "lucide-react";
 
 interface AudioScreenProps {
   audio: AudioSettings;
@@ -2154,12 +2155,17 @@ export function AudioScreen({
 
       <div className="mixer-board neo-pressed">
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 0 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
+              )}
+              {audio.masterMuted ? (
+                <VolumeX size={14} style={{ flexShrink: 0 }} />
+              ) : (
+                <Volume2 size={14} style={{ flexShrink: 0 }} />
               )}
               MAIN VOLUME
             </span>
@@ -2186,13 +2192,14 @@ export function AudioScreen({
         </div>
 
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 1 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
               )}
+              <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
             <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
@@ -2218,13 +2225,14 @@ export function AudioScreen({
         </div>
 
         <div className="mixer-strip">
-          <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096" }}>
-            <span>
+          <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {menuIndex === 2 && (
                 <span className="cursor-arrow" style={{ marginRight: "6px" }}>
                   ▶
                 </span>
               )}
+              <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
             <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
@@ -2264,9 +2272,14 @@ export function AudioScreen({
             fontSize: "1.4vmin",
             borderRadius: "1vmin",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
           {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          <RotateCcw size={14} style={{ flexShrink: 0 }} />
           RESET ALL TO 100%
           {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -2284,9 +2297,14 @@ export function AudioScreen({
             fontSize: "1.4vmin",
             borderRadius: "1vmin",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
           {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          <ArrowLeft size={14} style={{ flexShrink: 0 }} />
           Back
           {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -2384,6 +2402,18 @@ import { useState } from "react";
 import { Action } from "@/core/InputProvider";
 import { settingsManager } from "@/core/SettingsManager";
 import { soundSynth } from "@/core/SoundSynth";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpCircle,
+  Swords,
+  Zap,
+  Cpu,
+  Keyboard,
+  Sliders
+} from "lucide-react";
 
 interface ControlsScreenProps {
   menuIndex: number;
@@ -2411,6 +2441,27 @@ function formatKeyDisplayName(code: string): string {
   if (upper === "Escape") return "ESC";
 
   return upper.replace(/^Key/, "");
+}
+
+function getActionIcon(action: Action) {
+  switch (action) {
+    case "MOVE_LEFT":
+      return <ArrowLeft size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_RIGHT":
+      return <ArrowRight size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_UP":
+      return <ArrowUp size={14} style={{ flexShrink: 0 }} />;
+    case "MOVE_DOWN":
+      return <ArrowDown size={14} style={{ flexShrink: 0 }} />;
+    case "JUMP":
+      return <ArrowUpCircle size={14} style={{ flexShrink: 0 }} />;
+    case "ATTACK":
+      return <Swords size={14} style={{ flexShrink: 0 }} />;
+    case "DASH":
+      return <Zap size={14} style={{ flexShrink: 0 }} />;
+    default:
+      return null;
+  }
 }
 
 export function ControlsScreen({
@@ -2537,6 +2588,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -2553,6 +2607,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Keyboard size={16} style={{ flexShrink: 0 }} />
               PRESET 1
               <span
                 className="cursor-arrow"
@@ -2575,6 +2630,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -2591,6 +2649,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Cpu size={16} style={{ flexShrink: 0 }} />
               PRESET 2
               <span
                 className="cursor-arrow"
@@ -2613,6 +2672,9 @@ export function ControlsScreen({
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -2628,6 +2690,7 @@ export function ControlsScreen({
               >
                 ▶
               </span>
+              <Sliders size={16} style={{ flexShrink: 0 }} />
               CUSTOM
               <span
                 className="cursor-arrow"
@@ -2652,6 +2715,7 @@ export function ControlsScreen({
                       fontSize: "14px",
                       display: "flex",
                       alignItems: "center",
+                      gap: "8px"
                     }}
                   >
                     <span
@@ -2660,6 +2724,7 @@ export function ControlsScreen({
                     >
                       ▶
                     </span>
+                    {getActionIcon(action)}
                     {action.replace("_", " ")}
                   </span>
                   <div className="flex-row" style={{ gap: "8px" }}>
@@ -2696,7 +2761,7 @@ export function ControlsScreen({
           setMenuIndex(backBtnIndex);
         }}
         className={\`neo-btn \${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
         <span
           className="cursor-arrow"
@@ -2704,6 +2769,7 @@ export function ControlsScreen({
         >
           ▶
         </span>
+        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
         Back
         <span
           className="cursor-arrow"
@@ -2785,6 +2851,8 @@ export function ControlsScreen({
   }
 }
 `,"src/components/menus/CreditsScreen.tsx":`import "./CreditsScreen.css";
+import { Layout, Activity, Waves, Database, ArrowLeft } from "lucide-react";
+
 interface CreditsScreenProps {
   onBack: () => void;
 }
@@ -2876,14 +2944,20 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 
         <div className="credits-grid">
           <div className="credits-item">
-            <span className="credits-tech-title">PRESENTATION LAYOUT</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Layout size={14} style={{ flexShrink: 0 }} />
+              PRESENTATION LAYOUT
+            </span>
             <span className="credits-tech-desc">
               React 19, TypeScript 6.0, and Vite 8.0 bundle chunk splitting for low loading latencies.
             </span>
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">PHYSICS ENGINE</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Activity size={14} style={{ flexShrink: 0 }} />
+              PHYSICS ENGINE
+            </span>
             <span className="credits-tech-desc">
               Custom 60Hz Semi-Implicit Euler accumulator loops, dynamic circular sweep checks, and ceiling corner
               nudging.
@@ -2891,7 +2965,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">AUDIO SYNTHESIS</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Waves size={14} style={{ flexShrink: 0 }} />
+              AUDIO SYNTHESIS
+            </span>
             <span className="credits-tech-desc">
               Dynamic procedural sound wave generation using native Web Audio API oscillators, gain, and muffle lowpass
               filters.
@@ -2899,7 +2976,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </div>
 
           <div className="credits-item">
-            <span className="credits-tech-title">DATA MANAGEMENT</span>
+            <span className="credits-tech-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Database size={14} style={{ flexShrink: 0 }} />
+              DATA MANAGEMENT
+            </span>
             <span className="credits-tech-desc">
               Zustand 5.0 reactive state managers and persistent browser registers secured with schema input checkers.
             </span>
@@ -2910,9 +2990,10 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
       <button
         onClick={onBack}
         className="neo-btn neo-btn-focused"
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
+        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
         <span className="cursor-arrow">▶</span>
+        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
         Back
         <span className="cursor-arrow">◀</span>
       </button>
@@ -2980,6 +3061,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 }
 `,"src/components/menus/SaveSelectScreen.tsx":`import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
+import { Save, FolderPlus, Copy, Trash2, ArrowLeft } from "lucide-react";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -3047,7 +3129,6 @@ export function SaveSelectScreen({
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
-              {/* Arrow is always rendered to maintain static text alignment, toggling only visibility */}
               <span
                 className="cursor-arrow"
                 style={{
@@ -3059,22 +3140,29 @@ export function SaveSelectScreen({
               >
                 ▶
               </span>
-              <div className="flex-col" style={{ textAlign: "left" }}>
-                <span
-                  style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
-                >
-                  Slot {i + 1}
-                </span>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    color: menuIndex === i ? "#22c55e" : "#a0aec0",
-                    marginTop: "6px",
-                  }}
-                >
-                  {slot.empty ? "NO SAVE DATA" : \`WINS: \${slot.wins} / LOSSES: \${slot.losses}\`}
-                </span>
+              <div className="flex-row" style={{ alignItems: "center", gap: "8px" }}>
+                {slot.empty ? (
+                  <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
+                ) : (
+                  <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+                )}
+                <div className="flex-col" style={{ textAlign: "left" }}>
+                  <span
+                    style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
+                  >
+                    Slot {i + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      color: menuIndex === i ? "#22c55e" : "#a0aec0",
+                      marginTop: "6px",
+                    }}
+                  >
+                    {slot.empty ? "NO SAVE DATA" : \`WINS: \${slot.wins} / LOSSES: \${slot.losses}\`}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -3120,14 +3208,15 @@ export function SaveSelectScreen({
               style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ▶
-            </span>
+                </span>
+            <Copy size={16} style={{ flexShrink: 0 }} />
             <span>Copy Slot</span>
             <span
               className="cursor-arrow"
               style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ◀
-            </span>
+                </span>
           </button>
           <button
             onClick={toggleEraseMode}
@@ -3151,14 +3240,15 @@ export function SaveSelectScreen({
               style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ▶
-            </span>
+                </span>
+            <Trash2 size={16} style={{ flexShrink: 0 }} />
             <span>Delete Slot</span>
             <span
               className="cursor-arrow"
               style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
             >
               ◀
-            </span>
+                </span>
           </button>
         </div>
         <button
@@ -3182,20 +3272,23 @@ export function SaveSelectScreen({
             style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
           >
             ▶
-          </span>
+              </span>
+          <ArrowLeft size={16} style={{ flexShrink: 0 }} />
           <span>Back</span>
           <span
             className="cursor-arrow"
             style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
           >
             ◀
-          </span>
+              </span>
         </button>
       </div>
     </div>
   );
 }
-`,"src/components/menus/SettingsScreen.tsx":`interface SettingsScreenProps {
+`,"src/components/menus/SettingsScreen.tsx":`import { Volume2, Keyboard, ArrowLeft } from "lucide-react";
+
+interface SettingsScreenProps {
   menuIndex: number;
   onAudio: () => void;
   onControls: () => void;
@@ -3240,8 +3333,10 @@ export function SettingsScreen({
             setMenuIndex(0);
           }}
           className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
+          style={{ display: "flex", alignItems: "center", gap: "10px" }}
         >
           {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
+          <Volume2 size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           SOUND SETTINGS
           {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -3252,8 +3347,10 @@ export function SettingsScreen({
             setMenuIndex(1);
           }}
           className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
+          style={{ display: "flex", alignItems: "center", gap: "10px" }}
         >
           {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
+          <Keyboard size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           KEYBOARD CONTROLS
           {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
         </button>
@@ -3266,9 +3363,10 @@ export function SettingsScreen({
           setMenuIndex(2);
         }}
         className={\`neo-btn \${menuIndex === 2 ? "neo-btn-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "240px" }}
+        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", gap: "10px" }}
       >
         {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
+        <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
         Back
         {menuIndex === 2 && <span className="cursor-arrow">◀</span>}
       </button>
@@ -3276,6 +3374,7 @@ export function SettingsScreen({
   );
 }
 `,"src/components/menus/SourceViewFooter.tsx":`import { soundSynth } from "@/core/SoundSynth";
+import { Download, ArrowLeft } from "lucide-react";
 
 interface SourceViewFooterProps {
   onBack: () => void;
@@ -3297,43 +3396,6 @@ function GithubIcon() {
       strokeLinejoin="round"
     >
       <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function BackIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
     </svg>
   );
 }
@@ -3396,7 +3458,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
               boxSizing: "border-box",
             }}
           >
-            <DownloadIcon />
+            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
 
@@ -3411,7 +3473,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
               boxSizing: "border-box",
             }}
           >
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
       </div>
@@ -3457,7 +3519,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <DownloadIcon />
+            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
             DOWNLOAD SOURCE
           </span>
           <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
@@ -3473,7 +3535,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <BackIcon />
+            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
             BACK TO MENU
           </span>
           <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
@@ -12687,4 +12749,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
 }
-`};function m({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:p,handleDownload:m}){(0,f.useEffect)(()=>{let f=f=>{if(e.length===0)return;if(s&&c===`CODE`&&(d(f)||f.code===`ArrowLeft`||f.code===`KeyA`)){f.preventDefault(),u.playSelectTick(),p(`TOC`);return}let h=e[t<e.length?t:0];if(f.code===`ArrowDown`||f.code===`KeyS`)f.preventDefault(),u.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(f.code===`ArrowUp`||f.code===`KeyW`)f.preventDefault(),u.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(f.code===`ArrowRight`||f.code===`KeyD`)f.preventDefault(),u.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(f.code===`ArrowLeft`||f.code===`KeyA`)if(f.preventDefault(),u.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else l(f)?(f.preventDefault(),t<e.length?(u.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&p(`CODE`))):t===e.length?(u.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?m():t===e.length+2&&(u.playErrorTick(),o())):d(f)&&(f.preventDefault(),t<e.length?h.isDir&&r[h.path]?(u.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(u.playSelectTick(),n(e.length+2)):t===e.length+2?(u.playErrorTick(),o()):(u.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,f),()=>window.removeEventListener(`keydown`,f)},[e,t,r,o,s,c,n,i,a,p,m])}var h=c();function g(){return(0,h.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,h.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function _(){return(0,h.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,h.jsx)(`path`,{d:`M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4`}),(0,h.jsx)(`polyline`,{points:`7 10 12 15 17 10`}),(0,h.jsx)(`line`,{x1:`12`,y1:`15`,x2:`12`,y2:`3`})]})}function v(){return(0,h.jsxs)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:[(0,h.jsx)(`line`,{x1:`19`,y1:`12`,x2:`5`,y2:`12`}),(0,h.jsx)(`polyline`,{points:`12 19 5 12 12 5`})]})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{u.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,h.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,h.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,h.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,h.jsx)(g,{})})}),(0,h.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,h.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,h.jsx)(_,{})})}),(0,h.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,h.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,h.jsx)(v,{})})})]}):(0,h.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,h.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,h.jsx)(`div`,{className:`btn-indicator-light`}),(0,h.jsxs)(`div`,{className:`btn-label-group`,children:[(0,h.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,h.jsx)(g,{}),`GITHUB REPO`]}),(0,h.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,h.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,h.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,h.jsx)(`div`,{className:`btn-indicator-light`}),(0,h.jsxs)(`div`,{className:`btn-label-group`,children:[(0,h.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,h.jsx)(_,{}),`DOWNLOAD SOURCE`]}),(0,h.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,h.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,h.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,h.jsx)(`div`,{className:`btn-indicator-light`}),(0,h.jsxs)(`div`,{className:`btn-label-group`,children:[(0,h.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,h.jsx)(v,{}),`BACK TO MENU`]}),(0,h.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,h.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,f.useState)(p),[c,l]=(0,f.useState)({src:!0,"src/components":!0,"src/core":!0}),[d,g]=(0,f.useState)((0,f.useMemo)(()=>Object.keys(p).sort(),[])[0]||``),[_,v]=(0,f.useState)(!1),[C,w]=(0,f.useState)(`TOC`),T=(0,f.useRef)(null),E=(0,f.useMemo)(()=>b(Object.keys(p)),[]),D=(0,f.useMemo)(()=>E?x(E,c):[],[E,c]),[O,k]=(0,f.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return m({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:c,setExpandedDirs:l,setSelectedFile:g,onBack:e,isMobile:_,mobileView:C,setMobileView:w,handleDownload:()=>{u.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,f.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,f.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,h.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,h.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,h.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,h.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:_?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,h.jsxs)(`div`,{className:`source-view-workspace`,children:[(!_||C===`TOC`)&&(0,h.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:_?`100%`:`24%`,height:_?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!c[e.path],f=!e.isDir&&e.path===d;return(0,h.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{u.playSelectTick(),k(t),e.isDir?l(t=>({...t,[e.path]:!t[e.path]})):(g(e.path),_&&w(`CODE`))},style:{paddingTop:_?`14px`:`6px`,paddingBottom:_?`14px`:`6px`,paddingRight:_?`16px`:`10px`,paddingLeft:`${e.depth*(_?22:16)+(_?16:10)}px`,borderRadius:`6px`,fontSize:_?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:f?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:f?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,h.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,h.jsx)(a,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,h.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,h.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,h.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,h.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!_||C===`CODE`)&&(0,h.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:_?`100%`:`76%`,height:_?`100%`:``,display:`flex`,flexDirection:`column`},children:[_&&(0,h.jsx)(`button`,{onClick:()=>{u.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),d?(0,h.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,h.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:_?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,d]}),(0,h.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,h.jsx)(t,{language:S(d),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:_?`10px`:`11px`,lineHeight:`1.5`},children:n[d]||``})})]}):(0,h.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,h.jsx)(y,{onBack:e,isMobile:_,activeIndex:O,visibleNodesLength:D.length})]})}export{C as SourceViewScreen};
+`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let a=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:a,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(l,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(i,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:a,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(l,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(i,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[i,l]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,i):[],[E,i]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:i,setExpandedDirs:l,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!i[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?l(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(a,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length})]})}export{C as SourceViewScreen};
