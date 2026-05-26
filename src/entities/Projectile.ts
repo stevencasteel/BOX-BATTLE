@@ -225,7 +225,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       if (isColliding) {
         const targetHealth = target.getComponent(HealthComponent);
         if (targetHealth) {
-          targetHealth.takeDamage(this.damage);
+          const projIntensity = this.ownerId === "player" ? (this.damage >= 3 ? 1.6 : 0.6) : 1.0;
+          targetHealth.takeDamage(this.damage, this.position.x, this.position.y, projIntensity);
           return true;
         }
       }

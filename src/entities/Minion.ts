@@ -13,6 +13,7 @@ import { eventBroker } from "@/core/eventBroker";
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
 export class Minion extends BaseEntity {
+  private unsubHurt!: () => void;
   public get status(): EntityStatus {
     if (this.isDead) return EntityStatus.DEAD;
     if (this.isDying) return EntityStatus.DYING;
@@ -87,6 +88,12 @@ export class Minion extends BaseEntity {
       this.stateMachine.changeState(new FlyerPatrolState(this));
     }
     eventBroker.publish("MINION_SPAWNING", undefined);
+
+    this.unsubHurt = eventBroker.subscribe("MINION_HURT", ({ id, sourceX, sourceY, intensity }) => {
+      if (id === this.id) {
+        this.handleHurtReaction(sourceX, sourceY, intensity);
+      }
+    });
   }
 
   public startDeathSequence() {
@@ -351,5 +358,34 @@ export class Minion extends BaseEntity {
     ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
 
     ctx.restore();
+  }
+
+  public handleHurtReaction(sourceX: number, sourceY: number, intensity: number) {
+    if (this.isDead || this.isDying || this.isSpawning) return;
+
+    const dx = this.position.x - sourceX;
+    const dy = this.position.y - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
+
+    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
+    this.velocity.x = dirX * 320 * intensity;
+    this.velocity.y = Math.min(this.velocity.y, -340 * intensity);
+    this.physics.isGrounded = false;
+
+    // Stretch vertically to visually sell the launch momentum (amplified for lighter class)
+    this.visualScale = { x: 1.0 - 0.2 * intensity, y: 1.0 + 0.4 * intensity };
+    this.scaleVelocity = { x: 10.0 * intensity, y: -20.0 * intensity };
+
+    const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
+    this.applyAngularImpulse(rotImpulse);
+  }
+
+  public teardown() {
+    if (this.unsubHurt) {
+      this.unsubHurt();
+    }
+    super.teardown();
   }
 }

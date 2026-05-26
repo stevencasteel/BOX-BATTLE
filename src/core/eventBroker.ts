@@ -1,7 +1,7 @@
 export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number };
+  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
+  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
   PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
   PLAYER_JUMPED: void;
   PLAYER_DASHED: { direction: number };

@@ -16,6 +16,7 @@ import {
 } from "./BossStates";
 
 export class Boss extends BaseEntity {
+  private unsubHurt!: () => void;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public stateMachine: StateMachine;
@@ -57,6 +58,10 @@ export class Boss extends BaseEntity {
 
     this.stateMachine = new StateMachine();
     this.stateMachine.changeState(this.cooldownState);
+
+    this.unsubHurt = eventBroker.subscribe("BOSS_HURT", ({ sourceX, sourceY, intensity }) => {
+      this.handleHurtReaction(sourceX, sourceY, intensity);
+    });
   }
 
   public update(dt: number) {
@@ -256,5 +261,34 @@ export class Boss extends BaseEntity {
 
     ctx.shadowBlur = 0;
     ctx.restore();
+  }
+
+  public handleHurtReaction(sourceX: number, sourceY: number, intensity: number) {
+    if (this.isDead) return;
+
+    const dx = this.position.x - sourceX;
+    const dy = this.position.y - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
+
+    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
+    this.velocity.x = dirX * 240 * intensity;
+    this.velocity.y = Math.min(this.velocity.y, -280 * intensity);
+    this.physics.isGrounded = false;
+
+    // Stretch vertically to visually sell the launch momentum
+    this.visualScale = { x: 1.0 - 0.15 * intensity, y: 1.0 + 0.3 * intensity };
+    this.scaleVelocity = { x: 8.0 * intensity, y: -16.0 * intensity };
+
+    const rotImpulse = -Math.sign(dirX) * 12.0 * intensity;
+    this.applyAngularImpulse(rotImpulse);
+  }
+
+  public teardown() {
+    if (this.unsubHurt) {
+      this.unsubHurt();
+    }
+    super.teardown();
   }
 }

@@ -58,6 +58,20 @@ export class BaseEntity implements IEntity {
     return (component as T) || null;
   }
 
+    public applyKineticImpulse(vx: number, vy: number) {
+    this.velocity.x += vx;
+    this.velocity.y += vy;
+  }
+
+  public applyScaleImpulse(sx: number, sy: number) {
+    this.scaleVelocity.x += sx;
+    this.scaleVelocity.y += sy;
+  }
+
+  public applyAngularImpulse(rv: number) {
+    this.rotationVelocity += rv;
+  }
+
   public update(dt: number) {
     if (this.isDead) return;
 

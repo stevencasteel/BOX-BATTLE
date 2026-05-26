@@ -43,7 +43,7 @@ export class HealthComponent implements IEntityComponent {
     this.hitFlashTimer = 0;
   }
 
-  public takeDamage(amount: number): boolean {
+  public takeDamage(amount: number, sourceX: number = 0, sourceY: number = 0, intensity: number = 1): boolean {
     const isDying = this.owner.status === EntityStatus.DYING;
     const isSpawning = this.owner.status === EntityStatus.SPAWNING;
     if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
@@ -65,6 +65,9 @@ export class HealthComponent implements IEntityComponent {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
+        sourceX,
+        sourceY,
+        intensity,
       });
     } else if (this.owner.id.startsWith("minion-")) {
       eventBroker.publish("MINION_HURT", {
@@ -72,6 +75,9 @@ export class HealthComponent implements IEntityComponent {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
+        sourceX,
+        sourceY,
+        intensity,
       });
     }
 
