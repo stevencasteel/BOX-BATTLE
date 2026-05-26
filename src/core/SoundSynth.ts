@@ -186,6 +186,10 @@ class SoundSynth {
     this.drones.playHealStart(x);
   }
 
+  public updateHealTimer(timer: number): void {
+    this.drones.updateHealTimer(timer);
+  }
+
   public stopHealDrone(): void {
     this.drones.stopHealDrone();
   }

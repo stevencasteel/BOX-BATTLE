@@ -41,6 +41,7 @@ export class Player extends BaseEntity {
   private maxFallSpeed: number = 0;
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
+  private unsubHealCancel!: () => void;
   private unsubDamageDealt!: () => void;
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
@@ -104,6 +105,18 @@ export class Player extends BaseEntity {
     this.unsubPogo = eventBroker.subscribe("PLAYER_POGOED", () => {
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
+    });
+
+    this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: 0,
+        color: "hsl(280, 80%, 65%)",
+        radial: true,
+        count: 18,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
     this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
@@ -243,23 +256,68 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
+        return;
       }
-      
-      // Bubbling healing: Spawn upward-ascending purple embers around player base
-      if (Math.random() < 0.45) {
-        const spawnX = this.position.x + (Math.random() * 32 - 16);
-        const spawnY = this.position.y + this.size.height / 2;
-        const angle = -Math.PI / 2 + (Math.random() * 0.6 - 0.3);
+
+      this.velocity.x = 0;
+      const now = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+
+      this.visualScale = { 
+        x: 1.0 + Math.sin(now * 0.045) * 0.04 * progress, 
+        y: 1.0 - Math.sin(now * 0.045) * 0.04 * progress 
+      };
+
+      // Spawning rising lightning and aura flare particles
+      const sparkChance = 0.35 + progress * 0.65;
+      if (Math.random() < sparkChance) {
+        const spawnX = this.position.x + (Math.random() * 44 - 22);
+        const spawnY = this.position.y + this.size.height / 2 - (Math.random() * this.size.height);
+        const angle = -Math.PI / 2 + (Math.random() * 0.3 - 0.15);
 
         eventBroker.publish("SPAWN_SPARKS", {
           x: spawnX,
           y: spawnY,
           angle: angle,
-          color: "hsl(280, 80%, 65%)",
-          count: 1,
-          turbulence: 25
+          color: progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)",
+          count: Math.random() < 0.2 ? 2 : 1,
+          shape: Math.random() < 0.35 ? "line" : "spark",
+          turbulence: 15 + progress * 40
         });
       }
+
+      // Vortex-style inward pulling kii accretion sparks
+      if (Math.random() < 0.25 + progress * 0.45) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 90 - progress * 55;
+        const startX = this.position.x + Math.cos(angle) * radius;
+        const startY = this.position.y - 10 + Math.sin(angle) * radius;
+
+        const targetX = this.position.x;
+        const targetY = this.position.y - 10;
+        const vx = (targetX - startX) * 4.0;
+        const vy = (targetY - startY) * 4.0;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: startX,
+          y: startY,
+          angle: Math.atan2(vy, vx),
+          color: "hsl(280, 100%, 75%)",
+          count: 1,
+          shape: "line",
+          turbulence: 20
+        });
+      }
+
+      // Pressure ground-dust emissions
+      if (Math.random() < 0.08 + progress * 0.15) {
+        eventBroker.publish("SPAWN_DUST", {
+          x: this.position.x,
+          y: this.position.y + this.size.height / 2,
+          direction: "horizontal"
+        });
+      }
+
       return;
     }
 
@@ -627,21 +685,77 @@ export class Player extends BaseEntity {
     const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
-      const cycle = performance.now() * 0.008;
-      ctx.strokeStyle = "hsl(280, 80%, 65%)";
-      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
-      ctx.shadowBlur = 15;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
+      const nowTime = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
 
-      const radius1 = 44 + Math.sin(cycle) * 8;
-      const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(localCenterX, localCenterY, radius1, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.save();
+      ctx.shadowColor = "rgba(168, 85, 247, 0.95)";
+      ctx.shadowBlur = 20 + progress * 20;
+
+      const baseW = this.size.width * (1.1 + progress * 0.6);
+      const baseH = this.size.height * (1.05 + progress * 0.4);
+
+      const flameLayers = [
+        { color: "hsla(280, 85%, 35%, 0.4)", waveSpeed: 0.03, heightScale: 1.0 },
+        { color: "hsla(285, 90%, 55%, 0.6)", waveSpeed: 0.045, heightScale: 0.85 },
+        { color: "hsla(290, 100%, 75%, 0.8)", waveSpeed: 0.06, heightScale: 0.7 }
+      ];
+
+      flameLayers.forEach((layer) => {
+        ctx.fillStyle = layer.color;
+        ctx.beginPath();
+
+        const leftX = -baseW / 2;
+        const rightX = baseW / 2;
+        const bottomY = 0;
+
+        ctx.moveTo(leftX, bottomY);
+
+        const segments = 10;
+        for (let j = 1; j <= segments; j++) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5) * wiggleAmp;
+          const currentX = leftX + (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        for (let j = segments; j >= 0; j--) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5 + Math.PI) * wiggleAmp;
+          const currentX = rightX - (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // Ground crack concentric ellipse
+      ctx.save();
+      ctx.strokeStyle = "hsl(280, 85%, 65%)";
+      ctx.lineWidth = 1.5 + progress * 2.5;
+      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
+      ctx.shadowBlur = 10;
+
+      const ringCycle = (nowTime * 0.005) % 1.0;
+      const ringRadius = (this.size.width * 1.1) + ringCycle * 60;
+      const ringOpacity = Math.max(0, 1.0 - ringCycle);
+
+      ctx.globalAlpha = ringOpacity;
       ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, radius2, 0, Math.PI * 2);
+      ctx.ellipse(localCenterX, 0, ringRadius, ringRadius * 0.3, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Body trembling shudder
+      const tremble = (Math.random() * 2 - 1) * (1.0 + progress * 4.5);
+      ctx.translate(tremble, tremble);
     }
 
     if (this.isCharging && this.chargeTimer >= 0.25) {
@@ -666,6 +780,7 @@ export class Player extends BaseEntity {
     this.unsubHurt();
     this.unsubPogo();
     this.unsubHealComplete();
+    this.unsubHealCancel();
     this.unsubChargeMaxed();
     this.unsubDamageDealt();
     if (this.unsubProjectileFired) {

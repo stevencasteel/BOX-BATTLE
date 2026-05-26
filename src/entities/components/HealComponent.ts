@@ -19,6 +19,7 @@ export class HealComponent implements IEntityComponent {
     if (this.isHealing) {
       this.owner.velocity.x = 0;
       this.healTimer -= dt;
+      eventBroker.publish("HEAL_UPDATE", { timer: this.healTimer });
 
       if (this.healTimer <= 0) {
         this.completeHealing();

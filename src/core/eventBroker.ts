@@ -24,6 +24,7 @@ export type GameEventMap = {
   PLAYER_LANDED: void;
   HEAL_START: void;
   HEAL_CANCEL: void;
+  HEAL_UPDATE: { timer: number };
   HEAL_COMPLETE: void;
   PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;

@@ -8,7 +8,9 @@ export class DroneManager {
   private panner!: Tone.Panner;
 
   private healOsc!: Tone.Oscillator;
+  private healOscSub!: Tone.Oscillator;
   private healFilter!: Tone.Filter;
+  private healLfo!: Tone.LFO;
   private healGain!: Tone.Gain;
   private isHealDroneRunning: boolean = false;
 
@@ -32,11 +34,15 @@ export class DroneManager {
   private init() {
     this.panner = new Tone.Panner(0).connect(this.ctxManager.sfxGain);
 
-    this.healOsc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
-    this.healFilter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
+    this.healOsc = new Tone.Oscillator({ type: "sawtooth", frequency: 110 }).start();
+    this.healOscSub = new Tone.Oscillator({ type: "triangle", frequency: 55 }).start();
+    this.healFilter = new Tone.Filter({ frequency: 220, type: "bandpass", Q: 7.0 });
+    this.healLfo = new Tone.LFO({ frequency: 12.0, min: -150, max: 150 }).start();
     this.healGain = new Tone.Gain(0);
 
+    this.healLfo.connect(this.healFilter.frequency);
     this.healOsc.connect(this.healFilter);
+    this.healOscSub.connect(this.healFilter);
     this.healFilter.connect(this.healGain);
     this.healGain.connect(this.panner);
 
@@ -70,21 +76,70 @@ export class DroneManager {
     }
 
     const now = Tone.now();
-
-    this.healOsc.frequency.setValueAtTime(220, now);
-    this.healFilter.frequency.setValueAtTime(440, now);
-
-    this.healOsc.frequency.rampTo(660, 2.0);
-    this.healFilter.frequency.rampTo(1320, 2.0);
-    this.healGain.gain.rampTo(0.25, 0.15);
+    this.healOsc.frequency.setValueAtTime(110, now);
+    this.healOscSub.frequency.setValueAtTime(55, now);
+    this.healFilter.frequency.setValueAtTime(220, now);
+    this.healLfo.frequency.setValueAtTime(12.0, now);
+    this.healLfo.amplitude.setValueAtTime(150 / 350, now);
+    this.healGain.gain.rampTo(0.35, 0.1);
 
     this.isHealDroneRunning = true;
   }
 
+  public updateHealTimer(timer: number) {
+    if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
+    const now = Tone.now();
+    
+    // Strict clamp progress to normal range [0, 1]
+    const progress = Math.max(0, Math.min(1.0, (2.0 - timer) / 2.0));
+
+    const baseFreq = 110 + progress * 220;
+    const subFreq = 55 + progress * 55;
+    const filterFreq = 220 + Math.pow(progress, 1.5) * 1400;
+    const lfoFreq = 12.0 + progress * 16.0;
+    
+    // Scale LFO amplitude safely and clamp to [0, 1] normal range
+    const lfoAmp = Math.max(0, Math.min(1.0, 0.42 + progress * 0.45));
+
+    this.healOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
+    this.healOscSub.frequency.setTargetAtTime(subFreq, now, 0.05);
+    this.healFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+    this.healLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
+    this.healLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
+    
+    // Clamp output gain value to [0, 1] normal range
+    const gainVal = Math.max(0, Math.min(1.0, 0.35 + progress * 0.25));
+    this.healGain.gain.setTargetAtTime(gainVal, now, 0.05);
+  }
+
   public stopHealDrone() {
     if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
-    this.healGain.gain.rampTo(0, 0.1);
+    const now = Tone.now();
+    this.healGain.gain.cancelScheduledValues(now);
+    this.healGain.gain.setValueAtTime(this.healGain.gain.value, now);
+    this.healGain.gain.rampTo(0, 0.12);
     this.isHealDroneRunning = false;
+  }
+
+  public playHealComplete() {
+    this.stopHealDrone();
+    if (!this.ctxManager.initialized) return;
+
+    const now = Tone.now();
+    const chimeNotes = ["C5", "Eb5", "G5", "C6", "Eb6"];
+    chimeNotes.forEach((note, idx) => {
+      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
+    });
+
+    const impactSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
+      oscillator: { type: "sawtooth" }
+    }).connect(this.ctxManager.sfxGain);
+
+    impactSynth.triggerAttackRelease("C1", "2n", now);
+    setTimeout(() => {
+      impactSynth.dispose();
+    }, 2000);
   }
 
   public playChargeStart(x?: number) {
@@ -130,7 +185,6 @@ export class DroneManager {
     } else if (timer >= 1.12) {
       if (this.currentChargeLevel < 2) {
         this.currentChargeLevel = 2;
-        this.playChargeCompleteDing();
       }
       const vibration = Math.sin(now * 30) * 8;
       this.chargeOsc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
@@ -141,28 +195,11 @@ export class DroneManager {
     }
   }
 
-  private playChargeCompleteDing() {
-    if (!this.ctxManager.initialized) return;
-    // Silent (ding sound disabled)
-  }
-
   public stopChargeDrone() {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
     this.currentChargeLevel = 0;
-  }
-
-  public playHealComplete() {
-    this.stopHealDrone();
-    if (!this.ctxManager.initialized) return;
-
-    const chimeNotes = ["C5", "E5", "G5", "C6"];
-    const now = Tone.now();
-
-    chimeNotes.forEach((note, idx) => {
-      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
-    });
   }
 
   public setHeartbeat(active: boolean) {

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 1:18:21 PM
+ [SYSTEM] Generated: 5/26/2026, 2:02:55 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -546,7 +546,7 @@ Reactive Spring-Loaded HUD Elements
 Charging should feel like a DBZ kii charge.
 
 
-
+We need to redo from scratch how our purple determination charging looks. and it needs a nice satisfying completion animation and sound. It should find inspiration from DBZ kii charging.
 
 
 
@@ -2134,7 +2134,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   align-items: center;
   justify-content: center;
   z-index: 99;
-  padding: 24px;
+  padding: clamp(12px, 3vmin, 24px);
   box-sizing: border-box;
   animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   opacity: 0;
@@ -2157,11 +2157,11 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: clamp(16px, 4.5vmin, 40px);
   border-radius: 20px;
   background: rgba(12, 14, 18, 0.96);
   max-width: 440px;
-  width: 85%;
+  width: 90%;
   box-sizing: border-box;
   text-align: center;
   transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
@@ -2177,55 +2177,182 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1);
 }
 
+.gameover-icon {
+  width: clamp(40px, 8vmin, 64px) !important;
+  height: clamp(40px, 8vmin, 64px) !important;
+  margin-bottom: clamp(8px, 2vmin, 16px) !important;
+}
+
+.gameover-stat-card {
+  width: 100%;
+  margin-top: clamp(10px, 2.5vmin, 24px);
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  background: rgba(7, 8, 11, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.5vmin, 10px);
+  box-sizing: border-box;
+}
+
+.gameover-stat-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  color: #718096;
+}
+
+.gameover-stat-title {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.gameover-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gameover-stat-label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.gameover-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.gameover-stat-win {
+  color: var(--signal-green);
+}
+
+.gameover-stat-loss {
+  color: var(--signal-red);
+}
+
+.gameover-divider {
+  height: 1px;
+  width: 60px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: clamp(12px, 2.5vmin, 24px) 0;
+}
+
 .gameover-btn-container {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: clamp(10px, 2vmin, 16px);
   width: 100%;
   justify-content: center;
 }
 
-.gameover-btn {
+.neo-btn.gameover-btn {
   flex: 1;
-  padding: 16px 20px;
-  font-size: 14px;
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  font-size: clamp(11px, 1.5vmin, 14px);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 0.1em;
+  height: auto;
+  min-height: 0;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+.gameover-inline-arrow {
+  display: inline-block;
+  font-family: monospace;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  font-size: clamp(10px, 1.3vmin, 14px);
+  line-height: 1;
+}
+
+@media (max-width: 768px), (max-height: 750px) {
   .gameover-box {
-    padding: 24px !important;
-    width: 90% !important;
+    padding: clamp(12px, 3.5vmin, 24px);
+    width: 90%;
+    max-width: 360px;
+    border-radius: 14px;
+  }
+  .gameover-icon {
+    width: 44px !important;
+    height: 44px !important;
+    margin-bottom: 8px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.8rem;
+  }
+  .gameover-stat-card {
+    margin-top: 12px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .gameover-stat-label {
+    font-size: 11px;
+  }
+  .gameover-stat-value {
+    font-size: 15px;
+  }
+  .gameover-divider {
+    margin: 12px 0;
   }
   .gameover-btn-container {
-    gap: 12px !important;
-    padding: 0 10px !important;
+    gap: 10px;
   }
-  .gameover-btn {
-    padding: 12px 12px !important;
-    font-size: 12px !important;
-    border-radius: 8px !important;
+  .neo-btn.gameover-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 8px;
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 380px), (max-height: 560px) {
   .gameover-box {
-    padding: 16px !important;
-    width: 95% !important;
+    padding: 12px;
+    width: 95%;
+    max-width: 320px;
+  }
+  .gameover-icon {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 4px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.4rem;
+  }
+  .gameover-stat-card {
+    margin-top: 8px;
+    padding: 6px 10px;
+    gap: 4px;
+  }
+  .gameover-stat-label {
+    font-size: 10px;
+  }
+  .gameover-stat-value {
+    font-size: 13px;
+  }
+  .gameover-divider {
+    margin: 8px 0;
   }
   .gameover-btn-container {
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding: 0 !important;
+    flex-direction: row;
+    gap: 8px;
   }
-  .gameover-btn {
-    width: 100% !important;
-    padding: 12px 16px !important;
-    font-size: 12px !important;
+  .neo-btn.gameover-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -2355,24 +2482,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 @keyframes rumble-anim {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-  20% {
-    transform: translate(-1px, -1px) rotate(-1deg);
-  }
-  40% {
-    transform: translate(-1px, 1px) rotate(1deg);
-  }
-  60% {
-    transform: translate(1px, -1px) rotate(0deg);
-  }
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-  100% {
-    transform: translate(1px, 1px) rotate(-1deg);
-  }
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  20% { transform: translate(-1px, -1px) rotate(-1deg); }
+  40% { transform: translate(-1px, 1px) rotate(1deg); }
+  60% { transform: translate(1px, -1px) rotate(0deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
 @media (max-width: 768px) and (pointer: coarse) {
@@ -2443,12 +2558,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
 
-  // Staggered state sequence: 0 (Hidden), 1 (Fading Base), 2 (Header Pop & Sound), 3 (Tallying Stats), 4 (Buttons Visible)
   const [stagger, setStagger] = useState(0);
   const [displayWins, setDisplayWins] = useState(0);
   const [displayLosses, setDisplayLosses] = useState(0);
 
-  // Grouped selector bindings
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -2494,7 +2607,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, []);
 
-  // Staggered animation triggers on game conclusion
   useEffect(() => {
     if (gameResult === "PLAYING") {
       queueMicrotask(() => {
@@ -2505,13 +2617,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       return;
     }
 
-    // Step 1: Base panel entry
     const t1 = setTimeout(() => {
       setStagger(1);
       soundSynth.playMenuConfirm();
     }, 200);
 
-    // Step 2: Primary banner pop & screen shake
     const t2 = setTimeout(() => {
       setStagger(2);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
@@ -2522,7 +2632,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }
     }, 750);
 
-    // Step 3: Run stat ticks count-up
     const t3 = setTimeout(() => {
       setStagger(3);
       const slotIdx = saveManager.getCurrentSlotIndex();
@@ -2548,8 +2657,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               soundSynth.playSelectTick();
             } else {
               clearInterval(lossTimer);
-              
-              // Step 4: Display retry buttons smoothly
               setStagger(4);
               soundSynth.playDashRecharge();
             }
@@ -2623,24 +2730,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Skull
                           size={64}
-                          className="defeat-icon-anim"
-                          style={{
-                            color: "var(--signal-red)",
-                            marginBottom: "16px",
-                          }}
+                          className="defeat-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-red)" }}
                         />
-                        <h1
-                          className="defeat-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-red)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
                           DEFEATED
                         </h1>
                       </div>
@@ -2648,24 +2741,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Trophy
                           size={64}
-                          className="victory-icon-anim"
-                          style={{
-                            color: "var(--signal-green)",
-                            marginBottom: "16px",
-                          }}
+                          className="victory-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-green)" }}
                         />
-                        <h1
-                          className="victory-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-green)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
                           VICTORY
                         </h1>
                       </div>
@@ -2673,54 +2752,28 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </>
                 )}
 
-                {/* Save Stats Tally */}
                 {stagger >= 3 && (
-                  <div
-                    className="stat-card-anim"
-                    style={{
-                      width: "100%",
-                      marginTop: "24px",
-                      padding: "16px 20px",
-                      background: "rgba(7, 8, 11, 0.6)",
-                      border: "1px solid rgba(255,255,255,0.03)",
-                      borderRadius: "10px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center", color: "#718096" }}>
+                  <div className="stat-card-anim gameover-stat-card">
+                    <div className="gameover-stat-title-row">
                       <BarChart2 size={14} />
-                      <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                      <span className="gameover-stat-title">
                         SAVE SLOT PERFORMANCE
                       </span>
                     </div>
-                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL WINS</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-green)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayWins}
-                      </span>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL WINS</span>
+                      <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL LOSSES</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-red)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayLosses}
-                      </span>
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL LOSSES</span>
+                      <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
                     </div>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    height: "1px",
-                    width: "60px",
-                    background: "rgba(255,255,255,0.08)",
-                    margin: "24px 0",
-                  }}
-                />
+                <div className="gameover-divider" />
 
-                {/* Navigation Buttons */}
                 <div
                   className="gameover-btn-container button-reveal-anim"
                   style={{
@@ -2750,9 +2803,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2762,9 +2815,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2790,9 +2843,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2802,9 +2855,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -3377,7 +3430,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Layer A — Aura (optional prismatic ring) */}
       <motion.div
         style={{
           position: "absolute",
@@ -3397,7 +3449,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         transition={{ type: "spring", stiffness: 180, damping: 15 }}
       />
 
-      {/* Layer B — Icon Bubble */}
       <motion.div
         style={{
           position: "absolute",
@@ -3475,18 +3526,17 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Layer C — Triangle Pointer positioned at exact tracking center with offset compensation */}
       {variant.isBase && (
         <motion.div
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            x: "-5.5px",
-            y: "-3.2px",
+            x: -5.5,
+            y: -3.2,
             zIndex: 3,
             pointerEvents: "none",
-            transformOrigin: "top left",
+            transformOrigin: "5.5px 3.2px",
           }}
           animate={{
             scale: isPressed ? 0.85 : 1,
@@ -8260,6 +8310,10 @@ class SoundSynth {
     this.drones.playHealStart(x);
   }
 
+  public updateHealTimer(timer: number): void {
+    this.drones.updateHealTimer(timer);
+  }
+
   public stopHealDrone(): void {
     this.drones.stopHealDrone();
   }
@@ -8990,7 +9044,9 @@ export class DroneManager {
   private panner!: Tone.Panner;
 
   private healOsc!: Tone.Oscillator;
+  private healOscSub!: Tone.Oscillator;
   private healFilter!: Tone.Filter;
+  private healLfo!: Tone.LFO;
   private healGain!: Tone.Gain;
   private isHealDroneRunning: boolean = false;
 
@@ -9014,11 +9070,15 @@ export class DroneManager {
   private init() {
     this.panner = new Tone.Panner(0).connect(this.ctxManager.sfxGain);
 
-    this.healOsc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
-    this.healFilter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
+    this.healOsc = new Tone.Oscillator({ type: "sawtooth", frequency: 110 }).start();
+    this.healOscSub = new Tone.Oscillator({ type: "triangle", frequency: 55 }).start();
+    this.healFilter = new Tone.Filter({ frequency: 220, type: "bandpass", Q: 7.0 });
+    this.healLfo = new Tone.LFO({ frequency: 12.0, min: -150, max: 150 }).start();
     this.healGain = new Tone.Gain(0);
 
+    this.healLfo.connect(this.healFilter.frequency);
     this.healOsc.connect(this.healFilter);
+    this.healOscSub.connect(this.healFilter);
     this.healFilter.connect(this.healGain);
     this.healGain.connect(this.panner);
 
@@ -9052,21 +9112,70 @@ export class DroneManager {
     }
 
     const now = Tone.now();
-
-    this.healOsc.frequency.setValueAtTime(220, now);
-    this.healFilter.frequency.setValueAtTime(440, now);
-
-    this.healOsc.frequency.rampTo(660, 2.0);
-    this.healFilter.frequency.rampTo(1320, 2.0);
-    this.healGain.gain.rampTo(0.25, 0.15);
+    this.healOsc.frequency.setValueAtTime(110, now);
+    this.healOscSub.frequency.setValueAtTime(55, now);
+    this.healFilter.frequency.setValueAtTime(220, now);
+    this.healLfo.frequency.setValueAtTime(12.0, now);
+    this.healLfo.amplitude.setValueAtTime(150 / 350, now);
+    this.healGain.gain.rampTo(0.35, 0.1);
 
     this.isHealDroneRunning = true;
   }
 
+  public updateHealTimer(timer: number) {
+    if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
+    const now = Tone.now();
+    
+    // Strict clamp progress to normal range [0, 1]
+    const progress = Math.max(0, Math.min(1.0, (2.0 - timer) / 2.0));
+
+    const baseFreq = 110 + progress * 220;
+    const subFreq = 55 + progress * 55;
+    const filterFreq = 220 + Math.pow(progress, 1.5) * 1400;
+    const lfoFreq = 12.0 + progress * 16.0;
+    
+    // Scale LFO amplitude safely and clamp to [0, 1] normal range
+    const lfoAmp = Math.max(0, Math.min(1.0, 0.42 + progress * 0.45));
+
+    this.healOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
+    this.healOscSub.frequency.setTargetAtTime(subFreq, now, 0.05);
+    this.healFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+    this.healLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
+    this.healLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
+    
+    // Clamp output gain value to [0, 1] normal range
+    const gainVal = Math.max(0, Math.min(1.0, 0.35 + progress * 0.25));
+    this.healGain.gain.setTargetAtTime(gainVal, now, 0.05);
+  }
+
   public stopHealDrone() {
     if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
-    this.healGain.gain.rampTo(0, 0.1);
+    const now = Tone.now();
+    this.healGain.gain.cancelScheduledValues(now);
+    this.healGain.gain.setValueAtTime(this.healGain.gain.value, now);
+    this.healGain.gain.rampTo(0, 0.12);
     this.isHealDroneRunning = false;
+  }
+
+  public playHealComplete() {
+    this.stopHealDrone();
+    if (!this.ctxManager.initialized) return;
+
+    const now = Tone.now();
+    const chimeNotes = ["C5", "Eb5", "G5", "C6", "Eb6"];
+    chimeNotes.forEach((note, idx) => {
+      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
+    });
+
+    const impactSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
+      oscillator: { type: "sawtooth" }
+    }).connect(this.ctxManager.sfxGain);
+
+    impactSynth.triggerAttackRelease("C1", "2n", now);
+    setTimeout(() => {
+      impactSynth.dispose();
+    }, 2000);
   }
 
   public playChargeStart(x?: number) {
@@ -9112,7 +9221,6 @@ export class DroneManager {
     } else if (timer >= 1.12) {
       if (this.currentChargeLevel < 2) {
         this.currentChargeLevel = 2;
-        this.playChargeCompleteDing();
       }
       const vibration = Math.sin(now * 30) * 8;
       this.chargeOsc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
@@ -9123,28 +9231,11 @@ export class DroneManager {
     }
   }
 
-  private playChargeCompleteDing() {
-    if (!this.ctxManager.initialized) return;
-    // Silent (ding sound disabled)
-  }
-
   public stopChargeDrone() {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
     this.currentChargeLevel = 0;
-  }
-
-  public playHealComplete() {
-    this.stopHealDrone();
-    if (!this.ctxManager.initialized) return;
-
-    const chimeNotes = ["C5", "E5", "G5", "C6"];
-    const now = Tone.now();
-
-    chimeNotes.forEach((note, idx) => {
-      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
-    });
   }
 
   public setHeartbeat(active: boolean) {
@@ -9441,34 +9532,40 @@ export class BossSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      envelope: { attack: 0.015, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      envelope: { attack: 0.015, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
       harmonicity: 5.1,
       resonance: 4000,
+      volume: -7
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
       oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      envelope: { attack: 0.012, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      volume: -5
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
       oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      envelope: { attack: 0.02, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
+      envelope: { attack: 0.012, decay: 0.05, sustain: 0, release: 0.05 },
+      volume: -6
     }).connect(this.impactPanner);
   }
 
@@ -9543,7 +9640,7 @@ export class BossSFX {
 
   public playMinionSpawning(x?: number) {
     const preset = SFX_PRESETS.boss.minion_spawn;
-    this.helper.execute("minion_spawn", 100, x, this.bossPanner, (now) => {
+    this.helper.execute("minion_spawn", 1000, x, this.bossPanner, (now) => {
       this.teleportSynth.triggerAttackRelease(preset.frequency, "4n", now);
       this.teleportSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
@@ -9662,17 +9759,20 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
+      envelope: { attack: 0.012, decay: 0.04, sustain: 0, release: 0.04 },
+      volume: -6
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthBoss = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 },
+      envelope: { attack: 0.015, decay: 0.06, sustain: 0, release: 0.06 },
+      volume: -7
     }).connect(this.bossDialoguePanner);
 
     this.menuSynth = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 },
+      envelope: { attack: 0.015, decay: 0.12, sustain: 0, release: 0.12 },
+      volume: -6
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
@@ -9785,20 +9885,23 @@ export class PlayerSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      envelope: { attack: 0.012, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
       oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      envelope: { attack: 0.012, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
       oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      envelope: { attack: 0.012, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
-    this.dashNoise = new Tone.Noise("white");
+    this.dashNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
     this.dashEnv = new Tone.AmplitudeEnvelope({
       attack: 0.01,
@@ -9811,10 +9914,11 @@ export class PlayerSFX {
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      envelope: { attack: 0.012, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
-    this.landingNoise = new Tone.Noise("white");
+    this.landingNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.landingFilter = new Tone.Filter({
       frequency: presets.landing.noiseFreq,
       type: "bandpass",
@@ -9829,7 +9933,7 @@ export class PlayerSFX {
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
-    this.slashNoiseSide = new Tone.Noise("white");
+    this.slashNoiseSide = new Tone.Noise({ type: "white", volume: -7 });
     this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
     this.slashEnvSide = new Tone.AmplitudeEnvelope({
@@ -9841,7 +9945,7 @@ export class PlayerSFX {
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
-    this.slashNoisePuff = new Tone.Noise("pink");
+    this.slashNoisePuff = new Tone.Noise({ type: "pink", volume: -7 });
     this.slashFilterPuff = new Tone.Filter({
       frequency: presets.slash_puff.noiseFreq,
       type: "bandpass",
@@ -9888,6 +9992,10 @@ export class PlayerSFX {
 
     eventBroker.subscribe("PLAYER_LANDED", () => {
       this.playLanding(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_UPDATE", ({ timer }) => {
+      soundSynth.updateHealTimer(timer);
     });
 
     eventBroker.subscribe("HEAL_START", () => {
@@ -10236,8 +10344,8 @@ export const SFX_PRESETS = {
   },
   interface: {
     select_tick: {
-      note1: 950,
-      note2: 1400,
+      note1: 880,
+      note2: 1250,
       delay: 0.025,
     },
     error_tick: {
@@ -10288,6 +10396,7 @@ export type GameEventMap = {
   PLAYER_LANDED: void;
   HEAL_START: void;
   HEAL_CANCEL: void;
+  HEAL_UPDATE: { timer: number };
   HEAL_COMPLETE: void;
   PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;
@@ -12134,6 +12243,7 @@ export class Player extends BaseEntity {
   private maxFallSpeed: number = 0;
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
+  private unsubHealCancel!: () => void;
   private unsubDamageDealt!: () => void;
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
@@ -12197,6 +12307,18 @@ export class Player extends BaseEntity {
     this.unsubPogo = eventBroker.subscribe("PLAYER_POGOED", () => {
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
+    });
+
+    this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: 0,
+        color: "hsl(280, 80%, 65%)",
+        radial: true,
+        count: 18,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
     this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
@@ -12336,23 +12458,68 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
+        return;
       }
-      
-      // Bubbling healing: Spawn upward-ascending purple embers around player base
-      if (Math.random() < 0.45) {
-        const spawnX = this.position.x + (Math.random() * 32 - 16);
-        const spawnY = this.position.y + this.size.height / 2;
-        const angle = -Math.PI / 2 + (Math.random() * 0.6 - 0.3);
+
+      this.velocity.x = 0;
+      const now = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+
+      this.visualScale = { 
+        x: 1.0 + Math.sin(now * 0.045) * 0.04 * progress, 
+        y: 1.0 - Math.sin(now * 0.045) * 0.04 * progress 
+      };
+
+      // Spawning rising lightning and aura flare particles
+      const sparkChance = 0.35 + progress * 0.65;
+      if (Math.random() < sparkChance) {
+        const spawnX = this.position.x + (Math.random() * 44 - 22);
+        const spawnY = this.position.y + this.size.height / 2 - (Math.random() * this.size.height);
+        const angle = -Math.PI / 2 + (Math.random() * 0.3 - 0.15);
 
         eventBroker.publish("SPAWN_SPARKS", {
           x: spawnX,
           y: spawnY,
           angle: angle,
-          color: "hsl(280, 80%, 65%)",
-          count: 1,
-          turbulence: 25
+          color: progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)",
+          count: Math.random() < 0.2 ? 2 : 1,
+          shape: Math.random() < 0.35 ? "line" : "spark",
+          turbulence: 15 + progress * 40
         });
       }
+
+      // Vortex-style inward pulling kii accretion sparks
+      if (Math.random() < 0.25 + progress * 0.45) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 90 - progress * 55;
+        const startX = this.position.x + Math.cos(angle) * radius;
+        const startY = this.position.y - 10 + Math.sin(angle) * radius;
+
+        const targetX = this.position.x;
+        const targetY = this.position.y - 10;
+        const vx = (targetX - startX) * 4.0;
+        const vy = (targetY - startY) * 4.0;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: startX,
+          y: startY,
+          angle: Math.atan2(vy, vx),
+          color: "hsl(280, 100%, 75%)",
+          count: 1,
+          shape: "line",
+          turbulence: 20
+        });
+      }
+
+      // Pressure ground-dust emissions
+      if (Math.random() < 0.08 + progress * 0.15) {
+        eventBroker.publish("SPAWN_DUST", {
+          x: this.position.x,
+          y: this.position.y + this.size.height / 2,
+          direction: "horizontal"
+        });
+      }
+
       return;
     }
 
@@ -12720,21 +12887,77 @@ export class Player extends BaseEntity {
     const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
-      const cycle = performance.now() * 0.008;
-      ctx.strokeStyle = "hsl(280, 80%, 65%)";
-      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
-      ctx.shadowBlur = 15;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
+      const nowTime = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
 
-      const radius1 = 44 + Math.sin(cycle) * 8;
-      const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(localCenterX, localCenterY, radius1, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.save();
+      ctx.shadowColor = "rgba(168, 85, 247, 0.95)";
+      ctx.shadowBlur = 20 + progress * 20;
+
+      const baseW = this.size.width * (1.1 + progress * 0.6);
+      const baseH = this.size.height * (1.05 + progress * 0.4);
+
+      const flameLayers = [
+        { color: "hsla(280, 85%, 35%, 0.4)", waveSpeed: 0.03, heightScale: 1.0 },
+        { color: "hsla(285, 90%, 55%, 0.6)", waveSpeed: 0.045, heightScale: 0.85 },
+        { color: "hsla(290, 100%, 75%, 0.8)", waveSpeed: 0.06, heightScale: 0.7 }
+      ];
+
+      flameLayers.forEach((layer) => {
+        ctx.fillStyle = layer.color;
+        ctx.beginPath();
+
+        const leftX = -baseW / 2;
+        const rightX = baseW / 2;
+        const bottomY = 0;
+
+        ctx.moveTo(leftX, bottomY);
+
+        const segments = 10;
+        for (let j = 1; j <= segments; j++) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5) * wiggleAmp;
+          const currentX = leftX + (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        for (let j = segments; j >= 0; j--) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5 + Math.PI) * wiggleAmp;
+          const currentX = rightX - (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // Ground crack concentric ellipse
+      ctx.save();
+      ctx.strokeStyle = "hsl(280, 85%, 65%)";
+      ctx.lineWidth = 1.5 + progress * 2.5;
+      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
+      ctx.shadowBlur = 10;
+
+      const ringCycle = (nowTime * 0.005) % 1.0;
+      const ringRadius = (this.size.width * 1.1) + ringCycle * 60;
+      const ringOpacity = Math.max(0, 1.0 - ringCycle);
+
+      ctx.globalAlpha = ringOpacity;
       ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, radius2, 0, Math.PI * 2);
+      ctx.ellipse(localCenterX, 0, ringRadius, ringRadius * 0.3, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Body trembling shudder
+      const tremble = (Math.random() * 2 - 1) * (1.0 + progress * 4.5);
+      ctx.translate(tremble, tremble);
     }
 
     if (this.isCharging && this.chargeTimer >= 0.25) {
@@ -12759,6 +12982,7 @@ export class Player extends BaseEntity {
     this.unsubHurt();
     this.unsubPogo();
     this.unsubHealComplete();
+    this.unsubHealCancel();
     this.unsubChargeMaxed();
     this.unsubDamageDealt();
     if (this.unsubProjectileFired) {
@@ -13358,6 +13582,7 @@ export class HealComponent implements IEntityComponent {
     if (this.isHealing) {
       this.owner.velocity.x = 0;
       this.healTimer -= dt;
+      eventBroker.publish("HEAL_UPDATE", { timer: this.healTimer });
 
       if (this.healTimer <= 0) {
         this.completeHealing();

@@ -161,6 +161,10 @@ export class PlayerSFX {
       this.playLanding(soundSynth.getPlayerX());
     });
 
+    eventBroker.subscribe("HEAL_UPDATE", ({ timer }) => {
+      soundSynth.updateHealTimer(timer);
+    });
+
     eventBroker.subscribe("HEAL_START", () => {
       soundSynth.playHealStart(soundSynth.getPlayerX());
     });
