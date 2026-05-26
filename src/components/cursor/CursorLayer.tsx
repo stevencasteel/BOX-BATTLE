@@ -13,7 +13,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Layer A — Aura (optional prismatic ring) */}
       <motion.div
         style={{
           position: "absolute",
@@ -33,7 +32,6 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         transition={{ type: "spring", stiffness: 180, damping: 15 }}
       />
 
-      {/* Layer B — Icon Bubble */}
       <motion.div
         style={{
           position: "absolute",
@@ -111,18 +109,17 @@ export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Layer C — Triangle Pointer positioned at exact tracking center with offset compensation */}
       {variant.isBase && (
         <motion.div
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            x: "-5.5px",
-            y: "-3.2px",
+            x: -5.5,
+            y: -3.2,
             zIndex: 3,
             pointerEvents: "none",
-            transformOrigin: "top left",
+            transformOrigin: "5.5px 3.2px",
           }}
           animate={{
             scale: isPressed ? 0.85 : 1,

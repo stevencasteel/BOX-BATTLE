@@ -51,7 +51,7 @@
   align-items: center;
   justify-content: center;
   z-index: 99;
-  padding: 24px;
+  padding: clamp(12px, 3vmin, 24px);
   box-sizing: border-box;
   animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   opacity: 0;
@@ -74,11 +74,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: clamp(16px, 4.5vmin, 40px);
   border-radius: 20px;
   background: rgba(12, 14, 18, 0.96);
   max-width: 440px;
-  width: 85%;
+  width: 90%;
   box-sizing: border-box;
   text-align: center;
   transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
@@ -94,55 +94,182 @@
   box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1);
 }
 
+.gameover-icon {
+  width: clamp(40px, 8vmin, 64px) !important;
+  height: clamp(40px, 8vmin, 64px) !important;
+  margin-bottom: clamp(8px, 2vmin, 16px) !important;
+}
+
+.gameover-stat-card {
+  width: 100%;
+  margin-top: clamp(10px, 2.5vmin, 24px);
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  background: rgba(7, 8, 11, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.5vmin, 10px);
+  box-sizing: border-box;
+}
+
+.gameover-stat-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  color: #718096;
+}
+
+.gameover-stat-title {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.gameover-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gameover-stat-label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.gameover-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.gameover-stat-win {
+  color: var(--signal-green);
+}
+
+.gameover-stat-loss {
+  color: var(--signal-red);
+}
+
+.gameover-divider {
+  height: 1px;
+  width: 60px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: clamp(12px, 2.5vmin, 24px) 0;
+}
+
 .gameover-btn-container {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: clamp(10px, 2vmin, 16px);
   width: 100%;
   justify-content: center;
 }
 
-.gameover-btn {
+.neo-btn.gameover-btn {
   flex: 1;
-  padding: 16px 20px;
-  font-size: 14px;
+  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
+  font-size: clamp(11px, 1.5vmin, 14px);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 0.1em;
+  height: auto;
+  min-height: 0;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+.gameover-inline-arrow {
+  display: inline-block;
+  font-family: monospace;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  font-size: clamp(10px, 1.3vmin, 14px);
+  line-height: 1;
+}
+
+@media (max-width: 768px), (max-height: 750px) {
   .gameover-box {
-    padding: 24px !important;
-    width: 90% !important;
+    padding: clamp(12px, 3.5vmin, 24px);
+    width: 90%;
+    max-width: 360px;
+    border-radius: 14px;
+  }
+  .gameover-icon {
+    width: 44px !important;
+    height: 44px !important;
+    margin-bottom: 8px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.8rem;
+  }
+  .gameover-stat-card {
+    margin-top: 12px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .gameover-stat-label {
+    font-size: 11px;
+  }
+  .gameover-stat-value {
+    font-size: 15px;
+  }
+  .gameover-divider {
+    margin: 12px 0;
   }
   .gameover-btn-container {
-    gap: 12px !important;
-    padding: 0 10px !important;
+    gap: 10px;
   }
-  .gameover-btn {
-    padding: 12px 12px !important;
-    font-size: 12px !important;
-    border-radius: 8px !important;
+  .neo-btn.gameover-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 8px;
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 380px), (max-height: 560px) {
   .gameover-box {
-    padding: 16px !important;
-    width: 95% !important;
+    padding: 12px;
+    width: 95%;
+    max-width: 320px;
+  }
+  .gameover-icon {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 4px !important;
+  }
+  .victory-title-anim,
+  .defeat-title-anim {
+    font-size: 1.4rem;
+  }
+  .gameover-stat-card {
+    margin-top: 8px;
+    padding: 6px 10px;
+    gap: 4px;
+  }
+  .gameover-stat-label {
+    font-size: 10px;
+  }
+  .gameover-stat-value {
+    font-size: 13px;
+  }
+  .gameover-divider {
+    margin: 8px 0;
   }
   .gameover-btn-container {
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding: 0 !important;
+    flex-direction: row;
+    gap: 8px;
   }
-  .gameover-btn {
-    width: 100% !important;
-    padding: 12px 16px !important;
-    font-size: 12px !important;
+  .neo-btn.gameover-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -272,24 +399,12 @@
 }
 
 @keyframes rumble-anim {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-  20% {
-    transform: translate(-1px, -1px) rotate(-1deg);
-  }
-  40% {
-    transform: translate(-1px, 1px) rotate(1deg);
-  }
-  60% {
-    transform: translate(1px, -1px) rotate(0deg);
-  }
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-  100% {
-    transform: translate(1px, 1px) rotate(-1deg);
-  }
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  20% { transform: translate(-1px, -1px) rotate(-1deg); }
+  40% { transform: translate(-1px, 1px) rotate(1deg); }
+  60% { transform: translate(1px, -1px) rotate(0deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
 @media (max-width: 768px) and (pointer: coarse) {

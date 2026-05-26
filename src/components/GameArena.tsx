@@ -16,12 +16,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
 
-  // Staggered state sequence: 0 (Hidden), 1 (Fading Base), 2 (Header Pop & Sound), 3 (Tallying Stats), 4 (Buttons Visible)
   const [stagger, setStagger] = useState(0);
   const [displayWins, setDisplayWins] = useState(0);
   const [displayLosses, setDisplayLosses] = useState(0);
 
-  // Grouped selector bindings
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const gameResult = useSessionStore((state) => state.gameResult);
   const menuIndex = useSessionStore((state) => state.menuIndex);
@@ -67,7 +65,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, []);
 
-  // Staggered animation triggers on game conclusion
   useEffect(() => {
     if (gameResult === "PLAYING") {
       queueMicrotask(() => {
@@ -78,13 +75,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       return;
     }
 
-    // Step 1: Base panel entry
     const t1 = setTimeout(() => {
       setStagger(1);
       soundSynth.playMenuConfirm();
     }, 200);
 
-    // Step 2: Primary banner pop & screen shake
     const t2 = setTimeout(() => {
       setStagger(2);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
@@ -95,7 +90,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }
     }, 750);
 
-    // Step 3: Run stat ticks count-up
     const t3 = setTimeout(() => {
       setStagger(3);
       const slotIdx = saveManager.getCurrentSlotIndex();
@@ -121,8 +115,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               soundSynth.playSelectTick();
             } else {
               clearInterval(lossTimer);
-              
-              // Step 4: Display retry buttons smoothly
               setStagger(4);
               soundSynth.playDashRecharge();
             }
@@ -196,24 +188,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Skull
                           size={64}
-                          className="defeat-icon-anim"
-                          style={{
-                            color: "var(--signal-red)",
-                            marginBottom: "16px",
-                          }}
+                          className="defeat-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-red)" }}
                         />
-                        <h1
-                          className="defeat-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-red)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
                           DEFEATED
                         </h1>
                       </div>
@@ -221,24 +199,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       <div className="flex-col-center">
                         <Trophy
                           size={64}
-                          className="victory-icon-anim"
-                          style={{
-                            color: "var(--signal-green)",
-                            marginBottom: "16px",
-                          }}
+                          className="victory-icon-anim gameover-icon"
+                          style={{ color: "var(--signal-green)" }}
                         />
-                        <h1
-                          className="victory-title-anim"
-                          style={{
-                            fontSize: "2.6rem",
-                            margin: 0,
-                            color: "var(--signal-green)",
-                            fontWeight: 900,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.22em",
-                            lineHeight: "1.1",
-                          }}
-                        >
+                        <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
                           VICTORY
                         </h1>
                       </div>
@@ -246,54 +210,28 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </>
                 )}
 
-                {/* Save Stats Tally */}
                 {stagger >= 3 && (
-                  <div
-                    className="stat-card-anim"
-                    style={{
-                      width: "100%",
-                      marginTop: "24px",
-                      padding: "16px 20px",
-                      background: "rgba(7, 8, 11, 0.6)",
-                      border: "1px solid rgba(255,255,255,0.03)",
-                      borderRadius: "10px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center", color: "#718096" }}>
+                  <div className="stat-card-anim gameover-stat-card">
+                    <div className="gameover-stat-title-row">
                       <BarChart2 size={14} />
-                      <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                      <span className="gameover-stat-title">
                         SAVE SLOT PERFORMANCE
                       </span>
                     </div>
-                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL WINS</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-green)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayWins}
-                      </span>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL WINS</span>
+                      <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL LOSSES</span>
-                      <span style={{ fontSize: "18px", color: "var(--signal-red)", fontWeight: "bold", fontFamily: "monospace" }}>
-                        {displayLosses}
-                      </span>
+                    <div className="gameover-stat-row">
+                      <span className="gameover-stat-label">TOTAL LOSSES</span>
+                      <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
                     </div>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    height: "1px",
-                    width: "60px",
-                    background: "rgba(255,255,255,0.08)",
-                    margin: "24px 0",
-                  }}
-                />
+                <div className="gameover-divider" />
 
-                {/* Navigation Buttons */}
                 <div
                   className="gameover-btn-container button-reveal-anim"
                   style={{
@@ -323,9 +261,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -335,9 +273,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -363,9 +301,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     }
                   >
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginRight: "2px",
+                        marginRight: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -375,9 +313,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
-                      className="cursor-arrow"
+                      className="gameover-inline-arrow"
                       style={{
-                        marginLeft: "2px",
+                        marginLeft: "6px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
