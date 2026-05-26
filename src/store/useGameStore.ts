@@ -102,6 +102,9 @@ interface GameplayState {
   triggerGlitch: (duration?: number) => void;
   triggerBossDefeat: (x: number, y: number) => void;
   resetGameSession: () => void;
+  comboCounter: number;
+  incrementCombo: () => void;
+  resetCombo: () => void;
 }
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
@@ -111,12 +114,16 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   determination: 0,
   isGlitching: false,
   bossDeathCoordinates: null,
+  comboCounter: 0,
+  incrementCombo: () => set((state) => ({ comboCounter: state.comboCounter + 1 })),
+  resetCombo: () => set({ comboCounter: 0 }),
   setPlayerHP: (hp) => {
     const current = get().playerHP;
     if (hp !== current) {
       set({ playerHP: hp });
       if (hp < current) {
         get().triggerGlitch(150);
+        get().resetCombo();
 
         if (typeof document !== "undefined") {
           const panel = document.querySelector(".cabinet-status-panel");
@@ -160,6 +167,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       determination: 0,
       isGlitching: false,
       bossDeathCoordinates: null,
+      comboCounter: 0,
     });
   },
 }));

@@ -23,15 +23,3 @@ Physics reaction knockback from minion when you hit it.
 
 
 Reactive Spring-Loaded HUD Elements
-
-
-Fireball Charge AV & Haptic Synergy: The player’s sprite will physically pulse and wobble based on the fireball charge level. When Level 2 is achieved, it triggers a sharp scale deformation and a controller pop.
-
-Dynamic Dash Wind Trails: High-speed wind resistance lines are generated behind the player as they dash, aligning with their trajectory angle.
-
-Continuous Friction Sparks (Wall Slide): Sliding down walls generates continuous bright-yellow metal friction sparks, scaling with vertical speed.
-
-Enhanced Ground Landing Impact: Landing on the floor triggers directional dust puffs that spread outward.
-
-
-

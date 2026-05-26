@@ -4,6 +4,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -214,8 +217,13 @@ export class BossSFX {
     this.entityComboMap.set(targetId, combo);
 
     const preset = SFX_PRESETS.boss.hit_confirm;
-    const comboMultiplier = 1.0 + combo.hitSequenceCount * 0.12;
-    const pitchAdjustedFreq = preset.synthFreq * comboMultiplier;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+    
+    const baseFreq = 523.25;
+    const pitchAdjustedFreq = baseFreq * ratio;
 
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
       this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);

@@ -1,0 +1,55 @@
+===========================================================================
+  BOX BATTLE WEB CABINET // MUSICAL HARMONY & ACOUSTIC THEORY
+  Technical Specification for Scale Chaining & Auditory Feedback
+===========================================================================
+
+1. HARMONIC ROOT AND MODE SELECTION
+-----------------------------------
+The background synth sequences reside strictly in C Natural Minor (C Aeolian)
+and periodically pivot through C Harmonic Minor (introducing the B-natural major 
+dominant turnaround). 
+
+To ensure combat sound effects slice cleanly through the dense lower-register 
+bass synthesizer frequencies, the auditory accretion is mapped to the C Dorian 
+Mode:
+  Scale: C, D, Eb, F, G, A, Bb (1, 2, b3, 4, 5, 6, b7)
+
+The major 6th scale degree (A-natural, 1.6818 ratio) provides a bright, 
+heroic, "space-knight" acoustic tone that prevents harmonic mud and gives 
+satisfying auditory feedback upon skill execution.
+
+
+2. EQUAL TEMPERAMENT FREQUENCY SCALING
+--------------------------------------
+To calculate in-key pitches dynamically for sfx, we utilize standard 12-Tone 
+Equal Temperament (12-TET) mathematical multipliers:
+  Multiplier = 2^(n/12)
+
+The C Dorian Mode multiplier ratios are:
+  C   (Unison):  1.0000
+  D   (Maj 2nd): 1.1225
+  Eb  (Min 3rd): 1.1892
+  F   (Perf 4):  1.3348
+  G   (Perf 5):  1.4983
+  A   (Maj 6th): 1.6818
+  Bb  (Min 7th): 1.7818
+  C   (Octave):  2.0000
+
+
+3. SYSTEM ACCRETION INTEGRATION
+-------------------------------
+3.1 State Tracking:
+    The Zustand gameplay store ('src/store/useGameStore.ts') maintains an 
+    active combo tracker ('comboCounter: number').
+
+3.2 Accumulation Rules:
+    - Increments with each successful hit (BOSS_HURT, MINION_HURT).
+    - Resets immediately back to zero when the player lands on the floor 
+      (PLAYER_LANDED) or receives contact damage (PLAYER_HURT).
+
+3.3 SFX Chaining:
+    - Hit confirm strikes in 'BossSFX.ts' are grounded to C5 (523.25 Hz) and 
+      pitch up in 12-TET equal intervals, looping with octave multiplications
+      if the combo exceeds 12.
+    - Slashes and downward pogo bounces in 'PlayerSFX.ts' scale their base 
+      oscillators relative to the active scale multiplier.

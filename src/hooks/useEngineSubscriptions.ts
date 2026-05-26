@@ -34,6 +34,15 @@ export function useEngineSubscriptions(
       eventBroker.subscribe("CLEAR_DIALOGUES", () => {
         resetRef.current();
       }),
+      eventBroker.subscribe("PLAYER_LANDED", () => {
+        useGameplayStore.getState().resetCombo();
+      }),
+      eventBroker.subscribe("BOSS_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
+      eventBroker.subscribe("MINION_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
     ];
 
     return () => {

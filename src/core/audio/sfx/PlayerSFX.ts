@@ -4,6 +4,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -220,9 +223,16 @@ export class PlayerSFX {
 
   public playFireballLvl1(x?: number) {
     const preset = SFX_PRESETS.player.fireball_lvl1;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("fireball_lvl1", 0, x, this.playerPanner, (now) => {
-      this.slashSynth.triggerAttackRelease(preset.frequency, "8n", now);
-      this.slashSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.slashSynth.triggerAttackRelease(baseFreq, "8n", now);
+      this.slashSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
@@ -270,9 +280,16 @@ export class PlayerSFX {
 
   public playPogo(x?: number) {
     const preset = SFX_PRESETS.player.pogo;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("pogo", 80, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(preset.frequency, "16n", now);
-      this.pogoSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.pogoSynth.triggerAttackRelease(baseFreq, "16n", now);
+      this.pogoSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
