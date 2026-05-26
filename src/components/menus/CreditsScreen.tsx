@@ -123,7 +123,6 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
       <MenuBackButton
         isFocused={true}
         onBack={onBack}
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
       />
     </MenuContainer>
   );

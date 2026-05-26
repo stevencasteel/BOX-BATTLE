@@ -291,6 +291,9 @@
   .screen-inner {
     border-radius: 0;
     padding: 12px 10px;
+    overflow-y: auto;
+    justify-content: space-around;
+    gap: 8px;
   }
 
   .title-banner {

@@ -137,11 +137,12 @@ export function MenuBackButton({
   onFocused,
   playHoverTick,
   style,
+  variant = "large",
   ...props
 }: MenuBackButtonProps) {
   const defaultStyle: React.CSSProperties = {
     width: "100%",
-    maxWidth: "38vmin",
+    maxWidth: "58vmin",
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
@@ -152,7 +153,7 @@ export function MenuBackButton({
 
   return (
     <MenuButton
-      variant="led"
+      variant={variant}
       isFocused={isFocused}
       onFocused={onFocused}
       playHoverTick={playHoverTick}

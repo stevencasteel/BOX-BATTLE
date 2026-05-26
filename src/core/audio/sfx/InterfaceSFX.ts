@@ -38,8 +38,8 @@ export class InterfaceSFX {
       envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 },
     }).connect(this.playerDialoguePanner);
 
-    this.dialogueSynthPlayer.maxPolyphony = 4;
-    this.dialogueSynthBoss.maxPolyphony = 4;
+    this.dialogueSynthPlayer.maxPolyphony = 16;
+    this.dialogueSynthBoss.maxPolyphony = 16;
   }
 
   public playSelectTick() {

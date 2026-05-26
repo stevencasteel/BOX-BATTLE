@@ -184,30 +184,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           {gameResult !== "PLAYING" && stagger >= 1 && (
             <div className="gameover-overlay" style={{ opacity: 1, transition: "opacity 0.4s ease" }}>
               <div
-                className="gameover-box neo-elevated"
+                className={`gameover-box neo-elevated ${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}`}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "40px",
-                  borderRadius: "20px",
-                  border:
-                    gameResult === "GAMEOVER"
-                      ? "2px solid rgba(239, 68, 68, 0.35)"
-                      : "2px solid rgba(34, 197, 94, 0.35)",
-                  boxShadow:
-                    gameResult === "GAMEOVER"
-                      ? "0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1)"
-                      : "0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1)",
-                  background: "rgba(12, 14, 18, 0.96)",
-                  maxWidth: "440px",
-                  width: "85%",
-                  boxSizing: "border-box",
-                  textAlign: "center",
                   transform: stagger >= 2 ? "scale(1)" : "scale(0.92)",
                   opacity: stagger >= 2 ? 1 : 0.8,
-                  transition: "transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease",
                 }}
               >
                 {stagger >= 2 && (
@@ -315,11 +295,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
                 {/* Navigation Buttons */}
                 <div
-                  className="flex-row button-reveal-anim"
+                  className="gameover-btn-container button-reveal-anim"
                   style={{
-                    gap: "16px",
-                    width: "100%",
-                    justifyContent: "center",
                     opacity: stagger >= 4 ? 1 : 0,
                     transform: stagger >= 4 ? "translateY(0)" : "translateY(15px)",
                     transition: "opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)",
@@ -334,24 +311,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       playHoverTick();
                       setMenuIndex(0);
                     }}
-                    className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
-                    style={{
-                      flex: 1,
-                      padding: "16px 20px",
-                      fontSize: "14px",
-                      borderRadius: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      ...(gameResult === "GAMEOVER" && menuIndex === 0
+                    className={`neo-btn gameover-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                    style={
+                      gameResult === "GAMEOVER" && menuIndex === 0
                         ? {
                             color: "var(--signal-red)",
                             borderColor: "rgba(239, 68, 68, 0.25)",
                             textShadow: "0 0 8px var(--signal-red-glow)",
                           }
-                        : {}),
-                    }}
+                        : {}
+                    }
                   >
                     <span
                       className="cursor-arrow"
@@ -382,24 +351,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       playHoverTick();
                       setMenuIndex(1);
                     }}
-                    className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
-                    style={{
-                      flex: 1,
-                      padding: "16px 20px",
-                      fontSize: "14px",
-                      borderRadius: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      ...(gameResult === "GAMEOVER" && menuIndex === 1
+                    className={`neo-btn gameover-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                    style={
+                      gameResult === "GAMEOVER" && menuIndex === 1
                         ? {
                             color: "var(--signal-red)",
                             borderColor: "rgba(239, 68, 68, 0.25)",
                             textShadow: "0 0 8px var(--signal-red-glow)",
                           }
-                        : {}),
-                    }}
+                        : {}
+                    }
                   >
                     <span
                       className="cursor-arrow"
