@@ -15,13 +15,17 @@ class SaveManager {
   }
 
   private initializeDefaultStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
-      const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
-        wins: 0,
-        losses: 0,
-        empty: true,
-      }));
-      localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+    try {
+      if (!localStorage.getItem(this.storageKey)) {
+        const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
+          wins: 0,
+          losses: 0,
+          empty: true,
+        }));
+        localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+      }
+    } catch (e) {
+      console.warn("localStorage is blocked or unavailable:", e);
     }
   }
 
@@ -63,7 +67,11 @@ class SaveManager {
     const slots = this.getSlots();
     if (index >= 0 && index < slots.length) {
       slots[index] = ConfigurationValidator.validateSaveSlot(data);
-      localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      } catch (e) {
+        console.warn("Could not save to localStorage:", e);
+      }
     }
   }
 

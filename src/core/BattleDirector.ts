@@ -5,6 +5,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
+import { saveManager } from "@/core/SaveManager";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -94,6 +95,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("GAMEOVER");
+              saveManager.recordLoss();
             },
           },
           {
@@ -135,6 +137,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("VICTORY");
+              saveManager.recordWin();
             },
           },
           {

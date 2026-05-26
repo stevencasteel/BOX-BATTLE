@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 9:06:55 PM
+ [SYSTEM] Generated: 5/25/2026, 9:51:34 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -5594,6 +5594,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
+import { saveManager } from "@/core/SaveManager";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -5683,6 +5684,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("GAMEOVER");
+              saveManager.recordLoss();
             },
           },
           {
@@ -5724,6 +5726,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("VICTORY");
+              saveManager.recordWin();
             },
           },
           {
@@ -7133,13 +7136,17 @@ class SaveManager {
   }
 
   private initializeDefaultStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
-      const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
-        wins: 0,
-        losses: 0,
-        empty: true,
-      }));
-      localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+    try {
+      if (!localStorage.getItem(this.storageKey)) {
+        const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
+          wins: 0,
+          losses: 0,
+          empty: true,
+        }));
+        localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+      }
+    } catch (e) {
+      console.warn("localStorage is blocked or unavailable:", e);
     }
   }
 
@@ -7181,7 +7188,11 @@ class SaveManager {
     const slots = this.getSlots();
     if (index >= 0 && index < slots.length) {
       slots[index] = ConfigurationValidator.validateSaveSlot(data);
-      localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      } catch (e) {
+        console.warn("Could not save to localStorage:", e);
+      }
     }
   }
 
