@@ -160,6 +160,7 @@ export class PlayerSFX {
 
     eventBroker.subscribe("HEAL_CANCEL", () => {
       this.playHealCancel(soundSynth.getPlayerX());
+      soundSynth.stopHealDrone();
     });
 
     eventBroker.subscribe("HEAL_COMPLETE", () => {
