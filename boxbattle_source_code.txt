@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 2:52:10 AM
+ [SYSTEM] Generated: 5/26/2026, 3:03:50 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8496,7 +8496,7 @@ export class DroneManager {
 
   private playChargeCompleteDing() {
     if (!this.ctxManager.initialized) return;
-    this.musicSeq.musicArpSynth.triggerAttackRelease("G6", "4n");
+    // Silent (ding sound disabled)
   }
 
   public stopChargeDrone() {

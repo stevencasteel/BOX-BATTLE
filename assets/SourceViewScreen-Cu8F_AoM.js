@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BES1ySm6.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-DeYkYwfL.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7565,7 +7565,7 @@ export class DroneManager {
 
   private playChargeCompleteDing() {
     if (!this.ctxManager.initialized) return;
-    this.musicSeq.musicArpSynth.triggerAttackRelease("G6", "4n");
+    // Silent (ding sound disabled)
   }
 
   public stopChargeDrone() {
