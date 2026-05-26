@@ -90,3 +90,24 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #4ade80;
 }
+
+
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after,
+  html, body, #root,
+  iframe, canvas, video, svg, path,
+  :hover, :focus, :active,
+  ::backdrop {
+    cursor: none !important;
+  }
+}
+
+
+/* Enable native text selection and custom scroll operations specifically inside the code viewer panel */
+.code-viewer-pane,
+.code-viewer-pane * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}

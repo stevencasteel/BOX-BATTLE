@@ -23,6 +23,7 @@ import { HudPanel } from "@/components/HudPanel";
 import { DialogueConsole } from "@/components/DialogueConsole";
 import { TouchOverlay } from "@/components/TouchOverlay";
 import { ChromaticAberrationFilter } from "@/components/ChromaticAberrationFilter";
+import { Cursor } from "@/components/cursor/Cursor";
 import { useHudSubscription } from "@/hooks/useHudSubscription";
 import { useMusicLifecycle } from "@/hooks/useMusicLifecycle";
 import { useFirstGesture } from "@/hooks/useFirstGesture";
@@ -394,6 +395,7 @@ export default function App() {
       </div>
 
       <ChromaticAberrationFilter />
+      <Cursor />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 10:34:26 PM
+ [SYSTEM] Generated: 5/25/2026, 11:07:18 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -36,6 +36,10 @@
 │   │   ├── react.svg
 │   │   └── vite.svg
 │   ├── components/
+│   │   ├── cursor/
+│   │   │   ├── Cursor.tsx
+│   │   │   ├── CursorLayer.tsx
+│   │   │   └── CursorVariants.ts
 │   │   ├── menus/
 │   │   │   ├── AudioScreen.css
 │   │   │   ├── AudioScreen.tsx
@@ -116,6 +120,7 @@
 │   ├── hooks/
 │   │   ├── useAudioSettings.ts
 │   │   ├── useBootSequence.ts
+│   │   ├── useButtonHandlers.ts
 │   │   ├── useEngineSubscriptions.ts
 │   │   ├── useFirstGesture.ts
 │   │   ├── useGameDialogue.ts
@@ -125,6 +130,7 @@
 │   │   ├── useSaveSlots.ts
 │   │   └── useSourceViewKeyboard.ts
 │   ├── store/
+│   │   ├── useCursorStore.ts
 │   │   └── useGameStore.ts
 │   ├── styles/
 │   │   └── neomorphism.css
@@ -1739,6 +1745,7 @@ import { HudPanel } from "@/components/HudPanel";
 import { DialogueConsole } from "@/components/DialogueConsole";
 import { TouchOverlay } from "@/components/TouchOverlay";
 import { ChromaticAberrationFilter } from "@/components/ChromaticAberrationFilter";
+import { Cursor } from "@/components/cursor/Cursor";
 import { useHudSubscription } from "@/hooks/useHudSubscription";
 import { useMusicLifecycle } from "@/hooks/useMusicLifecycle";
 import { useFirstGesture } from "@/hooks/useFirstGesture";
@@ -2110,6 +2117,7 @@ export default function App() {
       </div>
 
       <ChromaticAberrationFilter />
+      <Cursor />
     </div>
   );
 }
@@ -3422,6 +3430,315 @@ export function TouchOverlay() {
 
 
 
+● ./src/components/cursor/Cursor.tsx
+────────────────────────────────────────────────────
+import { useEffect, useState } from "react";
+import { useMotionValue, motion } from "framer-motion";
+import { useCursorStore } from "@/store/useCursorStore";
+import { CURSOR_VARIANTS } from "./CursorVariants";
+import { CursorLayer } from "./CursorLayer";
+
+export function Cursor() {
+  const cursorType = useCursorStore((state) => state.cursorType);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isSafari] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const ua = navigator.userAgent.toLowerCase();
+    return ua.includes("safari") && !ua.includes("chrome") && !ua.includes("android");
+  });
+
+  const mouseX = useMotionValue(-100);
+  const mouseY = useMotionValue(-100);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handlePointerEnter = () => setIsVisible(true);
+    const handlePointerLeave = () => setIsVisible(false);
+
+    const handlePointerDown = () => setIsPressed(true);
+    const handlePointerUp = () => setIsPressed(false);
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("pointerenter", handlePointerEnter);
+    document.addEventListener("pointerleave", handlePointerLeave);
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerenter", handlePointerEnter);
+      document.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [mouseX, mouseY, isVisible]);
+
+  const variant = CURSOR_VARIANTS[cursorType];
+
+  return (
+    <motion.div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        x: mouseX,
+        y: mouseY,
+        translateX: "-50%",
+        translateY: "-50%",
+        width: 80,
+        height: 80,
+        pointerEvents: "none",
+        zIndex: 99999,
+        mixBlendMode: isSafari ? "normal" : variant.blendMode,
+      }}
+      className="[@media(pointer:coarse)]:hidden"
+      animate={{
+        opacity: isVisible && cursorType !== "hidden" ? 1 : 0,
+      }}
+      transition={{ duration: 0.25 }}
+    >
+      <CursorLayer cursorType={cursorType} isPressed={isPressed} />
+    </motion.div>
+  );
+}
+
+
+
+● ./src/components/cursor/CursorLayer.tsx
+────────────────────────────────────────────────────
+import { motion, AnimatePresence } from "framer-motion";
+import { CURSOR_VARIANTS } from "./CursorVariants";
+import { CursorType } from "@/store/useCursorStore";
+import { Eye, Play } from "lucide-react";
+
+interface CursorLayerProps {
+  cursorType: CursorType;
+  isPressed: boolean;
+}
+
+export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
+  const variant = CURSOR_VARIANTS[cursorType];
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* Layer A — Aura (optional prismatic ring) */}
+      <motion.div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          x: "-50%",
+          y: "-50%",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0) 70%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+        animate={{
+          width: (variant.bubbleSize > 0 && cursorType !== "text") ? variant.bubbleSize + 24 : 0,
+          height: (variant.bubbleSize > 0 && cursorType !== "text") ? variant.bubbleSize + 24 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 180, damping: 15 }}
+      />
+
+      {/* Layer B — Icon Bubble */}
+      <motion.div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          x: "-50%",
+          y: "-50%",
+          borderRadius: "50%",
+          backgroundColor: variant.bubbleBg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          zIndex: 2,
+        }}
+        animate={{
+          width: variant.bubbleSize,
+          height: variant.bubbleSize,
+        }}
+        transition={{ type: "spring", stiffness: 180, damping: 15 }}
+      >
+        <AnimatePresence mode="wait">
+          {cursorType === "view" && (
+            <motion.div
+              key="view-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Eye size={32} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "view-small" && (
+            <motion.div
+              key="view-small-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Eye size={20} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "play" && (
+            <motion.div
+              key="play-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Play size={32} fill={variant.color} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "text" && (
+            <motion.div
+              key="text-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <svg width="26" height="26" viewBox="0 0 83 83" style={{ display: "block" }}>
+                <path
+                  fill="none"
+                  stroke={variant.color}
+                  strokeLinecap="round"
+                  strokeWidth="4"
+                  d="M43 71h11M43 12h11M25.5 71h11m-11-59h11m3.5 5v50"
+                />
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Layer C — Triangle Pointer positioned at exact tracking center with offset compensation */}
+      {variant.isBase && (
+        <motion.div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            x: "-5.5px",
+            y: "-3.2px",
+            zIndex: 3,
+            pointerEvents: "none",
+            transformOrigin: "top left",
+          }}
+          animate={{
+            scale: isPressed ? 0.85 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        >
+          <svg width="24" height="24" viewBox="0 0 100 100" style={{ display: "block" }}>
+            <path
+              d="M22.917,13.375l51.333,51.333l-19.03,-3.781l14.863,23.031l-8.833,8.834l-14.863,-23.032l-4.387,27.198l-19.083,-83.583Z"
+              fill={variant.color}
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth="2"
+            />
+          </svg>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+
+
+● ./src/components/cursor/CursorVariants.ts
+────────────────────────────────────────────────────
+import { CursorType } from "@/store/useCursorStore";
+
+export interface CursorVariantConfig {
+  blendMode: "normal" | "difference" | "exclusion";
+  color: string;
+  isBase: boolean;
+  bubbleSize: number;
+  bubbleBg: string;
+}
+
+export const CURSOR_VARIANTS: Record<CursorType, CursorVariantConfig> = {
+  default: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: true,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  button: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: true,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  view: {
+    blendMode: "difference",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  "view-small": {
+    blendMode: "difference",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 48,
+    bubbleBg: "#ffffff",
+  },
+  play: {
+    blendMode: "exclusion",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  video: {
+    blendMode: "exclusion",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  text: {
+    blendMode: "normal",
+    color: "hsl(142, 71%, 58%)",
+    isBase: false,
+    bubbleSize: 64,
+    bubbleBg: "transparent",
+  },
+  grab: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  hidden: {
+    blendMode: "normal",
+    color: "transparent",
+    isBase: false,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+};
+
+
+
 ● ./src/components/menus/AudioScreen.css
 ────────────────────────────────────────────────────
 .mixer-board {
@@ -4246,6 +4563,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 ────────────────────────────────────────────────────
 import React from "react";
 import { soundSynth } from "@/core/SoundSynth";
+import { useCursorStore } from "@/store/useCursorStore";
 import { ArrowLeft } from "lucide-react";
 
 interface MenuContainerProps {
@@ -4311,6 +4629,7 @@ export function MenuButton({
   ...props
 }: MenuButtonProps) {
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("button");
     if (playHoverTick) {
       playHoverTick();
     } else {
@@ -4324,14 +4643,22 @@ export function MenuButton({
     }
   };
 
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("default");
+    if (props.onMouseLeave) {
+      props.onMouseLeave(e);
+    }
+  };
+
   const indicatorClass = isFocused ? `led-${indicatorColor}` : "";
 
   if (variant === "large") {
     return (
       <button
         className={`neo-btn-large ${isFocused ? "neo-btn-large-focused" : ""} ${className}`}
-        onMouseEnter={handleMouseEnter}
         {...props}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
         <div className="btn-label-group">
@@ -4349,8 +4676,9 @@ export function MenuButton({
   return (
     <button
       className={`neo-btn-led ${isFocused ? "neo-btn-led-focused" : ""} ${className}`}
-      onMouseEnter={handleMouseEnter}
       {...props}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className={`btn-indicator-light ${indicatorClass}`} style={isFocused ? undefined : { background: "#1e2430" }} />
       {leftIcon}
@@ -4587,9 +4915,9 @@ export function SaveSelectScreen({
 
       <div
         className="flex-col"
-        style={{ gap: "16px", width: "100%", maxWidth: "480px", marginTop: "16px", paddingBottom: "10px" }}
+        style={{ gap: "16px", width: "100%", maxWidth: "64vmin", marginTop: "16px", paddingBottom: "10px" }}
       >
-        <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
+        <div className="flex-row" style={{ gap: "16px", justifyContent: "center", width: "100%" }}>
           <MenuButton
             variant="led"
             isFocused={menuIndex === 3}
@@ -4598,10 +4926,9 @@ export function SaveSelectScreen({
             onClick={toggleCopyMode}
             leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
             mainLabel="COPY SLOT"
-            showArrow={false}
             className={isCopyMode ? "neo-btn-led-active" : ""}
             indicatorColor={isCopyMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
+            style={{ flex: 1, padding: "18px", whiteSpace: "nowrap" }}
           />
 
           <MenuButton
@@ -4612,10 +4939,9 @@ export function SaveSelectScreen({
             onClick={toggleEraseMode}
             leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
             mainLabel="DELETE SLOT"
-            showArrow={false}
             className={isEraseMode ? "neo-btn-led-active" : ""}
             indicatorColor={isEraseMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
+            style={{ flex: 1, padding: "18px", whiteSpace: "nowrap" }}
           />
         </div>
 
@@ -4624,7 +4950,7 @@ export function SaveSelectScreen({
           onFocused={() => setMenuIndex(5)}
           playHoverTick={playHoverTick}
           onBack={onBack}
-          style={{ padding: "18px", maxWidth: "100%" }}
+          style={{ padding: "18px", maxWidth: "100%", width: "100%" }}
         />
       </div>
     </MenuContainer>
@@ -4939,6 +5265,7 @@ import { sourceCodeManifest } from "@/core/sourceCodeManifest";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
+import { useCursorStore } from "@/store/useCursorStore";
 import { SourceViewFooter } from "./SourceViewFooter";
 import { Folder, FolderOpen, FileCode, FileText } from "lucide-react";
 
@@ -5201,6 +5528,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
         {(!isMobile || mobileView === "CODE") && (
           <div
+            onMouseOver={() => useCursorStore.getState().setCursorType("text")}
+            onMouseLeave={() => useCursorStore.getState().setCursorType("default")}
             className="code-viewer-pane neo-pressed"
             style={{
               WebkitOverflowScrolling: "touch",
@@ -13489,6 +13818,52 @@ export function useBootSequence() {
 
 
 
+● ./src/hooks/useButtonHandlers.ts
+────────────────────────────────────────────────────
+import { useCursorStore, CursorType } from "@/store/useCursorStore";
+import { useRef } from "react";
+
+interface ButtonHandlerOptions {
+  cursor?: CursorType;
+  onClick?: (e: React.MouseEvent) => void;
+}
+
+export function useButtonHandlers(options: ButtonHandlerOptions = {}) {
+  const setCursorType = useCursorStore((state) => state.setCursorType);
+  const timeoutRef = useRef<number | null>(null);
+
+  const onMouseEnter = () => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setCursorType(options.cursor || "button");
+  };
+
+  const onMouseLeave = () => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = window.setTimeout(() => {
+      setCursorType("default");
+    }, 150);
+  };
+
+  const onClick = (e: React.MouseEvent) => {
+    if (options.onClick) {
+      options.onClick(e);
+    }
+  };
+
+  return {
+    onMouseEnter,
+    onMouseLeave,
+    onClick,
+  };
+}
+
+
+
 ● ./src/hooks/useEngineSubscriptions.ts
 ────────────────────────────────────────────────────
 import { useEffect, useRef } from "react";
@@ -14207,6 +14582,27 @@ body {
 }
 
 
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after,
+  html, body, #root,
+  iframe, canvas, video, svg, path,
+  :hover, :focus, :active,
+  ::backdrop {
+    cursor: none !important;
+  }
+}
+
+
+/* Enable native text selection and custom scroll operations specifically inside the code viewer panel */
+.code-viewer-pane,
+.code-viewer-pane * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+
 
 ● ./src/main.tsx
 ────────────────────────────────────────────────────
@@ -14220,6 +14616,33 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
+
+
+
+● ./src/store/useCursorStore.ts
+────────────────────────────────────────────────────
+import { create } from "zustand";
+
+export type CursorType =
+  | "default"
+  | "text"
+  | "view"
+  | "view-small"
+  | "play"
+  | "video"
+  | "grab"
+  | "button"
+  | "hidden";
+
+interface CursorStore {
+  cursorType: CursorType;
+  setCursorType: (type: CursorType) => void;
+}
+
+export const useCursorStore = create<CursorStore>((set) => ({
+  cursorType: "default",
+  setCursorType: (type) => set({ cursorType: type }),
+}));
 
 
 

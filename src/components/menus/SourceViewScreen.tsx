@@ -5,6 +5,7 @@ import { sourceCodeManifest } from "@/core/sourceCodeManifest";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
+import { useCursorStore } from "@/store/useCursorStore";
 import { SourceViewFooter } from "./SourceViewFooter";
 import { Folder, FolderOpen, FileCode, FileText } from "lucide-react";
 
@@ -267,6 +268,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
         {(!isMobile || mobileView === "CODE") && (
           <div
+            onMouseOver={() => useCursorStore.getState().setCursorType("text")}
+            onMouseLeave={() => useCursorStore.getState().setCursorType("default")}
             className="code-viewer-pane neo-pressed"
             style={{
               WebkitOverflowScrolling: "touch",

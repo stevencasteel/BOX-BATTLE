@@ -1,5 +1,6 @@
 import React from "react";
 import { soundSynth } from "@/core/SoundSynth";
+import { useCursorStore } from "@/store/useCursorStore";
 import { ArrowLeft } from "lucide-react";
 
 interface MenuContainerProps {
@@ -65,6 +66,7 @@ export function MenuButton({
   ...props
 }: MenuButtonProps) {
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("button");
     if (playHoverTick) {
       playHoverTick();
     } else {
@@ -78,14 +80,22 @@ export function MenuButton({
     }
   };
 
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("default");
+    if (props.onMouseLeave) {
+      props.onMouseLeave(e);
+    }
+  };
+
   const indicatorClass = isFocused ? `led-${indicatorColor}` : "";
 
   if (variant === "large") {
     return (
       <button
         className={`neo-btn-large ${isFocused ? "neo-btn-large-focused" : ""} ${className}`}
-        onMouseEnter={handleMouseEnter}
         {...props}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
         <div className="btn-label-group">
@@ -103,8 +113,9 @@ export function MenuButton({
   return (
     <button
       className={`neo-btn-led ${isFocused ? "neo-btn-led-focused" : ""} ${className}`}
-      onMouseEnter={handleMouseEnter}
       {...props}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className={`btn-indicator-light ${indicatorClass}`} style={isFocused ? undefined : { background: "#1e2430" }} />
       {leftIcon}
