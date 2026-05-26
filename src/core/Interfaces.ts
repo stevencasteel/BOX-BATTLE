@@ -118,7 +118,8 @@ export interface IWorld {
     ownerId: "player" | "boss",
     damage: number,
     speed: number,
-    lifespan: number
+    lifespan: number,
+    customColor?: string
   ): IProjectile;
 }
 

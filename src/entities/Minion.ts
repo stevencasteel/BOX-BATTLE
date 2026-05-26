@@ -254,6 +254,16 @@ export class Minion extends BaseEntity {
     super.update(dt);
   }
 
+  public get minionColor(): string {
+    if (this.minionType === "LANCER") {
+      return "hsl(280, 60%, 55%)";
+    } else if (this.minionType === "FLYER") {
+      return "hsl(200, 70%, 55%)";
+    } else {
+      return "hsl(215, 20%, 65%)";
+    }
+  }
+
   public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -271,7 +281,8 @@ export class Minion extends BaseEntity {
       "boss",
       1,
       400,
-      5.0
+      5.0,
+      this.minionColor
     );
   }
 

@@ -33,7 +33,8 @@ export class World implements IWorld {
     ownerId: "player" | "boss",
     damage: number,
     speed: number,
-    lifespan: number
+    lifespan: number,
+    customColor?: string
   ): IProjectile {
     if (!this.projectilePool) {
       throw new Error("Projectile pool not initialized on World.");
@@ -48,7 +49,8 @@ export class World implements IWorld {
       speed,
       lifespan,
       (p: Projectile) => this.releaseProjectile(p),
-      this
+      this,
+      customColor
     );
   }
 }
