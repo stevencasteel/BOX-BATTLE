@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 2:09:02 PM
+ [SYSTEM] Generated: 5/26/2026, 2:20:02 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -12337,13 +12337,51 @@ export class Player extends BaseEntity {
           maxHealth: health.maxHealth,
         });
       }
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+
+      // High impact Ki explosion waves representing restored health vitality
+      eventBroker.publish("SPAWN_BLAST", {
+        x: this.position.x,
+        y: this.position.y,
+        color: "hsl(280, 100%, 75%)",
+      });
+      
+      eventBroker.publish("SPAWN_BLAST", {
+        x: this.position.x,
+        y: this.position.y,
+        color: "hsl(142, 71%, 58%)",
+      });
+
+      // Exploding rain of glowing lavender particles
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: 0,
+        color: "hsl(285, 100%, 80%)",
+        radial: true,
+        count: 32,
+        shape: "line",
+        turbulence: 30
+      });
+
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: 0,
+        color: "hsl(142, 100%, 80%)",
+        radial: true,
+        count: 20,
+        shape: "spark",
+      });
+
+      this.visualScale = { x: 0.90, y: 1.10 };
+      this.scaleVelocity = { x: 6.0, y: -12.0 };
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.35 });
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.55, y: 0.45 }; // Extreme squished visual pop
-      this.scaleVelocity = { x: -35.0, y: 35.0 }; // Fast, rubbery spring rebound
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.15 });
+      this.visualScale = { x: 1.10, y: 0.90 }; // Toned down crisp visual pop
+      this.scaleVelocity = { x: -10.0, y: 10.0 }; // Gentler snappy recovery
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
     });
 
     this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
@@ -12422,15 +12460,15 @@ if (this.isCharging) {
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
 
       const time = performance.now();
-      const pulse = Math.sin(time * 0.045) * 0.06 * progress;
-      const shiverX = (Math.random() * 0.03 - 0.015) * progress;
-      const shiverY = (Math.random() * 0.03 - 0.015) * progress;
+      const pulse = Math.sin(time * 0.045) * 0.03 * progress;
+      const shiverX = (Math.random() * 0.012 - 0.006) * progress;
+      const shiverY = (Math.random() * 0.012 - 0.006) * progress;
 
       this.targetVisualScale = { 
         x: 1.0 - pulse + shiverX, 
         y: 1.0 + pulse + shiverY 
       };
-      this.rotation = Math.sin(time * 0.09) * 0.04 * progress;
+      this.rotation = Math.sin(time * 0.09) * 0.02 * progress;
 
       // Swirling vortex accretion kii particles
       if (Math.random() < 0.3 + progress * 0.5) {
@@ -12504,9 +12542,28 @@ if (this.isCharging) {
       const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
 
       this.visualScale = { 
-        x: 1.0 + Math.sin(now * 0.045) * 0.04 * progress, 
-        y: 1.0 - Math.sin(now * 0.045) * 0.04 * progress 
+        x: 1.0 + Math.sin(now * 0.045) * 0.015 * progress, 
+        y: 1.0 - Math.sin(now * 0.045) * 0.015 * progress 
       };
+
+      // Satisfying progressive screen shake
+      if (Math.random() < 0.2 + progress * 0.4) {
+        eventBroker.publish("CAMERA_SHAKE", { amplitude: 0.5 + progress * 3.5, duration: 0.05 });
+      }
+
+      // Rising Ki column sparks
+      if (Math.random() < 0.3 + progress * 0.4) {
+        const spawnX = this.position.x + (Math.random() * 32 - 16);
+        const spawnY = this.position.y + this.size.height / 2;
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: spawnX,
+          y: spawnY,
+          angle: -Math.PI / 2 + (Math.random() * 0.15 - 0.075),
+          color: "hsl(280, 85%, 65%)",
+          count: 1,
+          shape: "line"
+        });
+      }
 
       // Spawning rising lightning and aura flare particles
       const sparkChance = 0.35 + progress * 0.65;
@@ -12929,73 +12986,96 @@ if (this.isCharging) {
       const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
 
       ctx.save();
-      ctx.shadowColor = "rgba(168, 85, 247, 0.95)";
-      ctx.shadowBlur = 20 + progress * 20;
+      const baseW = this.size.width * (1.15 + progress * 0.75);
+      const baseH = this.size.height * (1.1 + progress * 0.55);
 
-      const baseW = this.size.width * (1.1 + progress * 0.6);
-      const baseH = this.size.height * (1.05 + progress * 0.4);
-
-      const flameLayers = [
-        { color: "hsla(280, 85%, 35%, 0.4)", waveSpeed: 0.03, heightScale: 1.0 },
-        { color: "hsla(285, 90%, 55%, 0.6)", waveSpeed: 0.045, heightScale: 0.85 },
-        { color: "hsla(290, 100%, 75%, 0.8)", waveSpeed: 0.06, heightScale: 0.7 }
+      // DBZ inspired blazing jagged aura spikes
+      const auraColors = [
+        'hsla(280, 90%, 25%, 0.35)',
+        'hsla(285, 95%, 45%, 0.55)',
+        'hsla(290, 100%, 75%, 0.8)',
+        'hsla(0, 0%, 100%, 0.95)'
       ];
 
-      flameLayers.forEach((layer) => {
-        ctx.fillStyle = layer.color;
+      ctx.shadowColor = 'rgba(168, 85, 247, 0.9)';
+      ctx.shadowBlur = 15 + progress * 25;
+
+      auraColors.forEach((color, layerIdx) => {
+        ctx.fillStyle = color;
         ctx.beginPath();
 
-        const leftX = -baseW / 2;
-        const rightX = baseW / 2;
+        const scaleFactor = 1.0 - layerIdx * 0.22;
+        const width = baseW * scaleFactor;
+        const height = baseH * scaleFactor;
+
         const bottomY = 0;
+        const topY = -height;
 
-        ctx.moveTo(leftX, bottomY);
+        ctx.moveTo(-width / 2, bottomY);
 
-        const segments = 10;
-        for (let j = 1; j <= segments; j++) {
-          const t = j / segments;
-          const currentY = -baseH * t * layer.heightScale;
-          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
-          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5) * wiggleAmp;
-          const currentX = leftX + (rightX - leftX) * t * 0.1 + wiggle;
+        // Jagged aura spikes going up on the left side
+        const leftSteps = 8;
+        for (let j = 1; j <= leftSteps; j++) {
+          const t = j / leftSteps;
+          const currentY = bottomY - height * t;
+          const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5;
+          const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
+          const currentX = -width / 2 * (1 - t) + spikeDist;
           ctx.lineTo(currentX, currentY);
         }
 
-        for (let j = segments; j >= 0; j--) {
-          const t = j / segments;
-          const currentY = -baseH * t * layer.heightScale;
-          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
-          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5 + Math.PI) * wiggleAmp;
-          const currentX = rightX - (rightX - leftX) * t * 0.1 + wiggle;
+        // Top violent flare point
+        ctx.lineTo(0 + (Math.random() * 12 - 6) * progress, topY);
+
+        // Jagged aura spikes going down on the right side
+        const rightSteps = 8;
+        for (let j = rightSteps - 1; j >= 0; j--) {
+          const t = j / rightSteps;
+          const currentY = bottomY - height * t;
+          const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5 + Math.PI;
+          const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
+          const currentX = width / 2 * (1 - t) + spikeDist;
           ctx.lineTo(currentX, currentY);
         }
 
+        ctx.lineTo(width / 2, bottomY);
         ctx.closePath();
         ctx.fill();
       });
 
       ctx.restore();
 
-      // Ground crack concentric ellipse
+      // Redesign the ground rings to look like a violent expanding shockwave crater
       ctx.save();
-      ctx.strokeStyle = "hsl(280, 85%, 65%)";
-      ctx.lineWidth = 1.5 + progress * 2.5;
-      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
-      ctx.shadowBlur = 10;
+      const wavePulse = Math.sin(nowTime * 0.035) * 6;
+      const radius = (this.size.width * 1.0) + progress * 28 + wavePulse;
 
-      const ringCycle = (nowTime * 0.005) % 1.0;
-      const ringRadius = (this.size.width * 1.1) + ringCycle * 60;
-      const ringOpacity = Math.max(0, 1.0 - ringCycle);
+      ctx.strokeStyle = 'hsl(280, 100%, 75%)';
+      ctx.lineWidth = 2.0 + progress * 3.0;
+      ctx.shadowColor = 'rgba(168, 85, 247, 0.9)';
+      ctx.shadowBlur = 15;
 
-      ctx.globalAlpha = ringOpacity;
       ctx.beginPath();
-      ctx.ellipse(localCenterX, 0, ringRadius, ringRadius * 0.3, 0, 0, Math.PI * 2);
+      ctx.ellipse(localCenterX, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Secondary outer shockwave lines
+      if (progress > 0.4) {
+        const ringCycle = (nowTime * 0.004) % 1.0;
+        const outerRadius = radius + ringCycle * 45;
+        ctx.strokeStyle = 'hsla(285, 100%, 75%, ' + (1.0 - ringCycle) + ')';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.ellipse(localCenterX, 0, outerRadius, outerRadius * 0.28, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
       ctx.restore();
 
-      // Body trembling shudder
-      const tremble = (Math.random() * 2 - 1) * (1.0 + progress * 4.5);
-      ctx.translate(tremble, tremble);
+      // Subtle body shuddering tremble (Shakes local draw position safely)
+      const trembleX = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
+      const trembleY = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
+      ctx.translate(trembleX, trembleY);
     }
 
 if (this.isCharging) {
@@ -13005,21 +13085,37 @@ if (this.isCharging) {
 
       ctx.save();
       const glowColor = isLvl2 
-        ? "rgba(234, 179, 8, 0.9)" 
-        : `rgba(34, 197, 94, ${0.4 + progress * 0.5})`;
+        ? 'rgba(234, 179, 8, 0.9)' 
+        : 'rgba(34, 197, 94, ' + (0.4 + progress * 0.5) + ')';
       
       ctx.shadowColor = glowColor;
       ctx.shadowBlur = 15 + progress * 20;
 
+      // 1. Draw glowing condensed buster core at center
+      const coreRadius = (8 + progress * 14);
+      const coreGrad = ctx.createRadialGradient(
+        localCenterX, localCenterY, 0,
+        localCenterX, localCenterY, coreRadius
+      );
+      coreGrad.addColorStop(0.0, '#ffffff');
+      coreGrad.addColorStop(0.3, isLvl2 ? 'hsl(45, 100%, 75%)' : 'hsl(142, 100%, 80%)');
+      coreGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
+      
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Draw outer rotating power rings
       const shieldCount = isLvl2 ? 3 : 2;
       for (let s = 0; s < shieldCount; s++) {
         const rotationSpeed = (s % 2 === 0 ? 1 : -1) * 0.003 * nowTime;
-        const pulse = Math.sin(nowTime * 0.02 + s * 2) * 6 * progress;
-        const baseRadius = (this.size.height * 0.35) + s * 14 * progress + pulse;
+        const ringPulse = Math.sin(nowTime * 0.02 + s * 2) * 6 * progress;
+        const baseRadius = (this.size.height * 0.35) + s * 14 * progress + ringPulse;
 
         ctx.strokeStyle = isLvl2 
-          ? (s === 2 ? "rgba(255, 255, 255, 0.95)" : "rgba(234, 179, 8, 0.8)") 
-          : "rgba(34, 197, 94, 0.65)";
+          ? (s === 2 ? 'rgba(255, 255, 255, 0.95)' : 'rgba(234, 179, 8, 0.8)') 
+          : 'rgba(34, 197, 94, 0.65)';
         ctx.lineWidth = isLvl2 ? (s === 2 ? 3 : 1.5) : 1.0;
 
         ctx.beginPath();
@@ -13039,6 +13135,38 @@ if (this.isCharging) {
         }
         ctx.closePath();
         ctx.stroke();
+      }
+
+      // 3. Draw random crackling plasma discharges when highly charged
+      if (progress > 0.5) {
+        const dischargeCount = isLvl2 ? 3 : 1;
+        ctx.strokeStyle = isLvl2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(132, 239, 158, 0.8)';
+        ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
+        
+        for (let d = 0; d < dischargeCount; d++) {
+          if (Math.random() < 0.35) {
+            const startAngle = Math.random() * Math.PI * 2;
+            const rMax = (this.size.height * 0.35) + 20 * progress;
+            
+            ctx.beginPath();
+            const cx = localCenterX + Math.cos(startAngle) * rMax;
+            const cy = localCenterY + Math.sin(startAngle) * rMax;
+            ctx.moveTo(cx, cy);
+
+            // Create jagged lightning-bolt nodes heading inward to the core
+            const steps = 3;
+            for (let s = 1; s <= steps; s++) {
+              const t = s / steps;
+              const nextAngle = startAngle + (Math.random() * 0.6 - 0.3);
+              const nextRadius = rMax * (1.0 - t);
+              const targetX = localCenterX + Math.cos(nextAngle) * nextRadius;
+              const targetY = localCenterY + Math.sin(nextAngle) * nextRadius;
+              
+              ctx.lineTo(targetX, targetY);
+            }
+            ctx.stroke();
+          }
+        }
       }
 
       ctx.restore();
