@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-U4iwe3Rq.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CF--3smp.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9006,8 +9006,8 @@ export const SFX_PRESETS = {
 };
 `,"src/core/eventBroker.ts":`export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number };
+  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
+  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
   PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
   PLAYER_JUMPED: void;
   PLAYER_DASHED: { direction: number };
@@ -9504,6 +9504,20 @@ export class BaseEntity implements IEntity {
     return (component as T) || null;
   }
 
+    public applyKineticImpulse(vx: number, vy: number) {
+    this.velocity.x += vx;
+    this.velocity.y += vy;
+  }
+
+  public applyScaleImpulse(sx: number, sy: number) {
+    this.scaleVelocity.x += sx;
+    this.scaleVelocity.y += sy;
+  }
+
+  public applyAngularImpulse(rv: number) {
+    this.rotationVelocity += rv;
+  }
+
   public update(dt: number) {
     if (this.isDead) return;
 
@@ -9588,6 +9602,7 @@ import {
 } from "./BossStates";
 
 export class Boss extends BaseEntity {
+  private unsubHurt!: () => void;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public stateMachine: StateMachine;
@@ -9629,6 +9644,10 @@ export class Boss extends BaseEntity {
 
     this.stateMachine = new StateMachine();
     this.stateMachine.changeState(this.cooldownState);
+
+    this.unsubHurt = eventBroker.subscribe("BOSS_HURT", ({ sourceX, sourceY, intensity }) => {
+      this.handleHurtReaction(sourceX, sourceY, intensity);
+    });
   }
 
   public update(dt: number) {
@@ -9828,6 +9847,35 @@ export class Boss extends BaseEntity {
 
     ctx.shadowBlur = 0;
     ctx.restore();
+  }
+
+  public handleHurtReaction(sourceX: number, sourceY: number, intensity: number) {
+    if (this.isDead) return;
+
+    const dx = this.position.x - sourceX;
+    const dy = this.position.y - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
+
+    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
+    this.velocity.x = dirX * 240 * intensity;
+    this.velocity.y = Math.min(this.velocity.y, -280 * intensity);
+    this.physics.isGrounded = false;
+
+    // Stretch vertically to visually sell the launch momentum
+    this.visualScale = { x: 1.0 - 0.15 * intensity, y: 1.0 + 0.3 * intensity };
+    this.scaleVelocity = { x: 8.0 * intensity, y: -16.0 * intensity };
+
+    const rotImpulse = -Math.sign(dirX) * 12.0 * intensity;
+    this.applyAngularImpulse(rotImpulse);
+  }
+
+  public teardown() {
+    if (this.unsubHurt) {
+      this.unsubHurt();
+    }
+    super.teardown();
   }
 }
 `,"src/entities/BossStates.ts":`import { IState } from "@/core/StateMachine";
@@ -10104,6 +10152,7 @@ import { eventBroker } from "@/core/eventBroker";
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
 export class Minion extends BaseEntity {
+  private unsubHurt!: () => void;
   public get status(): EntityStatus {
     if (this.isDead) return EntityStatus.DEAD;
     if (this.isDying) return EntityStatus.DYING;
@@ -10178,6 +10227,12 @@ export class Minion extends BaseEntity {
       this.stateMachine.changeState(new FlyerPatrolState(this));
     }
     eventBroker.publish("MINION_SPAWNING", undefined);
+
+    this.unsubHurt = eventBroker.subscribe("MINION_HURT", ({ id, sourceX, sourceY, intensity }) => {
+      if (id === this.id) {
+        this.handleHurtReaction(sourceX, sourceY, intensity);
+      }
+    });
   }
 
   public startDeathSequence() {
@@ -10442,6 +10497,35 @@ export class Minion extends BaseEntity {
     ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
 
     ctx.restore();
+  }
+
+  public handleHurtReaction(sourceX: number, sourceY: number, intensity: number) {
+    if (this.isDead || this.isDying || this.isSpawning) return;
+
+    const dx = this.position.x - sourceX;
+    const dy = this.position.y - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
+
+    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
+    this.velocity.x = dirX * 320 * intensity;
+    this.velocity.y = Math.min(this.velocity.y, -340 * intensity);
+    this.physics.isGrounded = false;
+
+    // Stretch vertically to visually sell the launch momentum (amplified for lighter class)
+    this.visualScale = { x: 1.0 - 0.2 * intensity, y: 1.0 + 0.4 * intensity };
+    this.scaleVelocity = { x: 10.0 * intensity, y: -20.0 * intensity };
+
+    const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
+    this.applyAngularImpulse(rotImpulse);
+  }
+
+  public teardown() {
+    if (this.unsubHurt) {
+      this.unsubHurt();
+    }
+    super.teardown();
   }
 }
 `,"src/entities/MinionBehaviors.ts":`// Deprecated. Minion state updates are polymorphically handled inside MinionStates.ts.
@@ -11479,7 +11563,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       if (isColliding) {
         const targetHealth = target.getComponent(HealthComponent);
         if (targetHealth) {
-          targetHealth.takeDamage(this.damage);
+          const projIntensity = this.ownerId === "player" ? (this.damage >= 3 ? 1.6 : 0.6) : 1.0;
+          targetHealth.takeDamage(this.damage, this.position.x, this.position.y, projIntensity);
           return true;
         }
       }
@@ -11871,7 +11956,7 @@ export class HealthComponent implements IEntityComponent {
     this.hitFlashTimer = 0;
   }
 
-  public takeDamage(amount: number): boolean {
+  public takeDamage(amount: number, sourceX: number = 0, sourceY: number = 0, intensity: number = 1): boolean {
     const isDying = this.owner.status === EntityStatus.DYING;
     const isSpawning = this.owner.status === EntityStatus.SPAWNING;
     if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
@@ -11893,6 +11978,9 @@ export class HealthComponent implements IEntityComponent {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
+        sourceX,
+        sourceY,
+        intensity,
       });
     } else if (this.owner.id.startsWith("minion-")) {
       eventBroker.publish("MINION_HURT", {
@@ -11900,6 +11988,9 @@ export class HealthComponent implements IEntityComponent {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
+        sourceX,
+        sourceY,
+        intensity,
       });
     }
 
