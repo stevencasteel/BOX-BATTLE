@@ -6,27 +6,38 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 
+const colorCache = new Map<string, { h: number; s: number; l: number } | null>();
+
+function parseHsl(str: string): { h: number; s: number; l: number } | null {
+  if (colorCache.has(str)) {
+    return colorCache.get(str)!;
+  }
+  const regex = /hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/;
+  const match = str.match(regex);
+  if (!match) {
+    colorCache.set(str, null);
+    return null;
+  }
+  const result = {
+    h: parseFloat(match[1]),
+    s: parseFloat(match[2]),
+    l: parseFloat(match[3]),
+  };
+  colorCache.set(str, result);
+  return result;
+}
+
 function lerpHsl(startStr: string, endStr: string, pct: number): string {
   if (!startStr || !endStr) return startStr;
-  if (!startStr.startsWith("hsl") || !endStr.startsWith("hsl")) {
-    return startStr;
-  }
-  try {
-    const regex = /hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/;
-    const m1 = startStr.match(regex);
-    const m2 = endStr.match(regex);
-    if (!m1 || !m2) return startStr;
-    const h1 = parseFloat(m1[1]), s1 = parseFloat(m1[2]), l1 = parseFloat(m1[3]);
-    const h2 = parseFloat(m2[1]), s2 = parseFloat(m2[2]), l2 = parseFloat(m2[3]);
-    
-    const factor = 1 - pct;
-    const h = h1 + (h2 - h1) * factor;
-    const s = s1 + (s2 - s1) * factor;
-    const l = l1 + (l2 - l1) * factor;
-    return `hsl(${h}, ${s}%, ${l}%)`;
-  } catch {
-    return startStr;
-  }
+  const c1 = parseHsl(startStr);
+  const c2 = parseHsl(endStr);
+  if (!c1 || !c2) return startStr;
+
+  const factor = 1 - pct;
+  const h = c1.h + (c2.h - c1.h) * factor;
+  const s = c1.s + (c2.s - c1.s) * factor;
+  const l = c1.l + (c2.l - c1.l) * factor;
+  return `hsl(${h}, ${s}%, ${l}%)`;
 }
 
 export class WorldRenderer {

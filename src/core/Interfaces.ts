@@ -108,7 +108,7 @@ export interface IWorld {
   boss: IEntity | null;
   minions: IEntity[];
   physicsWorld: IPhysicsWorld;
-  getProjectiles(): IProjectile[];
+  getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
     x: number,

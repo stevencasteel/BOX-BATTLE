@@ -14,9 +14,9 @@ export class World implements IWorld {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
-  public getProjectiles(): IProjectile[] {
+  public getProjectiles(): readonly IProjectile[] {
     if (!this.projectilePool) return [];
-    return [...this.projectilePool.getActive()];
+    return this.projectilePool.getActive();
   }
 
   public releaseProjectile(proj: IProjectile): void {

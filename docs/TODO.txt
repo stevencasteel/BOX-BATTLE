@@ -18,7 +18,7 @@ misc:
 
 
 
+A toy pull string that ratchets back
+Physics reaction knockback from minion when you hit it.
 
-
-
-WASD needs to work for victory/defeat./titl screen menus
+Is there anything in my source code I shouldn't be sharing publicly?

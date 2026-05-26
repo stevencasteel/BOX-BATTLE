@@ -9,6 +9,7 @@ export class MeleeComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
   public attackCooldownTimer: number = 0;
+  private targetsScratchpad: BaseEntity[] = [];
   public attackActiveTimer: number = 0;
   public attackActive: boolean = false;
   public attackDirection: "side" | "up" | "down" | null = null;
@@ -280,17 +281,19 @@ export class MeleeComponent implements IEntityComponent {
     eventBroker.publish("PLAYER_POGOED", undefined);
   }
 
-  private gatherAwaitingTargets(): BaseEntity[] {
-    const targets: BaseEntity[] = [];
+  private gatherAwaitingTargets(): readonly BaseEntity[] {
+    this.targetsScratchpad.length = 0;
     if (this.owner.world.boss && !this.owner.world.boss.isDead) {
-      targets.push(this.owner.world.boss as BaseEntity);
+      this.targetsScratchpad.push(this.owner.world.boss as BaseEntity);
     }
-    for (const minion of this.owner.world.minions) {
+    const minions = this.owner.world.minions;
+    for (let i = 0; i < minions.length; i++) {
+      const minion = minions[i];
       if (minion && minion.status === EntityStatus.ACTIVE) {
-        targets.push(minion as BaseEntity);
+        this.targetsScratchpad.push(minion as BaseEntity);
       }
     }
-    return targets;
+    return this.targetsScratchpad;
   }
 
   private calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
