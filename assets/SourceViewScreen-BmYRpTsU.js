@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BJkbCtSn.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Cr8-TieM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8096,7 +8096,6 @@ export class DroneManager {
   private chargeLfo!: Tone.LFO;
   private chargeGain!: Tone.Gain;
   private isChargeDroneRunning: boolean = false;
-  private currentChargeLevel: number = 0;
 
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
@@ -8236,47 +8235,37 @@ export class DroneManager {
     this.chargeGain.gain.setValueAtTime(0.18, now);
 
     this.isChargeDroneRunning = true;
-    this.currentChargeLevel = 0;
   }
 
   public updateChargeTimer(timer: number) {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     const now = Tone.now();
 
-    if (timer < 0.25) {
-      const progress = timer / 0.25;
-      this.chargeOsc.frequency.setTargetAtTime(220 + progress * 100, now, 0.05);
-      this.chargeFilter.frequency.setTargetAtTime(450 + progress * 150, now, 0.05);
-      this.chargeLfo.frequency.setTargetAtTime(6.0, now, 0.05);
-      this.chargeLfo.amplitude.setTargetAtTime(110 / 360, now, 0.05);
-      this.chargeGain.gain.setTargetAtTime(0.25, now, 0.05);
-    } else if (timer >= 0.25 && timer < 1.12) {
-      this.currentChargeLevel = 1;
-      const range = (timer - 0.25) / (1.12 - 0.25);
+    // Clamp progress safely to [0, 1] relative to the Level 2 max timer
+    const progress = Math.max(0, Math.min(1.0, timer / 1.12));
 
-      this.chargeOsc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
-      this.chargeFilter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
-      this.chargeLfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
-      this.chargeLfo.amplitude.setTargetAtTime((120 + range * 120) / 360, now, 0.06);
-      this.chargeGain.gain.setTargetAtTime(0.45, now, 0.05);
-    } else if (timer >= 1.12) {
-      if (this.currentChargeLevel < 2) {
-        this.currentChargeLevel = 2;
-      }
-      const vibration = Math.sin(now * 30) * 8;
-      this.chargeOsc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
-      this.chargeFilter.frequency.setTargetAtTime(1500, now, 0.08);
-      this.chargeLfo.frequency.setTargetAtTime(15.0, now, 0.08);
-      this.chargeLfo.amplitude.setTargetAtTime(1.0, now, 0.08);
-      this.chargeGain.gain.setTargetAtTime(0.35, now, 0.05);
-    }
+    const baseFreq = 220 + progress * 440;
+    const filterFreq = 450 + progress * 1200;
+    const lfoFreq = 5.5 + progress * 16.0;
+    
+    // Clamp LFO amplitude strictly to NormalRange [0, 1] to prevent crashes
+    const lfoAmp = Math.max(0, Math.min(1.0, 0.3 + progress * 0.7));
+
+    this.chargeOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
+    this.chargeFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+    this.chargeLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
+    this.chargeLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
+    
+    // Clamp output gain value to NormalRange [0, 1]
+    const gainVal = Math.max(0, Math.min(1.0, 0.18 + progress * 0.32));
+    this.chargeGain.gain.setTargetAtTime(gainVal, now, 0.05);
   }
 
   public stopChargeDrone() {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
-    this.currentChargeLevel = 0;
+    
   }
 
   public setHeartbeat(active: boolean) {
@@ -9411,6 +9400,7 @@ export type GameEventMap = {
   CHARGE_UPDATE: { timer: number };
   CHARGE_STOP: void;
   CHARGE_MAXED: void;
+  CHARGE_CANCEL: void;
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
   PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
@@ -11185,6 +11175,7 @@ export class Player extends BaseEntity {
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
   private unsubHealCancel!: () => void;
+  private unsubChargeCancel!: () => void;
   private unsubDamageDealt!: () => void;
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
@@ -11262,6 +11253,18 @@ export class Player extends BaseEntity {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
+    this.unsubChargeCancel = eventBroker.subscribe("CHARGE_CANCEL", () => {
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y - 12,
+        angle: 0,
+        color: "hsl(142, 71%, 58%)",
+        radial: true,
+        count: 14,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 2, duration: 0.1 });
+    });
+
     this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
       this.healingCharges = Math.max(0, this.healingCharges - 1);
       eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
@@ -11296,21 +11299,36 @@ export class Player extends BaseEntity {
     });
 
     this.unsubProjectileFired = eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
-      // Linear recoil forces (tuned lower for better control weight)
       const kbForce = level === 2 ? 160 : 55;
       const tiltForce = level === 2 ? 6.0 : 2.5;
 
-      // Apply backward velocity pushback proportional to firing direction
       this.applyKineticImpulse(-dirX * kbForce, -dirY * kbForce);
-
-      // Apply lean-style angular recoil relative to horizontal vector (leans back)
       this.applyAngularImpulse(-dirX * tiltForce);
 
-      // Highly subtle squash-stretch scale deformation to keep focus purely on rotation lean
       const sqX = level === 2 ? 0.94 : 0.98;
       const sqY = level === 2 ? 1.06 : 1.02;
       this.visualScale = { x: sqX, y: sqY };
       this.scaleVelocity = { x: (level === 2 ? 12 : 5), y: (level === 2 ? -12 : -5) };
+
+      // Spawn muzzle blast sparks and dust ring at projectile launch coordinate
+      const muzzleX = this.position.x + dirX * 30;
+      const muzzleY = this.position.y + dirY * 30;
+
+      eventBroker.publish("SPAWN_BLAST", {
+        x: muzzleX,
+        y: muzzleY,
+        color: level === 2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"
+      });
+
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: muzzleX,
+        y: muzzleY,
+        angle: Math.atan2(dirY, dirX),
+        color: level === 2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+        radial: false,
+        count: level === 2 ? 16 : 8,
+        shape: "line"
+      });
     });
   }
 
@@ -11340,41 +11358,61 @@ export class Player extends BaseEntity {
 
     this.targetRotation = targetRotation;
 
-    if (this.isCharging) {
-      const chargeProgress = Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME);
-      
-      // Accurately simulate high stored energy with high-frequency scale wobble and angular shiver
+if (this.isCharging) {
+      const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
+      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+
       const time = performance.now();
-      const pulse = Math.sin(time * 0.04) * 0.08 * chargeProgress;
-      const shiverX = (Math.random() * 0.04 - 0.02) * chargeProgress;
-      const shiverY = (Math.random() * 0.04 - 0.02) * chargeProgress;
+      const pulse = Math.sin(time * 0.045) * 0.06 * progress;
+      const shiverX = (Math.random() * 0.03 - 0.015) * progress;
+      const shiverY = (Math.random() * 0.03 - 0.015) * progress;
 
       this.targetVisualScale = { 
         x: 1.0 - pulse + shiverX, 
         y: 1.0 + pulse + shiverY 
       };
-      this.rotation = Math.sin(time * 0.08) * 0.04 * chargeProgress;
+      this.rotation = Math.sin(time * 0.09) * 0.04 * progress;
 
-      // Vortex accretion: Spawn swirling charges rotating in-wards
-      if (Math.random() < 0.35) {
+      // Swirling vortex accretion kii particles
+      if (Math.random() < 0.3 + progress * 0.5) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = 60 - chargeProgress * 30;
-        const spawnX = this.position.x + Math.cos(angle) * dist;
-        const spawnY = this.position.y - 12 + Math.sin(angle) * dist;
-        
+        const radius = 80 - progress * 50;
+        const startX = this.position.x + Math.cos(angle) * radius;
+        const startY = this.position.y - 12 + Math.sin(angle) * radius;
+
         const targetX = this.position.x;
         const targetY = this.position.y - 12;
-        const vx = (targetX - spawnX) * 2.5;
-        const vy = (targetY - spawnY) * 2.5;
+        const vx = (targetX - startX) * 3.5;
+        const vy = (targetY - startY) * 3.5;
 
         eventBroker.publish("SPAWN_SPARKS", {
-          x: spawnX,
-          y: spawnY,
+          x: startX,
+          y: startY,
           angle: Math.atan2(vy, vx),
-          color: chargeProgress >= 1.0 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+          color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
           count: 1,
-          turbulence: 35
+          shape: "line",
+          turbulence: 20
         });
+      }
+
+      // High-tension golden electric lightning line discharges arcing into core
+      if (isLvl2 && Math.random() < 0.12) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 60;
+        const startX = this.position.x + Math.cos(angle) * radius;
+        const startY = this.position.y - 12 + Math.sin(angle) * radius;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: startX,
+          y: startY,
+          angle: angle + Math.PI,
+          color: "hsl(190, 100%, 85%)",
+          count: 3,
+          shape: "line",
+          turbulence: 45
+        });
+        eventBroker.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
       }
     } else {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
@@ -11901,19 +11939,50 @@ export class Player extends BaseEntity {
       ctx.translate(tremble, tremble);
     }
 
-    if (this.isCharging && this.chargeTimer >= 0.25) {
-      const isLvl2 = this.chargeTimer >= 1.12;
-      ctx.strokeStyle = isLvl2 ? "white" : "rgba(34, 197, 94, 0.6)";
-      ctx.lineWidth = isLvl2 ? 3 : 1.5;
-      ctx.beginPath();
-      ctx.arc(
-        localCenterX,
-        localCenterY,
-        this.size.height * 0.6 + Math.sin(performance.now() * 0.05) * 4,
-        0,
-        Math.PI * 2
-      );
-      ctx.stroke();
+if (this.isCharging) {
+      const nowTime = performance.now();
+      const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
+      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+
+      ctx.save();
+      const glowColor = isLvl2 
+        ? "rgba(234, 179, 8, 0.9)" 
+        : \`rgba(34, 197, 94, \${0.4 + progress * 0.5})\`;
+      
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 15 + progress * 20;
+
+      const shieldCount = isLvl2 ? 3 : 2;
+      for (let s = 0; s < shieldCount; s++) {
+        const rotationSpeed = (s % 2 === 0 ? 1 : -1) * 0.003 * nowTime;
+        const pulse = Math.sin(nowTime * 0.02 + s * 2) * 6 * progress;
+        const baseRadius = (this.size.height * 0.35) + s * 14 * progress + pulse;
+
+        ctx.strokeStyle = isLvl2 
+          ? (s === 2 ? "rgba(255, 255, 255, 0.95)" : "rgba(234, 179, 8, 0.8)") 
+          : "rgba(34, 197, 94, 0.65)";
+        ctx.lineWidth = isLvl2 ? (s === 2 ? 3 : 1.5) : 1.0;
+
+        ctx.beginPath();
+        const segments = 12;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i <= segments; i++) {
+          const angle = i * step + rotationSpeed;
+          const noise = (Math.sin(angle * 6 + nowTime * 0.05) * 4) * progress;
+          const rx = localCenterX + Math.cos(angle) * (baseRadius + noise);
+          const ry = localCenterY + Math.sin(angle) * (baseRadius + noise);
+
+          if (i === 0) {
+            ctx.moveTo(rx, ry);
+          } else {
+            ctx.lineTo(rx, ry);
+          }
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      ctx.restore();
     }
 
     ctx.restore();
@@ -11925,6 +11994,7 @@ export class Player extends BaseEntity {
     this.unsubHealComplete();
     this.unsubHealCancel();
     this.unsubChargeMaxed();
+    this.unsubChargeCancel();
     this.unsubDamageDealt();
     if (this.unsubProjectileFired) {
       this.unsubProjectileFired();
@@ -12416,6 +12486,7 @@ export class FireballComponent implements IEntityComponent {
   public startCharging(): void {
     this.isCharging = true;
     this.chargeTimer = 0;
+    this.hasPoppedLvl2 = false;
     eventBroker.publish("CHARGE_START", undefined);
   }
 
@@ -12423,7 +12494,9 @@ export class FireballComponent implements IEntityComponent {
     if (this.isCharging) {
       this.isCharging = false;
       this.chargeTimer = 0;
+      this.hasPoppedLvl2 = false;
       eventBroker.publish("CHARGE_STOP", undefined);
+      eventBroker.publish("CHARGE_CANCEL", undefined);
     }
   }
 
@@ -12435,6 +12508,8 @@ export class FireballComponent implements IEntityComponent {
 
     if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {
       this.fire(dirX, dirY, facingDirection);
+    } else {
+      eventBroker.publish("CHARGE_CANCEL", undefined);
     }
   }
 
@@ -12471,9 +12546,9 @@ export class FireballComponent implements IEntityComponent {
     );
 
     if (isLvl2) {
-      proj.size = { width: 28, height: 28 };
+      proj.size = { width: 48, height: 48 };
     } else {
-      proj.size = { width: 14, height: 14 };
+      proj.size = { width: 22, height: 22 };
     }
   }
 }
