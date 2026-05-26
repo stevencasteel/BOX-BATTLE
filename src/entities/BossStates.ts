@@ -233,10 +233,33 @@ export class BossLungeState extends BossState {
   }
 
   public exit(): void {
-    this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 0.8, y: 1.2 };
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
-    this.owner.rotationVelocity = -this.owner.facingDirection * 15;
+    const physics = this.owner.getComponent(PhysicsComponent);
+    const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
+
+    if (hitWall && physics) {
+      // Rebound backward and squash elastically on wall collision
+      this.owner.velocity.x = -this.owner.facingDirection * 350;
+      this.owner.visualScale = { x: 0.7, y: 1.3 };
+      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      this.owner.rotationVelocity = -this.owner.facingDirection * 28;
+
+      const impactSide = physics.isOnWallLeft ? -1 : 1;
+      const wallX = this.owner.position.x + impactSide * (this.owner.size.width / 2);
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: wallX,
+        y: this.owner.position.y,
+        angle: impactSide > 0 ? Math.PI : 0,
+        color: "hsl(350, 80%, 60%)",
+        radial: true,
+        count: 15,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
+    } else {
+      this.owner.velocity.x = 0;
+      this.owner.visualScale = { x: 0.8, y: 1.2 };
+      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      this.owner.rotationVelocity = -this.owner.facingDirection * 15;
+    }
   }
 }
 

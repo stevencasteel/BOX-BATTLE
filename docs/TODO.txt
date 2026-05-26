@@ -28,3 +28,5 @@ Charging should feel like a DBZ kii charge.
 
 
 We need to redo from scratch how our purple determination charging looks. and it needs a nice satisfying completion animation and sound. It should find inspiration from DBZ kii charging.
+
+player win/lose tics / sounds should play faster at first than it currently is and slow to a stop but not too slow as it reaches the current number of wins/loses. And that wins/loses save slot performances and tics shouldn't happen until a beat after the player/boss dialogue is done.

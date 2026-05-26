@@ -33,7 +33,7 @@ export class Spawner {
   }
 
   private spawnMinion() {
-    const minionId = `minion-${this.spawnType}-${Date.now()}`;
+    const minionId = `minion-${this.spawnType}-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
     const minion = new Minion(minionId, this.spawnType, this.position, this.world);
     this.activeMinion = minion;
     this.world.minions.push(minion);

@@ -28,6 +28,7 @@ export class Minion extends BaseEntity {
 
   public patrolSpeed: number = 100;
   public stateTimer: number = 0;
+  public recoilTimer: number = 0;
 
   public pointA: { x: number; y: number } = { x: 0, y: 0 };
   public pointB: { x: number; y: number } = { x: 0, y: 0 };
@@ -187,7 +188,13 @@ export class Minion extends BaseEntity {
     this.stateTimer -= dt;
     this.shootTimer -= dt;
 
-    this.stateMachine.update(dt);
+    if (this.recoilTimer > 0) {
+      this.recoilTimer -= dt;
+      const friction = 2.5;
+      this.velocity.x += (0 - this.velocity.x) * friction * dt;
+    } else {
+      this.stateMachine.update(dt);
+    }
 
     if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
       this.targetRotation = this.facingDirection * 0.21;
@@ -380,6 +387,8 @@ export class Minion extends BaseEntity {
 
     const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
     this.applyAngularImpulse(rotImpulse);
+
+    this.recoilTimer = 0.35 * intensity;
   }
 
   public teardown() {

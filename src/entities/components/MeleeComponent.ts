@@ -124,10 +124,28 @@ export class MeleeComponent implements IEntityComponent {
           const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
           const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
-          const registeredDamage = health.takeDamage(damageAmount);
+          const registeredDamage = health.takeDamage(
+            damageAmount,
+            this.owner.position.x,
+            this.owner.position.y
+          );
           if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
             eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
+
+            // Apply blade resistance pushback recoil to the player
+            const recoilForce = isCloseRange ? 200 : 90;
+            this.owner.velocity.x = -facing * recoilForce;
+            if (this.owner.getComponent(HealthComponent)?.owner.world.physicsWorld) {
+              const withPhysics = this.owner as unknown as { physics?: { isGrounded: boolean } };
+              const isGrounded = this.owner.velocity.y === 0 || withPhysics.physics?.isGrounded;
+              if (!isGrounded) {
+                this.owner.velocity.y = Math.min(this.owner.velocity.y, -120);
+              }
+            }
+            if ('recoilTimer' in this.owner) {
+              (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.15;
+            }
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
