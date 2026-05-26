@@ -143,7 +143,7 @@ export class DroneManager {
 
   private playChargeCompleteDing() {
     if (!this.ctxManager.initialized) return;
-    this.musicSeq.musicArpSynth.triggerAttackRelease("G6", "4n");
+    // Silent (ding sound disabled)
   }
 
   public stopChargeDrone() {
