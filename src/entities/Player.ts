@@ -225,8 +225,9 @@ export class Player extends BaseEntity {
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;
     } else {
-      if (this.airtimeDuration > 0.08) {
-        const factor = Math.min(1, Math.max(0, (this.airtimeDuration - 0.08) / 0.62));
+      if (this.airtimeDuration > 0.18) {
+        const rawFactor = Math.min(1, Math.max(0, (this.airtimeDuration - 0.18) / 0.52));
+        const factor = rawFactor * rawFactor; // Soft quadratic easing to prevent flat squishing on short falls
         this.visualScale = { x: 1.0 + 0.22 * factor, y: 1.0 - 0.22 * factor };
         this.scaleVelocity = { x: 8 * factor, y: -15 * factor };
         this.velocity.x *= (1.0 - 0.75 * factor);
