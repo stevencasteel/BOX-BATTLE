@@ -862,7 +862,6 @@ export class Player extends BaseEntity {
       const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
 
-      const shieldCount = isLvl2 ? 3 : 2;
       const baseRadius = (this.size.height * 0.35) + chargeProgress * 10;
       const localCenterX = 0;
       const localCenterY = -this.size.height / 2;
@@ -873,15 +872,24 @@ export class Player extends BaseEntity {
         { psi: -Math.PI / 4, phi: 0.52, speed: 0.003 }
       ];
 
-      for (let s = 0; s < shieldCount; s++) {
-        const orbit = orbits[s % orbits.length];
+      const activeRings = isLvl2
+        ? [
+            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.85)" },
+            { orbitIndex: 1, color: "rgba(134, 212, 51, 0.85)" },
+            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.95)" }
+          ]
+        : [
+            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.65)" },
+            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.75)" }
+          ];
+
+      for (let s = 0; s < activeRings.length; s++) {
+        const ringConfig = activeRings[s];
+        const orbit = orbits[ringConfig.orbitIndex];
         const segments = 32;
         const step = (Math.PI * 2) / segments;
         const rotationSpeed = orbit.speed * nowTime;
-
-        const ringColor = isLvl2
-          ? (s === 0 ? "rgba(234, 179, 8, 0.85)" : s === 1 ? "rgba(134, 212, 51, 0.85)" : "rgba(34, 197, 94, 0.95)")
-          : (s === 0 ? "rgba(234, 179, 8, 0.65)" : "rgba(34, 197, 94, 0.75)");
+        const ringColor = ringConfig.color;
 
         const lineWidth = isLvl2 ? (s === 2 ? 2.5 : 1.5) : 1.2;
 
