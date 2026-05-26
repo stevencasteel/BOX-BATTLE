@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DgrzpAtS.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Dx2rY3mF.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8517,34 +8517,40 @@ export class BossSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      envelope: { attack: 0.015, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      envelope: { attack: 0.015, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
       harmonicity: 5.1,
       resonance: 4000,
+      volume: -7
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
       oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      envelope: { attack: 0.012, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      volume: -5
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
       oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      envelope: { attack: 0.02, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
+      envelope: { attack: 0.012, decay: 0.05, sustain: 0, release: 0.05 },
+      volume: -6
     }).connect(this.impactPanner);
   }
 
@@ -8619,7 +8625,7 @@ export class BossSFX {
 
   public playMinionSpawning(x?: number) {
     const preset = SFX_PRESETS.boss.minion_spawn;
-    this.helper.execute("minion_spawn", 100, x, this.bossPanner, (now) => {
+    this.helper.execute("minion_spawn", 1000, x, this.bossPanner, (now) => {
       this.teleportSynth.triggerAttackRelease(preset.frequency, "4n", now);
       this.teleportSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });
@@ -8733,17 +8739,20 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
+      envelope: { attack: 0.012, decay: 0.04, sustain: 0, release: 0.04 },
+      volume: -6
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthBoss = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.07, sustain: 0, release: 0.07 },
+      envelope: { attack: 0.015, decay: 0.06, sustain: 0, release: 0.06 },
+      volume: -7
     }).connect(this.bossDialoguePanner);
 
     this.menuSynth = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 },
+      envelope: { attack: 0.015, decay: 0.12, sustain: 0, release: 0.12 },
+      volume: -6
     }).connect(this.playerDialoguePanner);
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
@@ -8851,20 +8860,23 @@ export class PlayerSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      envelope: { attack: 0.012, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
       oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      envelope: { attack: 0.012, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
       oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      envelope: { attack: 0.012, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
-    this.dashNoise = new Tone.Noise("white");
+    this.dashNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
     this.dashEnv = new Tone.AmplitudeEnvelope({
       attack: 0.01,
@@ -8877,10 +8889,11 @@ export class PlayerSFX {
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      envelope: { attack: 0.012, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
-    this.landingNoise = new Tone.Noise("white");
+    this.landingNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.landingFilter = new Tone.Filter({
       frequency: presets.landing.noiseFreq,
       type: "bandpass",
@@ -8895,7 +8908,7 @@ export class PlayerSFX {
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
-    this.slashNoiseSide = new Tone.Noise("white");
+    this.slashNoiseSide = new Tone.Noise({ type: "white", volume: -7 });
     this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
     this.slashEnvSide = new Tone.AmplitudeEnvelope({
@@ -8907,7 +8920,7 @@ export class PlayerSFX {
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
-    this.slashNoisePuff = new Tone.Noise("pink");
+    this.slashNoisePuff = new Tone.Noise({ type: "pink", volume: -7 });
     this.slashFilterPuff = new Tone.Filter({
       frequency: presets.slash_puff.noiseFreq,
       type: "bandpass",
@@ -9292,8 +9305,8 @@ export const SFX_PRESETS = {
   },
   interface: {
     select_tick: {
-      note1: 950,
-      note2: 1400,
+      note1: 880,
+      note2: 1250,
       delay: 0.025,
     },
     error_tick: {
