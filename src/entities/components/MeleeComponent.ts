@@ -2,27 +2,18 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus, IEntity } from "@/core/Interfaces";
-import { DashComponent } from "@/entities/components/DashComponent";
+import { EntityStatus } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 
-export interface IMeleeCapable extends IEntity {
-  facingDirection: number;
-  hasDoubleJump: boolean;
-  registerDamageDealt?(): void;
-}
-
 export class MeleeComponent implements IEntityComponent {
-  public owner!: IMeleeCapable;
+  public owner!: BaseEntity;
 
-  // High-frequency timing registers
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
   public attackActive: boolean = false;
   public attackDirection: "side" | "up" | "down" | null = null;
   public hasHitEnemyThisSwing: boolean = false;
 
-  // Balancing & Reach parameters
   private readonly pogoForce: number = 450;
   private readonly meleeRangeLimit: number = UNITS.MELEE_MAX_REACH;
   private readonly closeRangeThreshold: number = UNITS.MELEE_CLOSE_RANGE_THRESHOLD;
@@ -30,13 +21,12 @@ export class MeleeComponent implements IEntityComponent {
   private readonly verticalReachOffset: number = UNITS.MELEE_VERTICAL_OFFSET;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as unknown as IMeleeCapable;
+    this.owner = owner;
   }
 
   public update(dt: number): void {
     this.decayAttackTimers(dt);
 
-    // Evaluate active swing intersections if we have not registered contact yet
     if (this.attackActive && !this.hasHitEnemyThisSwing) {
       if (this.attackDirection === "down") {
         this.checkPogoAttack();
@@ -86,17 +76,11 @@ export class MeleeComponent implements IEntityComponent {
     eventBroker.publish("PLAYER_ATTACKED", { direction });
   }
 
-  /**
-   * Main intersection bridge for horizontal (side) and vertical-upward swipes.
-   */
   private checkMeleeAttackContact(): void {
     this.swipeEnemies();
     this.swipeIncomingProjectiles();
   }
 
-  /**
-   * Evaluates and applies swipe damage to valid boss and minion targets within range.
-   */
   private swipeEnemies(): void {
     const targets = this.gatherAwaitingTargets();
     const facing = this.owner.facingDirection;
@@ -142,7 +126,7 @@ export class MeleeComponent implements IEntityComponent {
           const registeredDamage = health.takeDamage(damageAmount);
           if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
-            this.owner.registerDamageDealt?.();
+            eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
@@ -159,9 +143,6 @@ export class MeleeComponent implements IEntityComponent {
     }
   }
 
-  /**
-   * Evaluates and releases/deflects incoming hostile projectiles within swipe reach.
-   */
   private swipeIncomingProjectiles(): void {
     const facing = this.owner.facingDirection;
     const activeProjectiles = [...this.owner.world.getProjectiles()];
@@ -199,16 +180,13 @@ export class MeleeComponent implements IEntityComponent {
         if (isDeflected) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
     }
   }
 
-  /**
-   * Main intersection bridge for downward pogo hits against enemies, projectiles, and solid ground.
-   */
   private checkPogoAttack(): void {
     const pogoHitbox = {
       x: this.owner.position.x + UNITS.POGO_HITBOX_X_OFFSET,
@@ -239,7 +217,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(UNITS.PLAYER_MELEE_DAMAGE_BASE);
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
         }
 
         this.applyPogoRebound();
@@ -265,7 +243,7 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isColliding) {
           this.owner.world.releaseProjectile(proj);
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
           this.applyPogoRebound();
           return true;
         }
@@ -295,21 +273,10 @@ export class MeleeComponent implements IEntityComponent {
     }
   }
 
-  /**
-   * Calculates vertical push force upon landing a successful downward strike,
-   * restoring the double-jump and dash registers.
-   */
   private applyPogoRebound(): void {
     this.owner.velocity.y = -this.pogoForce;
     this.owner.position.y -= 2;
     this.hasHitEnemyThisSwing = true;
-    this.owner.hasDoubleJump = true;
-
-    const dash = this.owner.getComponent(DashComponent);
-    if (dash) {
-      dash.resetDashCharge();
-    }
-
     eventBroker.publish("PLAYER_POGOED", undefined);
   }
 

@@ -10,16 +10,16 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
+  public facingDirection: number = 1;
+
   public visualScale = { x: 1, y: 1 };
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
-  // Standard Hooke's Law Spring-Damper parameters for visual scaling
   public scaleVelocity = { x: 0, y: 0 };
   public springStiffness = 180;
   public springDamping = 12;
 
-  // Standard DRY rotation spring fields
   public rotation = 0;
   public rotationVelocity = 0;
   public targetRotation = 0;
@@ -61,7 +61,6 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    // Standard Hooke's Law visual scale spring physics
     const dispX = this.visualScale.x - this.targetVisualScale.x;
     const dispY = this.visualScale.y - this.targetVisualScale.y;
 
@@ -77,7 +76,6 @@ export class BaseEntity implements IEntity {
     this.visualScale.x = Math.max(0.1, this.visualScale.x);
     this.visualScale.y = Math.max(0.1, this.visualScale.y);
 
-    // Standard Hooke's Law visual rotation spring physics
     const dispRot = this.rotation - this.targetRotation;
     const forceRot = -this.springStiffnessRot * dispRot - this.springDampingRot * this.rotationVelocity;
 
