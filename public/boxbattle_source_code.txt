@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 6:19:12 PM
+ [SYSTEM] Generated: 5/26/2026, 6:22:37 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8897,55 +8897,64 @@ export class WorldRenderer {
       proj.draw(this.ctx, alpha);
     }
 
-    for (const p of particles) {
-      const pct = p.life / p.maxLife;
-      this.ctx.save();
-
-      if (p.shape === 'spark') {
-        const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
-        const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
-        radialGrad.addColorStop(0.0, convertToHsla(sparkColor, pct));
-        radialGrad.addColorStop(0.3, convertToHsla(sparkColor, pct * 0.5));
-        radialGrad.addColorStop(1.0, convertToHsla(sparkColor, 0));
-        this.ctx.fillStyle = radialGrad;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
-        this.ctx.fill();
-      } else if (p.shape === 'dust') {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } else if (p.shape === 'line') {
-        const angle = Math.atan2(p.vy, p.vx);
+            // Save canvas state exactly once before processing the particle array
         this.ctx.save();
-        this.ctx.translate(p.x, p.y);
-        this.ctx.rotate(angle);
-        
-        const lineGrad = this.ctx.createLinearGradient(-p.size * 8, 0, p.size * 6, 0);
-        lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
-        lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
-        lineGrad.addColorStop(0.85, convertToHsla(p.color, pct * 0.95));
-        lineGrad.addColorStop(1.0, convertToHsla(p.color, pct * 0.3));
-        
-        this.ctx.strokeStyle = lineGrad;
-        this.ctx.lineWidth = p.size;
-        this.ctx.lineCap = 'round';
-        this.ctx.beginPath();
-        this.ctx.moveTo(-p.size * 8, 0);
-        this.ctx.lineTo(p.size * 6, 0);
-        this.ctx.stroke();
+        for (const p of particles) {
+          const pct = p.life / p.maxLife;
+
+          if (p.shape === 'spark') {
+            const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
+            const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
+            radialGrad.addColorStop(0.0, convertToHsla(sparkColor, pct));
+            radialGrad.addColorStop(0.3, convertToHsla(sparkColor, pct * 0.5));
+            radialGrad.addColorStop(1.0, convertToHsla(sparkColor, 0));
+            this.ctx.fillStyle = radialGrad;
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+            this.ctx.fill();
+          } else if (p.shape === 'dust') {
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = pct;
+            this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+          } else if (p.shape === 'line') {
+            const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+            let ux = 1;
+            let uy = 0;
+            if (speed > 0) {
+              ux = p.vx / speed;
+              uy = p.vy / speed;
+            }
+            const x1 = p.x - ux * p.size * 8;
+            const y1 = p.y - uy * p.size * 8;
+            const x2 = p.x + ux * p.size * 6;
+            const y2 = p.y + uy * p.size * 6;
+
+            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
+            lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
+            lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, convertToHsla(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, convertToHsla(p.color, pct * 0.3));
+            
+            this.ctx.strokeStyle = lineGrad;
+            this.ctx.lineWidth = p.size;
+            this.ctx.lineCap = 'round';
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+          } else if (p.shape === 'ring') {
+            const radius = p.size + (1.0 - pct) * 44;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = p.color;
+            this.ctx.globalAlpha = pct;
+            this.ctx.lineWidth = 2.5;
+            this.ctx.stroke();
+          }
+        }
         this.ctx.restore();
-      } else if (p.shape === 'ring') {
-        const radius = p.size + (1.0 - pct) * 44;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.lineWidth = 2.5;
-        this.ctx.stroke();
-      }
-      this.ctx.restore();
-    }
 
     if (bossDeathTimer >= 0 && bossDeathPos) {
       CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos);
