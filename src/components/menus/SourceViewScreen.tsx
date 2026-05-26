@@ -173,7 +173,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             color: "#fff",
           }}
         >
-          SOURCE VIEWER
+          SOURCE BROWSER
         </h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
           {isMobile
@@ -357,6 +357,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         isMobile={isMobile}
         activeIndex={activeIndex}
         visibleNodesLength={visibleNodes.length}
+        setActiveIndex={setActiveIndex}
       />
     </div>
   );

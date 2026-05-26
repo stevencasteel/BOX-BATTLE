@@ -131,31 +131,17 @@ export function SaveSelectScreen({
               playHoverTick();
               setMenuIndex(3);
             }}
-            className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}`}
+            className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : isCopyMode ? "neo-btn-led-active" : ""}`}
             style={{
               flex: 1,
               padding: "18px",
               fontSize: "16px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
             }}
           >
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ▶
-                </span>
+            <div className="btn-indicator-light" />
             <Copy size={16} style={{ flexShrink: 0 }} />
-            <span>Copy Slot</span>
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ◀
-                </span>
+            <span>COPY SLOT</span>
+            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
           </button>
           <button
             onClick={toggleEraseMode}
@@ -163,31 +149,17 @@ export function SaveSelectScreen({
               playHoverTick();
               setMenuIndex(4);
             }}
-            className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}`}
+            className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : isEraseMode ? "neo-btn-led-active" : ""}`}
             style={{
               flex: 1,
               padding: "18px",
               fontSize: "16px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
             }}
           >
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ▶
-                </span>
+            <div className="btn-indicator-light" />
             <Trash2 size={16} style={{ flexShrink: 0 }} />
-            <span>Delete Slot</span>
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ◀
-                </span>
+            <span>DELETE SLOT</span>
+            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
           </button>
         </div>
         <button
@@ -196,30 +168,16 @@ export function SaveSelectScreen({
             playHoverTick();
             setMenuIndex(5);
           }}
-          className={`neo-btn ${menuIndex === 5 ? "neo-btn-focused" : ""}`}
+          className={`neo-btn-led ${menuIndex === 5 ? "neo-btn-led-focused" : ""}`}
           style={{
             padding: "18px",
             fontSize: "16px",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "8px",
           }}
         >
-          <span
-            className="cursor-arrow"
-            style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-          >
-            ▶
-              </span>
+          <div className="btn-indicator-light" />
           <ArrowLeft size={16} style={{ flexShrink: 0 }} />
           <span>Back</span>
-          <span
-            className="cursor-arrow"
-            style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-          >
-            ◀
-              </span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 5 ? "visible" : "hidden" }}>▶</span>
         </button>
       </div>
     </div>

@@ -49,6 +49,177 @@
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
+/* Centralized Large Neomorphic Led Buttons */
+.neo-btn-large {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 24px 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.neo-btn-large:hover,
+.neo-btn-large-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+}
+
+.neo-btn-large:active {
+  transform: scale(0.98);
+}
+
+.neo-btn-large .btn-indicator-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  margin-right: 24px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-large:hover .btn-indicator-light,
+.neo-btn-large-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow:
+    0 0 10px var(--signal-green),
+    0 0 20px var(--signal-green-glow);
+}
+
+.btn-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.btn-main-label {
+  font-size: clamp(14px, 4vw, 18px);
+  font-weight: 800;
+  color: #a0aec0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large:hover .btn-main-label,
+.neo-btn-large-focused .btn-main-label {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.btn-sub-label {
+  font-size: clamp(8px, 2.5vw, 10px);
+  font-weight: 500;
+  color: #4a5568;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large:hover .btn-sub-label,
+.neo-btn-large-focused .btn-sub-label {
+  color: var(--signal-green);
+  opacity: 0.85;
+}
+
+/* Centralized Compact Neomorphic Led Buttons */
+.neo-btn-led {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 1.6vmin 3.2vmin;
+  font-size: 1.5vmin;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  gap: 12px;
+  color: #a0aec0;
+  justify-content: flex-start;
+}
+
+.neo-btn-led:hover,
+.neo-btn-led-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+  color: #ffffff;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.neo-btn-led:active {
+  transform: scale(0.98);
+}
+
+.neo-btn-led .btn-indicator-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-led:hover .btn-indicator-light,
+.neo-btn-led-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow:
+    0 0 10px var(--signal-green),
+    0 0 20px var(--signal-green-glow);
+}
+
+.neo-btn-led-active {
+  background: #0c0e12;
+  border-color: var(--signal-yellow) !important;
+  box-shadow:
+    0 0 15px rgba(234, 179, 8, 0.15),
+    inset 0 0 8px rgba(234, 179, 8, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95) !important;
+  color: #ffffff !important;
+}
+
+.neo-btn-led-active .btn-indicator-light {
+  background: var(--signal-yellow) !important;
+  box-shadow:
+    0 0 10px var(--signal-yellow),
+    0 0 20px var(--signal-yellow-glow) !important;
+}
+
 .led-dot {
   width: 1.3vmin;
   height: 1.3vmin;
@@ -171,7 +342,6 @@
     border-radius: 6px;
   }
 }
-
 
 @keyframes led-wobble {
   0% { transform: translate(0, 0) scale(1); }

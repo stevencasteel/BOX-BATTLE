@@ -153,23 +153,20 @@ export function AudioScreen({
             playHoverTick();
             setMenuIndex(3);
           }}
-          className={`neo-btn ${menuIndex === 3 ? "neo-btn-focused" : ""}`}
+          className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : ""}`}
           style={{
             width: "100%",
-            padding: "1.4vmin 2vmin",
-            fontSize: "1.4vmin",
-            borderRadius: "1vmin",
-            whiteSpace: "nowrap",
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px"
+            gap: "12px"
           }}
         >
-          {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          <div className="btn-indicator-light" />
           <RotateCcw size={14} style={{ flexShrink: 0 }} />
-          RESET ALL TO 100%
-          {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+          <span>RESET ALL TO 100%</span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
         </button>
 
         <button
@@ -178,23 +175,20 @@ export function AudioScreen({
             playHoverTick();
             setMenuIndex(4);
           }}
-          className={`neo-btn ${menuIndex === 4 ? "neo-btn-focused" : ""}`}
+          className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : ""}`}
           style={{
             width: "100%",
-            padding: "1.4vmin 2vmin",
-            fontSize: "1.4vmin",
-            borderRadius: "1vmin",
-            whiteSpace: "nowrap",
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px"
+            gap: "12px"
           }}
         >
-          {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          <div className="btn-indicator-light" />
           <ArrowLeft size={14} style={{ flexShrink: 0 }} />
-          Back
-          {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+          <span>Back</span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
         </button>
       </div>
     </div>

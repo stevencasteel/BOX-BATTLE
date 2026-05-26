@@ -137,13 +137,13 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 
       <button
         onClick={onBack}
-        className="neo-btn neo-btn-focused"
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+        className="neo-btn-led neo-btn-led-focused"
+        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
       >
-        <span className="cursor-arrow">▶</span>
+        <div className="btn-indicator-light" />
         <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        Back
-        <span className="cursor-arrow">◀</span>
+        <span>Back</span>
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: "visible" }}>▶</span>
       </button>
     </div>
   );

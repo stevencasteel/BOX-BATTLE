@@ -6,6 +6,7 @@ interface SourceViewFooterProps {
   isMobile: boolean;
   activeIndex: number;
   visibleNodesLength: number;
+  setActiveIndex: (idx: number) => void;
 }
 
 function GithubIcon() {
@@ -25,7 +26,7 @@ function GithubIcon() {
   );
 }
 
-export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength }: SourceViewFooterProps) {
+export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength, setActiveIndex }: SourceViewFooterProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
@@ -124,6 +125,10 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         rel="noopener noreferrer"
         className={`neo-btn-large ${activeIndex === visibleNodesLength ? "neo-btn-large-focused" : ""}`}
         style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -133,13 +138,17 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
         </div>
-        {activeIndex === visibleNodesLength && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength ? "visible" : "hidden" }}>▶</span>
       </a>
 
       <button
         onClick={handleDownload}
         className={`neo-btn-large ${activeIndex === visibleNodesLength + 1 ? "neo-btn-large-focused" : ""}`}
         style={{ flex: 1, boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength + 1);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -149,13 +158,17 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
         </div>
-        {activeIndex === visibleNodesLength + 1 && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 1 ? "visible" : "hidden" }}>▶</span>
       </button>
 
       <button
         onClick={onBack}
         className={`neo-btn-large ${activeIndex === visibleNodesLength + 2 ? "neo-btn-large-focused" : ""}`}
         style={{ flex: 1, boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength + 2);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -165,7 +178,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
         </div>
-        {activeIndex === visibleNodesLength + 2 && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 2 ? "visible" : "hidden" }}>▶</span>
       </button>
     </div>
   );

@@ -185,13 +185,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(0);
               }}
-              className={`neo-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+              className={`neo-btn-led ${menuIndex === 0 ? "neo-btn-led-focused" : ""}`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -202,20 +199,10 @@ export function ControlsScreen({
                   menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Keyboard size={16} style={{ flexShrink: 0 }} />
-              PRESET 1
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>PRESET 1</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
             </button>
             <button
               onClick={() => {
@@ -227,13 +214,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(1);
               }}
-              className={`neo-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+              className={`neo-btn-led ${menuIndex === 1 ? "neo-btn-led-focused" : ""}`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -244,20 +228,10 @@ export function ControlsScreen({
                   menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Cpu size={16} style={{ flexShrink: 0 }} />
-              PRESET 2
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>PRESET 2</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
             </button>
             <button
               onClick={() => {
@@ -269,13 +243,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(2);
               }}
-              className={`neo-btn ${menuIndex === 2 ? "neo-btn-focused" : ""}`}
+              className={`neo-btn-led ${menuIndex === 2 ? "neo-btn-led-focused" : ""}`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -285,20 +256,10 @@ export function ControlsScreen({
                 color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Sliders size={16} style={{ flexShrink: 0 }} />
-              CUSTOM
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>CUSTOM</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
             </button>
           </div>
 
@@ -361,23 +322,13 @@ export function ControlsScreen({
           playHoverTick();
           setMenuIndex(backBtnIndex);
         }}
-        className={`neo-btn ${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+        className={`neo-btn-led ${menuIndex === backBtnIndex ? "neo-btn-led-focused" : ""}`}
+        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
-        <span
-          className="cursor-arrow"
-          style={{ marginRight: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}
-        >
-          ▶
-        </span>
+        <div className="btn-indicator-light" />
         <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        Back
-        <span
-          className="cursor-arrow"
-          style={{ marginLeft: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}
-        >
-          ◀
-        </span>
+        <span>Back</span>
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
       </button>
     </div>
   );
