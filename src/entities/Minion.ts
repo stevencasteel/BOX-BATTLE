@@ -311,6 +311,87 @@ export class Minion extends BaseEntity {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
+    const nowTime = performance.now();
+    const backCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+    const frontCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+
+    if (this.isSpawning) {
+      const pct = 1.0 - this.spawnTimer / 0.6;
+      const staticFlicker = Math.random() < 0.04 ? 0.45 : 1.0;
+      const cageAlpha = (1.0 - pct) * 0.85 * staticFlicker;
+
+      const mColor =
+        this.minionType === "LANCER"
+          ? `hsla(280, 85%, 65%, ${cageAlpha})`
+          : this.minionType === "FLYER"
+            ? `hsla(200, 85%, 65%, ${cageAlpha})`
+            : `hsla(142, 80%, 65%, ${cageAlpha})`;
+
+      const H = this.size.height;
+      const W = this.size.width;
+      const R = W * 0.72;
+
+      const rotation = nowTime * 0.005;
+      const ringHeights = [0, H / 2, H];
+      const segments = 24;
+      const step = (Math.PI * 2) / segments;
+
+      for (let rIdx = 0; rIdx < ringHeights.length; rIdx++) {
+        const h = ringHeights[rIdx];
+        const dir = rIdx % 2 === 0 ? 1 : -1;
+        const ringRotation = rotation * dir;
+
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + ringRotation;
+          const theta2 = (i + 1) * step + ringRotation;
+
+          const x1 = R * Math.cos(theta1);
+          const y1 = -h + R * Math.sin(theta1) * 0.28;
+
+          const x2 = R * Math.cos(theta2);
+          const y2 = -h + R * Math.sin(theta2) * 0.28;
+
+          const midAngle = (theta1 + theta2) / 2;
+          const isBehind = Math.sin(midAngle) < 0;
+
+          const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+          if (isBehind) {
+            backCage.push(segment);
+          } else {
+            frontCage.push(segment);
+          }
+        }
+      }
+
+      const strutAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
+      for (const angle of strutAngles) {
+        const theta = angle + rotation;
+        const x = R * Math.cos(theta);
+        const yBottom = 0 + R * Math.sin(theta) * 0.28;
+        const yTop = -H + R * Math.sin(theta) * 0.28;
+
+        const isBehind = Math.sin(theta) < 0;
+        const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
+        if (isBehind) {
+          backCage.push(segment);
+        } else {
+          frontCage.push(segment);
+        }
+      }
+    }
+
+    const drawCageSegments = (segments: typeof backCage) => {
+      for (let s = 0; s < segments.length; s++) {
+        const seg = segments[s];
+        ctx.strokeStyle = seg.color;
+        ctx.lineWidth = seg.width;
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.lineTo(seg.x2, seg.y2);
+        ctx.stroke();
+      }
+    };
+
     ctx.save();
 
     if (this.isSpawning) {
@@ -324,6 +405,19 @@ export class Minion extends BaseEntity {
       ctx.translate(-drawX, -drawY);
     }
 
+    const feetY = drawY + this.size.height / 2;
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
+
+    if (this.isSpawning) {
+      ctx.save();
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawCageSegments(backCage);
+      ctx.restore();
+    }
+
+    ctx.save();
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
@@ -344,25 +438,23 @@ export class Minion extends BaseEntity {
 
     const vWidth = this.size.width * this.visualScale.x;
     const vHeight = this.size.height * this.visualScale.y;
-
     const localY = this.squashPivot === "feet" ? -this.size.height / 2 : 0;
 
-    if (this.squashPivot === "feet") {
-      const feetY = drawY + this.size.height / 2;
-      ctx.translate(drawX, feetY);
-      ctx.rotate(this.rotation);
-      ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
-    } else {
-      ctx.translate(drawX, drawY);
-      ctx.rotate(this.rotation);
-      ctx.fillRect(-vWidth / 2, -vHeight / 2, vWidth, vHeight);
-    }
-
+    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
     ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
+    ctx.restore();
+
+    if (this.isSpawning) {
+      ctx.save();
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawCageSegments(frontCage);
+      ctx.restore();
+    }
 
     ctx.restore();
   }
@@ -376,12 +468,10 @@ export class Minion extends BaseEntity {
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
-    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
     this.velocity.x = dirX * 320 * intensity;
     this.velocity.y = Math.min(this.velocity.y, -340 * intensity);
     this.physics.isGrounded = false;
 
-    // Stretch vertically to visually sell the launch momentum (amplified for lighter class)
     this.visualScale = { x: 1.0 - 0.2 * intensity, y: 1.0 + 0.4 * intensity };
     this.scaleVelocity = { x: 10.0 * intensity, y: -20.0 * intensity };
 
