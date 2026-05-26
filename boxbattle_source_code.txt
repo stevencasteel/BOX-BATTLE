@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 10:11:53 PM
+ [SYSTEM] Generated: 5/26/2026, 10:24:09 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -545,7 +545,7 @@ Reactive Spring-Loaded HUD Elements
 
 In our cabinet middle header in the arena, we should start by showing the zxc on the left, and arrow configuration key caps. as the user pressing each one they visually change to indicate they've been "used". After each button has been pressed, we take turns showing the combo they should press to do each kind of move in the game (like street fighter). for example, up dash next. then how to charge shot. then, how to determination charge. then, how to drop from one way platform. once all have been shown, then box battle, what we have there already, appears and we don't show any more move tips. (if user presses the preset 2 buttons, that will also count as "using" the keys". and if they have preset 2 chosen in settings, then preset 2 key caps are shown. I'm not sure what to do if player has custom key binding chosen.
 
-The purple ring at the base of player when doing determination is placed directly in front of the player. it should be a spiral coil instead with the player in the center of it.
+
 
 When SAVE SLOT PERFORMANCE BOX APPEARS, the UI elements should stagger in quickly, and the tics should wait a beat before beginning instead of starting the same time save slot performance box appears.
 
@@ -8697,7 +8697,6 @@ export class WorldRenderer {
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
 
-    // Allocate the radial gradient once at startup to prevent GC spikes in high-frame-rate loops
     this.cachedMeleeGradient = ctx.createRadialGradient(
       0,
       0,
@@ -8736,8 +8735,6 @@ export class WorldRenderer {
       const cy = drawY;
 
       ctx.save();
-
-      // Shift origin space to (cx, cy) to draw pre-compiled cached gradient centered at (0, 0)
       ctx.translate(cx, cy);
       ctx.globalAlpha = opacity;
       ctx.fillStyle = this.cachedMeleeGradient;
@@ -8856,7 +8853,6 @@ export class WorldRenderer {
       this.ctx.restore();
     }
 
-    // Geometric Path Batching: Group hazard rendering triangles into a single GPU state call
     this.ctx.fillStyle = "hsl(350, 80%, 60%)";
     this.ctx.beginPath();
     for (const hazard of hazards) {
@@ -8873,8 +8869,6 @@ export class WorldRenderer {
     if (world.boss) {
       world.boss.draw(this.ctx, alpha);
     }
-
-
 
     if (world.player) {
       world.player.draw(this.ctx, alpha);
@@ -8917,7 +8911,6 @@ export class WorldRenderer {
         this.ctx.translate(p.x, p.y);
         this.ctx.rotate(angle);
         
-        // Motion-blurred linear gradient smear
         const lineGrad = this.ctx.createLinearGradient(-p.size * 8, 0, p.size * 6, 0);
         lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
         lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
@@ -8951,8 +8944,90 @@ export class WorldRenderer {
       const px = bossDeathPos.x;
       const py = bossDeathPos.y;
 
-      if (t < 0.25) {
-        const flashOpacity = Math.max(0, 0.85 * (1 - t / 0.25));
+      if (t < 1.0) {
+        const implodeProgress = t;
+        const scale = Math.max(0, 1.0 - Math.pow(implodeProgress, 3));
+        const radius = 135 * scale;
+        const opacity = 1.0 - implodeProgress;
+
+        if (radius > 1) {
+          const rotationY = t * 2.5;
+          const rotationX = t * 1.2;
+
+          this.ctx.save();
+          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
+          this.ctx.shadowBlur = 20 * (1.0 - implodeProgress);
+          this.ctx.lineWidth = 1.5;
+
+          this.ctx.beginPath();
+
+          const latitudes = [-Math.PI / 4, 0, Math.PI / 4];
+          const segments = 24;
+          const step = (Math.PI * 2) / segments;
+
+          for (let lIdx = 0; lIdx < latitudes.length; lIdx++) {
+            const lat = latitudes[lIdx];
+            const ringR = radius * Math.cos(lat);
+            const ringY = radius * Math.sin(lat);
+
+            for (let i = 0; i < segments; i++) {
+              const theta1 = i * step + rotationY;
+              const theta2 = (i + 1) * step + rotationY;
+
+              const x1_0 = ringR * Math.cos(theta1);
+              const z1_0 = ringR * Math.sin(theta1);
+              const y1_0 = ringY;
+
+              const x1 = x1_0;
+              const y1 = y1_0 * Math.cos(rotationX) - z1_0 * Math.sin(rotationX);
+
+              const x2_0 = ringR * Math.cos(theta2);
+              const z2_0 = ringR * Math.sin(theta2);
+              const y2_0 = ringY;
+
+              const x2 = x2_0;
+              const y2 = y2_0 * Math.cos(rotationX) - z2_0 * Math.sin(rotationX);
+
+              this.ctx.moveTo(px + x1, py + y1 * 0.7);
+              this.ctx.lineTo(px + x2, py + y2 * 0.7);
+            }
+          }
+
+          const longitudes = [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4];
+          for (let loIdx = 0; loIdx < longitudes.length; loIdx++) {
+            const long = longitudes[loIdx];
+            for (let i = 0; i < segments; i++) {
+              const theta1 = i * step + rotationX;
+              const theta2 = (i + 1) * step + rotationX;
+
+              const x1_0 = radius * Math.cos(theta1) * Math.cos(long);
+              const y1_0 = radius * Math.sin(theta1);
+              const z1_0 = radius * Math.cos(theta1) * Math.sin(long);
+
+              const x1 = x1_0 * Math.cos(rotationY) + z1_0 * Math.sin(rotationY);
+              const y1 = y1_0;
+
+              const x2_0 = radius * Math.cos(theta2) * Math.cos(long);
+              const y2_0 = radius * Math.sin(theta2);
+              const z2_0 = radius * Math.cos(theta2) * Math.sin(long);
+
+              const x2 = x2_0 * Math.cos(rotationY) + z2_0 * Math.sin(rotationY);
+              const y2 = y2_0;
+
+              this.ctx.moveTo(px + x1, py + y1 * 0.7);
+              this.ctx.lineTo(px + x2, py + y2 * 0.7);
+            }
+          }
+
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+
+      const flashT = t - 1.0;
+      if (flashT >= 0 && flashT < 0.25) {
+        const flashOpacity = Math.max(0, 0.85 * (1 - flashT / 0.25));
         this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
         this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
       }
@@ -8961,7 +9036,7 @@ export class WorldRenderer {
       const speed = 750;
       for (let i = 0; i < ringCount; i++) {
         const delay = i * 0.15;
-        const ringTime = t - delay;
+        const ringTime = t - 1.0 - delay;
         if (ringTime > 0 && ringTime < 1.2) {
           const radius = ringTime * speed;
           const opacity = Math.max(0, 1 - ringTime / 1.2);
@@ -8988,14 +9063,15 @@ export class WorldRenderer {
       const particleCount = 24;
       const particleSpeed = 550;
       const particleLife = 1.0;
-      if (t < particleLife) {
-        const opacity = Math.max(0, 1 - t / particleLife);
+      const explodeT = t - 1.0;
+      if (explodeT >= 0 && explodeT < particleLife) {
+        const opacity = Math.max(0, 1 - explodeT / particleLife);
         this.ctx.save();
         this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
         this.ctx.shadowBlur = 15;
         for (let i = 0; i < particleCount; i++) {
-          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? t * 0.5 : -t * 0.5);
-          const distance = t * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
+          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.5 : -explodeT * 0.5);
+          const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
           const x = px + Math.cos(angle) * distance;
           const y = py + Math.sin(angle) * distance;
 
@@ -12563,6 +12639,9 @@ export class Player extends BaseEntity {
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
 
+  public doubleJumpDiskTimer: number = 0;
+  public doubleJumpDiskPos: { x: number; y: number } = { x: 0, y: 0 };
+
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
@@ -12776,6 +12855,10 @@ export class Player extends BaseEntity {
 
     if (this.recoilTimer > 0) {
       this.recoilTimer -= dt;
+    }
+
+    if (this.doubleJumpDiskTimer > 0) {
+      this.doubleJumpDiskTimer -= dt;
     }
 
     let targetRotation = 0;
@@ -13178,6 +13261,10 @@ export class Player extends BaseEntity {
       this.hasDoubleJump = false;
       this.jumpBufferTimer = 0;
       this.visualScale = { x: 0.82, y: 1.18 };
+
+      this.doubleJumpDiskTimer = 0.22;
+      this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
+
       eventBroker.publish("PLAYER_JUMPED", undefined);
     }
   }
@@ -13282,6 +13369,32 @@ export class Player extends BaseEntity {
       const gHeight = this.size.height * this.visualScale.y;
       const gFeetY = ghost.y + this.size.height / 2;
       ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
+    }
+
+    if (this.doubleJumpDiskTimer > 0) {
+      const p = 1.0 - this.doubleJumpDiskTimer / 0.22;
+      const alphaDisk = (1.0 - p) * 0.8;
+      const radius = 18 + p * 44;
+
+      ctx.save();
+      ctx.translate(this.doubleJumpDiskPos.x, this.doubleJumpDiskPos.y);
+
+      ctx.strokeStyle = `hsla(142, 71%, 58%, ${alphaDisk})`;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
+      ctx.shadowBlur = 12 * (1.0 - p);
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = `hsla(142, 100%, 80%, ${alphaDisk * 0.5})`;
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 0.6, radius * 0.6 * 0.28, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     const vWidth = this.size.width * this.visualScale.x;
