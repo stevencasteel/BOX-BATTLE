@@ -45,34 +45,40 @@ export class BossSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      envelope: { attack: 0.015, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      envelope: { attack: 0.015, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
       harmonicity: 5.1,
       resonance: 4000,
+      volume: -7
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
     this.spikeSynth = new Tone.Synth({
       oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.005, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      envelope: { attack: 0.012, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
+      volume: -5
     }).connect(this.impactPanner);
 
     this.teleportSynth = new Tone.Synth({
       oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.05, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      envelope: { attack: 0.02, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
+      volume: -5
     }).connect(this.bossPanner);
 
     this.dialogueSynthPlayer = new Tone.Synth({
       oscillator: { type: "sine" },
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
+      envelope: { attack: 0.012, decay: 0.05, sustain: 0, release: 0.05 },
+      volume: -6
     }).connect(this.impactPanner);
   }
 
@@ -147,7 +153,7 @@ export class BossSFX {
 
   public playMinionSpawning(x?: number) {
     const preset = SFX_PRESETS.boss.minion_spawn;
-    this.helper.execute("minion_spawn", 100, x, this.bossPanner, (now) => {
+    this.helper.execute("minion_spawn", 1000, x, this.bossPanner, (now) => {
       this.teleportSynth.triggerAttackRelease(preset.frequency, "4n", now);
       this.teleportSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
     });

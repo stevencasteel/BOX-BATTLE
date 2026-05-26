@@ -52,20 +52,23 @@ export class PlayerSFX {
 
     this.jumpSynth = new Tone.Synth({
       oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      envelope: { attack: 0.012, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.slashSynth = new Tone.Synth({
       oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      envelope: { attack: 0.012, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
     this.pogoSynth = new Tone.Synth({
       oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      envelope: { attack: 0.012, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
+      volume: -5
     }).connect(this.playerPanner);
 
-    this.dashNoise = new Tone.Noise("white");
+    this.dashNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
     this.dashEnv = new Tone.AmplitudeEnvelope({
       attack: 0.01,
@@ -78,10 +81,11 @@ export class PlayerSFX {
 
     this.hurtSynth = new Tone.Synth({
       oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.01, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      envelope: { attack: 0.012, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
+      volume: -5
     }).connect(this.hurtPanner);
 
-    this.landingNoise = new Tone.Noise("white");
+    this.landingNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.landingFilter = new Tone.Filter({
       frequency: presets.landing.noiseFreq,
       type: "bandpass",
@@ -96,7 +100,7 @@ export class PlayerSFX {
     this.landingNoise.chain(this.landingFilter, this.landingEnv, this.playerPanner);
     this.landingNoise.start();
 
-    this.slashNoiseSide = new Tone.Noise("white");
+    this.slashNoiseSide = new Tone.Noise({ type: "white", volume: -7 });
     this.slashFilterSide = new Tone.Filter({ frequency: presets.slash_side.noiseFreq, type: "highpass" });
     this.slashFilter2Side = new Tone.Filter({ frequency: 1600, type: "bandpass", Q: 1.0 });
     this.slashEnvSide = new Tone.AmplitudeEnvelope({
@@ -108,7 +112,7 @@ export class PlayerSFX {
     this.slashNoiseSide.chain(this.slashFilterSide, this.slashFilter2Side, this.slashEnvSide, this.playerPanner);
     this.slashNoiseSide.start();
 
-    this.slashNoisePuff = new Tone.Noise("pink");
+    this.slashNoisePuff = new Tone.Noise({ type: "pink", volume: -7 });
     this.slashFilterPuff = new Tone.Filter({
       frequency: presets.slash_puff.noiseFreq,
       type: "bandpass",

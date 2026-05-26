@@ -150,8 +150,8 @@ export const SFX_PRESETS = {
   },
   interface: {
     select_tick: {
-      note1: 950,
-      note2: 1400,
+      note1: 880,
+      note2: 1250,
       delay: 0.025,
     },
     error_tick: {

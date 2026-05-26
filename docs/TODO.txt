@@ -27,4 +27,4 @@ Reactive Spring-Loaded HUD Elements
 Charging should feel like a DBZ kii charge.
 
 
-
+We need to redo from scratch how our purple determination charging looks. and it needs a nice satisfying completion animation and sound. It should find inspiration from DBZ kii charging.
