@@ -818,11 +818,100 @@ export class Player extends BaseEntity {
       }
     }
 
+    const chargeBackSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+    const chargeFrontSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+
+    if (this.isCharging) {
+      const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
+      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+
+      const shieldCount = isLvl2 ? 3 : 2;
+      const baseRadius = (this.size.height * 0.35) + chargeProgress * 10;
+      const localCenterX = 0;
+      const localCenterY = -this.size.height / 2;
+
+      const orbits = [
+        { psi: 0.1, phi: 0.38, speed: 0.005 },
+        { psi: Math.PI / 4, phi: 0.52, speed: -0.004 },
+        { psi: -Math.PI / 4, phi: 0.52, speed: 0.003 }
+      ];
+
+      for (let s = 0; s < shieldCount; s++) {
+        const orbit = orbits[s % orbits.length];
+        const segments = 32;
+        const step = (Math.PI * 2) / segments;
+        const rotationSpeed = orbit.speed * nowTime;
+
+        const ringColor = isLvl2
+          ? (s === 0 ? "rgba(234, 179, 8, 0.85)" : s === 1 ? "rgba(134, 212, 51, 0.85)" : "rgba(34, 197, 94, 0.95)")
+          : (s === 0 ? "rgba(234, 179, 8, 0.65)" : "rgba(34, 197, 94, 0.75)");
+
+        const lineWidth = isLvl2 ? (s === 2 ? 2.5 : 1.5) : 1.2;
+
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + rotationSpeed;
+          const theta2 = (i + 1) * step + rotationSpeed;
+
+          const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+          const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+
+          const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
+          const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
+
+          const x0_1 = r1 * Math.cos(theta1);
+          const y0_1 = r1 * Math.sin(theta1);
+          
+          const x1_1 = x0_1 * Math.cos(orbit.psi);
+          const y1_1 = y0_1;
+          const z1_1 = -x0_1 * Math.sin(orbit.psi);
+
+          const x2_1 = x1_1;
+          const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
+          const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
+
+          const x0_2 = r2 * Math.cos(theta2);
+          const y0_2 = r2 * Math.sin(theta2);
+
+          const x1_2 = x0_2 * Math.cos(orbit.psi);
+          const y1_2 = y0_2;
+          const z1_2 = -x0_2 * Math.sin(orbit.psi);
+
+          const x2_2 = x1_2;
+          const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
+          const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
+
+          const p1 = { x: localCenterX + x2_1, y: localCenterY + y2_1, z: z2_1 };
+          const p2 = { x: localCenterX + x2_2, y: localCenterY + y2_2, z: z2_2 };
+
+          const midZ = (p1.z + p2.z) / 2;
+          const segment = { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, color: ringColor, width: lineWidth };
+
+          if (midZ < 0) {
+            chargeBackSegments.push(segment);
+          } else {
+            chargeFrontSegments.push(segment);
+          }
+        }
+      }
+    }
+
     const drawCoilSegments = (segments: typeof backSegments) => {
       for (let s = 0; s < segments.length; s++) {
         const seg = segments[s];
         ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
         ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.lineTo(seg.x2, seg.y2);
+        ctx.stroke();
+      }
+    };
+
+    const drawChargeSegments = (segments: typeof chargeBackSegments) => {
+      for (let s = 0; s < segments.length; s++) {
+        const seg = segments[s];
+        ctx.strokeStyle = seg.color;
+        ctx.lineWidth = seg.width;
         ctx.beginPath();
         ctx.moveTo(seg.x1, seg.y1);
         ctx.lineTo(seg.x2, seg.y2);
@@ -840,6 +929,14 @@ export class Player extends BaseEntity {
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
       drawCoilSegments(backSegments);
+      ctx.restore();
+    }
+
+    if (this.isCharging) {
+      ctx.save();
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawChargeSegments(chargeBackSegments);
       ctx.restore();
     }
 
@@ -928,17 +1025,18 @@ export class Player extends BaseEntity {
     }
 
     if (this.isCharging) {
+      const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
 
       ctx.save();
       const glowColor = isLvl2 
         ? 'rgba(234, 179, 8, 0.9)' 
-        : 'rgba(34, 197, 94, ' + (0.4 + progress * 0.5) + ')';
+        : 'rgba(34, 197, 94, ' + (0.4 + chargeProgress * 0.5) + ')';
       
       ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 15 + progress * 20;
+      ctx.shadowBlur = 15 + chargeProgress * 20;
 
-      const coreRadius = (8 + progress * 14);
+      const coreRadius = (8 + chargeProgress * 14);
       const coreGrad = ctx.createRadialGradient(
         localCenterX, localCenterY, 0,
         localCenterX, localCenterY, coreRadius
@@ -952,38 +1050,13 @@ export class Player extends BaseEntity {
       ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      const shieldCount = isLvl2 ? 3 : 2;
-      for (let s = 0; s < shieldCount; s++) {
-        const rotationSpeed = (s % 2 === 0 ? 1 : -1) * 0.003 * nowTime;
-        const ringPulse = Math.sin(nowTime * 0.02 + s * 2) * 6 * progress;
-        const baseRadius = (this.size.height * 0.35) + s * 14 * progress + ringPulse;
+      ctx.save();
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawChargeSegments(chargeFrontSegments);
+      ctx.restore();
 
-        const ringColor = isLvl2
-          ? (s === 0 ? "rgba(234, 179, 8, 0.85)" : s === 1 ? "rgba(134, 212, 51, 0.85)" : "rgba(34, 197, 94, 0.95)")
-          : (s === 0 ? "rgba(234, 179, 8, 0.65)" : "rgba(34, 197, 94, 0.75)");
-        ctx.strokeStyle = ringColor;
-        ctx.lineWidth = isLvl2 ? (s === 2 ? 3 : 1.5) : 1.0;
-
-        ctx.beginPath();
-        const segments = 12;
-        const step = (Math.PI * 2) / segments;
-        for (let i = 0; i <= segments; i++) {
-          const angle = i * step + rotationSpeed;
-          const noise = (Math.sin(angle * 6 + nowTime * 0.05) * 4) * progress;
-          const rx = localCenterX + Math.cos(angle) * (baseRadius + noise);
-          const ry = localCenterY + Math.sin(angle) * (baseRadius + noise);
-
-          if (i === 0) {
-            ctx.moveTo(rx, ry);
-          } else {
-            ctx.lineTo(rx, ry);
-          }
-        }
-        ctx.closePath();
-        ctx.stroke();
-      }
-
-      if (progress > 0.5) {
+      if (chargeProgress > 0.5) {
         const dischargeCount = isLvl2 ? 3 : 1;
         ctx.strokeStyle = isLvl2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(132, 239, 158, 0.8)';
         ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
@@ -991,7 +1064,7 @@ export class Player extends BaseEntity {
         for (let d = 0; d < dischargeCount; d++) {
           if (Math.random() < 0.35) {
             const startAngle = Math.random() * Math.PI * 2;
-            const rMax = (this.size.height * 0.35) + 20 * progress;
+            const rMax = (this.size.height * 0.35) + 20 * chargeProgress;
             
             ctx.beginPath();
             const cx = localCenterX + Math.cos(startAngle) * rMax;
