@@ -30,11 +30,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 0 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               {audio.masterMuted ? (
                 <VolumeX size={14} style={{ flexShrink: 0 }} />
               ) : (
@@ -67,11 +62,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 1 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
@@ -100,11 +90,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 2 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>

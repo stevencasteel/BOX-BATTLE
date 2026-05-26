@@ -256,8 +256,7 @@ export function ControlsScreen({
                     }}
                   >
                     <span
-                      className="cursor-arrow"
-                      style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
+                      style={{ color: "var(--signal-green)", marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
                     >
                       ▶
                     </span>

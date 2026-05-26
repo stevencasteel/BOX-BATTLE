@@ -2,6 +2,7 @@ import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
 import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
+import { motion } from "framer-motion";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -32,10 +33,10 @@ export function SaveSelectScreen({
 }: SaveSelectScreenProps) {
   const selectHeaderTitle = isCopyMode
     ? copySourceIndex === -1
-      ? "CHOOSE SLOT TO COPY"
+      ? "COPY A SLAVE SLOT"
       : "CHOOSE WHERE TO COPY"
     : isEraseMode
-      ? "CHOOSE SLOT TO DELETE"
+      ? "DELETE A SAVE SLOT"
       : "CHOOSE A SAVE SLOT";
 
   return (
@@ -44,24 +45,37 @@ export function SaveSelectScreen({
 
       <div className="slot-list">
         {slots.map((slot, i) => (
-          <button
+          <motion.button
             key={i}
             onClick={() => handleSlotSelect(i)}
             onMouseEnter={() => {
               playHoverTick();
               setMenuIndex(i);
             }}
+            whileTap={{ scale: 0.985 }}
+            animate={
+              copySourceIndex === i 
+                ? { scale: [1, 1.015, 1], borderColor: ["rgba(234, 179, 8, 0.15)", "rgba(234, 179, 8, 0.85)", "rgba(234, 179, 8, 0.15)"] } 
+                : isEraseMode && !slot.empty 
+                  ? { scale: [1, 1.015, 1], borderColor: ["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.85)", "rgba(239, 68, 68, 0.15)"] }
+                  : {}
+            }
+            transition={
+              (copySourceIndex === i || (isEraseMode && !slot.empty))
+                ? { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+                : { type: "spring", stiffness: 450, damping: 14 }
+            }
             className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
               <span
-                className="cursor-arrow"
                 style={{
                   visibility: menuIndex === i ? "visible" : "hidden",
                   width: "16px",
                   display: "inline-block",
                   textAlign: "center",
+                  color: "var(--signal-green)"
                 }}
               >
                 ▶
@@ -111,7 +125,7 @@ export function SaveSelectScreen({
                 {slot.empty ? "EMPTY" : "SAVED GAME"}
               </span>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
 

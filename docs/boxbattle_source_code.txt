@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 3:51:35 PM
+ [SYSTEM] Generated: 5/26/2026, 4:22:50 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -547,7 +547,7 @@ Reactive Spring-Loaded HUD Elements
 
 In our cabinet middle header in the arena, we should start by showing the zxc on the left, and arrow configuration key caps. as the user pressing each one they visually change to indicate they've been "used". After each button has been pressed, we take turns showing the combo they should press to do each kind of move in the game (like street fighter). for example, up dash next. then how to charge shot. then, how to determination charge. then, how to drop from one way platform. once all have been shown, then box battle, what we have there already, appears and we don't show any more move tips. (if user presses the preset 2 buttons, that will also count as "using" the keys". and if they have preset 2 chosen in settings, then preset 2 key caps are shown. I'm not sure what to do if player has custom key binding chosen.
 
-where are some opportunities for classic high end frame motion microinteractions / animations in the project that I'm missing
+The purple ring at the base of player when doing determination is placed directly in front of the player. it should be a spiral coil instead with the player in the center of it.
 
 
 
@@ -2022,6 +2022,7 @@ export function ChromaticAberrationFilter() {
 
 ● ./src/components/DialogueConsole.tsx
 ────────────────────────────────────────────────────
+import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
 
 interface DialogueConsoleProps {
@@ -2032,10 +2033,49 @@ interface DialogueConsoleProps {
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
   const mobileClass = isTouchDevice ? "is-mobile" : "";
+
+  const leftState = playerDialogue.active 
+    ? "active" 
+    : bossDialogue.active 
+      ? "inactive" 
+      : "idle";
+
+  const rightState = bossDialogue.active 
+    ? "active" 
+    : playerDialogue.active 
+      ? "inactive" 
+      : "idle";
+
+  const getVariants = (speaker: "player" | "boss") => ({
+    active: {
+      scale: 1.02,
+      opacity: 1,
+      borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)",
+      boxShadow: speaker === "player" 
+        ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)"
+        : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)",
+    },
+    inactive: {
+      scale: 0.96,
+      opacity: 0.15,
+      borderColor: "rgba(0, 0, 0, 0.3)",
+      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
+    },
+    idle: {
+      scale: 0.98,
+      opacity: 0.35,
+      borderColor: "rgba(0, 0, 0, 0.3)",
+      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
+    }
+  });
+
   return (
     <div className={`dialogue-console ${mobileClass}`}>
-      <div
-        className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"} ${mobileClass}`}
+      <motion.div
+        animate={leftState}
+        variants={getVariants("player")}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className={`dialogue-box-left neo-pressed ${mobileClass}`}
       >
         <div
           className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
@@ -2051,10 +2091,13 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div
-        className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"} ${mobileClass}`}
+      <motion.div
+        animate={rightState}
+        variants={getVariants("boss")}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className={`dialogue-box-right neo-pressed ${mobileClass}`}
       >
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
@@ -2073,7 +2116,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             background: bossDialogue.active ? "" : "#07080b",
           }}
         />
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -3780,11 +3823,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 0 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               {audio.masterMuted ? (
                 <VolumeX size={14} style={{ flexShrink: 0 }} />
               ) : (
@@ -3817,11 +3855,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 1 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
@@ -3850,11 +3883,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 2 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
@@ -3902,7 +3930,6 @@ export function AudioScreen({
     </MenuContainer>
   );
 }
-
 
 
 ● ./src/components/menus/ControlsScreen.css
@@ -4255,8 +4282,7 @@ export function ControlsScreen({
                     }}
                   >
                     <span
-                      className="cursor-arrow"
-                      style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
+                      style={{ color: "var(--signal-green)", marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
                     >
                       ▶
                     </span>
@@ -4774,6 +4800,7 @@ import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
 import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
+import { motion } from "framer-motion";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -4804,10 +4831,10 @@ export function SaveSelectScreen({
 }: SaveSelectScreenProps) {
   const selectHeaderTitle = isCopyMode
     ? copySourceIndex === -1
-      ? "CHOOSE SLOT TO COPY"
+      ? "COPY A SLAVE SLOT"
       : "CHOOSE WHERE TO COPY"
     : isEraseMode
-      ? "CHOOSE SLOT TO DELETE"
+      ? "DELETE A SAVE SLOT"
       : "CHOOSE A SAVE SLOT";
 
   return (
@@ -4816,24 +4843,37 @@ export function SaveSelectScreen({
 
       <div className="slot-list">
         {slots.map((slot, i) => (
-          <button
+          <motion.button
             key={i}
             onClick={() => handleSlotSelect(i)}
             onMouseEnter={() => {
               playHoverTick();
               setMenuIndex(i);
             }}
+            whileTap={{ scale: 0.985 }}
+            animate={
+              copySourceIndex === i 
+                ? { scale: [1, 1.015, 1], borderColor: ["rgba(234, 179, 8, 0.15)", "rgba(234, 179, 8, 0.85)", "rgba(234, 179, 8, 0.15)"] } 
+                : isEraseMode && !slot.empty 
+                  ? { scale: [1, 1.015, 1], borderColor: ["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.85)", "rgba(239, 68, 68, 0.15)"] }
+                  : {}
+            }
+            transition={
+              (copySourceIndex === i || (isEraseMode && !slot.empty))
+                ? { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+                : { type: "spring", stiffness: 450, damping: 14 }
+            }
             className={`slot-card ${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}`}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
               <span
-                className="cursor-arrow"
                 style={{
                   visibility: menuIndex === i ? "visible" : "hidden",
                   width: "16px",
                   display: "inline-block",
                   textAlign: "center",
+                  color: "var(--signal-green)"
                 }}
               >
                 ▶
@@ -4883,7 +4923,7 @@ export function SaveSelectScreen({
                 {slot.empty ? "EMPTY" : "SAVED GAME"}
               </span>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -4930,7 +4970,6 @@ export function SaveSelectScreen({
     </MenuContainer>
   );
 }
-
 
 
 ● ./src/components/menus/SettingsScreen.tsx
@@ -5605,7 +5644,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     </div>
   );
 }
-
 
 
 ● ./src/components/menus/TitleScreen.css
