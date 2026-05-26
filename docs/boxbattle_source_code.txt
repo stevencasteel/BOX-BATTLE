@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 4:22:50 PM
+ [SYSTEM] Generated: 5/26/2026, 4:28:10 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -4753,6 +4753,7 @@ export function MenuBackButton({
   box-sizing: border-box;
   outline: none;
   -webkit-tap-highlight-color: transparent;
+  border: 1px solid transparent;
 }
 
 .slot-card:active {
@@ -4762,14 +4763,14 @@ export function MenuBackButton({
 .slot-card-empty {
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 0, 0, 0.3);
   color: #4a5568;
 }
 
 .slot-card-loaded {
   background: var(--surface-elevated);
   box-shadow: var(--shadow-light), var(--shadow-dark);
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.02);
   color: #ffffff;
 }
 

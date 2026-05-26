@@ -19,6 +19,7 @@
   box-sizing: border-box;
   outline: none;
   -webkit-tap-highlight-color: transparent;
+  border: 1px solid transparent;
 }
 
 .slot-card:active {
@@ -28,14 +29,14 @@
 .slot-card-empty {
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 0, 0, 0.3);
   color: #4a5568;
 }
 
 .slot-card-loaded {
   background: var(--surface-elevated);
   box-shadow: var(--shadow-light), var(--shadow-dark);
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.02);
   color: #ffffff;
 }
 
