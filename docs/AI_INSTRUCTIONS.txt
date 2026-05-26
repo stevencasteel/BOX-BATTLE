@@ -57,14 +57,16 @@
      temporary or auxiliary Node.js scripts must use ES Module syntax 
      (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
 
-2.2  Surgical Patch Scripts
+2.2  Surgical Patch Scripts & Immediate Cleanup
      When modifying large source files, prefer writing temporary Node.js 
      scripts (utilizing `fs.readFileSync` and `.replace()`) over full file 
      overwrites to prevent command truncation or buffer loss.
-     CRITICAL: Always append the cleanup command (e.g., "&& rm ./patch.js") 
-     on the exact same execution line to keep the repository untracked space clean.
-     Actively clean up and delete any other transient scripts or patch helpers 
-     immediately after execution to prevent workspace clutter.
+     
+     CRITICAL: All temporary scripts, patches, diagnostics, or evaluation 
+     helpers must be deleted immediately within the same terminal command chain 
+     using an appended deletion statement (e.g., "node patch.js && rm patch.js"). 
+     Transient files must never remain in the workspace, and under no 
+     circumstances should they be staged or committed to the repository history.
 
 2.3  Zsh Compatibility & Escaping
      The development environment is on macOS running Zsh. Never use raw, unescaped 
