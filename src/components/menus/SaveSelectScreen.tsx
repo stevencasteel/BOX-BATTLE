@@ -117,9 +117,9 @@ export function SaveSelectScreen({
 
       <div
         className="flex-col"
-        style={{ gap: "16px", width: "100%", maxWidth: "480px", marginTop: "16px", paddingBottom: "10px" }}
+        style={{ gap: "16px", width: "100%", maxWidth: "64vmin", marginTop: "16px", paddingBottom: "10px" }}
       >
-        <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
+        <div className="flex-row" style={{ gap: "16px", justifyContent: "center", width: "100%" }}>
           <MenuButton
             variant="led"
             isFocused={menuIndex === 3}
@@ -128,10 +128,9 @@ export function SaveSelectScreen({
             onClick={toggleCopyMode}
             leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
             mainLabel="COPY SLOT"
-            showArrow={false}
             className={isCopyMode ? "neo-btn-led-active" : ""}
             indicatorColor={isCopyMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
+            style={{ flex: 1, padding: "18px", whiteSpace: "nowrap" }}
           />
 
           <MenuButton
@@ -142,10 +141,9 @@ export function SaveSelectScreen({
             onClick={toggleEraseMode}
             leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
             mainLabel="DELETE SLOT"
-            showArrow={false}
             className={isEraseMode ? "neo-btn-led-active" : ""}
             indicatorColor={isEraseMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
+            style={{ flex: 1, padding: "18px", whiteSpace: "nowrap" }}
           />
         </div>
 
@@ -154,7 +152,7 @@ export function SaveSelectScreen({
           onFocused={() => setMenuIndex(5)}
           playHoverTick={playHoverTick}
           onBack={onBack}
-          style={{ padding: "18px", maxWidth: "100%" }}
+          style={{ padding: "18px", maxWidth: "100%", width: "100%" }}
         />
       </div>
     </MenuContainer>
