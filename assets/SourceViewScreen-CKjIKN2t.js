@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-DqgVzURU.js";var m=e(n(),1),h={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-vONtB1Xt.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2169,7 +2169,8 @@ export function TouchOverlay() {
 }
 `,"src/components/menus/AudioScreen.tsx":`import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
-import { Volume2, VolumeX, Music, Zap, RotateCcw, ArrowLeft } from "lucide-react";
+import { Volume2, VolumeX, Music, Zap, RotateCcw } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface AudioScreenProps {
   audio: AudioSettings;
@@ -2191,24 +2192,8 @@ export function AudioScreen({
   setMenuIndex,
 }: AudioScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SOUND SETTINGS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Adjust game sounds and music volume
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title="SOUND SETTINGS" subtitle="Adjust game sounds and music volume" />
 
       <div className="mixer-board neo-pressed">
         <div className="mixer-strip">
@@ -2316,51 +2301,24 @@ export function AudioScreen({
       </div>
 
       <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
-        <button
+        <MenuButton
+          variant="led"
+          isFocused={menuIndex === 3}
+          onFocused={() => setMenuIndex(3)}
+          playHoverTick={playHoverTick}
           onClick={resetSettings}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(3);
-          }}
-          className={\`neo-btn-led \${menuIndex === 3 ? "neo-btn-led-focused" : ""}\`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <RotateCcw size={14} style={{ flexShrink: 0 }} />
-          <span>RESET ALL TO 100%</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<RotateCcw size={14} style={{ flexShrink: 0 }} />}
+          mainLabel="RESET ALL TO 100%"
+        />
 
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(4);
-          }}
-          className={\`neo-btn-led \${menuIndex === 4 ? "neo-btn-led-focused" : ""}\`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={14} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-        </button>
+        <MenuBackButton
+          isFocused={menuIndex === 4}
+          onFocused={() => setMenuIndex(4)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }
 `,"src/components/menus/ControlsScreen.css":`.binding-board {
@@ -2465,6 +2423,7 @@ import {
   Keyboard,
   Sliders
 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface ControlsScreenProps {
   menuIndex: number;
@@ -2543,27 +2502,8 @@ export function ControlsScreen({
   const backBtnIndex = isTouchDevice ? 0 : 10;
 
   return (
-    <div
-      className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}
-    >
-      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          CONTROLS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="CONTROLS" subtitle={isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"} />
 
       {isTouchDevice ? (
         <div
@@ -2625,17 +2565,19 @@ export function ControlsScreen({
       ) : (
         <>
           <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
-            <button
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 0}
+              onFocused={() => setMenuIndex(0)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_1");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(0);
-              }}
-              className={\`neo-btn-led \${menuIndex === 0 ? "neo-btn-led-focused" : ""}\`}
+              leftIcon={<Keyboard size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 1"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -2648,23 +2590,21 @@ export function ControlsScreen({
                 color:
                   menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Keyboard size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 1</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 1}
+              onFocused={() => setMenuIndex(1)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_2");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(1);
-              }}
-              className={\`neo-btn-led \${menuIndex === 1 ? "neo-btn-led-focused" : ""}\`}
+              leftIcon={<Cpu size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 2"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -2677,23 +2617,21 @@ export function ControlsScreen({
                 color:
                   menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Cpu size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 2</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 2}
+              onFocused={() => setMenuIndex(2)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("CUSTOM");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(2);
-              }}
-              className={\`neo-btn-led \${menuIndex === 2 ? "neo-btn-led-focused" : ""}\`}
+              leftIcon={<Sliders size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="CUSTOM"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -2705,12 +2643,7 @@ export function ControlsScreen({
                       : "",
                 color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Sliders size={16} style={{ flexShrink: 0 }} />
-              <span>CUSTOM</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-            </button>
+            />
           </div>
 
           <div className="binding-board neo-pressed">
@@ -2766,21 +2699,13 @@ export function ControlsScreen({
         </>
       )}
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => {
-          playHoverTick();
-          setMenuIndex(backBtnIndex);
-        }}
-        className={\`neo-btn-led \${menuIndex === backBtnIndex ? "neo-btn-led-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
-      </button>
-    </div>
+      <MenuBackButton
+        isFocused={menuIndex === backBtnIndex}
+        onFocused={() => setMenuIndex(backBtnIndex)}
+        playHoverTick={playHoverTick}
+        onBack={onBack}
+      />
+    </MenuContainer>
   );
 }
 `,"src/components/menus/CreditsScreen.css":`.credits-block {
@@ -2853,7 +2778,8 @@ export function ControlsScreen({
   }
 }
 `,"src/components/menus/CreditsScreen.tsx":`import "./CreditsScreen.css";
-import { Layout, Activity, Waves, Database, ArrowLeft } from "lucide-react";
+import { Layout, Activity, Waves, Database } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuBackButton } from "./MenuPrimitives";
 
 interface CreditsScreenProps {
   onBack: () => void;
@@ -2861,24 +2787,8 @@ interface CreditsScreenProps {
 
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "15px" }}>
-        <h2
-          style={{
-            fontSize: "1.8rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SYSTEM CREDITS
-        </h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          Engine Architecture & Technologies
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="SYSTEM CREDITS" subtitle="Engine Architecture & Technologies" />
 
       <div
         className="credits-block neo-pressed flex-col"
@@ -2914,7 +2824,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           <p
             style={{
               fontSize: "1.2vmin",
-              color: "#4ade80",
+              color: "#4a5568",
               margin: "0.6vmin 0 0",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
@@ -2989,17 +2899,167 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         </div>
       </div>
 
-      <button
-        onClick={onBack}
-        className="neo-btn-led neo-btn-led-focused"
+      <MenuBackButton
+        isFocused={true}
+        onBack={onBack}
         style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: "visible" }}>▶</span>
-      </button>
+      />
+    </MenuContainer>
+  );
+}
+`,"src/components/menus/MenuPrimitives.tsx":`import React from "react";
+import { soundSynth } from "@/core/SoundSynth";
+import { ArrowLeft } from "lucide-react";
+
+interface MenuContainerProps {
+  children: React.ReactNode;
+  className?: string;
+  hasGridOverlay?: boolean;
+  style?: React.CSSProperties;
+}
+
+export function MenuContainer({ children, className = "", hasGridOverlay = false, style }: MenuContainerProps) {
+  return (
+    <div className={\`title-screen-container \${className}\`} style={style}>
+      {hasGridOverlay && <div className="title-grid-overlay" />}
+      {children}
     </div>
+  );
+}
+
+interface MenuHeaderProps {
+  title: string;
+  subtitle: string;
+}
+
+export function MenuHeader({ title, subtitle }: MenuHeaderProps) {
+  return (
+    <div className="title-screen-header">
+      <div className="title-banner-overhauled">
+        <h1 style={{ textTransform: "uppercase" }}>{title}</h1>
+        <div className="title-subtitle-container">
+          <span className="subtitle-line"></span>
+          <p className="subtitle-text">{subtitle}</p>
+          <span className="subtitle-line"></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isFocused: boolean;
+  onFocused?: () => void;
+  playHoverTick?: () => void;
+  variant?: "large" | "led";
+  indicatorColor?: "green" | "yellow" | "red";
+  mainLabel: React.ReactNode;
+  subLabel?: string;
+  leftIcon?: React.ReactNode;
+  showArrow?: boolean;
+}
+
+export function MenuButton({
+  isFocused,
+  onFocused,
+  playHoverTick,
+  variant = "large",
+  indicatorColor = "green",
+  mainLabel,
+  subLabel,
+  leftIcon,
+  showArrow = true,
+  className = "",
+  onMouseEnter,
+  ...props
+}: MenuButtonProps) {
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (playHoverTick) {
+      playHoverTick();
+    } else {
+      soundSynth.playSelectTick();
+    }
+    if (onFocused) {
+      onFocused();
+    }
+    if (onMouseEnter) {
+      onMouseEnter(e);
+    }
+  };
+
+  const indicatorClass = isFocused ? \`led-\${indicatorColor}\` : "";
+
+  if (variant === "large") {
+    return (
+      <button
+        className={\`neo-btn-large \${isFocused ? "neo-btn-large-focused" : ""} \${className}\`}
+        onMouseEnter={handleMouseEnter}
+        {...props}
+      >
+        <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
+        <div className="btn-label-group">
+          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {leftIcon}
+            {mainLabel}
+          </span>
+          {subLabel && <span className="btn-sub-label">{subLabel}</span>}
+        </div>
+        {isFocused && showArrow && <span className="cursor-arrow-large">▶</span>}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      className={\`neo-btn-led \${isFocused ? "neo-btn-led-focused" : ""} \${className}\`}
+      onMouseEnter={handleMouseEnter}
+      {...props}
+    >
+      <div className={\`btn-indicator-light \${indicatorClass}\`} style={isFocused ? undefined : { background: "#1e2430" }} />
+      {leftIcon}
+      <span>{mainLabel}</span>
+      {isFocused && showArrow && <span className="cursor-arrow" style={{ marginLeft: "auto" }}>▶</span>}
+    </button>
+  );
+}
+
+interface MenuBackButtonProps extends Omit<MenuButtonProps, "mainLabel"> {
+  onBack: () => void;
+  label?: string;
+}
+
+export function MenuBackButton({
+  onBack,
+  label = "Back",
+  isFocused,
+  onFocused,
+  playHoverTick,
+  style,
+  ...props
+}: MenuBackButtonProps) {
+  const defaultStyle: React.CSSProperties = {
+    width: "100%",
+    maxWidth: "38vmin",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: "12px",
+    zIndex: 2,
+    ...style
+  };
+
+  return (
+    <MenuButton
+      variant="led"
+      isFocused={isFocused}
+      onFocused={onFocused}
+      playHoverTick={playHoverTick}
+      onClick={onBack}
+      leftIcon={<ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+      mainLabel={label}
+      style={defaultStyle}
+      {...props}
+    />
   );
 }
 `,"src/components/menus/SaveSelectScreen.css":`.slot-list {
@@ -3063,7 +3123,8 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 }
 `,"src/components/menus/SaveSelectScreen.tsx":`import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
-import { Save, FolderPlus, Copy, Trash2, ArrowLeft } from "lucide-react";
+import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -3092,31 +3153,17 @@ export function SaveSelectScreen({
   playHoverTick,
   setMenuIndex,
 }: SaveSelectScreenProps) {
+  const selectHeaderTitle = isCopyMode
+    ? copySourceIndex === -1
+      ? "CHOOSE SLOT TO COPY"
+      : "CHOOSE WHERE TO COPY"
+    : isEraseMode
+      ? "CHOOSE SLOT TO DELETE"
+      : "CHOOSE A SAVE SLOT";
+
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          {isCopyMode
-            ? copySourceIndex === -1
-              ? "CHOOSE SLOT TO COPY"
-              : "CHOOSE WHERE TO COPY"
-            : isEraseMode
-              ? "CHOOSE SLOT TO DELETE"
-              : "CHOOSE A SAVE SLOT"}
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Select a slot to load your game
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title={selectHeaderTitle} subtitle="Select a slot to load your game" />
 
       <div className="slot-list">
         {slots.map((slot, i) => (
@@ -3188,65 +3235,48 @@ export function SaveSelectScreen({
         style={{ gap: "16px", width: "100%", maxWidth: "420px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
-          <button
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={toggleCopyMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={\`neo-btn-led \${menuIndex === 3 ? "neo-btn-led-focused" : isCopyMode ? "neo-btn-led-active" : ""}\`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Copy size={16} style={{ flexShrink: 0 }} />
-            <span>COPY SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-          </button>
-          <button
+            leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="COPY SLOT"
+            showArrow={false}
+            className={isCopyMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isCopyMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
+
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 4}
+            onFocused={() => setMenuIndex(4)}
+            playHoverTick={playHoverTick}
             onClick={toggleEraseMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(4);
-            }}
-            className={\`neo-btn-led \${menuIndex === 4 ? "neo-btn-led-focused" : isEraseMode ? "neo-btn-led-active" : ""}\`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Trash2 size={16} style={{ flexShrink: 0 }} />
-            <span>DELETE SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-          </button>
+            leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="DELETE SLOT"
+            showArrow={false}
+            className={isEraseMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isEraseMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
         </div>
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(5);
-          }}
-          className={\`neo-btn-led \${menuIndex === 5 ? "neo-btn-led-focused" : ""}\`}
-          style={{
-            padding: "18px",
-            fontSize: "16px",
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 5 ? "visible" : "hidden" }}>▶</span>
-        </button>
+
+        <MenuBackButton
+          isFocused={menuIndex === 5}
+          onFocused={() => setMenuIndex(5)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+          style={{ padding: "18px" }}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }
-`,"src/components/menus/SettingsScreen.tsx":`import { Volume2, Keyboard, ArrowLeft } from "lucide-react";
+`,"src/components/menus/SettingsScreen.tsx":`import { Volume2, Keyboard } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SettingsScreenProps {
   menuIndex: number;
@@ -3266,84 +3296,43 @@ export function SettingsScreen({
   setMenuIndex,
 }: SettingsScreenProps) {
   return (
-    <div className="title-screen-container">
-      <div className="title-banner" style={{ zIndex: 2 }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SETTINGS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Configure sound decibels and keyboard matrices
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title="SETTINGS" subtitle="Configure sound decibels and keyboard matrices" />
 
       <div className="btn-container-overhauled" style={{ zIndex: 2 }}>
-        <button
+        <MenuButton
+          isFocused={menuIndex === 0}
+          onFocused={() => setMenuIndex(0)}
+          playHoverTick={playHoverTick}
           onClick={onAudio}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(0);
-          }}
-          className={\`neo-btn-large \${menuIndex === 0 ? "neo-btn-large-focused" : ""}\`}
-        >
-          <div className="btn-indicator-light" />
-          <div className="btn-label-group">
-            <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Volume2 size={18} strokeWidth={2} style={{ flexShrink: 0 }} />
-              SOUND SETTINGS
-            </span>
-            <span className="btn-sub-label">ADJUST GAME SOUNDS AND MUSIC VOLUME</span>
-          </div>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<Volume2 size={18} strokeWidth={2} style={{ flexShrink: 0 }} />}
+          mainLabel="SOUND SETTINGS"
+          subLabel="ADJUST GAME SOUNDS AND MUSIC VOLUME"
+        />
 
-        <button
+        <MenuButton
+          isFocused={menuIndex === 1}
+          onFocused={() => setMenuIndex(1)}
+          playHoverTick={playHoverTick}
           onClick={onControls}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(1);
-          }}
-          className={\`neo-btn-large \${menuIndex === 1 ? "neo-btn-large-focused" : ""}\`}
-        >
-          <div className="btn-indicator-light" />
-          <div className="btn-label-group">
-            <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Keyboard size={18} strokeWidth={2} style={{ flexShrink: 0 }} />
-              KEYBOARD CONTROLS
-            </span>
-            <span className="btn-sub-label">CALIBRATE INPUTS AND REMAP KEYS</span>
-          </div>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<Keyboard size={18} strokeWidth={2} style={{ flexShrink: 0 }} />}
+          mainLabel="KEYBOARD CONTROLS"
+          subLabel="CALIBRATE INPUTS AND REMAP KEYS"
+        />
       </div>
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => {
-          playHoverTick();
-          setMenuIndex(2);
-        }}
-        className={\`neo-btn-led \${menuIndex === 2 ? "neo-btn-led-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", gap: "10px", zIndex: 2 }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-      </button>
-    </div>
+      <MenuBackButton
+        isFocused={menuIndex === 2}
+        onFocused={() => setMenuIndex(2)}
+        playHoverTick={playHoverTick}
+        onBack={onBack}
+      />
+    </MenuContainer>
   );
 }
 `,"src/components/menus/SourceViewFooter.tsx":`import { soundSynth } from "@/core/SoundSynth";
 import { Download, ArrowLeft } from "lucide-react";
+import { MenuButton } from "./MenuPrimitives";
 
 interface SourceViewFooterProps {
   onBack: () => void;
@@ -3370,7 +3359,13 @@ function GithubIcon() {
   );
 }
 
-export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength, setActiveIndex }: SourceViewFooterProps) {
+export function SourceViewFooter({
+  onBack,
+  isMobile,
+  activeIndex,
+  visibleNodesLength,
+  setActiveIndex,
+}: SourceViewFooterProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
@@ -3397,16 +3392,13 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         }}
       >
         <div style={{ flex: 1, display: "flex" }}>
-          <a
-            href="https://github.com/stevencasteel/BOX-BATTLE"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
             className="neo-btn"
             style={{
               width: "100%",
               padding: "12px",
               fontSize: "12px",
-              textDecoration: "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -3414,7 +3406,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
             }}
           >
             <GithubIcon />
-          </a>
+          </button>
         </div>
 
         <div style={{ flex: 1, display: "flex" }}>
@@ -3463,67 +3455,35 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         flexShrink: 0,
       }}
     >
-      <a
-        href="https://github.com/stevencasteel/BOX-BATTLE"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={\`neo-btn-large \${activeIndex === visibleNodesLength ? "neo-btn-large-focused" : ""}\`}
-        style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <GithubIcon />
-            GITHUB REPO
-          </span>
-          <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength ? "visible" : "hidden" }}>▶</span>
-      </a>
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength}
+        onFocused={() => setActiveIndex(visibleNodesLength)}
+        onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
+        leftIcon={<GithubIcon />}
+        mainLabel="GITHUB REPO"
+        subLabel="VIEW AND DOWNLOAD CODE ARCHIVE"
+        style={{ flex: 1, boxSizing: "border-box" }}
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 1}
+        onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
-        className={\`neo-btn-large \${activeIndex === visibleNodesLength + 1 ? "neo-btn-large-focused" : ""}\`}
+        leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="DOWNLOAD SOURCE"
+        subLabel="SAVE ALL CODE AS SINGLE .TXT FILE"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 1);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            DOWNLOAD SOURCE
-          </span>
-          <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 1 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 2}
+        onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
-        className={\`neo-btn-large \${activeIndex === visibleNodesLength + 2 ? "neo-btn-large-focused" : ""}\`}
+        leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="BACK TO MENU"
+        subLabel="EXIT SOURCE CODE VIEW"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 2);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            BACK TO MENU
-          </span>
-          <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 2 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
     </div>
   );
 }
@@ -3710,7 +3670,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, [treeRoot, expandedDirs]);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -3748,13 +3707,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    if (clampedActiveIndex < visibleNodes.length) {
+    if (activeIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [clampedActiveIndex, visibleNodes.length]);
+  }, [activeIndex, visibleNodes.length]);
 
   return (
     <div
@@ -3795,7 +3754,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === clampedActiveIndex;
+              const isActive = idx === activeIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
@@ -4355,8 +4314,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     padding: 10px 16px;
   }
 }
-`,"src/components/menus/TitleScreen.tsx":`import "./TitleScreen.css";
-import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
+`,"src/components/menus/TitleScreen.tsx":`import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton } from "./MenuPrimitives";
+
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;
@@ -4377,99 +4337,53 @@ export function TitleScreen({
   setMenuIndex,
 }: TitleScreenProps) {
   return (
-    <div className="title-screen-container">
-      {/* Structural background line vectors */}
-      <div className="title-grid-overlay" />
-
+    <MenuContainer hasGridOverlay>
       <div className="title-screen-header">
         <div className="system-tag">WELCOME TO THE ARENA</div>
-        <div className="title-banner-overhauled">
-          <h1>BOX BATTLE</h1>
-          <div className="title-subtitle-container">
-            <span className="subtitle-line"></span>
-            <p className="subtitle-text">RETRO ACTION GAME</p>
-            <span className="subtitle-line"></span>
-          </div>
-        </div>
+        <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
       </div>
 
       <div className="title-screen-center">
         <div className="btn-container-overhauled">
-          <button
+          <MenuButton
+            isFocused={menuIndex === 0}
+            onFocused={() => setMenuIndex(0)}
+            playHoverTick={playHoverTick}
             onClick={onPlay}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(0);
-            }}
-            className={\`neo-btn-large \${menuIndex === 0 ? "neo-btn-large-focused" : ""}\`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Gamepad2 size={18} strokeWidth={2} />
-                PLAY GAME
-              </span>
-              <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
-            </div>
-            {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Gamepad2 size={18} strokeWidth={2} />}
+            mainLabel="PLAY GAME"
+            subLabel="CHOOSE A SAVE SLOT TO BEGIN"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 1}
+            onFocused={() => setMenuIndex(1)}
+            playHoverTick={playHoverTick}
             onClick={onSettings}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(1);
-            }}
-            className={\`neo-btn-large \${menuIndex === 1 ? "neo-btn-large-focused" : ""}\`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sliders size={18} strokeWidth={2} />
-                OPTIONS
-              </span>
-              <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
-            </div>
-            {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Sliders size={18} strokeWidth={2} />}
+            mainLabel="OPTIONS"
+            subLabel="ADJUST SOUNDS AND CONTROLS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 2}
+            onFocused={() => setMenuIndex(2)}
+            playHoverTick={playHoverTick}
             onClick={onCredits}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(2);
-            }}
-            className={\`neo-btn-large \${menuIndex === 2 ? "neo-btn-large-focused" : ""}\`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Award size={18} strokeWidth={2} />
-                CREDITS
-              </span>
-              <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
-            </div>
-            {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Award size={18} strokeWidth={2} />}
+            mainLabel="CREDITS"
+            subLabel="GAME CREATOR AND DETAILS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={onSource}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={\`neo-btn-large \${menuIndex === 3 ? "neo-btn-large-focused" : ""}\`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Code2 size={18} strokeWidth={2} />
-                SOURCE CODE
-              </span>
-              <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
-            </div>
-            {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Code2 size={18} strokeWidth={2} />}
+            mainLabel="SOURCE CODE"
+            subLabel="BROWSE CABINET ENGINE FILE TREE"
+          />
         </div>
       </div>
 
@@ -4481,7 +4395,7 @@ export function TitleScreen({
           <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
-    </div>
+    </MenuContainer>
   );
 }
 `,"src/core/BattleDirector.ts":`import { Player } from "@/entities/Player";
@@ -12600,7 +12514,110 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-/* Centralized Large Neomorphic Led Buttons */
+.title-screen-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  padding: 1.5vmin 2.5vmin;
+  position: relative;
+}
+
+.title-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 3.2vmin 3.2vmin;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-screen-header {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5vmin;
+}
+
+.system-tag {
+  font-size: 1.1vmin;
+  color: #4a5568;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 0.5vmin 1.4vmin;
+  border-radius: 0.4vmin;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title-banner-overhauled {
+  text-align: center;
+  margin-top: 1.5vmin;
+  width: 100%;
+}
+
+.title-banner-overhauled h1 {
+  font-size: 4vmin;
+  margin: 0;
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+}
+
+.title-subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vmin;
+  width: 100%;
+  margin-top: 0.8vmin;
+}
+
+.subtitle-line {
+  height: 1px;
+  flex-grow: 1;
+  max-width: 8vmin;
+  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
+}
+
+.subtitle-text {
+  font-size: 1.2vmin;
+  color: var(--signal-green);
+  margin: 0;
+  letter-spacing: 0.35em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.title-screen-center {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.btn-container-overhauled {
+  width: 100%;
+  max-width: 58vmin;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8vmin;
+}
+
 .neo-btn-large {
   display: flex;
   align-items: center;
@@ -12611,8 +12628,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 24px 32px;
-  border-radius: 12px;
+  padding: 2.2vmin 3.2vmin;
+  border-radius: 1.2vmin;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -12637,11 +12654,11 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .neo-btn-large .btn-indicator-light {
-  width: 8px;
-  height: 8px;
+  width: 1vmin;
+  height: 1vmin;
   border-radius: 50%;
   background: #1e2430;
-  margin-right: 24px;
+  margin-right: 2.4vmin;
   transition: all 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
@@ -12663,7 +12680,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .btn-main-label {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: 1.7vmin;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -12678,7 +12695,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .btn-sub-label {
-  font-size: clamp(8px, 2.5vw, 10px);
+  font-size: 1vmin;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -12692,7 +12709,67 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   opacity: 0.85;
 }
 
-/* Centralized Compact Neomorphic Led Buttons */
+.cursor-arrow-large {
+  color: var(--signal-green);
+  font-size: 1.8vmin;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  margin-left: 1vmin;
+}
+
+.cursor-arrow {
+  color: var(--signal-green);
+  font-weight: bold;
+  display: inline-block;
+  animation: arrow-blink 0.4s infinite alternate;
+}
+
+@keyframes arrow-blink {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.title-screen-footer {
+  z-index: 2;
+  width: 100%;
+  margin-top: 1vmin;
+}
+
+.footer-deco-line {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.05) 80%,
+    transparent
+  );
+  width: 100%;
+  margin-bottom: 0.8vmin;
+}
+
+.footer-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9vmin;
+  color: #4a5568;
+  letter-spacing: 0.15em;
+  padding: 0 1.6vmin;
+  text-transform: uppercase;
+}
+
+.footer-center-prompt {
+  color: #718096;
+  font-weight: bold;
+}
+
 .neo-btn-led {
   display: flex;
   align-items: center;
@@ -12868,10 +12945,63 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 @media (max-width: 768px) and (pointer: coarse) {
+  .title-screen-container {
+    padding: 8px 12px;
+  }
+  .title-screen-header {
+    padding-top: 10px;
+  }
+  .system-tag {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+  .title-banner-overhauled {
+    margin-top: 8px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 26px;
+  }
+  .title-subtitle-container {
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .subtitle-text {
+    font-size: 10px;
+  }
+  .btn-container-overhauled {
+    max-width: none;
+    gap: 10px;
+  }
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;
     border-radius: 12px;
+  }
+  .neo-btn-large {
+    padding: 14px 20px;
+    border-radius: 10px;
+  }
+  .neo-btn-large .btn-indicator-light {
+    width: 8px;
+    height: 8px;
+    margin-right: 14px;
+  }
+  .btn-main-label {
+    font-size: 14px;
+  }
+  .btn-sub-label {
+    font-size: 9px;
+  }
+  .cursor-arrow-large {
+    font-size: 14px;
+    margin-left: 10px;
+  }
+  .footer-status-bar {
+    font-size: 7px;
+    padding: 0;
+  }
+  .footer-center-prompt {
+    display: none;
   }
   .led-dot {
     width: 14px;
@@ -12899,7 +13029,23 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   50% { transform: translate(1px, -1px) scale(1.15); filter: brightness(1.2) drop-shadow(0 0 6px var(--signal-yellow-glow)); }
   100% { transform: translate(0, 0) scale(1); }
 }
+
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
 }
-`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let o=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:o,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r?`visible`:`hidden`},children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:o,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r+1)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r+1?`visible`:`hidden`},children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r+2)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r+2?`visible`:`hidden`},children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[a,s]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,a):[],[E,a]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length,setActiveIndex:k})]})}export{C as SourceViewScreen};
+
+@media (max-height: 600px) {
+  .title-screen-header {
+    padding-top: 6px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 2rem;
+  }
+  .btn-container-overhauled {
+    gap: 6px;
+  }
+  .neo-btn-large {
+    padding: 10px 16px;
+  }
+}
+`};function _({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,h.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(f(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else p(m)?(m.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):f(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var v=u();function y(){return(0,v.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,v.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function b({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let o=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,v.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,v.jsx)(y,{})})}),(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:o,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,v.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,v.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,v.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,v.jsx)(m,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,v.jsx)(y,{}),mainLabel:`GITHUB REPO`,subLabel:`VIEW AND DOWNLOAD CODE ARCHIVE`,style:{flex:1,boxSizing:`border-box`}}),(0,v.jsx)(m,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:o,leftIcon:(0,v.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD SOURCE`,subLabel:`SAVE ALL CODE AS SINGLE .TXT FILE`,style:{flex:1,boxSizing:`border-box`}}),(0,v.jsx)(m,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,v.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,subLabel:`EXIT SOURCE CODE VIEW`,style:{flex:1,boxSizing:`border-box`}})]})}function x(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function S(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>S(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>S(e,t,n)),n)}function C(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function w({onBack:e}){let[n]=(0,h.useState)(g),[a,s]=(0,h.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,h.useState)((0,h.useMemo)(()=>Object.keys(g).sort(),[])[0]||``),[p,m]=(0,h.useState)(!1),[y,w]=(0,h.useState)(`TOC`),T=(0,h.useRef)(null),E=(0,h.useMemo)(()=>x(Object.keys(g)),[]),D=(0,h.useMemo)(()=>E?S(E,a):[],[E,a]),[O,k]=(0,h.useState)(0);return _({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:f,onBack:e,isMobile:p,mobileView:y,setMobileView:w,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,h.useEffect)(()=>{if(typeof window<`u`){let e=()=>{m(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,h.useEffect)(()=>{if(O<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[O,D.length]),(0,v.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,v.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,v.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,v.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?y===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,v.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||y===`TOC`)&&(0,v.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===O,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,v.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,v.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,v.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,v.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,v.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,v.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,v.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||y===`CODE`)&&(0,v.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,v.jsx)(`button`,{onClick:()=>{d.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,v.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,v.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,v.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,v.jsx)(t,{language:C(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,v.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,v.jsx)(b,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length,setActiveIndex:k})]})}export{w as SourceViewScreen};
