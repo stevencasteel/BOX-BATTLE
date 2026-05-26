@@ -17,6 +17,7 @@ export function useHudSubscription() {
       // 1. Player HP updates
       if (playerHP !== lastHP) {
         const tookDamage = playerHP < lastHP && lastHP !== -1;
+        const healed = playerHP > lastHP && lastHP !== -1;
 
         if (soundSynth.initialized) {
           soundSynth.setLowHPStatus(playerHP === 1);
@@ -24,6 +25,7 @@ export function useHudSubscription() {
 
         const groupD = document.getElementById("hud-d-hp-group");
         const groupM = document.getElementById("hud-m-hp-group");
+        
         if (playerHP === 1) {
           groupD?.classList.add("hud-stress-shiver");
           groupM?.classList.add("hud-stress-shiver");
@@ -42,11 +44,20 @@ export function useHudSubscription() {
             if (isLit) {
               dotD.classList.add("led-green");
               if (tookDamage) {
-                dotD.classList.add("led-shaking");
-                setTimeout(() => dotD.classList.remove("led-shaking"), 350);
+                // Subtle spring-shudder only on the remaining lit health squares
+                dotD.classList.remove("led-spring-impact");
+                void dotD.offsetWidth;
+                dotD.classList.add("led-spring-impact");
+              } else if (healed) {
+                // Elastic recovery pop on the newly healed squares
+                dotD.classList.remove("led-elastic-spring");
+                void dotD.offsetWidth;
+                dotD.classList.add("led-elastic-spring");
               }
             } else {
               dotD.classList.remove("led-green");
+              dotD.classList.remove("led-spring-impact");
+              dotD.classList.remove("led-elastic-spring");
               if (wasLit && tookDamage) {
                 dotD.classList.add("led-shaking-die");
                 setTimeout(() => dotD.classList.remove("led-shaking-die"), 450);
@@ -59,11 +70,18 @@ export function useHudSubscription() {
             if (isLit) {
               dotM.classList.add("led-green");
               if (tookDamage) {
-                dotM.classList.add("led-shaking");
-                setTimeout(() => dotM.classList.remove("led-shaking"), 350);
+                dotM.classList.remove("led-spring-impact");
+                void dotM.offsetWidth;
+                dotM.classList.add("led-spring-impact");
+              } else if (healed) {
+                dotM.classList.remove("led-elastic-spring");
+                void dotM.offsetWidth;
+                dotM.classList.add("led-elastic-spring");
               }
             } else {
               dotM.classList.remove("led-green");
+              dotM.classList.remove("led-spring-impact");
+              dotM.classList.remove("led-elastic-spring");
               if (wasLit && tookDamage) {
                 dotM.classList.add("led-shaking-die");
                 setTimeout(() => dotM.classList.remove("led-shaking-die"), 450);
@@ -76,6 +94,8 @@ export function useHudSubscription() {
 
       // 2. Healing Charges updates
       if (healingCharges !== lastHealCharges) {
+        const gainedCharge = healingCharges > lastHealCharges && lastHealCharges !== -1;
+
         for (let i = 0; i < 3; i++) {
           const isLit = i < healingCharges;
           const dotD = document.getElementById("hud-d-heal-" + i);
@@ -84,12 +104,14 @@ export function useHudSubscription() {
             const wasLit = dotD.classList.contains("led-yellow");
             if (isLit) {
               dotD.classList.add("led-yellow");
-              if (!wasLit) {
-                dotD.classList.add("led-pop");
-                setTimeout(() => dotD.classList.remove("led-pop"), 300);
+              if (!wasLit && gainedCharge) {
+                dotD.classList.remove("led-elastic-spring");
+                void dotD.offsetWidth;
+                dotD.classList.add("led-elastic-spring");
               }
             } else {
               dotD.classList.remove("led-yellow");
+              dotD.classList.remove("led-elastic-spring");
             }
 
             if (healingCharges === 3) {
@@ -102,12 +124,14 @@ export function useHudSubscription() {
             const wasLit = dotM.classList.contains("led-yellow");
             if (isLit) {
               dotM.classList.add("led-yellow");
-              if (!wasLit) {
-                dotM.classList.add("led-pop");
-                setTimeout(() => dotM.classList.remove("led-pop"), 300);
+              if (!wasLit && gainedCharge) {
+                dotM.classList.remove("led-elastic-spring");
+                void dotM.offsetWidth;
+                dotM.classList.add("led-elastic-spring");
               }
             } else {
               dotM.classList.remove("led-yellow");
+              dotM.classList.remove("led-elastic-spring");
             }
 
             if (healingCharges === 3) {

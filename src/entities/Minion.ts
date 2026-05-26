@@ -61,7 +61,7 @@ export class Minion extends BaseEntity {
     if (type === "TURRET") {
       this.size = { width: 44, height: 44 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-        maxHealth: 3,
+        maxHealth: 5,
         invincibilityDuration: 0.15,
       });
       this.physics.gravity = 0;
@@ -70,7 +70,7 @@ export class Minion extends BaseEntity {
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-        maxHealth: 4,
+        maxHealth: 6,
         invincibilityDuration: 0.15,
       });
       this.squashPivot = "feet";
@@ -78,7 +78,7 @@ export class Minion extends BaseEntity {
     } else {
       this.size = { width: 36, height: 36 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-        maxHealth: 2,
+        maxHealth: 3,
         invincibilityDuration: 0.15,
       });
       this.physics.gravity = 0;

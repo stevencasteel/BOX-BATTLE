@@ -75,6 +75,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
             ))}
           </div>
           <div
+            id="hud-m-det-container"
             className="neo-pressed"
             style={{
               width: "36px",
@@ -95,7 +96,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 height: "100%",
                 borderRadius: "1.5px",
                 width: "0%",
-                transition: "width 0.15s ease",
+                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
                 background: "hsl(280, 80%, 65%)",
                 boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
               }}
@@ -145,6 +146,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
             <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
           </span>
           <div
+            id="hud-m-boss-container"
             className="neo-pressed"
             style={{
               width: "80px",
@@ -162,7 +164,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 height: "100%",
                 borderRadius: "1.5px",
                 width: "0%",
-                transition: "all 0.15s ease",
+                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
               }}
             />
           </div>
@@ -207,6 +209,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
             ))}
           </div>
           <div
+            id="hud-d-det-container"
             className="neo-pressed"
             style={{
               width: "54px",
@@ -224,7 +227,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 height: "100%",
                 borderRadius: "2px",
                 width: "0%",
-                transition: "width 0.15s ease",
+                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
                 background: "hsl(280, 80%, 65%)",
                 boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
               }}
@@ -318,6 +321,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           BOSS HP
         </span>
         <div
+          id="hud-d-boss-container"
           className="neo-pressed"
           style={{
             width: "160px",
@@ -335,7 +339,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
               height: "100%",
               borderRadius: "2px",
               width: "0%",
-              transition: "all 0.15s ease",
+              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
             }}
           />
         </div>

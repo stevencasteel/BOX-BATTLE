@@ -646,3 +646,24 @@
 .hud-stress-shiver {
   animation: stress-shiver 0.12s infinite linear !important;
 }
+
+/* Refined Subtle Reactive Spring-Loaded HUD Keyframes */
+@keyframes led-squash-spring {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.18, 0.82); filter: brightness(1.2); }
+  60% { transform: scale(0.92, 1.08); }
+  100% { transform: scale(1); }
+}
+.led-spring-impact {
+  animation: led-squash-spring 0.38s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+@keyframes led-elastic-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  55% { transform: scale(1.35); filter: brightness(1.3); }
+  80% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.led-elastic-spring {
+  animation: led-elastic-pop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
