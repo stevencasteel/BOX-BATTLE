@@ -1,3 +1,4 @@
+import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
@@ -811,158 +812,17 @@ export class Player extends BaseEntity {
     const feetY = drawY + this.size.height / 2;
 
     const nowTime = performance.now();
-    const progress = this.isHealing 
-      ? Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION))
-      : 0;
-
-    const backSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
-    const frontSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
+    const healCounts = { back: 0, front: 0 };
+    const chargeCounts = { back: 0, front: 0 };
 
     if (this.isHealing) {
-      const segmentsCount = 120;
-      const loops = 4.0;
-      const maxAngle = loops * Math.PI * 2;
-      const rotationOffset = nowTime * 0.008;
-      const coilHeight = progress * 84;
-
-      for (let i = 0; i < segmentsCount; i++) {
-        const t1 = i / segmentsCount;
-        const t2 = (i + 1) / segmentsCount;
-
-        const angle1 = t1 * maxAngle + rotationOffset;
-        const angle2 = t2 * maxAngle + rotationOffset;
-
-        const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
-        const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
-
-        const x1 = r1 * Math.cos(angle1);
-        const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
-
-        const x2 = r2 * Math.cos(angle2);
-        const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
-
-        const midAngle = (angle1 + angle2) / 2;
-        const isBehind = Math.sin(midAngle) < 0;
-
-        const segmentAlpha = (1.0 - t1 * 0.25) * progress;
-
-        const segment = { x1, y1, x2, y2, alpha: segmentAlpha };
-        if (isBehind) {
-          backSegments.push(segment);
-        } else {
-          frontSegments.push(segment);
-        }
-      }
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+      PlayerFxRenderer.prepareHealSegments(nowTime, progress, healCounts);
     }
-
-    const chargeBackSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
-    const chargeFrontSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
 
     if (this.isCharging) {
-      const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
-      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
-
-      const baseRadius = (this.size.height * 0.35) + chargeProgress * 10;
-      const localCenterX = 0;
-      const localCenterY = -this.size.height / 2;
-
-      const orbits = [
-        { psi: 0.1, phi: 0.38, speed: 0.005 },
-        { psi: Math.PI / 4, phi: 0.52, speed: -0.004 },
-        { psi: -Math.PI / 4, phi: 0.52, speed: 0.003 }
-      ];
-
-      const activeRings = isLvl2
-        ? [
-            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.85)" },
-            { orbitIndex: 1, color: "rgba(134, 212, 51, 0.85)" },
-            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.95)" }
-          ]
-        : [
-            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.65)" },
-            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.75)" }
-          ];
-
-      for (let s = 0; s < activeRings.length; s++) {
-        const ringConfig = activeRings[s];
-        const orbit = orbits[ringConfig.orbitIndex];
-        const segments = 32;
-        const step = (Math.PI * 2) / segments;
-        const rotationSpeed = orbit.speed * nowTime;
-        const ringColor = ringConfig.color;
-
-        const lineWidth = isLvl2 ? (s === 2 ? 2.5 : 1.5) : 1.2;
-
-        for (let i = 0; i < segments; i++) {
-          const theta1 = i * step + rotationSpeed;
-          const theta2 = (i + 1) * step + rotationSpeed;
-
-          const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-          const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-
-          const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
-          const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
-
-          const x0_1 = r1 * Math.cos(theta1);
-          const y0_1 = r1 * Math.sin(theta1);
-          
-          const x1_1 = x0_1 * Math.cos(orbit.psi);
-          const y1_1 = y0_1;
-          const z1_1 = -x0_1 * Math.sin(orbit.psi);
-
-          const x2_1 = x1_1;
-          const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
-          const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
-
-          const x0_2 = r2 * Math.cos(theta2);
-          const y0_2 = r2 * Math.sin(theta2);
-
-          const x1_2 = x0_2 * Math.cos(orbit.psi);
-          const y1_2 = y0_2;
-          const z1_2 = -x0_2 * Math.sin(orbit.psi);
-
-          const x2_2 = x1_2;
-          const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
-          const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
-
-          const p1 = { x: localCenterX + x2_1, y: localCenterY + y2_1, z: z2_1 };
-          const p2 = { x: localCenterX + x2_2, y: localCenterY + y2_2, z: z2_2 };
-
-          const midZ = (p1.z + p2.z) / 2;
-          const segment = { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, color: ringColor, width: lineWidth };
-
-          if (midZ < 0) {
-            chargeBackSegments.push(segment);
-          } else {
-            chargeFrontSegments.push(segment);
-          }
-        }
-      }
+      PlayerFxRenderer.prepareChargeSegments(nowTime, this.chargeTimer, this.size.height, chargeCounts);
     }
-
-    const drawCoilSegments = (segments: typeof backSegments) => {
-      for (let s = 0; s < segments.length; s++) {
-        const seg = segments[s];
-        ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
-        ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
-        ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
-        ctx.stroke();
-      }
-    };
-
-    const drawChargeSegments = (segments: typeof chargeBackSegments) => {
-      for (let s = 0; s < segments.length; s++) {
-        const seg = segments[s];
-        ctx.strokeStyle = seg.color;
-        ctx.lineWidth = seg.width;
-        ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
-        ctx.stroke();
-      }
-    };
 
     ctx.save();
     ctx.translate(drawX, feetY);
@@ -973,7 +833,7 @@ export class Player extends BaseEntity {
       ctx.lineWidth = 3.5;
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCoilSegments(backSegments);
+      PlayerFxRenderer.renderHealBuffer(ctx, true, healCounts.back);
       ctx.restore();
     }
 
@@ -981,7 +841,7 @@ export class Player extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawChargeSegments(chargeBackSegments);
+      PlayerFxRenderer.renderChargeBuffer(ctx, true, chargeCounts.back);
       ctx.restore();
     }
 
@@ -1002,6 +862,7 @@ export class Player extends BaseEntity {
 
     if (this.isHealing) {
       ctx.save();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
       const baseW = this.size.width * (1.15 + progress * 0.75);
       const baseH = this.size.height * (1.1 + progress * 0.55);
 
@@ -1061,7 +922,7 @@ export class Player extends BaseEntity {
       ctx.lineWidth = 3.5;
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCoilSegments(frontSegments);
+      PlayerFxRenderer.renderHealBuffer(ctx, false, healCounts.front);
       ctx.restore();
 
       const trembleX = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
@@ -1098,7 +959,7 @@ export class Player extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawChargeSegments(chargeFrontSegments);
+      PlayerFxRenderer.renderChargeBuffer(ctx, false, chargeCounts.front);
       ctx.restore();
 
       if (chargeProgress > 0.5) {
