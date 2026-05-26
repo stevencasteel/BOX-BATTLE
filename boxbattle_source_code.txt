@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 11:55:00 PM
+ [SYSTEM] Generated: 5/26/2026, 12:01:47 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -4336,6 +4336,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
 import { SourceViewFooter } from "./SourceViewFooter";
+import { Folder, FolderOpen, FileCode, FileText } from "lucide-react";
 
 interface SourceViewScreenProps {
   onBack: () => void;
@@ -4579,7 +4580,15 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                   <span style={{ minWidth: "12px", fontSize: "10px" }}>
                     {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
                   </span>
-                  <span style={{ fontSize: "13px" }}>{node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}</span>
+                  {node.isDir ? (
+                    isExpanded ? <FolderOpen size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} /> : <Folder size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                  ) : (
+                    node.name.endsWith(".ts") || node.name.endsWith(".tsx") || node.name.endsWith(".js") ? (
+                      <FileCode size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                    ) : (
+                      <FileText size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                    )
+                  )}
                   <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>{node.name}</span>
                 </div>
               );
@@ -5087,6 +5096,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 ● ./src/components/menus/TitleScreen.tsx
 ────────────────────────────────────────────────────
 import "./TitleScreen.css";
+import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;
@@ -5135,7 +5145,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">PLAY GAME</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Gamepad2 size={18} strokeWidth={2} />
+                PLAY GAME
+              </span>
               <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
             </div>
             {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
@@ -5151,7 +5164,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">OPTIONS</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Sliders size={18} strokeWidth={2} />
+                OPTIONS
+              </span>
               <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
             </div>
             {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
@@ -5167,7 +5183,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">CREDITS</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Award size={18} strokeWidth={2} />
+                CREDITS
+              </span>
               <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
             </div>
             {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
@@ -5183,7 +5202,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">SOURCE CODE</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Code2 size={18} strokeWidth={2} />
+                SOURCE CODE
+              </span>
               <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
             </div>
             {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
