@@ -1,6 +1,7 @@
 import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
-import { Volume2, VolumeX, Music, Zap, RotateCcw, ArrowLeft } from "lucide-react";
+import { Volume2, VolumeX, Music, Zap, RotateCcw } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface AudioScreenProps {
   audio: AudioSettings;
@@ -22,24 +23,8 @@ export function AudioScreen({
   setMenuIndex,
 }: AudioScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SOUND SETTINGS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Adjust game sounds and music volume
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title="SOUND SETTINGS" subtitle="Adjust game sounds and music volume" />
 
       <div className="mixer-board neo-pressed">
         <div className="mixer-strip">
@@ -147,50 +132,23 @@ export function AudioScreen({
       </div>
 
       <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
-        <button
+        <MenuButton
+          variant="led"
+          isFocused={menuIndex === 3}
+          onFocused={() => setMenuIndex(3)}
+          playHoverTick={playHoverTick}
           onClick={resetSettings}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(3);
-          }}
-          className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <RotateCcw size={14} style={{ flexShrink: 0 }} />
-          <span>RESET ALL TO 100%</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<RotateCcw size={14} style={{ flexShrink: 0 }} />}
+          mainLabel="RESET ALL TO 100%"
+        />
 
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(4);
-          }}
-          className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={14} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-        </button>
+        <MenuBackButton
+          isFocused={menuIndex === 4}
+          onFocused={() => setMenuIndex(4)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }

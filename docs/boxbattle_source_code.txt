@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 7:29:38 PM
+ [SYSTEM] Generated: 5/25/2026, 7:46:14 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -39,6 +39,7 @@
 │   │   │   ├── ControlsScreen.tsx
 │   │   │   ├── CreditsScreen.css
 │   │   │   ├── CreditsScreen.tsx
+│   │   │   ├── MenuPrimitives.tsx
 │   │   │   ├── SaveSelectScreen.css
 │   │   │   ├── SaveSelectScreen.tsx
 │   │   │   ├── SettingsScreen.tsx
@@ -2896,7 +2897,8 @@ export function TouchOverlay() {
 ────────────────────────────────────────────────────
 import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
-import { Volume2, VolumeX, Music, Zap, RotateCcw, ArrowLeft } from "lucide-react";
+import { Volume2, VolumeX, Music, Zap, RotateCcw } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface AudioScreenProps {
   audio: AudioSettings;
@@ -2918,24 +2920,8 @@ export function AudioScreen({
   setMenuIndex,
 }: AudioScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SOUND SETTINGS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Adjust game sounds and music volume
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title="SOUND SETTINGS" subtitle="Adjust game sounds and music volume" />
 
       <div className="mixer-board neo-pressed">
         <div className="mixer-strip">
@@ -3043,51 +3029,24 @@ export function AudioScreen({
       </div>
 
       <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
-        <button
+        <MenuButton
+          variant="led"
+          isFocused={menuIndex === 3}
+          onFocused={() => setMenuIndex(3)}
+          playHoverTick={playHoverTick}
           onClick={resetSettings}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(3);
-          }}
-          className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <RotateCcw size={14} style={{ flexShrink: 0 }} />
-          <span>RESET ALL TO 100%</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<RotateCcw size={14} style={{ flexShrink: 0 }} />}
+          mainLabel="RESET ALL TO 100%"
+        />
 
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(4);
-          }}
-          className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px"
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={14} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-        </button>
+        <MenuBackButton
+          isFocused={menuIndex === 4}
+          onFocused={() => setMenuIndex(4)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }
 
@@ -3202,6 +3161,7 @@ import {
   Keyboard,
   Sliders
 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface ControlsScreenProps {
   menuIndex: number;
@@ -3280,27 +3240,8 @@ export function ControlsScreen({
   const backBtnIndex = isTouchDevice ? 0 : 10;
 
   return (
-    <div
-      className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}
-    >
-      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          CONTROLS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="CONTROLS" subtitle={isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"} />
 
       {isTouchDevice ? (
         <div
@@ -3362,17 +3303,18 @@ export function ControlsScreen({
       ) : (
         <>
           <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
-            <button
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 0}
+              onFocused={() => setMenuIndex(0)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_1");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(0);
-              }}
-              className={`neo-btn-led ${menuIndex === 0 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Keyboard size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 1"
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -3385,23 +3327,20 @@ export function ControlsScreen({
                 color:
                   menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Keyboard size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 1</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 1}
+              onFocused={() => setMenuIndex(1)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_2");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(1);
-              }}
-              className={`neo-btn-led ${menuIndex === 1 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Cpu size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 2"
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -3414,23 +3353,20 @@ export function ControlsScreen({
                 color:
                   menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Cpu size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 2</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 2}
+              onFocused={() => setMenuIndex(2)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("CUSTOM");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(2);
-              }}
-              className={`neo-btn-led ${menuIndex === 2 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Sliders size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="CUSTOM"
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -3442,12 +3378,7 @@ export function ControlsScreen({
                       : "",
                 color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Sliders size={16} style={{ flexShrink: 0 }} />
-              <span>CUSTOM</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-            </button>
+            />
           </div>
 
           <div className="binding-board neo-pressed">
@@ -3503,21 +3434,13 @@ export function ControlsScreen({
         </>
       )}
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => {
-          playHoverTick();
-          setMenuIndex(backBtnIndex);
-        }}
-        className={`neo-btn-led ${menuIndex === backBtnIndex ? "neo-btn-led-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
-      </button>
-    </div>
+      <MenuBackButton
+        isFocused={menuIndex === backBtnIndex}
+        onFocused={() => setMenuIndex(backBtnIndex)}
+        playHoverTick={playHoverTick}
+        onBack={onBack}
+      />
+    </MenuContainer>
   );
 }
 
@@ -3600,7 +3523,8 @@ export function ControlsScreen({
 ● ./src/components/menus/CreditsScreen.tsx
 ────────────────────────────────────────────────────
 import "./CreditsScreen.css";
-import { Layout, Activity, Waves, Database, ArrowLeft } from "lucide-react";
+import { Layout, Activity, Waves, Database } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuBackButton } from "./MenuPrimitives";
 
 interface CreditsScreenProps {
   onBack: () => void;
@@ -3608,24 +3532,8 @@ interface CreditsScreenProps {
 
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "15px" }}>
-        <h2
-          style={{
-            fontSize: "1.8rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SYSTEM CREDITS
-        </h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          Engine Architecture & Technologies
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="SYSTEM CREDITS" subtitle="Engine Architecture & Technologies" />
 
       <div
         className="credits-block neo-pressed flex-col"
@@ -3661,7 +3569,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           <p
             style={{
               fontSize: "1.2vmin",
-              color: "#4ade80",
+              color: "#4a5568",
               margin: "0.6vmin 0 0",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
@@ -3736,17 +3644,170 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         </div>
       </div>
 
-      <button
-        onClick={onBack}
-        className="neo-btn-led neo-btn-led-focused"
+      <MenuBackButton
+        isFocused={true}
+        onBack={onBack}
         style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: "visible" }}>▶</span>
-      </button>
+      />
+    </MenuContainer>
+  );
+}
+
+
+
+● ./src/components/menus/MenuPrimitives.tsx
+────────────────────────────────────────────────────
+import React from "react";
+import { soundSynth } from "@/core/SoundSynth";
+import { ArrowLeft } from "lucide-react";
+
+interface MenuContainerProps {
+  children: React.ReactNode;
+  className?: string;
+  hasGridOverlay?: boolean;
+  style?: React.CSSProperties;
+}
+
+export function MenuContainer({ children, className = "", hasGridOverlay = false, style }: MenuContainerProps) {
+  return (
+    <div className={`title-screen-container ${className}`} style={style}>
+      {hasGridOverlay && <div className="title-grid-overlay" />}
+      {children}
     </div>
+  );
+}
+
+interface MenuHeaderProps {
+  title: string;
+  subtitle: string;
+}
+
+export function MenuHeader({ title, subtitle }: MenuHeaderProps) {
+  return (
+    <div className="title-screen-header">
+      <div className="title-banner-overhauled">
+        <h1 style={{ textTransform: "uppercase" }}>{title}</h1>
+        <div className="title-subtitle-container">
+          <span className="subtitle-line"></span>
+          <p className="subtitle-text">{subtitle}</p>
+          <span className="subtitle-line"></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isFocused: boolean;
+  onFocused?: () => void;
+  playHoverTick?: () => void;
+  variant?: "large" | "led";
+  indicatorColor?: "green" | "yellow" | "red";
+  mainLabel: React.ReactNode;
+  subLabel?: string;
+  leftIcon?: React.ReactNode;
+}
+
+export function MenuButton({
+  isFocused,
+  onFocused,
+  playHoverTick,
+  variant = "large",
+  indicatorColor = "green",
+  mainLabel,
+  subLabel,
+  leftIcon,
+  className = "",
+  onMouseEnter,
+  ...props
+}: MenuButtonProps) {
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (playHoverTick) {
+      playHoverTick();
+    } else {
+      soundSynth.playSelectTick();
+    }
+    if (onFocused) {
+      onFocused();
+    }
+    if (onMouseEnter) {
+      onMouseEnter(e);
+    }
+  };
+
+  const indicatorClass = isFocused ? `led-${indicatorColor}` : "";
+
+  if (variant === "large") {
+    return (
+      <button
+        className={`neo-btn-large ${isFocused ? "neo-btn-large-focused" : ""} ${className}`}
+        onMouseEnter={handleMouseEnter}
+        {...props}
+      >
+        <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
+        <div className="btn-label-group">
+          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {leftIcon}
+            {mainLabel}
+          </span>
+          {subLabel && <span className="btn-sub-label">{subLabel}</span>}
+        </div>
+        {isFocused && <span className="cursor-arrow-large">▶</span>}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      className={`neo-btn-led ${isFocused ? "neo-btn-led-focused" : ""} ${className}`}
+      onMouseEnter={handleMouseEnter}
+      {...props}
+    >
+      <div className={`btn-indicator-light ${indicatorClass}`} style={isFocused ? undefined : { background: "#1e2430" }} />
+      {leftIcon}
+      <span>{mainLabel}</span>
+      {isFocused && <span className="cursor-arrow" style={{ marginLeft: "auto" }}>▶</span>}
+    </button>
+  );
+}
+
+interface MenuBackButtonProps extends Omit<MenuButtonProps, "mainLabel"> {
+  onBack: () => void;
+  label?: string;
+}
+
+export function MenuBackButton({
+  onBack,
+  label = "Back",
+  isFocused,
+  onFocused,
+  playHoverTick,
+  style,
+  ...props
+}: MenuBackButtonProps) {
+  const defaultStyle: React.CSSProperties = {
+    width: "100%",
+    maxWidth: "38vmin",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "12px",
+    zIndex: 2,
+    ...style
+  };
+
+  return (
+    <MenuButton
+      variant="led"
+      isFocused={isFocused}
+      onFocused={onFocused}
+      playHoverTick={playHoverTick}
+      onClick={onBack}
+      leftIcon={<ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+      mainLabel={label}
+      style={defaultStyle}
+      {...props}
+    />
   );
 }
 
@@ -3820,7 +3881,8 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 ────────────────────────────────────────────────────
 import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
-import { Save, FolderPlus, Copy, Trash2, ArrowLeft } from "lucide-react";
+import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -3849,31 +3911,17 @@ export function SaveSelectScreen({
   playHoverTick,
   setMenuIndex,
 }: SaveSelectScreenProps) {
+  const selectHeaderTitle = isCopyMode
+    ? copySourceIndex === -1
+      ? "CHOOSE SLOT TO COPY"
+      : "CHOOSE WHERE TO COPY"
+    : isEraseMode
+      ? "CHOOSE SLOT TO DELETE"
+      : "CHOOSE A SAVE SLOT";
+
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          {isCopyMode
-            ? copySourceIndex === -1
-              ? "CHOOSE SLOT TO COPY"
-              : "CHOOSE WHERE TO COPY"
-            : isEraseMode
-              ? "CHOOSE SLOT TO DELETE"
-              : "CHOOSE A SAVE SLOT"}
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Select a slot to load your game
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title={selectHeaderTitle} subtitle="Select a slot to load your game" />
 
       <div className="slot-list">
         {slots.map((slot, i) => (
@@ -3945,62 +3993,42 @@ export function SaveSelectScreen({
         style={{ gap: "16px", width: "100%", maxWidth: "420px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
-          <button
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={toggleCopyMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : isCopyMode ? "neo-btn-led-active" : ""}`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Copy size={16} style={{ flexShrink: 0 }} />
-            <span>COPY SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-          </button>
-          <button
+            leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="COPY SLOT"
+            className={isCopyMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isCopyMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
+
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 4}
+            onFocused={() => setMenuIndex(4)}
+            playHoverTick={playHoverTick}
             onClick={toggleEraseMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(4);
-            }}
-            className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : isEraseMode ? "neo-btn-led-active" : ""}`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Trash2 size={16} style={{ flexShrink: 0 }} />
-            <span>DELETE SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-          </button>
+            leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="DELETE SLOT"
+            className={isEraseMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isEraseMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
         </div>
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(5);
-          }}
-          className={`neo-btn-led ${menuIndex === 5 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            padding: "18px",
-            fontSize: "16px",
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 5 ? "visible" : "hidden" }}>▶</span>
-        </button>
+
+        <MenuBackButton
+          isFocused={menuIndex === 5}
+          onFocused={() => setMenuIndex(5)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+          style={{ padding: "18px" }}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }
 
@@ -4008,7 +4036,8 @@ export function SaveSelectScreen({
 
 ● ./src/components/menus/SettingsScreen.tsx
 ────────────────────────────────────────────────────
-import { Volume2, Keyboard, ArrowLeft } from "lucide-react";
+import { Volume2, Keyboard } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SettingsScreenProps {
   menuIndex: number;
@@ -4028,69 +4057,38 @@ export function SettingsScreen({
   setMenuIndex,
 }: SettingsScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SETTINGS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Adjust sounds and change keys
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title="SETTINGS" subtitle="Configure sound decibels and keyboard matrices" />
 
-      <div className="btn-container" style={{ margin: "auto 0" }}>
-        <button
+      <div className="btn-container-overhauled" style={{ zIndex: 2 }}>
+        <MenuButton
+          isFocused={menuIndex === 0}
+          onFocused={() => setMenuIndex(0)}
+          playHoverTick={playHoverTick}
           onClick={onAudio}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(0);
-          }}
-          className={`neo-btn-led ${menuIndex === 0 ? "neo-btn-led-focused" : ""}`}
-        >
-          <div className="btn-indicator-light" />
-          <Volume2 size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          <span>SOUND SETTINGS</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-        </button>
-        <button
+          leftIcon={<Volume2 size={18} strokeWidth={2} style={{ flexShrink: 0 }} />}
+          mainLabel="SOUND SETTINGS"
+          subLabel="ADJUST GAME SOUNDS AND MUSIC VOLUME"
+        />
+
+        <MenuButton
+          isFocused={menuIndex === 1}
+          onFocused={() => setMenuIndex(1)}
+          playHoverTick={playHoverTick}
           onClick={onControls}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(1);
-          }}
-          className={`neo-btn-led ${menuIndex === 1 ? "neo-btn-led-focused" : ""}`}
-        >
-          <div className="btn-indicator-light" />
-          <Keyboard size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          <span>KEYBOARD CONTROLS</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-        </button>
+          leftIcon={<Keyboard size={18} strokeWidth={2} style={{ flexShrink: 0 }} />}
+          mainLabel="KEYBOARD CONTROLS"
+          subLabel="CALIBRATE INPUTS AND REMAP KEYS"
+        />
       </div>
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => {
-          playHoverTick();
-          setMenuIndex(2);
-        }}
-        className={`neo-btn-led ${menuIndex === 2 ? "neo-btn-led-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "240px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-      </button>
-    </div>
+      <MenuBackButton
+        isFocused={menuIndex === 2}
+        onFocused={() => setMenuIndex(2)}
+        playHoverTick={playHoverTick}
+        onBack={onBack}
+      />
+    </MenuContainer>
   );
 }
 
@@ -4100,6 +4098,7 @@ export function SettingsScreen({
 ────────────────────────────────────────────────────
 import { soundSynth } from "@/core/SoundSynth";
 import { Download, ArrowLeft } from "lucide-react";
+import { MenuButton } from "./MenuPrimitives";
 
 interface SourceViewFooterProps {
   onBack: () => void;
@@ -4126,7 +4125,13 @@ function GithubIcon() {
   );
 }
 
-export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength, setActiveIndex }: SourceViewFooterProps) {
+export function SourceViewFooter({
+  onBack,
+  isMobile,
+  activeIndex,
+  visibleNodesLength,
+  setActiveIndex,
+}: SourceViewFooterProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
@@ -4153,16 +4158,13 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         }}
       >
         <div style={{ flex: 1, display: "flex" }}>
-          <a
-            href="https://github.com/stevencasteel/BOX-BATTLE"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
             className="neo-btn"
             style={{
               width: "100%",
               padding: "12px",
               fontSize: "12px",
-              textDecoration: "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -4170,7 +4172,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
             }}
           >
             <GithubIcon />
-          </a>
+          </button>
         </div>
 
         <div style={{ flex: 1, display: "flex" }}>
@@ -4219,67 +4221,35 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         flexShrink: 0,
       }}
     >
-      <a
-        href="https://github.com/stevencasteel/BOX-BATTLE"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`neo-btn-large ${activeIndex === visibleNodesLength ? "neo-btn-large-focused" : ""}`}
-        style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <GithubIcon />
-            GITHUB REPO
-          </span>
-          <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength ? "visible" : "hidden" }}>▶</span>
-      </a>
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength}
+        onFocused={() => setActiveIndex(visibleNodesLength)}
+        onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
+        leftIcon={<GithubIcon />}
+        mainLabel="GITHUB REPO"
+        subLabel="VIEW AND DOWNLOAD CODE ARCHIVE"
+        style={{ flex: 1, boxSizing: "border-box" }}
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 1}
+        onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
-        className={`neo-btn-large ${activeIndex === visibleNodesLength + 1 ? "neo-btn-large-focused" : ""}`}
+        leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="DOWNLOAD SOURCE"
+        subLabel="SAVE ALL CODE AS SINGLE .TXT FILE"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 1);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            DOWNLOAD SOURCE
-          </span>
-          <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 1 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 2}
+        onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
-        className={`neo-btn-large ${activeIndex === visibleNodesLength + 2 ? "neo-btn-large-focused" : ""}`}
+        leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="BACK TO MENU"
+        subLabel="EXIT SOURCE CODE VIEW"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 2);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            BACK TO MENU
-          </span>
-          <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 2 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
     </div>
   );
 }
@@ -4476,7 +4446,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, [treeRoot, expandedDirs]);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -4514,13 +4483,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    if (clampedActiveIndex < visibleNodes.length) {
+    if (activeIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [clampedActiveIndex, visibleNodes.length]);
+  }, [activeIndex, visibleNodes.length]);
 
   return (
     <div
@@ -4561,7 +4530,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === clampedActiveIndex;
+              const isActive = idx === activeIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 
@@ -5131,8 +5100,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
 ● ./src/components/menus/TitleScreen.tsx
 ────────────────────────────────────────────────────
-import "./TitleScreen.css";
 import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton } from "./MenuPrimitives";
+
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;
@@ -5153,99 +5123,53 @@ export function TitleScreen({
   setMenuIndex,
 }: TitleScreenProps) {
   return (
-    <div className="title-screen-container">
-      {/* Structural background line vectors */}
-      <div className="title-grid-overlay" />
-
+    <MenuContainer hasGridOverlay>
       <div className="title-screen-header">
         <div className="system-tag">WELCOME TO THE ARENA</div>
-        <div className="title-banner-overhauled">
-          <h1>BOX BATTLE</h1>
-          <div className="title-subtitle-container">
-            <span className="subtitle-line"></span>
-            <p className="subtitle-text">RETRO ACTION GAME</p>
-            <span className="subtitle-line"></span>
-          </div>
-        </div>
+        <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
       </div>
 
       <div className="title-screen-center">
         <div className="btn-container-overhauled">
-          <button
+          <MenuButton
+            isFocused={menuIndex === 0}
+            onFocused={() => setMenuIndex(0)}
+            playHoverTick={playHoverTick}
             onClick={onPlay}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(0);
-            }}
-            className={`neo-btn-large ${menuIndex === 0 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Gamepad2 size={18} strokeWidth={2} />
-                PLAY GAME
-              </span>
-              <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
-            </div>
-            {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Gamepad2 size={18} strokeWidth={2} />}
+            mainLabel="PLAY GAME"
+            subLabel="CHOOSE A SAVE SLOT TO BEGIN"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 1}
+            onFocused={() => setMenuIndex(1)}
+            playHoverTick={playHoverTick}
             onClick={onSettings}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(1);
-            }}
-            className={`neo-btn-large ${menuIndex === 1 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sliders size={18} strokeWidth={2} />
-                OPTIONS
-              </span>
-              <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
-            </div>
-            {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Sliders size={18} strokeWidth={2} />}
+            mainLabel="OPTIONS"
+            subLabel="ADJUST SOUNDS AND CONTROLS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 2}
+            onFocused={() => setMenuIndex(2)}
+            playHoverTick={playHoverTick}
             onClick={onCredits}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(2);
-            }}
-            className={`neo-btn-large ${menuIndex === 2 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Award size={18} strokeWidth={2} />
-                CREDITS
-              </span>
-              <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
-            </div>
-            {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Award size={18} strokeWidth={2} />}
+            mainLabel="CREDITS"
+            subLabel="GAME CREATOR AND DETAILS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={onSource}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={`neo-btn-large ${menuIndex === 3 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Code2 size={18} strokeWidth={2} />
-                SOURCE CODE
-              </span>
-              <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
-            </div>
-            {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Code2 size={18} strokeWidth={2} />}
+            mainLabel="SOURCE CODE"
+            subLabel="BROWSE CABINET ENGINE FILE TREE"
+          />
         </div>
       </div>
 
@@ -5257,7 +5181,7 @@ export function TitleScreen({
           <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
-    </div>
+    </MenuContainer>
   );
 }
 
@@ -13681,7 +13605,110 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-/* Centralized Large Neomorphic Led Buttons */
+.title-screen-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  padding: 1.5vmin 2.5vmin;
+  position: relative;
+}
+
+.title-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 3.2vmin 3.2vmin;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-screen-header {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5vmin;
+}
+
+.system-tag {
+  font-size: 1.1vmin;
+  color: #4a5568;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 0.5vmin 1.4vmin;
+  border-radius: 0.4vmin;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title-banner-overhauled {
+  text-align: center;
+  margin-top: 1.5vmin;
+  width: 100%;
+}
+
+.title-banner-overhauled h1 {
+  font-size: 4vmin;
+  margin: 0;
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+}
+
+.title-subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vmin;
+  width: 100%;
+  margin-top: 0.8vmin;
+}
+
+.subtitle-line {
+  height: 1px;
+  flex-grow: 1;
+  max-width: 8vmin;
+  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
+}
+
+.subtitle-text {
+  font-size: 1.2vmin;
+  color: var(--signal-green);
+  margin: 0;
+  letter-spacing: 0.35em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.title-screen-center {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.btn-container-overhauled {
+  width: 100%;
+  max-width: 58vmin;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8vmin;
+}
+
 .neo-btn-large {
   display: flex;
   align-items: center;
@@ -13692,8 +13719,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 24px 32px;
-  border-radius: 12px;
+  padding: 2.2vmin 3.2vmin;
+  border-radius: 1.2vmin;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -13718,11 +13745,11 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .neo-btn-large .btn-indicator-light {
-  width: 8px;
-  height: 8px;
+  width: 1vmin;
+  height: 1vmin;
   border-radius: 50%;
   background: #1e2430;
-  margin-right: 24px;
+  margin-right: 2.4vmin;
   transition: all 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
@@ -13744,7 +13771,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .btn-main-label {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: 1.7vmin;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -13759,7 +13786,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .btn-sub-label {
-  font-size: clamp(8px, 2.5vw, 10px);
+  font-size: 1vmin;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -13773,7 +13800,67 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   opacity: 0.85;
 }
 
-/* Centralized Compact Neomorphic Led Buttons */
+.cursor-arrow-large {
+  color: var(--signal-green);
+  font-size: 1.8vmin;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  margin-left: 1vmin;
+}
+
+.cursor-arrow {
+  color: var(--signal-green);
+  font-weight: bold;
+  display: inline-block;
+  animation: arrow-blink 0.4s infinite alternate;
+}
+
+@keyframes arrow-blink {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.title-screen-footer {
+  z-index: 2;
+  width: 100%;
+  margin-top: 1vmin;
+}
+
+.footer-deco-line {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.05) 80%,
+    transparent
+  );
+  width: 100%;
+  margin-bottom: 0.8vmin;
+}
+
+.footer-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9vmin;
+  color: #4a5568;
+  letter-spacing: 0.15em;
+  padding: 0 1.6vmin;
+  text-transform: uppercase;
+}
+
+.footer-center-prompt {
+  color: #718096;
+  font-weight: bold;
+}
+
 .neo-btn-led {
   display: flex;
   align-items: center;
@@ -13949,10 +14036,63 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 @media (max-width: 768px) and (pointer: coarse) {
+  .title-screen-container {
+    padding: 8px 12px;
+  }
+  .title-screen-header {
+    padding-top: 10px;
+  }
+  .system-tag {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+  .title-banner-overhauled {
+    margin-top: 8px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 26px;
+  }
+  .title-subtitle-container {
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .subtitle-text {
+    font-size: 10px;
+  }
+  .btn-container-overhauled {
+    max-width: none;
+    gap: 10px;
+  }
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;
     border-radius: 12px;
+  }
+  .neo-btn-large {
+    padding: 14px 20px;
+    border-radius: 10px;
+  }
+  .neo-btn-large .btn-indicator-light {
+    width: 8px;
+    height: 8px;
+    margin-right: 14px;
+  }
+  .btn-main-label {
+    font-size: 14px;
+  }
+  .btn-sub-label {
+    font-size: 9px;
+  }
+  .cursor-arrow-large {
+    font-size: 14px;
+    margin-left: 10px;
+  }
+  .footer-status-bar {
+    font-size: 7px;
+    padding: 0;
+  }
+  .footer-center-prompt {
+    display: none;
   }
   .led-dot {
     width: 14px;
@@ -13980,8 +14120,24 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   50% { transform: translate(1px, -1px) scale(1.15); filter: brightness(1.2) drop-shadow(0 0 6px var(--signal-yellow-glow)); }
   100% { transform: translate(0, 0) scale(1); }
 }
+
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
+}
+
+@media (max-height: 600px) {
+  .title-screen-header {
+    padding-top: 6px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 2rem;
+  }
+  .btn-container-overhauled {
+    gap: 6px;
+  }
+  .neo-btn-large {
+    padding: 10px 16px;
+  }
 }
 
 

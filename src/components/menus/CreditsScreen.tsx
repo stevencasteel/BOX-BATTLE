@@ -1,5 +1,6 @@
 import "./CreditsScreen.css";
-import { Layout, Activity, Waves, Database, ArrowLeft } from "lucide-react";
+import { Layout, Activity, Waves, Database } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuBackButton } from "./MenuPrimitives";
 
 interface CreditsScreenProps {
   onBack: () => void;
@@ -7,24 +8,8 @@ interface CreditsScreenProps {
 
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner" style={{ marginTop: "15px" }}>
-        <h2
-          style={{
-            fontSize: "1.8rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SYSTEM CREDITS
-        </h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          Engine Architecture & Technologies
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="SYSTEM CREDITS" subtitle="Engine Architecture & Technologies" />
 
       <div
         className="credits-block neo-pressed flex-col"
@@ -60,7 +45,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           <p
             style={{
               fontSize: "1.2vmin",
-              color: "#4ade80",
+              color: "#4a5568",
               margin: "0.6vmin 0 0",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
@@ -135,16 +120,11 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         </div>
       </div>
 
-      <button
-        onClick={onBack}
-        className="neo-btn-led neo-btn-led-focused"
+      <MenuBackButton
+        isFocused={true}
+        onBack={onBack}
         style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: "visible" }}>▶</span>
-      </button>
-    </div>
+      />
+    </MenuContainer>
   );
 }

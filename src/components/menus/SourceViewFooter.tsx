@@ -1,5 +1,6 @@
 import { soundSynth } from "@/core/SoundSynth";
 import { Download, ArrowLeft } from "lucide-react";
+import { MenuButton } from "./MenuPrimitives";
 
 interface SourceViewFooterProps {
   onBack: () => void;
@@ -26,7 +27,13 @@ function GithubIcon() {
   );
 }
 
-export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength, setActiveIndex }: SourceViewFooterProps) {
+export function SourceViewFooter({
+  onBack,
+  isMobile,
+  activeIndex,
+  visibleNodesLength,
+  setActiveIndex,
+}: SourceViewFooterProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
@@ -53,16 +60,13 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         }}
       >
         <div style={{ flex: 1, display: "flex" }}>
-          <a
-            href="https://github.com/stevencasteel/BOX-BATTLE"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
             className="neo-btn"
             style={{
               width: "100%",
               padding: "12px",
               fontSize: "12px",
-              textDecoration: "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -70,7 +74,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
             }}
           >
             <GithubIcon />
-          </a>
+          </button>
         </div>
 
         <div style={{ flex: 1, display: "flex" }}>
@@ -119,67 +123,35 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         flexShrink: 0,
       }}
     >
-      <a
-        href="https://github.com/stevencasteel/BOX-BATTLE"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`neo-btn-large ${activeIndex === visibleNodesLength ? "neo-btn-large-focused" : ""}`}
-        style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <GithubIcon />
-            GITHUB REPO
-          </span>
-          <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength ? "visible" : "hidden" }}>▶</span>
-      </a>
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength}
+        onFocused={() => setActiveIndex(visibleNodesLength)}
+        onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
+        leftIcon={<GithubIcon />}
+        mainLabel="GITHUB REPO"
+        subLabel="VIEW AND DOWNLOAD CODE ARCHIVE"
+        style={{ flex: 1, boxSizing: "border-box" }}
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 1}
+        onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
-        className={`neo-btn-large ${activeIndex === visibleNodesLength + 1 ? "neo-btn-large-focused" : ""}`}
+        leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="DOWNLOAD SOURCE"
+        subLabel="SAVE ALL CODE AS SINGLE .TXT FILE"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 1);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            DOWNLOAD SOURCE
-          </span>
-          <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 1 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
 
-      <button
+      <MenuButton
+        isFocused={activeIndex === visibleNodesLength + 2}
+        onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
-        className={`neo-btn-large ${activeIndex === visibleNodesLength + 2 ? "neo-btn-large-focused" : ""}`}
+        leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="BACK TO MENU"
+        subLabel="EXIT SOURCE CODE VIEW"
         style={{ flex: 1, boxSizing: "border-box" }}
-        onMouseEnter={() => {
-          soundSynth.playSelectTick();
-          setActiveIndex(visibleNodesLength + 2);
-        }}
-      >
-        <div className="btn-indicator-light" />
-        <div className="btn-label-group">
-          <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            BACK TO MENU
-          </span>
-          <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
-        </div>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 2 ? "visible" : "hidden" }}>▶</span>
-      </button>
+      />
     </div>
   );
 }

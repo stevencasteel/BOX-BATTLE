@@ -111,7 +111,6 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, [treeRoot, expandedDirs]);
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const clampedActiveIndex = Math.min(activeIndex, Math.max(0, visibleNodes.length - 1));
 
   const handleDownload = () => {
     soundSynth.playHitConfirm();
@@ -149,13 +148,13 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   }, []);
 
   useEffect(() => {
-    if (clampedActiveIndex < visibleNodes.length) {
+    if (activeIndex < visibleNodes.length) {
       const activeEl = listRef.current?.querySelector(".file-item-active");
       if (activeEl) {
         activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
-  }, [clampedActiveIndex, visibleNodes.length]);
+  }, [activeIndex, visibleNodes.length]);
 
   return (
     <div
@@ -196,7 +195,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             }}
           >
             {visibleNodes.map((node, idx) => {
-              const isActive = idx === clampedActiveIndex;
+              const isActive = idx === activeIndex;
               const isExpanded = node.isDir && !!expandedDirs[node.path];
               const isCurrentlySelected = !node.isDir && node.path === selectedFile;
 

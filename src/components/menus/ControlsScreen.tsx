@@ -15,6 +15,7 @@ import {
   Keyboard,
   Sliders
 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface ControlsScreenProps {
   menuIndex: number;
@@ -93,27 +94,8 @@ export function ControlsScreen({
   const backBtnIndex = isTouchDevice ? 0 : 10;
 
   return (
-    <div
-      className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", alignItems: "center", boxSizing: "border-box", padding: "20px 0" }}
-    >
-      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          CONTROLS
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          {isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"}
-        </p>
-      </div>
+    <MenuContainer style={{ padding: "20px 0" }}>
+      <MenuHeader title="CONTROLS" subtitle={isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"} />
 
       {isTouchDevice ? (
         <div
@@ -175,17 +157,19 @@ export function ControlsScreen({
       ) : (
         <>
           <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
-            <button
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 0}
+              onFocused={() => setMenuIndex(0)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_1");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(0);
-              }}
-              className={`neo-btn-led ${menuIndex === 0 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Keyboard size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 1"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -198,23 +182,21 @@ export function ControlsScreen({
                 color:
                   menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Keyboard size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 1</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 1}
+              onFocused={() => setMenuIndex(1)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("DEFAULT_2");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(1);
-              }}
-              className={`neo-btn-led ${menuIndex === 1 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Cpu size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="PRESET 2"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -227,23 +209,21 @@ export function ControlsScreen({
                 color:
                   menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Cpu size={16} style={{ flexShrink: 0 }} />
-              <span>PRESET 2</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
-            </button>
-            <button
+            />
+
+            <MenuButton
+              variant="led"
+              isFocused={menuIndex === 2}
+              onFocused={() => setMenuIndex(2)}
+              playHoverTick={playHoverTick}
               onClick={() => {
                 settingsManager.setPreset("CUSTOM");
                 soundSynth.playHitConfirm();
                 reloadSaveSlots();
               }}
-              onMouseEnter={() => {
-                playHoverTick();
-                setMenuIndex(2);
-              }}
-              className={`neo-btn-led ${menuIndex === 2 ? "neo-btn-led-focused" : ""}`}
+              leftIcon={<Sliders size={16} style={{ flexShrink: 0 }} />}
+              mainLabel="CUSTOM"
+              showArrow={false}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
@@ -255,12 +235,7 @@ export function ControlsScreen({
                       : "",
                 color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
               }}
-            >
-              <div className="btn-indicator-light" />
-              <Sliders size={16} style={{ flexShrink: 0 }} />
-              <span>CUSTOM</span>
-              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
-            </button>
+            />
           </div>
 
           <div className="binding-board neo-pressed">
@@ -316,20 +291,12 @@ export function ControlsScreen({
         </>
       )}
 
-      <button
-        onClick={onBack}
-        onMouseEnter={() => {
-          playHoverTick();
-          setMenuIndex(backBtnIndex);
-        }}
-        className={`neo-btn-led ${menuIndex === backBtnIndex ? "neo-btn-led-focused" : ""}`}
-        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-      >
-        <div className="btn-indicator-light" />
-        <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        <span>Back</span>
-        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
-      </button>
-    </div>
+      <MenuBackButton
+        isFocused={menuIndex === backBtnIndex}
+        onFocused={() => setMenuIndex(backBtnIndex)}
+        playHoverTick={playHoverTick}
+        onBack={onBack}
+      />
+    </MenuContainer>
   );
 }

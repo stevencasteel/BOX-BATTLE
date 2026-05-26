@@ -1,6 +1,7 @@
 import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
-import { Save, FolderPlus, Copy, Trash2, ArrowLeft } from "lucide-react";
+import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -29,31 +30,17 @@ export function SaveSelectScreen({
   playHoverTick,
   setMenuIndex,
 }: SaveSelectScreenProps) {
+  const selectHeaderTitle = isCopyMode
+    ? copySourceIndex === -1
+      ? "CHOOSE SLOT TO COPY"
+      : "CHOOSE WHERE TO COPY"
+    : isEraseMode
+      ? "CHOOSE SLOT TO DELETE"
+      : "CHOOSE A SAVE SLOT";
+
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
-        <h2
-          style={{
-            fontSize: "2rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          {isCopyMode
-            ? copySourceIndex === -1
-              ? "CHOOSE SLOT TO COPY"
-              : "CHOOSE WHERE TO COPY"
-            : isEraseMode
-              ? "CHOOSE SLOT TO DELETE"
-              : "CHOOSE A SAVE SLOT"}
-        </h2>
-        <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Select a slot to load your game
-        </p>
-      </div>
+    <MenuContainer>
+      <MenuHeader title={selectHeaderTitle} subtitle="Select a slot to load your game" />
 
       <div className="slot-list">
         {slots.map((slot, i) => (
@@ -125,61 +112,43 @@ export function SaveSelectScreen({
         style={{ gap: "16px", width: "100%", maxWidth: "420px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
-          <button
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={toggleCopyMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={`neo-btn-led ${menuIndex === 3 ? "neo-btn-led-focused" : isCopyMode ? "neo-btn-led-active" : ""}`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Copy size={16} style={{ flexShrink: 0 }} />
-            <span>COPY SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
-          </button>
-          <button
+            leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="COPY SLOT"
+            showArrow={false}
+            className={isCopyMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isCopyMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
+
+          <MenuButton
+            variant="led"
+            isFocused={menuIndex === 4}
+            onFocused={() => setMenuIndex(4)}
+            playHoverTick={playHoverTick}
             onClick={toggleEraseMode}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(4);
-            }}
-            className={`neo-btn-led ${menuIndex === 4 ? "neo-btn-led-focused" : isEraseMode ? "neo-btn-led-active" : ""}`}
-            style={{
-              flex: 1,
-              padding: "18px",
-              fontSize: "16px",
-            }}
-          >
-            <div className="btn-indicator-light" />
-            <Trash2 size={16} style={{ flexShrink: 0 }} />
-            <span>DELETE SLOT</span>
-            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
-          </button>
+            leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
+            mainLabel="DELETE SLOT"
+            showArrow={false}
+            className={isEraseMode ? "neo-btn-led-active" : ""}
+            indicatorColor={isEraseMode ? "yellow" : "green"}
+            style={{ flex: 1, padding: "18px" }}
+          />
         </div>
-        <button
-          onClick={onBack}
-          onMouseEnter={() => {
-            playHoverTick();
-            setMenuIndex(5);
-          }}
-          className={`neo-btn-led ${menuIndex === 5 ? "neo-btn-led-focused" : ""}`}
-          style={{
-            padding: "18px",
-            fontSize: "16px",
-          }}
-        >
-          <div className="btn-indicator-light" />
-          <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-          <span>Back</span>
-          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 5 ? "visible" : "hidden" }}>▶</span>
-        </button>
+
+        <MenuBackButton
+          isFocused={menuIndex === 5}
+          onFocused={() => setMenuIndex(5)}
+          playHoverTick={playHoverTick}
+          onBack={onBack}
+          style={{ padding: "18px" }}
+        />
       </div>
-    </div>
+    </MenuContainer>
   );
 }

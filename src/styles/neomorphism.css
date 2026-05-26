@@ -49,7 +49,110 @@
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
-/* Centralized Large Neomorphic Led Buttons */
+.title-screen-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  padding: 1.5vmin 2.5vmin;
+  position: relative;
+}
+
+.title-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 3.2vmin 3.2vmin;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-screen-header {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5vmin;
+}
+
+.system-tag {
+  font-size: 1.1vmin;
+  color: #4a5568;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 0.5vmin 1.4vmin;
+  border-radius: 0.4vmin;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.title-banner-overhauled {
+  text-align: center;
+  margin-top: 1.5vmin;
+  width: 100%;
+}
+
+.title-banner-overhauled h1 {
+  font-size: 4vmin;
+  margin: 0;
+  letter-spacing: 0.22em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+}
+
+.title-subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vmin;
+  width: 100%;
+  margin-top: 0.8vmin;
+}
+
+.subtitle-line {
+  height: 1px;
+  flex-grow: 1;
+  max-width: 8vmin;
+  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
+}
+
+.subtitle-text {
+  font-size: 1.2vmin;
+  color: var(--signal-green);
+  margin: 0;
+  letter-spacing: 0.35em;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.title-screen-center {
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.btn-container-overhauled {
+  width: 100%;
+  max-width: 58vmin;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8vmin;
+}
+
 .neo-btn-large {
   display: flex;
   align-items: center;
@@ -60,8 +163,8 @@
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 24px 32px;
-  border-radius: 12px;
+  padding: 2.2vmin 3.2vmin;
+  border-radius: 1.2vmin;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -86,11 +189,11 @@
 }
 
 .neo-btn-large .btn-indicator-light {
-  width: 8px;
-  height: 8px;
+  width: 1vmin;
+  height: 1vmin;
   border-radius: 50%;
   background: #1e2430;
-  margin-right: 24px;
+  margin-right: 2.4vmin;
   transition: all 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
@@ -112,7 +215,7 @@
 }
 
 .btn-main-label {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: 1.7vmin;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -127,7 +230,7 @@
 }
 
 .btn-sub-label {
-  font-size: clamp(8px, 2.5vw, 10px);
+  font-size: 1vmin;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -141,7 +244,67 @@
   opacity: 0.85;
 }
 
-/* Centralized Compact Neomorphic Led Buttons */
+.cursor-arrow-large {
+  color: var(--signal-green);
+  font-size: 1.8vmin;
+  font-weight: bold;
+  animation: arrow-blink 0.4s infinite alternate;
+  margin-left: 1vmin;
+}
+
+.cursor-arrow {
+  color: var(--signal-green);
+  font-weight: bold;
+  display: inline-block;
+  animation: arrow-blink 0.4s infinite alternate;
+}
+
+@keyframes arrow-blink {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.title-screen-footer {
+  z-index: 2;
+  width: 100%;
+  margin-top: 1vmin;
+}
+
+.footer-deco-line {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0.05) 80%,
+    transparent
+  );
+  width: 100%;
+  margin-bottom: 0.8vmin;
+}
+
+.footer-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9vmin;
+  color: #4a5568;
+  letter-spacing: 0.15em;
+  padding: 0 1.6vmin;
+  text-transform: uppercase;
+}
+
+.footer-center-prompt {
+  color: #718096;
+  font-weight: bold;
+}
+
 .neo-btn-led {
   display: flex;
   align-items: center;
@@ -317,10 +480,63 @@
 }
 
 @media (max-width: 768px) and (pointer: coarse) {
+  .title-screen-container {
+    padding: 8px 12px;
+  }
+  .title-screen-header {
+    padding-top: 10px;
+  }
+  .system-tag {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+  .title-banner-overhauled {
+    margin-top: 8px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 26px;
+  }
+  .title-subtitle-container {
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .subtitle-text {
+    font-size: 10px;
+  }
+  .btn-container-overhauled {
+    max-width: none;
+    gap: 10px;
+  }
   .neo-btn {
     padding: 16px 32px;
     font-size: 15px;
     border-radius: 12px;
+  }
+  .neo-btn-large {
+    padding: 14px 20px;
+    border-radius: 10px;
+  }
+  .neo-btn-large .btn-indicator-light {
+    width: 8px;
+    height: 8px;
+    margin-right: 14px;
+  }
+  .btn-main-label {
+    font-size: 14px;
+  }
+  .btn-sub-label {
+    font-size: 9px;
+  }
+  .cursor-arrow-large {
+    font-size: 14px;
+    margin-left: 10px;
+  }
+  .footer-status-bar {
+    font-size: 7px;
+    padding: 0;
+  }
+  .footer-center-prompt {
+    display: none;
   }
   .led-dot {
     width: 14px;
@@ -348,6 +564,22 @@
   50% { transform: translate(1px, -1px) scale(1.15); filter: brightness(1.2) drop-shadow(0 0 6px var(--signal-yellow-glow)); }
   100% { transform: translate(0, 0) scale(1); }
 }
+
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
+}
+
+@media (max-height: 600px) {
+  .title-screen-header {
+    padding-top: 6px;
+  }
+  .title-banner-overhauled h1 {
+    font-size: 2rem;
+  }
+  .btn-container-overhauled {
+    gap: 6px;
+  }
+  .neo-btn-large {
+    padding: 10px 16px;
+  }
 }

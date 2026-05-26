@@ -1,5 +1,6 @@
-import "./TitleScreen.css";
 import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
+import { MenuContainer, MenuHeader, MenuButton } from "./MenuPrimitives";
+
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;
@@ -20,99 +21,53 @@ export function TitleScreen({
   setMenuIndex,
 }: TitleScreenProps) {
   return (
-    <div className="title-screen-container">
-      {/* Structural background line vectors */}
-      <div className="title-grid-overlay" />
-
+    <MenuContainer hasGridOverlay>
       <div className="title-screen-header">
         <div className="system-tag">WELCOME TO THE ARENA</div>
-        <div className="title-banner-overhauled">
-          <h1>BOX BATTLE</h1>
-          <div className="title-subtitle-container">
-            <span className="subtitle-line"></span>
-            <p className="subtitle-text">RETRO ACTION GAME</p>
-            <span className="subtitle-line"></span>
-          </div>
-        </div>
+        <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
       </div>
 
       <div className="title-screen-center">
         <div className="btn-container-overhauled">
-          <button
+          <MenuButton
+            isFocused={menuIndex === 0}
+            onFocused={() => setMenuIndex(0)}
+            playHoverTick={playHoverTick}
             onClick={onPlay}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(0);
-            }}
-            className={`neo-btn-large ${menuIndex === 0 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Gamepad2 size={18} strokeWidth={2} />
-                PLAY GAME
-              </span>
-              <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
-            </div>
-            {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Gamepad2 size={18} strokeWidth={2} />}
+            mainLabel="PLAY GAME"
+            subLabel="CHOOSE A SAVE SLOT TO BEGIN"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 1}
+            onFocused={() => setMenuIndex(1)}
+            playHoverTick={playHoverTick}
             onClick={onSettings}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(1);
-            }}
-            className={`neo-btn-large ${menuIndex === 1 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sliders size={18} strokeWidth={2} />
-                OPTIONS
-              </span>
-              <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
-            </div>
-            {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Sliders size={18} strokeWidth={2} />}
+            mainLabel="OPTIONS"
+            subLabel="ADJUST SOUNDS AND CONTROLS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 2}
+            onFocused={() => setMenuIndex(2)}
+            playHoverTick={playHoverTick}
             onClick={onCredits}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(2);
-            }}
-            className={`neo-btn-large ${menuIndex === 2 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Award size={18} strokeWidth={2} />
-                CREDITS
-              </span>
-              <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
-            </div>
-            {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Award size={18} strokeWidth={2} />}
+            mainLabel="CREDITS"
+            subLabel="GAME CREATOR AND DETAILS"
+          />
 
-          <button
+          <MenuButton
+            isFocused={menuIndex === 3}
+            onFocused={() => setMenuIndex(3)}
+            playHoverTick={playHoverTick}
             onClick={onSource}
-            onMouseEnter={() => {
-              playHoverTick();
-              setMenuIndex(3);
-            }}
-            className={`neo-btn-large ${menuIndex === 3 ? "neo-btn-large-focused" : ""}`}
-          >
-            <div className="btn-indicator-light" />
-            <div className="btn-label-group">
-              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Code2 size={18} strokeWidth={2} />
-                SOURCE CODE
-              </span>
-              <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
-            </div>
-            {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
-          </button>
+            leftIcon={<Code2 size={18} strokeWidth={2} />}
+            mainLabel="SOURCE CODE"
+            subLabel="BROWSE CABINET ENGINE FILE TREE"
+          />
         </div>
       </div>
 
@@ -124,6 +79,6 @@ export function TitleScreen({
           <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
-    </div>
+    </MenuContainer>
   );
 }
