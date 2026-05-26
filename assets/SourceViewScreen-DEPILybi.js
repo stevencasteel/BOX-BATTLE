@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-CuRb1yy1.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-Bdvlu4Ih.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6444,10 +6444,18 @@ export class StateMachine {
   PLAYER_JUMP_FORCE: 680,
   PLAYER_WALL_SLIDE_SPEED: 120,
   PLAYER_DASH_SPEED: 1400,
+  PLAYER_ACCEL: 12.0,
+  PLAYER_DECEL: 16.0,
 
   // Boss Kinematics
   BOSS_PATROL_SPEED_BASE: 200,
   BOSS_LUNGE_SPEED_BASE: 1200,
+  BOSS_ACCEL: 6.0,
+  BOSS_DECEL: 8.0,
+
+  // Minion Kinematics
+  MINION_ACCEL: 5.0,
+  MINION_DECEL: 7.0,
 
   // Combat Damage
   PLAYER_MELEE_DAMAGE_BASE: 1,
@@ -9040,6 +9048,7 @@ export class Boss extends BaseEntity {
   }
 }
 `,"src/entities/BossStates.ts":`import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { eventBroker } from "@/core/eventBroker";
@@ -9081,6 +9090,7 @@ export class BossCooldownState extends BossState {
 
   public update(dt: number): void {
     this.duration -= dt;
+    this.owner.velocity.x += (0 - this.owner.velocity.x) * UNITS.BOSS_DECEL * dt;
     if (this.duration <= 0) {
       this.owner.stateMachine.changeState(this.owner.patrolState);
     }
@@ -9101,7 +9111,8 @@ export class BossPatrolState extends BossState {
     this.duration -= dt;
     const physics = this.owner.getComponent(PhysicsComponent);
 
-    this.owner.velocity.x = this.owner.facingDirection * this.owner.patrolSpeed;
+    const targetSpeed = this.owner.facingDirection * this.owner.patrolSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.BOSS_ACCEL * dt;
 
     if (physics) {
       if (physics.isOnWallLeft) {
@@ -9259,7 +9270,8 @@ export class BossLungeState extends BossState {
 
   public update(dt: number): void {
     this.duration -= dt;
-    this.owner.velocity.x = this.owner.facingDirection * this.owner.lungeSpeed;
+    const targetSpeed = this.owner.facingDirection * this.owner.lungeSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.BOSS_ACCEL * dt;
 
     const physics = this.owner.getComponent(PhysicsComponent);
     const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
@@ -9649,6 +9661,7 @@ export class Minion extends BaseEntity {
 `,"src/entities/MinionBehaviors.ts":`// Deprecated. Minion state updates are polymorphically handled inside MinionStates.ts.
 export {};
 `,"src/entities/MinionStates.ts":`import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
 import { Minion } from "./Minion";
 
 export abstract class MinionState implements IState {
@@ -9716,7 +9729,7 @@ export class LancerPatrolState extends MinionState {
   }
 
   public update(_dt: number): void {
-    minionPatrolMovement(this.owner);
+    minionPatrolMovement(this.owner, _dt);
 
     const player = this.owner.world.player;
     const playerValid = player && !player.isDead;
@@ -9794,8 +9807,10 @@ export class LancerCooldownState extends MinionState {
   public exit(): void {}
 }
 
-function minionPatrolMovement(minion: Minion) {
-  minion.velocity.x = minion.facingDirection * minion.patrolSpeed;
+function minionPatrolMovement(minion: Minion, dt: number) {
+  const targetSpeed = minion.facingDirection * minion.patrolSpeed;
+  const rate = targetSpeed !== 0 ? UNITS.MINION_ACCEL : UNITS.MINION_DECEL;
+  minion.velocity.x += (targetSpeed - minion.velocity.x) * rate * dt;
   const physics = minion.physics;
   if (physics) {
     if (physics.isOnWallLeft) minion.facingDirection = 1;
@@ -9817,8 +9832,10 @@ export class FlyerPatrolState extends MinionState {
     if (dist < 5) {
       this.owner.flyerTarget = this.owner.flyerTarget === "A" ? "B" : "A";
     } else {
-      this.owner.velocity.x = (dx / dist) * this.owner.patrolSpeed;
-      this.owner.velocity.y = (dy / dist) * this.owner.patrolSpeed;
+      const targetVelX = (dx / dist) * this.owner.patrolSpeed;
+      const targetVelY = (dy / dist) * this.owner.patrolSpeed;
+      this.owner.velocity.x += (targetVelX - this.owner.velocity.x) * UNITS.MINION_ACCEL * _dt;
+      this.owner.velocity.y += (targetVelY - this.owner.velocity.y) * UNITS.MINION_ACCEL * _dt;
     }
 
     const player = this.owner.world.player;
@@ -10193,7 +10210,9 @@ export class Player extends BaseEntity {
       const friction = 2000.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
     } else {
-      this.velocity.x = moveAxis * this.moveSpeed;
+      const targetSpeed = moveAxis * this.moveSpeed;
+      const rate = moveAxis !== 0 ? UNITS.PLAYER_ACCEL : UNITS.PLAYER_DECEL;
+      this.velocity.x += (targetSpeed - this.velocity.x) * rate * dt;
     }
 
     if (moveAxis !== 0) {
