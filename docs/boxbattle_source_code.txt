@@ -2,11 +2,14 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/25/2026, 10:02:20 PM
+ [SYSTEM] Generated: 5/25/2026, 10:18:11 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
 .
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
 ├── dist/ (contents skipped)
 ├── docs/
 │   ├── AI_INSTRUCTIONS.txt
@@ -143,6 +146,59 @@
 
 
 ─── SOURCE FILES ───────────────────────────────────
+
+● ./.github/workflows/deploy.yml
+────────────────────────────────────────────────────
+name: Deploy to GitHub Pages and Itch.io
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+
+      - name: Push to Itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          ./butler push dist stevencasteel/boxbattle:html5
+
+
 
 ● ./README.md
 ────────────────────────────────────────────────────
@@ -691,14 +747,15 @@ function shouldInclude(filePath) {
     return false;
   }
 
-  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', '.github', 'BOX_BATTLE_ARCHIVE'];
-  if (ignoredPaths.some(p => relPath.startsWith(p) || relPath.includes(`/${p}/`))) return false;
+  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', 'BOX_BATTLE_ARCHIVE'];
+  const segments = relPath.split('/');
+  if (segments.some(segment => ignoredPaths.includes(segment))) return false;
   
   const boilerplateConfigs = ['.DS_Store', 'package-lock.json', 'tsconfig.tsbuildinfo'];
   if (boilerplateConfigs.includes(path.basename(relPath))) return false;
 
   const ext = path.extname(relPath);
-  const allowedExts = ['.ts', '.tsx', '.js', '.jsx', '.css', '.html', '.json', '.md', '.txt', '.command'];
+  const allowedExts = ['.ts', '.tsx', '.js', '.jsx', '.css', '.html', '.json', '.md', '.txt', '.command', '.yml', '.yaml'];
   return allowedExts.includes(ext);
 }
 
@@ -708,7 +765,9 @@ function getAllFiles(dir, fileList = []) {
     const filePath = path.join(dir, file);
     const fileName = path.basename(filePath);
     if (fs.statSync(filePath).isDirectory()) {
-      if (!fileName.startsWith('.') && fileName !== 'node_modules' && fileName !== 'dist') {
+      const isAllowedDotDir = fileName === '.github';
+      const isIgnoredDotDir = fileName.startsWith('.') && !isAllowedDotDir;
+      if (!isIgnoredDotDir && fileName !== 'node_modules' && fileName !== 'dist') {
         getAllFiles(filePath, fileList);
       }
     } else {
@@ -732,7 +791,7 @@ function generateTree(dir, prefix = '') {
       return { name: file, isDir, path: filePath };
     })
     .filter(item => {
-      if (item.name.startsWith('.') && item.name !== '.env') return false;
+      if (item.name.startsWith('.') && item.name !== '.env' && item.name !== '.github') return false;
       return true;
     })
     .sort((a, b) => {

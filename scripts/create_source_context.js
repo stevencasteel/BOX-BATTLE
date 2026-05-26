@@ -23,14 +23,15 @@ function shouldInclude(filePath) {
     return false;
   }
 
-  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', '.github', 'BOX_BATTLE_ARCHIVE'];
-  if (ignoredPaths.some(p => relPath.startsWith(p) || relPath.includes(`/${p}/`))) return false;
+  const ignoredPaths = ['node_modules', '.git', 'dist', '.vscode', 'BOX_BATTLE_ARCHIVE'];
+  const segments = relPath.split('/');
+  if (segments.some(segment => ignoredPaths.includes(segment))) return false;
   
   const boilerplateConfigs = ['.DS_Store', 'package-lock.json', 'tsconfig.tsbuildinfo'];
   if (boilerplateConfigs.includes(path.basename(relPath))) return false;
 
   const ext = path.extname(relPath);
-  const allowedExts = ['.ts', '.tsx', '.js', '.jsx', '.css', '.html', '.json', '.md', '.txt', '.command'];
+  const allowedExts = ['.ts', '.tsx', '.js', '.jsx', '.css', '.html', '.json', '.md', '.txt', '.command', '.yml', '.yaml'];
   return allowedExts.includes(ext);
 }
 
@@ -40,7 +41,9 @@ function getAllFiles(dir, fileList = []) {
     const filePath = path.join(dir, file);
     const fileName = path.basename(filePath);
     if (fs.statSync(filePath).isDirectory()) {
-      if (!fileName.startsWith('.') && fileName !== 'node_modules' && fileName !== 'dist') {
+      const isAllowedDotDir = fileName === '.github';
+      const isIgnoredDotDir = fileName.startsWith('.') && !isAllowedDotDir;
+      if (!isIgnoredDotDir && fileName !== 'node_modules' && fileName !== 'dist') {
         getAllFiles(filePath, fileList);
       }
     } else {
@@ -64,7 +67,7 @@ function generateTree(dir, prefix = '') {
       return { name: file, isDir, path: filePath };
     })
     .filter(item => {
-      if (item.name.startsWith('.') && item.name !== '.env') return false;
+      if (item.name.startsWith('.') && item.name !== '.env' && item.name !== '.github') return false;
       return true;
     })
     .sort((a, b) => {
