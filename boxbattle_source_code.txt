@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 5:00:03 PM
+ [SYSTEM] Generated: 5/26/2026, 5:27:39 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -14,6 +14,7 @@
 │   ├── AI_INSTRUCTIONS.txt
 │   ├── boxbattle_source_code.txt
 │   ├── DESIGN_EXCLUSIONS.txt
+│   ├── MUSIC_ARCHITECTURE.txt
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
 ├── public/
@@ -452,6 +453,66 @@ dashes, or boss phase changes).
 
 
 
+● ./docs/MUSIC_ARCHITECTURE.txt
+────────────────────────────────────────────────────
+===========================================================================
+  BOX BATTLE WEB CABINET // MUSICAL HARMONY & ACOUSTIC THEORY
+  Technical Specification for Scale Chaining & Auditory Feedback
+===========================================================================
+
+1. HARMONIC ROOT AND MODE SELECTION
+-----------------------------------
+The background synth sequences reside strictly in C Natural Minor (C Aeolian)
+and periodically pivot through C Harmonic Minor (introducing the B-natural major 
+dominant turnaround). 
+
+To ensure combat sound effects slice cleanly through the dense lower-register 
+bass synthesizer frequencies, the auditory accretion is mapped to the C Dorian 
+Mode:
+  Scale: C, D, Eb, F, G, A, Bb (1, 2, b3, 4, 5, 6, b7)
+
+The major 6th scale degree (A-natural, 1.6818 ratio) provides a bright, 
+heroic, "space-knight" acoustic tone that prevents harmonic mud and gives 
+satisfying auditory feedback upon skill execution.
+
+
+2. EQUAL TEMPERAMENT FREQUENCY SCALING
+--------------------------------------
+To calculate in-key pitches dynamically for sfx, we utilize standard 12-Tone 
+Equal Temperament (12-TET) mathematical multipliers:
+  Multiplier = 2^(n/12)
+
+The C Dorian Mode multiplier ratios are:
+  C   (Unison):  1.0000
+  D   (Maj 2nd): 1.1225
+  Eb  (Min 3rd): 1.1892
+  F   (Perf 4):  1.3348
+  G   (Perf 5):  1.4983
+  A   (Maj 6th): 1.6818
+  Bb  (Min 7th): 1.7818
+  C   (Octave):  2.0000
+
+
+3. SYSTEM ACCRETION INTEGRATION
+-------------------------------
+3.1 State Tracking:
+    The Zustand gameplay store ('src/store/useGameStore.ts') maintains an 
+    active combo tracker ('comboCounter: number').
+
+3.2 Accumulation Rules:
+    - Increments with each successful hit (BOSS_HURT, MINION_HURT).
+    - Resets immediately back to zero when the player lands on the floor 
+      (PLAYER_LANDED) or receives contact damage (PLAYER_HURT).
+
+3.3 SFX Chaining:
+    - Hit confirm strikes in 'BossSFX.ts' are grounded to C5 (523.25 Hz) and 
+      pitch up in 12-TET equal intervals, looping with octave multiplications
+      if the combo exceeds 12.
+    - Slashes and downward pogo bounces in 'PlayerSFX.ts' scale their base 
+      oscillators relative to the active scale multiplier.
+
+
+
 ● ./docs/TODO.txt
 ────────────────────────────────────────────────────
 ===========================================================================
@@ -479,18 +540,6 @@ Physics reaction knockback from minion when you hit it.
 
 
 Reactive Spring-Loaded HUD Elements
-
-
-Fireball Charge AV & Haptic Synergy: The player’s sprite will physically pulse and wobble based on the fireball charge level. When Level 2 is achieved, it triggers a sharp scale deformation and a controller pop.
-
-Dynamic Dash Wind Trails: High-speed wind resistance lines are generated behind the player as they dash, aligning with their trajectory angle.
-
-Continuous Friction Sparks (Wall Slide): Sliding down walls generates continuous bright-yellow metal friction sparks, scaling with vertical speed.
-
-Enhanced Ground Landing Impact: Landing on the floor triggers directional dust puffs that spread outward.
-
-
-
 
 
 
@@ -9201,6 +9250,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -9411,8 +9463,13 @@ export class BossSFX {
     this.entityComboMap.set(targetId, combo);
 
     const preset = SFX_PRESETS.boss.hit_confirm;
-    const comboMultiplier = 1.0 + combo.hitSequenceCount * 0.12;
-    const pitchAdjustedFreq = preset.synthFreq * comboMultiplier;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+    
+    const baseFreq = 523.25;
+    const pitchAdjustedFreq = baseFreq * ratio;
 
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
       this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
@@ -9527,6 +9584,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -9743,9 +9803,16 @@ export class PlayerSFX {
 
   public playFireballLvl1(x?: number) {
     const preset = SFX_PRESETS.player.fireball_lvl1;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("fireball_lvl1", 0, x, this.playerPanner, (now) => {
-      this.slashSynth.triggerAttackRelease(preset.frequency, "8n", now);
-      this.slashSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.slashSynth.triggerAttackRelease(baseFreq, "8n", now);
+      this.slashSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
@@ -9793,9 +9860,16 @@ export class PlayerSFX {
 
   public playPogo(x?: number) {
     const preset = SFX_PRESETS.player.pogo;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("pogo", 80, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(preset.frequency, "16n", now);
-      this.pogoSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.pogoSynth.triggerAttackRelease(baseFreq, "16n", now);
+      this.pogoSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
@@ -13936,6 +14010,15 @@ export function useEngineSubscriptions(
       eventBroker.subscribe("CLEAR_DIALOGUES", () => {
         resetRef.current();
       }),
+      eventBroker.subscribe("PLAYER_LANDED", () => {
+        useGameplayStore.getState().resetCombo();
+      }),
+      eventBroker.subscribe("BOSS_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
+      eventBroker.subscribe("MINION_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
     ];
 
     return () => {
@@ -14803,6 +14886,9 @@ interface GameplayState {
   triggerGlitch: (duration?: number) => void;
   triggerBossDefeat: (x: number, y: number) => void;
   resetGameSession: () => void;
+  comboCounter: number;
+  incrementCombo: () => void;
+  resetCombo: () => void;
 }
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
@@ -14812,12 +14898,16 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   determination: 0,
   isGlitching: false,
   bossDeathCoordinates: null,
+  comboCounter: 0,
+  incrementCombo: () => set((state) => ({ comboCounter: state.comboCounter + 1 })),
+  resetCombo: () => set({ comboCounter: 0 }),
   setPlayerHP: (hp) => {
     const current = get().playerHP;
     if (hp !== current) {
       set({ playerHP: hp });
       if (hp < current) {
         get().triggerGlitch(150);
+        get().resetCombo();
 
         if (typeof document !== "undefined") {
           const panel = document.querySelector(".cabinet-status-panel");
@@ -14861,6 +14951,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       determination: 0,
       isGlitching: false,
       bossDeathCoordinates: null,
+      comboCounter: 0,
     });
   },
 }));

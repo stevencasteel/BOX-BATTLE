@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-965abXbo.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-IDXGlnxo.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8283,6 +8283,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -8493,8 +8496,13 @@ export class BossSFX {
     this.entityComboMap.set(targetId, combo);
 
     const preset = SFX_PRESETS.boss.hit_confirm;
-    const comboMultiplier = 1.0 + combo.hitSequenceCount * 0.12;
-    const pitchAdjustedFreq = preset.synthFreq * comboMultiplier;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+    
+    const baseFreq = 523.25;
+    const pitchAdjustedFreq = baseFreq * ratio;
 
     this.helper.execute("hit_confirm", 40, x, this.impactPanner, (now) => {
       this.hitSynth.triggerAttackRelease(preset.metalNote, "16n", now);
@@ -8599,6 +8607,9 @@ import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
+import { useGameplayStore } from "@/store/useGameStore";
+
+const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -8815,9 +8826,16 @@ export class PlayerSFX {
 
   public playFireballLvl1(x?: number) {
     const preset = SFX_PRESETS.player.fireball_lvl1;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("fireball_lvl1", 0, x, this.playerPanner, (now) => {
-      this.slashSynth.triggerAttackRelease(preset.frequency, "8n", now);
-      this.slashSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.slashSynth.triggerAttackRelease(baseFreq, "8n", now);
+      this.slashSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
@@ -8865,9 +8883,16 @@ export class PlayerSFX {
 
   public playPogo(x?: number) {
     const preset = SFX_PRESETS.player.pogo;
+    const comboCounter = useGameplayStore.getState().comboCounter;
+    const scaleIndex = comboCounter % DORIAN_RATIOS.length;
+    const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
+    const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
     this.helper.execute("pogo", 80, x, this.playerPanner, (now) => {
-      this.pogoSynth.triggerAttackRelease(preset.frequency, "16n", now);
-      this.pogoSynth.frequency.rampTo(preset.targetFrequency, preset.rampDuration, now);
+      const baseFreq = preset.frequency * ratio;
+      const targetFreq = preset.targetFrequency * ratio;
+      this.pogoSynth.triggerAttackRelease(baseFreq, "16n", now);
+      this.pogoSynth.frequency.rampTo(targetFreq, preset.rampDuration, now);
     });
   }
 
@@ -12868,6 +12893,15 @@ export function useEngineSubscriptions(
       eventBroker.subscribe("CLEAR_DIALOGUES", () => {
         resetRef.current();
       }),
+      eventBroker.subscribe("PLAYER_LANDED", () => {
+        useGameplayStore.getState().resetCombo();
+      }),
+      eventBroker.subscribe("BOSS_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
+      eventBroker.subscribe("MINION_HURT", () => {
+        useGameplayStore.getState().incrementCombo();
+      }),
     ];
 
     return () => {
@@ -13680,6 +13714,9 @@ interface GameplayState {
   triggerGlitch: (duration?: number) => void;
   triggerBossDefeat: (x: number, y: number) => void;
   resetGameSession: () => void;
+  comboCounter: number;
+  incrementCombo: () => void;
+  resetCombo: () => void;
 }
 
 export const useGameplayStore = create<GameplayState>((set, get) => ({
@@ -13689,12 +13726,16 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   determination: 0,
   isGlitching: false,
   bossDeathCoordinates: null,
+  comboCounter: 0,
+  incrementCombo: () => set((state) => ({ comboCounter: state.comboCounter + 1 })),
+  resetCombo: () => set({ comboCounter: 0 }),
   setPlayerHP: (hp) => {
     const current = get().playerHP;
     if (hp !== current) {
       set({ playerHP: hp });
       if (hp < current) {
         get().triggerGlitch(150);
+        get().resetCombo();
 
         if (typeof document !== "undefined") {
           const panel = document.querySelector(".cabinet-status-panel");
@@ -13738,6 +13779,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       determination: 0,
       isGlitching: false,
       bossDeathCoordinates: null,
+      comboCounter: 0,
     });
   },
 }));
