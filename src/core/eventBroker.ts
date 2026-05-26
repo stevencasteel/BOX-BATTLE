@@ -18,7 +18,7 @@ export type GameEventMap = {
   GAME_OVER: void;
   VICTORY: void;
   CLEAR_DIALOGUES: void;
-  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number };
+  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line" };
   SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
   SPAWN_BLAST: { x: number; y: number; color: string };
   PLAYER_LANDED: void;

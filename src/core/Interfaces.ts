@@ -28,7 +28,7 @@ export interface Particle {
   size: number;
   life: number;
   maxLife: number;
-  shape: "spark" | "dust" | "ring";
+  shape: "spark" | "dust" | "ring" | "line";
   drag?: number;
   startColor?: string;
   endColor?: string;

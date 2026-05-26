@@ -11,7 +11,7 @@ export class PoolableParticle implements Particle, IPoolable {
   public size = 0;
   public life = 0;
   public maxLife = 0;
-  public shape: "spark" | "dust" | "ring" = "spark";
+  public shape: "spark" | "dust" | "ring" | "line" = "spark";
   public drag = 1.0;
   public startColor = "";
   public endColor = "";
@@ -26,7 +26,7 @@ export class PoolableParticle implements Particle, IPoolable {
     color: string,
     size: number,
     life: number,
-    shape: "spark" | "dust" | "ring",
+    shape: "spark" | "dust" | "ring" | "line",
     drag: number = 1.0,
     startColor: string = "",
     endColor: string = "",
@@ -68,7 +68,7 @@ export class ParticleSystem {
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence }) => {
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -93,7 +93,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol, turbulence || 0);
+          this.pool.get(x, y, vx, vy, pColor, size, life, shape || "spark", drag, sCol, eCol, turbulence || 0);
         }
       })
     );

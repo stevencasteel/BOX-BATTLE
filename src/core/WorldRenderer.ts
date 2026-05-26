@@ -258,6 +258,20 @@ export class WorldRenderer {
         this.ctx.fillStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
+      } else if (p.shape === "line") {
+        const angle = Math.atan2(p.vy, p.vx);
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(angle);
+        this.ctx.strokeStyle = p.color;
+        this.ctx.globalAlpha = pct;
+        this.ctx.lineWidth = p.size;
+        this.ctx.lineCap = "round";
+        this.ctx.beginPath();
+        this.ctx.moveTo(-p.size * 6, 0); // Stretched line shape backwards
+        this.ctx.lineTo(p.size * 6, 0);  // Stretched line shape forwards
+        this.ctx.stroke();
+        this.ctx.restore();
       } else if (p.shape === "ring") {
         const radius = p.size + (1.0 - pct) * 44;
         this.ctx.beginPath();
