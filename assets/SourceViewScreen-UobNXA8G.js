@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Btp1QbUw.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BxOFzLQm.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -3030,7 +3030,7 @@ export function AudioScreen({
               )}
               MAIN VOLUME
             </span>
-            <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.masterMuted ? "MUTED" : \`\${Math.round(audio.masterVolume * 100)}%\`}
             </span>
           </div>
@@ -3058,7 +3058,7 @@ export function AudioScreen({
               <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
-            <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.sfxMuted ? "MUTED" : \`\${Math.round(audio.sfxVolume * 100)}%\`}
             </span>
           </div>
@@ -3086,7 +3086,7 @@ export function AudioScreen({
               <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
-            <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.musicMuted ? "MUTED" : \`\${Math.round(audio.musicVolume * 100)}%\`}
             </span>
           </div>
@@ -3129,18 +3129,19 @@ export function AudioScreen({
       </div>
     </MenuContainer>
   );
-}`,"src/components/menus/ControlsScreen.css":`.binding-board {
+}
+`,"src/components/menus/ControlsScreen.css":`.binding-board {
   width: 100%;
-  max-width: 64vmin;
-  padding: 1.6vmin 2vmin;
+  max-width: 84vmin;
+  padding: 1.8vmin 2.4vmin;
   border-radius: 2.4vmin;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1vmin 2vmin;
+  gap: 1.2vmin 3vmin;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 40vh;
+  max-height: 46vh;
 }
 
 .binding-row {
@@ -3149,8 +3150,9 @@ export function AudioScreen({
   justify-content: space-between;
   font-size: 1.2vmin;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.6vmin 0.4vmin;
+  padding: 0.8vmin 0.4vmin;
   box-sizing: border-box;
+  gap: 10px;
 }
 
 .binding-action-label {
@@ -3158,14 +3160,21 @@ export function AudioScreen({
   letter-spacing: 0.12em;
   font-weight: bold;
   color: #718096;
+  white-space: nowrap;
 }
 
 .binding-btn {
-  min-width: 10vmin;
-  text-align: center;
+  width: 230px;
+  height: 48px;
+  padding: 0 !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   font-size: 1.4vmin;
-  padding: 1.4vmin 2.2vmin;
   border-radius: 0.8vmin;
+  box-sizing: border-box;
 }
 
 .controls-notice {
@@ -3181,7 +3190,7 @@ export function AudioScreen({
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 64vmin;
+  max-width: 84vmin;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -3200,10 +3209,17 @@ export function AudioScreen({
     font-size: 12px;
   }
   .binding-btn {
-    min-width: 110px;
-    padding: 10px 16px;
+    width: 170px;
+    height: 40px;
+    padding: 0 !important;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
     font-size: 12px;
     border-radius: 6px;
+    box-sizing: border-box;
   }
   .controls-notice {
     font-size: 9px;
@@ -3372,7 +3388,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "84vmin", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -3387,8 +3403,13 @@ export function ControlsScreen({
               mainLabel="PRESET 1"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -3414,8 +3435,13 @@ export function ControlsScreen({
               mainLabel="PRESET 2"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -3441,8 +3467,13 @@ export function ControlsScreen({
               mainLabel="CUSTOM"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -3484,8 +3515,6 @@ export function ControlsScreen({
                       onClick={() => handleRebindTrigger(action)}
                       className={\`binding-btn neo-btn \${isFocusedRow ? "neo-btn-focused" : ""}\`}
                       style={{
-                        minWidth: "150px",
-                        padding: "16px 24px",
                         borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                         color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                       }}
@@ -3511,6 +3540,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
+        style={{ maxWidth: "84vmin", width: "100%" }}
       />
     </MenuContainer>
   );
