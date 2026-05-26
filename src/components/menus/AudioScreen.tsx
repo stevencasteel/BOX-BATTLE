@@ -37,7 +37,7 @@ export function AudioScreen({
               )}
               MAIN VOLUME
             </span>
-            <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.masterMuted ? "#ef4444" : menuIndex === 0 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.masterMuted ? "MUTED" : `${Math.round(audio.masterVolume * 100)}%`}
             </span>
           </div>
@@ -65,7 +65,7 @@ export function AudioScreen({
               <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
-            <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.sfxMuted ? "#ef4444" : menuIndex === 1 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.sfxMuted ? "MUTED" : `${Math.round(audio.sfxVolume * 100)}%`}
             </span>
           </div>
@@ -93,7 +93,7 @@ export function AudioScreen({
               <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
-            <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80" }}>
+            <span style={{ color: audio.musicMuted ? "#ef4444" : menuIndex === 2 ? "#22c55e" : "#4ade80", minWidth: "4.5rem", textAlign: "right", display: "inline-block", flexShrink: 0 }}>
               {audio.musicMuted ? "MUTED" : `${Math.round(audio.musicVolume * 100)}%`}
             </span>
           </div>

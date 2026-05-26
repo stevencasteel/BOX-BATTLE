@@ -156,7 +156,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "84vmin", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -171,8 +171,13 @@ export function ControlsScreen({
               mainLabel="PRESET 1"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -198,8 +203,13 @@ export function ControlsScreen({
               mainLabel="PRESET 2"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -225,8 +235,13 @@ export function ControlsScreen({
               mainLabel="CUSTOM"
               showArrow={false}
               style={{
-                padding: "16px 28px",
+                flex: 1,
+                height: "54px",
+                padding: "0 16px",
                 fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -268,8 +283,6 @@ export function ControlsScreen({
                       onClick={() => handleRebindTrigger(action)}
                       className={`binding-btn neo-btn ${isFocusedRow ? "neo-btn-focused" : ""}`}
                       style={{
-                        minWidth: "150px",
-                        padding: "16px 24px",
                         borderColor: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                         color: rebindTarget?.action === action && rebindTarget?.index === 0 ? "#eab308" : "",
                       }}
@@ -295,6 +308,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
+        style={{ maxWidth: "84vmin", width: "100%" }}
       />
     </MenuContainer>
   );
