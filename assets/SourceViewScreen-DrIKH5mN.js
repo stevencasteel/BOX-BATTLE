@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DUkjWeJo.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-B9_OEg4A.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10492,10 +10492,33 @@ export class BossLungeState extends BossState {
   }
 
   public exit(): void {
-    this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 0.8, y: 1.2 };
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
-    this.owner.rotationVelocity = -this.owner.facingDirection * 15;
+    const physics = this.owner.getComponent(PhysicsComponent);
+    const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
+
+    if (hitWall && physics) {
+      // Rebound backward and squash elastically on wall collision
+      this.owner.velocity.x = -this.owner.facingDirection * 350;
+      this.owner.visualScale = { x: 0.7, y: 1.3 };
+      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      this.owner.rotationVelocity = -this.owner.facingDirection * 28;
+
+      const impactSide = physics.isOnWallLeft ? -1 : 1;
+      const wallX = this.owner.position.x + impactSide * (this.owner.size.width / 2);
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: wallX,
+        y: this.owner.position.y,
+        angle: impactSide > 0 ? Math.PI : 0,
+        color: "hsl(350, 80%, 60%)",
+        radial: true,
+        count: 15,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
+    } else {
+      this.owner.velocity.x = 0;
+      this.owner.visualScale = { x: 0.8, y: 1.2 };
+      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      this.owner.rotationVelocity = -this.owner.facingDirection * 15;
+    }
   }
 }
 
@@ -10546,6 +10569,7 @@ export class Minion extends BaseEntity {
 
   public patrolSpeed: number = 100;
   public stateTimer: number = 0;
+  public recoilTimer: number = 0;
 
   public pointA: { x: number; y: number } = { x: 0, y: 0 };
   public pointB: { x: number; y: number } = { x: 0, y: 0 };
@@ -10705,7 +10729,13 @@ export class Minion extends BaseEntity {
     this.stateTimer -= dt;
     this.shootTimer -= dt;
 
-    this.stateMachine.update(dt);
+    if (this.recoilTimer > 0) {
+      this.recoilTimer -= dt;
+      const friction = 2.5;
+      this.velocity.x += (0 - this.velocity.x) * friction * dt;
+    } else {
+      this.stateMachine.update(dt);
+    }
 
     if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
       this.targetRotation = this.facingDirection * 0.21;
@@ -10898,6 +10928,8 @@ export class Minion extends BaseEntity {
 
     const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
     this.applyAngularImpulse(rotImpulse);
+
+    this.recoilTimer = 0.35 * intensity;
   }
 
   public teardown() {
@@ -12645,7 +12677,7 @@ export class Spawner {
   }
 
   private spawnMinion() {
-    const minionId = \`minion-\${this.spawnType}-\${Date.now()}\`;
+    const minionId = \`minion-\${this.spawnType}-\${Date.now()}-\${Math.floor(Math.random() * 1000000)}\`;
     const minion = new Minion(minionId, this.spawnType, this.position, this.world);
     this.activeMinion = minion;
     this.world.minions.push(minion);
@@ -12724,8 +12756,15 @@ export class DashComponent implements IEntityComponent {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        if (this.dashDirectionX !== 0) this.owner.velocity.x *= 0.5;
-        if (this.dashDirectionY !== 0) this.owner.velocity.y = 0;
+        if (this.dashDirectionX !== 0) {
+          this.owner.velocity.x = this.dashDirectionX * this.dashSpeed * 0.65;
+          if ('recoilTimer' in this.owner) {
+            (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.18;
+          }
+        }
+        if (this.dashDirectionY !== 0) {
+          this.owner.velocity.y = this.dashDirectionY * this.dashSpeed * 0.40;
+        }
       }
     }
   }
@@ -13151,10 +13190,28 @@ export class MeleeComponent implements IEntityComponent {
           const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
           const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
-          const registeredDamage = health.takeDamage(damageAmount);
+          const registeredDamage = health.takeDamage(
+            damageAmount,
+            this.owner.position.x,
+            this.owner.position.y
+          );
           if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
             eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
+
+            // Apply blade resistance pushback recoil to the player
+            const recoilForce = isCloseRange ? 200 : 90;
+            this.owner.velocity.x = -facing * recoilForce;
+            if (this.owner.getComponent(HealthComponent)?.owner.world.physicsWorld) {
+              const withPhysics = this.owner as unknown as { physics?: { isGrounded: boolean } };
+              const isGrounded = this.owner.velocity.y === 0 || withPhysics.physics?.isGrounded;
+              if (!isGrounded) {
+                this.owner.velocity.y = Math.min(this.owner.velocity.y, -120);
+              }
+            }
+            if ('recoilTimer' in this.owner) {
+              (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.15;
+            }
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
