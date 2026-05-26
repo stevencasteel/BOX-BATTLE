@@ -29,6 +29,7 @@ export class FireballComponent implements IEntityComponent {
   public startCharging(): void {
     this.isCharging = true;
     this.chargeTimer = 0;
+    this.hasPoppedLvl2 = false;
     eventBroker.publish("CHARGE_START", undefined);
   }
 
@@ -36,7 +37,9 @@ export class FireballComponent implements IEntityComponent {
     if (this.isCharging) {
       this.isCharging = false;
       this.chargeTimer = 0;
+      this.hasPoppedLvl2 = false;
       eventBroker.publish("CHARGE_STOP", undefined);
+      eventBroker.publish("CHARGE_CANCEL", undefined);
     }
   }
 
@@ -48,6 +51,8 @@ export class FireballComponent implements IEntityComponent {
 
     if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {
       this.fire(dirX, dirY, facingDirection);
+    } else {
+      eventBroker.publish("CHARGE_CANCEL", undefined);
     }
   }
 
@@ -84,9 +89,9 @@ export class FireballComponent implements IEntityComponent {
     );
 
     if (isLvl2) {
-      proj.size = { width: 28, height: 28 };
+      proj.size = { width: 48, height: 48 };
     } else {
-      proj.size = { width: 14, height: 14 };
+      proj.size = { width: 22, height: 22 };
     }
   }
 }

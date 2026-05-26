@@ -19,7 +19,6 @@ export class DroneManager {
   private chargeLfo!: Tone.LFO;
   private chargeGain!: Tone.Gain;
   private isChargeDroneRunning: boolean = false;
-  private currentChargeLevel: number = 0;
 
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
@@ -159,47 +158,37 @@ export class DroneManager {
     this.chargeGain.gain.setValueAtTime(0.18, now);
 
     this.isChargeDroneRunning = true;
-    this.currentChargeLevel = 0;
   }
 
   public updateChargeTimer(timer: number) {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     const now = Tone.now();
 
-    if (timer < 0.25) {
-      const progress = timer / 0.25;
-      this.chargeOsc.frequency.setTargetAtTime(220 + progress * 100, now, 0.05);
-      this.chargeFilter.frequency.setTargetAtTime(450 + progress * 150, now, 0.05);
-      this.chargeLfo.frequency.setTargetAtTime(6.0, now, 0.05);
-      this.chargeLfo.amplitude.setTargetAtTime(110 / 360, now, 0.05);
-      this.chargeGain.gain.setTargetAtTime(0.25, now, 0.05);
-    } else if (timer >= 0.25 && timer < 1.12) {
-      this.currentChargeLevel = 1;
-      const range = (timer - 0.25) / (1.12 - 0.25);
+    // Clamp progress safely to [0, 1] relative to the Level 2 max timer
+    const progress = Math.max(0, Math.min(1.0, timer / 1.12));
 
-      this.chargeOsc.frequency.setTargetAtTime(320 + range * 120, now, 0.06);
-      this.chargeFilter.frequency.setTargetAtTime(600 + range * 250, now, 0.06);
-      this.chargeLfo.frequency.setTargetAtTime(6.0 + range * 4.0, now, 0.06);
-      this.chargeLfo.amplitude.setTargetAtTime((120 + range * 120) / 360, now, 0.06);
-      this.chargeGain.gain.setTargetAtTime(0.45, now, 0.05);
-    } else if (timer >= 1.12) {
-      if (this.currentChargeLevel < 2) {
-        this.currentChargeLevel = 2;
-      }
-      const vibration = Math.sin(now * 30) * 8;
-      this.chargeOsc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
-      this.chargeFilter.frequency.setTargetAtTime(1500, now, 0.08);
-      this.chargeLfo.frequency.setTargetAtTime(15.0, now, 0.08);
-      this.chargeLfo.amplitude.setTargetAtTime(1.0, now, 0.08);
-      this.chargeGain.gain.setTargetAtTime(0.35, now, 0.05);
-    }
+    const baseFreq = 220 + progress * 440;
+    const filterFreq = 450 + progress * 1200;
+    const lfoFreq = 5.5 + progress * 16.0;
+    
+    // Clamp LFO amplitude strictly to NormalRange [0, 1] to prevent crashes
+    const lfoAmp = Math.max(0, Math.min(1.0, 0.3 + progress * 0.7));
+
+    this.chargeOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
+    this.chargeFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+    this.chargeLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
+    this.chargeLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
+    
+    // Clamp output gain value to NormalRange [0, 1]
+    const gainVal = Math.max(0, Math.min(1.0, 0.18 + progress * 0.32));
+    this.chargeGain.gain.setTargetAtTime(gainVal, now, 0.05);
   }
 
   public stopChargeDrone() {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
-    this.currentChargeLevel = 0;
+    
   }
 
   public setHeartbeat(active: boolean) {

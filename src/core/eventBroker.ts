@@ -38,6 +38,7 @@ export type GameEventMap = {
   CHARGE_UPDATE: { timer: number };
   CHARGE_STOP: void;
   CHARGE_MAXED: void;
+  CHARGE_CANCEL: void;
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
   PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
