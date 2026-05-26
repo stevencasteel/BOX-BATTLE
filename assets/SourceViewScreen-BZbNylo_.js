@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DZNc7VcP.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C7EMJTtn.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7612,6 +7612,13 @@ function lerpHsl(startStr: string, endStr: string, pct: number): string {
   return \`hsl(\${h}, \${s}%, \${l}%)\`;
 }
 
+function convertToHsla(colorStr: string, alpha: number): string {
+  if (colorStr.startsWith("hsl(")) {
+    return colorStr.replace("hsl(", "hsla(").replace(")", ", " + alpha + ")");
+  }
+  return colorStr;
+}
+
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private cachedMeleeGradient: CanvasGradient;
@@ -7819,32 +7826,42 @@ export class WorldRenderer {
       const pct = p.life / p.maxLife;
       this.ctx.save();
 
-      if (p.shape === "spark") {
+      if (p.shape === 'spark') {
         const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
-        this.ctx.fillStyle = sparkColor;
-        this.ctx.globalAlpha = pct;
-        this.ctx.shadowColor = sparkColor;
-        this.ctx.shadowBlur = 8;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      } else if (p.shape === "dust") {
+        const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
+        radialGrad.addColorStop(0.0, convertToHsla(sparkColor, pct));
+        radialGrad.addColorStop(0.3, convertToHsla(sparkColor, pct * 0.5));
+        radialGrad.addColorStop(1.0, convertToHsla(sparkColor, 0));
+        this.ctx.fillStyle = radialGrad;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      } else if (p.shape === 'dust') {
         this.ctx.fillStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } else if (p.shape === "line") {
+      } else if (p.shape === 'line') {
         const angle = Math.atan2(p.vy, p.vx);
         this.ctx.save();
         this.ctx.translate(p.x, p.y);
         this.ctx.rotate(angle);
-        this.ctx.strokeStyle = p.color;
-        this.ctx.globalAlpha = pct;
+        
+        // Motion-blurred linear gradient smear
+        const lineGrad = this.ctx.createLinearGradient(-p.size * 8, 0, p.size * 6, 0);
+        lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
+        lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
+        lineGrad.addColorStop(0.85, convertToHsla(p.color, pct * 0.95));
+        lineGrad.addColorStop(1.0, convertToHsla(p.color, pct * 0.3));
+        
+        this.ctx.strokeStyle = lineGrad;
         this.ctx.lineWidth = p.size;
-        this.ctx.lineCap = "round";
+        this.ctx.lineCap = 'round';
         this.ctx.beginPath();
-        this.ctx.moveTo(-p.size * 6, 0); // Stretched line shape backwards
-        this.ctx.lineTo(p.size * 6, 0);  // Stretched line shape forwards
+        this.ctx.moveTo(-p.size * 8, 0);
+        this.ctx.lineTo(p.size * 6, 0);
         this.ctx.stroke();
         this.ctx.restore();
-      } else if (p.shape === "ring") {
+      } else if (p.shape === 'ring') {
         const radius = p.size + (1.0 - pct) * 44;
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
