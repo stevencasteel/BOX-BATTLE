@@ -8,6 +8,7 @@ export class FireballComponent implements IEntityComponent {
 
   public isCharging: boolean = false;
   private hasPoppedLvl2: boolean = false;
+  private hasPublishedChargeStart: boolean = false;
   public chargeTimer: number = 0;
 
   public setup(owner: BaseEntity): void {
@@ -17,7 +18,16 @@ export class FireballComponent implements IEntityComponent {
   public update(dt: number): void {
     if (this.isCharging) {
       this.chargeTimer += dt;
-      eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
+
+      // Introduce a 120ms dead-zone before the charge hum/ratchet begins
+      if (this.chargeTimer >= 0.12 && !this.hasPublishedChargeStart) {
+        this.hasPublishedChargeStart = true;
+        eventBroker.publish("CHARGE_START", undefined);
+      }
+
+      if (this.hasPublishedChargeStart) {
+        eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
+      }
 
       if (this.chargeTimer >= UNITS.CHARGE_LVL2_TIME && !this.hasPoppedLvl2) {
         this.hasPoppedLvl2 = true;
@@ -30,7 +40,7 @@ export class FireballComponent implements IEntityComponent {
     this.isCharging = true;
     this.chargeTimer = 0;
     this.hasPoppedLvl2 = false;
-    eventBroker.publish("CHARGE_START", undefined);
+    this.hasPublishedChargeStart = false;
   }
 
   public cancelCharging(): void {
@@ -38,8 +48,11 @@ export class FireballComponent implements IEntityComponent {
       this.isCharging = false;
       this.chargeTimer = 0;
       this.hasPoppedLvl2 = false;
-      eventBroker.publish("CHARGE_STOP", undefined);
-      eventBroker.publish("CHARGE_CANCEL", undefined);
+      if (this.hasPublishedChargeStart) {
+        eventBroker.publish("CHARGE_STOP", undefined);
+        eventBroker.publish("CHARGE_CANCEL", undefined);
+      }
+      this.hasPublishedChargeStart = false;
     }
   }
 
@@ -47,12 +60,18 @@ export class FireballComponent implements IEntityComponent {
     if (!this.isCharging) return;
     this.isCharging = false;
     this.hasPoppedLvl2 = false;
-    eventBroker.publish("CHARGE_STOP", undefined);
+
+    if (this.hasPublishedChargeStart) {
+      eventBroker.publish("CHARGE_STOP", undefined);
+    }
+    this.hasPublishedChargeStart = false;
 
     if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {
       this.fire(dirX, dirY, facingDirection);
     } else {
-      eventBroker.publish("CHARGE_CANCEL", undefined);
+      if (this.chargeTimer >= 0.12) {
+        eventBroker.publish("CHARGE_CANCEL", undefined);
+      }
     }
   }
 

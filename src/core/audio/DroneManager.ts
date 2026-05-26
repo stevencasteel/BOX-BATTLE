@@ -19,6 +19,10 @@ export class DroneManager {
   private chargeLfo!: Tone.LFO;
   private chargeGain!: Tone.Gain;
   private isChargeDroneRunning: boolean = false;
+  private chargeRatchetThreshold: number = 0;
+
+  private healRatchetThreshold: number = 0;
+  private ratchetSynth!: Tone.PolySynth;
 
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
@@ -55,6 +59,12 @@ export class DroneManager {
     this.chargeFilter.connect(this.chargeGain);
     this.chargeGain.connect(this.panner);
 
+    this.ratchetSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.001, decay: 0.012, sustain: 0, release: 0.012 },
+      volume: -6
+    }).connect(this.panner);
+
     this.heartbeatSynth = new Tone.MembraneSynth({
       envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.15 },
       oscillator: { type: "sine" }
@@ -75,6 +85,7 @@ export class DroneManager {
     }
 
     const now = Tone.now();
+    this.healRatchetThreshold = 0;
     this.healOsc.frequency.setValueAtTime(110, now);
     this.healOscSub.frequency.setValueAtTime(55, now);
     this.healFilter.frequency.setValueAtTime(220, now);
@@ -88,6 +99,17 @@ export class DroneManager {
   public updateHealTimer(timer: number) {
     if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
     const now = Tone.now();
+
+    // Play a mechanical pull-string winding click
+    const elapsed = 2.0 - timer;
+    if (elapsed > this.healRatchetThreshold) {
+      const progress = Math.max(0, Math.min(1.0, elapsed / 2.0));
+      const pitch = 220 + progress * 380; // Heavier woody mechanical click
+      this.ratchetSynth.triggerAttackRelease(pitch, "32n", now);
+
+      const interval = 0.18 - progress * 0.145; // Speed up click intervals as tension builds
+      this.healRatchetThreshold = elapsed + interval;
+    }
     
     // Strict clamp progress to normal range [0, 1]
     const progress = Math.max(0, Math.min(1.0, (2.0 - timer) / 2.0));
@@ -118,6 +140,13 @@ export class DroneManager {
     this.healGain.gain.setValueAtTime(this.healGain.gain.value, now);
     this.healGain.gain.rampTo(0, 0.12);
     this.isHealDroneRunning = false;
+
+    // Fast mechanical zip-back / unwind ratchet sound on release
+    for (let i = 0; i < 8; i++) {
+      const delay = i * 0.022;
+      const pitch = 550 - i * 60; // Descending mechanical ratchet clicks
+      this.ratchetSynth.triggerAttackRelease(pitch, "32n", now + delay);
+    }
   }
 
   public playHealComplete() {
@@ -150,6 +179,7 @@ export class DroneManager {
     }
 
     const now = Tone.now();
+    this.chargeRatchetThreshold = 0;
 
     this.chargeOsc.frequency.setValueAtTime(220, now);
     this.chargeFilter.frequency.setValueAtTime(450, now);
@@ -163,6 +193,16 @@ export class DroneManager {
   public updateChargeTimer(timer: number) {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     const now = Tone.now();
+
+    // Play a rapid mechanical pull-string winding click
+    if (timer > this.chargeRatchetThreshold) {
+      const progress = Math.max(0, Math.min(1.0, timer / 1.12));
+      const pitch = 380 + progress * 520; // High tension spring clicks
+      this.ratchetSynth.triggerAttackRelease(pitch, "32n", now);
+
+      const interval = 0.14 - progress * 0.105; // Speed up click intervals as tension builds
+      this.chargeRatchetThreshold = timer + interval;
+    }
 
     // Clamp progress safely to [0, 1] relative to the Level 2 max timer
     const progress = Math.max(0, Math.min(1.0, timer / 1.12));
@@ -189,6 +229,13 @@ export class DroneManager {
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
     
+    // Fast mechanical zip-back / unwind ratchet sound on release
+    const now = Tone.now();
+    for (let i = 0; i < 6; i++) {
+      const delay = i * 0.02;
+      const pitch = 850 - i * 110; // Descending zip clicks
+      this.ratchetSynth.triggerAttackRelease(pitch, "32n", now + delay);
+    }
   }
 
   public setHeartbeat(active: boolean) {
