@@ -191,6 +191,7 @@ export class Engine {
       entity.determinationCounter = 0;
       entity.healingCharges = 0;
       entity.hurtTimer = 0;
+      entity.recoilTimer = 0;
       entity.visualScale = { x: 1, y: 1 };
 
       entity.dashComponent.isDashing = false;

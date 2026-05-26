@@ -36,6 +36,7 @@ export class Player extends BaseEntity {
   public readonly maxHealingCharges: number = 3;
 
   public hurtTimer: number = 0;
+  public recoilTimer: number = 0;
   private unsubHurt!: () => void;
   private unsubChargeMaxed!: () => void;
   private maxFallSpeed: number = 0;
@@ -204,16 +205,26 @@ export class Player extends BaseEntity {
     });
 
     this.unsubProjectileFired = eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
-      const kbForce = level === 2 ? 160 : 55;
-      const tiltForce = level === 2 ? 6.0 : 2.5;
+      const isLvl2 = level === 2;
+      const recoilForce = isLvl2 ? 320 : 130;
+      const baseLift = isLvl2 ? 150 : 70;
+      const tiltForce = isLvl2 ? 14.0 : 6.0;
 
-      this.applyKineticImpulse(-dirX * kbForce, -dirY * kbForce);
+      // Physically break ground contact to allow natural rotational tilt and back-corner leaning
+      this.physics.isGrounded = false;
+      this.recoilTimer = isLvl2 ? 0.35 : 0.22;
+
+      // Additive momentum shove opposite to the shot vector
+      this.velocity.x -= dirX * recoilForce;
+      this.velocity.y -= (baseLift + dirY * recoilForce);
+
+      // Apply backward angular recoil tilt driven by the horizontal shot component
       this.applyAngularImpulse(-dirX * tiltForce);
 
-      const sqX = level === 2 ? 0.94 : 0.98;
-      const sqY = level === 2 ? 1.06 : 1.02;
+      const sqX = isLvl2 ? 0.90 : 0.96;
+      const sqY = isLvl2 ? 1.10 : 1.04;
       this.visualScale = { x: sqX, y: sqY };
-      this.scaleVelocity = { x: (level === 2 ? 12 : 5), y: (level === 2 ? -12 : -5) };
+      this.scaleVelocity = { x: (isLvl2 ? 16 : 8), y: (isLvl2 ? -16 : -8) };
 
       // Spawn muzzle blast sparks and dust ring at projectile launch coordinate
       const muzzleX = this.position.x + dirX * 30;
@@ -222,16 +233,16 @@ export class Player extends BaseEntity {
       eventBroker.publish("SPAWN_BLAST", {
         x: muzzleX,
         y: muzzleY,
-        color: level === 2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"
+        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"
       });
 
       eventBroker.publish("SPAWN_SPARKS", {
         x: muzzleX,
         y: muzzleY,
         angle: Math.atan2(dirY, dirX),
-        color: level === 2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
         radial: false,
-        count: level === 2 ? 16 : 8,
+        count: isLvl2 ? 16 : 8,
         shape: "line"
       });
     });
@@ -253,6 +264,10 @@ export class Player extends BaseEntity {
     this.updateAirTime(dt);
     this.updateGravity(isSliding);
     this.handleHurtTimer(dt);
+
+    if (this.recoilTimer > 0) {
+      this.recoilTimer -= dt;
+    }
 
     let targetRotation = 0;
     if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
@@ -571,7 +586,10 @@ if (this.isCharging) {
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
     } else {
       const targetSpeed = moveAxis * this.moveSpeed;
-      const rate = moveAxis !== 0 ? UNITS.PLAYER_ACCEL : UNITS.PLAYER_DECEL;
+      let rate = moveAxis !== 0 ? UNITS.PLAYER_ACCEL : UNITS.PLAYER_DECEL;
+      if (this.recoilTimer > 0) {
+        rate = rate * 0.15;
+      }
       this.velocity.x += (targetSpeed - this.velocity.x) * rate * dt;
     }
 

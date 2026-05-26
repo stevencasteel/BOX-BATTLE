@@ -64,12 +64,14 @@ export class Projectile extends BaseEntity implements IPoolable {
     }
 
     this.trail.push({ x: this.position.x, y: this.position.y });
-    if (this.trail.length > 8) {
+    const maxTrailLen = this.damage >= 3 ? 8 : 3;
+    if (this.trail.length > maxTrailLen) {
       this.trail.shift();
     }
 
-    if (this.ownerId === "player" && Math.random() < 0.35) {
-      const isLvl2 = this.damage >= 3;
+    const isLvl2 = this.damage >= 3;
+    const sparkChance = isLvl2 ? 0.35 : 0.08;
+    if (this.ownerId === "player" && Math.random() < sparkChance) {
       const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI + (Math.random() * 0.4 - 0.2);
       eventBroker.publish("SPAWN_SPARKS", {
         x: this.position.x,
@@ -261,7 +263,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       angle: angle,
       color: blastColor,
       radial: false,
-      count: isPlayer && this.damage >= 3 ? 18 : 8,
+      count: isPlayer ? (this.damage >= 3 ? 18 : 4) : 8,
       shape: "line",
       turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
     });
