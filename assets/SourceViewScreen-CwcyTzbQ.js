@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-Bdvlu4Ih.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-Dat80cTU.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5476,6 +5476,9 @@ export interface Particle {
   life: number;
   maxLife: number;
   shape: "spark" | "dust" | "ring";
+  drag?: number;
+  startColor?: string;
+  endColor?: string;
 }
 
 export interface IAbilityUser {
@@ -5645,6 +5648,9 @@ export class PoolableParticle implements Particle, IPoolable {
   public life = 0;
   public maxLife = 0;
   public shape: "spark" | "dust" | "ring" = "spark";
+  public drag = 1.0;
+  public startColor = "";
+  public endColor = "";
   public isActive = false;
 
   public activate(
@@ -5655,7 +5661,10 @@ export class PoolableParticle implements Particle, IPoolable {
     color: string,
     size: number,
     life: number,
-    shape: "spark" | "dust" | "ring"
+    shape: "spark" | "dust" | "ring",
+    drag: number = 1.0,
+    startColor: string = "",
+    endColor: string = ""
   ) {
     this.x = x;
     this.y = y;
@@ -5666,11 +5675,17 @@ export class PoolableParticle implements Particle, IPoolable {
     this.life = life;
     this.maxLife = life;
     this.shape = shape;
+    this.drag = drag;
+    this.startColor = startColor || color;
+    this.endColor = endColor || color;
     this.isActive = true;
   }
 
   public deactivate() {
     this.isActive = false;
+    this.drag = 1.0;
+    this.startColor = "";
+    this.endColor = "";
   }
 }
 
@@ -5699,7 +5714,18 @@ export class ParticleSystem {
           const size = 2.5 + Math.random() * 3.5;
           const life = 0.22;
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark");
+          const drag = 0.94;
+          let sCol = pColor;
+          let eCol = pColor;
+          if (pColor.includes("350") || pColor.includes("red") || pColor.includes("280")) {
+            sCol = "hsl(45, 100%, 75%)";
+            eCol = "hsl(350, 80%, 40%)";
+          } else if (pColor.includes("142") || pColor.includes("green")) {
+            sCol = "hsl(120, 100%, 80%)";
+            eCol = "hsl(142, 100%, 30%)";
+          }
+
+          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol);
         }
       })
     );
@@ -5734,6 +5760,10 @@ export class ParticleSystem {
       if (p.life <= 0) {
         this.pool.release(p);
         continue;
+      }
+      if (p.drag !== 1.0) {
+        p.vx *= Math.pow(p.drag, dt * 60);
+        p.vy *= Math.pow(p.drag, dt * 60);
       }
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -6570,6 +6600,29 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 
+function lerpHsl(startStr: string, endStr: string, pct: number): string {
+  if (!startStr || !endStr) return startStr;
+  if (!startStr.startsWith("hsl") || !endStr.startsWith("hsl")) {
+    return startStr;
+  }
+  try {
+    const regex = /hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/;
+    const m1 = startStr.match(regex);
+    const m2 = endStr.match(regex);
+    if (!m1 || !m2) return startStr;
+    const h1 = parseFloat(m1[1]), s1 = parseFloat(m1[2]), l1 = parseFloat(m1[3]);
+    const h2 = parseFloat(m2[1]), s2 = parseFloat(m2[2]), l2 = parseFloat(m2[3]);
+    
+    const factor = 1 - pct;
+    const h = h1 + (h2 - h1) * factor;
+    const s = s1 + (s2 - s1) * factor;
+    const l = l1 + (l2 - l1) * factor;
+    return \`hsl(\${h}, \${s}%, \${l}%)\`;
+  } catch {
+    return startStr;
+  }
+}
+
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private cachedMeleeGradient: CanvasGradient;
@@ -6752,9 +6805,10 @@ export class WorldRenderer {
       this.ctx.save();
 
       if (p.shape === "spark") {
-        this.ctx.fillStyle = p.color;
+        const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
+        this.ctx.fillStyle = sparkColor;
         this.ctx.globalAlpha = pct;
-        this.ctx.shadowColor = p.color;
+        this.ctx.shadowColor = sparkColor;
         this.ctx.shadowBlur = 8;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
       } else if (p.shape === "dust") {
@@ -9498,6 +9552,9 @@ export class Minion extends BaseEntity {
       this.rotationVelocity = 0;
     } else {
       this.targetRotation = Math.sign(this.velocity.x) * 0.12;
+      if (this.attackState === "PATROL" && !this.isDying && !this.isSpawning) {
+        this.targetRotation += Math.sin(performance.now() * 0.008 + this.position.x) * 0.04;
+      }
     }
 
     this.exhaustTimer -= dt;
