@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BVXGWGC0.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CJyfJoXM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -252,6 +252,21 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   transition: all 0.2s ease-in-out;
 }
 
+.cabinet-outer.cabinet-mobile {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 8px calc(10px + var(--safe-bottom)) 8px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .cabinet-wide-source {
   width: 95vw !important;
   height: 95vh !important;
@@ -416,19 +431,98 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   }
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
-  .cabinet-outer,
-  .cabinet-wide-source {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
+.game-viewport-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--void-bg);
+  position: relative;
+  contain: layout style paint;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
 
+.game-viewport-container.viewport-mobile {
+  flex-grow: 1;
+  width: 100%;
+  height: 0px;
+  aspect-ratio: auto;
+}
+
+.game-viewport-container.viewport-mobile.viewport-playing {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 1/1;
+  max-height: calc(100vh - 230px - var(--safe-bottom) - var(--safe-top));
+  max-height: calc(100dvh - 230px - var(--safe-bottom) - var(--safe-top));
+  height: auto;
+}
+
+.touch-overlay-panel {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  background: #0c0e12;
+  box-sizing: border-box;
+  flex-grow: 1;
+  height: 0px;
+  padding-top: 6px;
+}
+
+.touch-joystick-side {
+  flex: 1.3;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-vertical-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-row {
+  display: flex;
+  gap: 6px;
+  flex: 1.2;
+}
+
+.touch-label-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.neo-btn.touch-action-btn {
+  user-select: none;
+  touch-action: none;
+  padding: 0;
+  border-radius: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  min-height: 44px;
+}
+
+@media (max-width: 768px) and (pointer: coarse) {
   .screen-inner {
     border-radius: 0;
     padding: 12px 10px;
@@ -458,7 +552,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   }
 }
 
-/* -- Dynamic Game Juice HUD Keyframes -- */
 @keyframes hud-cabinet-shake {
   0% {
     transform: translate(1px, 1px) rotate(0deg);
@@ -530,7 +623,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: active-led-glow 0.8s infinite alternate ease-in-out;
 }
 
-/* -- Dynamic HP Indicator Decay shakes -- */
 @keyframes led-shake-sympathy {
   0% {
     transform: translate(1px, 0px) rotate(0deg);
@@ -581,8 +673,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* --- REFINED GAME OVER ELEMENTS & CRT TRANSITIONS --- */
-
 @keyframes crt-shutoff {
   0% {
     transform: scaleY(1) scaleX(1);
@@ -631,7 +721,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
 }
 
-/* Rich CRT Glass Phosphor Grid Texture */
 .gameover-overlay::before {
   content: " ";
   display: block;
@@ -645,14 +734,9 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 
 .gameover-box {
   position: relative;
-  z-index: 2; /* Sits cleanly above background texture */
+  z-index: 2;
 }
 
-
-
-
-
-/* Victory Element Easing Animations */
 @keyframes victory-bounce-glow {
   0% {
     transform: scale(0.3) translateY(40px);
@@ -675,7 +759,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, victory-float-glow 2s infinite ease-in-out 0.8s;
 }
 
-/* Defeat Element Shiver animations */
 @keyframes defeat-shake-glow {
   0% {
     transform: scale(0.3) rotate(-15deg);
@@ -701,7 +784,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards, defeat-shiver-glow 0.22s infinite linear 0.8s;
 }
 
-/* Title text flickers */
 @keyframes text-chromatic-flicker-green {
   0%, 100% { text-shadow: 0 0 15px var(--signal-green-glow), -2px 0 #00ff00, 2px 0 #0000ff; }
   50% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2), -1px 0 #00ff00, 1px 0 #0000ff; filter: brightness(0.9); }
@@ -722,7 +804,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: text-chromatic-flicker-red 2.5s infinite ease-in-out;
 }
 
-/* Stat Card Wipe-in */
 @keyframes terminal-wipe {
   0% {
     max-height: 0px;
@@ -741,7 +822,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: terminal-wipe 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* Button Slide-up Spring */
 @keyframes spring-up {
   0% {
     transform: translateY(30px);
@@ -757,8 +837,6 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
 }
 
-
-/* --- ACTIVE ELEMENT ANIMATION LOOPS --- */
 @keyframes victory-float-glow {
   0% {
     transform: translateY(0) scale(1);
@@ -998,18 +1076,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div
-        className={\`cabinet-outer \${isFullHeightScreen ? "cabinet-wide-source" : ""}\`}
-        style={
-          isTouchDevice
-            ? {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                padding: "10px",
-                height: "100vh",
-              }
-            : undefined
-        }
+        className={\`cabinet-outer \${isFullHeightScreen ? "cabinet-wide-source" : ""} \${isTouchDevice ? "cabinet-mobile" : ""}\`}
       >
         {!isFullHeightScreen && (
           <HudPanel
@@ -1020,27 +1087,8 @@ export default function App() {
         )}
 
         <div
-          className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"} \${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} \${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""}\`}
+          className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"} \${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} \${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} \${isTouchDevice ? "viewport-mobile" : ""}\`}
           ref={viewportRef}
-          style={
-            isTouchDevice
-              ? isPlayingScreen
-                ? {
-                    flexGrow: 0,
-                    flexShrink: 0,
-                    width: "100%",
-                    aspectRatio: "1/1",
-                    maxHeight: "calc(100vh - 250px)",
-                    height: "auto",
-                  }
-                : {
-                    flexGrow: 1,
-                    width: "100%",
-                    height: "0px",
-                    aspectRatio: "auto",
-                  }
-              : undefined
-          }
         >
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -1230,88 +1278,46 @@ interface DialogueConsoleProps {
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
+  const mobileClass = isTouchDevice ? "is-mobile" : "";
   return (
-    <div
-      className="dialogue-console"
-      style={
-        isTouchDevice
-          ? {
-              height: "54px",
-              marginTop: "4px",
-              gap: "4px",
-              padding: "0",
-              flexShrink: 0,
-            }
-          : undefined
-      }
-    >
+    <div className={\`dialogue-console \${mobileClass}\`}>
       <div
-        className={\`dialogue-box-left neo-pressed \${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}\`}
-        style={
-          isTouchDevice
-            ? {
-                padding: "4px 8px",
-                gap: "8px",
-                borderRadius: "6px",
-                height: "100%",
-              }
-            : undefined
-        }
+        className={\`dialogue-box-left neo-pressed \${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"} \${mobileClass}\`}
       >
         <div
-          className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""}\`}
+          className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""} \${mobileClass}\`}
           style={{
             background: playerDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "68px",
-            height: isTouchDevice ? "32px" : "68px",
           }}
         />
         <div className="dialogue-text-container">
-          <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px" } : undefined}>
+          <div className={\`dialogue-speaker-label \${mobileClass}\`}>
             PLAYER
           </div>
-          <div
-            className="dialogue-body-text"
-            style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
-          >
+          <div className={\`dialogue-body-text \${mobileClass}\`}>
             {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
       </div>
 
       <div
-        className={\`dialogue-box-right neo-pressed \${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}\`}
-        style={
-          isTouchDevice
-            ? {
-                padding: "4px 8px",
-                gap: "8px",
-                borderRadius: "6px",
-                height: "100%",
-              }
-            : undefined
-        }
+        className={\`dialogue-box-right neo-pressed \${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"} \${mobileClass}\`}
       >
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
-            className="dialogue-speaker-label"
-            style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}
+            className={\`dialogue-speaker-label \${mobileClass}\`}
+            style={{ color: "var(--signal-red)" }}
           >
             BOSS
           </div>
-          <div
-            className="dialogue-body-text"
-            style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
-          >
+          <div className={\`dialogue-body-text \${mobileClass}\`}>
             {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
         <div
-          className={\`portrait-square led-red \${bossDialogue.isTyping ? "portrait-rumble" : ""}\`}
+          className={\`portrait-square led-red \${bossDialogue.isTyping ? "portrait-rumble" : ""} \${mobileClass}\`}
           style={{
             background: bossDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "68px",
-            height: isTouchDevice ? "32px" : "68px",
           }}
         />
       </div>
@@ -1391,14 +1397,22 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin; /* Compact sizing returned to original standards */
+  height: 8.5vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1vmin; /* Perfect 1vmin gap symmetry matching the top panel! */
+  margin-top: 1vmin;
   box-sizing: border-box;
   flex-shrink: 0;
+}
+
+.dialogue-console.is-mobile {
+  height: 54px !important;
+  margin-top: 4px !important;
+  gap: 4px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 .dialogue-box-left,
@@ -1417,6 +1431,14 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   transform: scale(0.97);
+}
+
+.dialogue-box-left.is-mobile,
+.dialogue-box-right.is-mobile {
+  padding: 4px 8px !important;
+  gap: 8px !important;
+  border-radius: 6px !important;
+  height: 100% !important;
 }
 
 .dialogue-active-green {
@@ -1445,15 +1467,20 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .portrait-square {
-  width: 6.5vmin; /* Sized down proportionally */
+  width: 6.5vmin;
   height: 6.5vmin;
   min-width: 36px;
   min-height: 36px;
-  max-width: 72px; /* Limits adjusted to match the compact 68px desktop layout */
+  max-width: 72px;
   max-height: 72px;
   border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.portrait-square.is-mobile {
+  width: 32px !important;
+  height: 32px !important;
 }
 
 .dialogue-text-container {
@@ -1471,6 +1498,10 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   color: var(--signal-green);
 }
 
+.dialogue-speaker-label.is-mobile {
+  font-size: 10px !important;
+}
+
 .dialogue-body-text {
   font-size: clamp(11px, 1.5vmin, 15px);
   line-height: 1.35;
@@ -1478,6 +1509,11 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow: hidden;
+}
+
+.dialogue-body-text.is-mobile {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
 }
 
 .portrait-rumble {
@@ -2359,20 +2395,8 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className="neo-btn"
-      style={{
-        ...style,
-        userSelect: "none",
-        touchAction: "none",
-        padding: "0",
-        borderRadius: "12px",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxSizing: "border-box",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)",
-      }}
+      className="neo-btn touch-action-btn"
+      style={style}
     >
       {label}
     </button>
@@ -2383,48 +2407,21 @@ import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ArrowUpToLine, Swords, Zap }
 
 export function TouchOverlay() {
   return (
-    <div
-      style={{
-        display: "flex",
-        width: "100%",
-        gap: "8px",
-        background: "#0c0e12",
-        boxSizing: "border-box",
-        flexGrow: 1,
-        height: "0px",
-        paddingTop: "6px",
-      }}
-    >
-      <div
-        style={{
-          flex: 1.3,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "6px",
-          height: "100%",
-        }}
-      >
+    <div className="touch-overlay-panel">
+      <div className="touch-joystick-side">
         <TouchButton action="MOVE_LEFT" label={<ArrowLeft size={24} />} style={{ height: "100%" }} />
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
+        <div className="touch-vertical-group">
           <TouchButton action="MOVE_UP" label={<ArrowUp size={20} />} style={{ flex: 1 }} />
           <TouchButton action="MOVE_DOWN" label={<ArrowDown size={20} />} style={{ flex: 1 }} />
         </div>
         <TouchButton action="MOVE_RIGHT" label={<ArrowRight size={24} />} style={{ height: "100%" }} />
       </div>
 
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-          height: "100%",
-        }}
-      >
+      <div className="touch-action-side">
         <TouchButton
           action="DASH"
           label={
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+            <div className="touch-label-inner">
               <Zap size={14} />
               <span>DASH</span>
             </div>
@@ -2435,13 +2432,13 @@ export function TouchOverlay() {
             color: "var(--signal-yellow)",
           }}
         />
-        <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
+        <div className="touch-action-row">
           <TouchButton
             action="ATTACK"
             label={
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+              <div className="touch-label-inner">
                 <Swords size={14} />
-                <span>ATK</span>
+                <span>ATK/CHG</span>
               </div>
             }
             style={{ flex: 1, borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
@@ -2449,7 +2446,7 @@ export function TouchOverlay() {
           <TouchButton
             action="JUMP"
             label={
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+              <div className="touch-label-inner">
                 <ArrowUpToLine size={14} />
                 <span>JMP</span>
               </div>
@@ -4077,6 +4074,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
@@ -4092,6 +4092,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
@@ -4185,21 +4188,20 @@ export function SourceViewFooter({
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+@media (max-width: 800px) {
   .source-view-workspace {
     flex-direction: column;
     gap: 12px;
     margin: 10px 0;
   }
   .directory-tree-pane {
-    width: 100%;
-    height: 35%;
-    min-height: 140px;
+    width: 100% !important;
+    height: 100% !important;
     padding: 8px;
   }
   .code-viewer-pane {
-    width: 100%;
-    height: 65%;
+    width: 100% !important;
+    height: 100% !important;
     padding: 10px;
   }
   .source-view-footer {
@@ -13179,6 +13181,11 @@ export function useSourceViewKeyboard({
   --shadow-dark: 6px 6px 18px rgba(0, 0, 0, 0.75);
   --shadow-inset-light: inset -2px -2px 6px rgba(255, 255, 255, 0.01);
   --shadow-inset-dark: inset 3px 3px 10px rgba(0, 0, 0, 0.9);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 html,
@@ -13188,12 +13195,14 @@ body,
   padding: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: #050505;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 body {
@@ -13256,7 +13265,6 @@ body {
   background: #4ade80;
 }
 
-
 @media (pointer: fine) {
   *,
   *::before,
@@ -13269,8 +13277,6 @@ body {
   }
 }
 
-
-/* Enable native text selection and custom scroll operations specifically inside the code viewer panel */
 .code-viewer-pane,
 .code-viewer-pane * {
   -webkit-user-select: text !important;
@@ -14058,4 +14064,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     padding: 10px 16px;
   }
 }
-`};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB REPO`,subLabel:`VIEW AND DOWNLOAD CODE ARCHIVE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD SOURCE`,subLabel:`SAVE ALL CODE AS SINGLE .TXT FILE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,subLabel:`EXIT SOURCE CODE VIEW`,style:{flex:1,boxSizing:`border-box`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
+`};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB REPO`,subLabel:`VIEW AND DOWNLOAD CODE ARCHIVE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD SOURCE`,subLabel:`SAVE ALL CODE AS SINGLE .TXT FILE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,subLabel:`EXIT SOURCE CODE VIEW`,style:{flex:1,boxSizing:`border-box`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
