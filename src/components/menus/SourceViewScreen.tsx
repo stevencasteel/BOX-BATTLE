@@ -6,6 +6,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
 import { SourceViewFooter } from "./SourceViewFooter";
+import { Folder, FolderOpen, FileCode, FileText } from "lucide-react";
 
 interface SourceViewScreenProps {
   onBack: () => void;
@@ -249,7 +250,15 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
                   <span style={{ minWidth: "12px", fontSize: "10px" }}>
                     {node.isDir ? (isExpanded ? "▼" : "▶") : " "}
                   </span>
-                  <span style={{ fontSize: "13px" }}>{node.isDir ? (isExpanded ? "📂" : "📁") : "📄"}</span>
+                  {node.isDir ? (
+                    isExpanded ? <FolderOpen size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} /> : <Folder size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                  ) : (
+                    node.name.endsWith(".ts") || node.name.endsWith(".tsx") || node.name.endsWith(".js") ? (
+                      <FileCode size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                    ) : (
+                      <FileText size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                    )
+                  )}
                   <span style={{ fontWeight: node.isDir ? "bold" : "normal" }}>{node.name}</span>
                 </div>
               );

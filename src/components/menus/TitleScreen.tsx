@@ -1,4 +1,5 @@
 import "./TitleScreen.css";
+import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
 interface TitleScreenProps {
   menuIndex: number;
   onPlay: () => void;
@@ -47,7 +48,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">PLAY GAME</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Gamepad2 size={18} strokeWidth={2} />
+                PLAY GAME
+              </span>
               <span className="btn-sub-label">CHOOSE A SAVE SLOT TO BEGIN</span>
             </div>
             {menuIndex === 0 && <span className="cursor-arrow-large">▶</span>}
@@ -63,7 +67,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">OPTIONS</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Sliders size={18} strokeWidth={2} />
+                OPTIONS
+              </span>
               <span className="btn-sub-label">ADJUST SOUNDS AND CONTROLS</span>
             </div>
             {menuIndex === 1 && <span className="cursor-arrow-large">▶</span>}
@@ -79,7 +86,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">CREDITS</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Award size={18} strokeWidth={2} />
+                CREDITS
+              </span>
               <span className="btn-sub-label">GAME CREATOR AND DETAILS</span>
             </div>
             {menuIndex === 2 && <span className="cursor-arrow-large">▶</span>}
@@ -95,7 +105,10 @@ export function TitleScreen({
           >
             <div className="btn-indicator-light" />
             <div className="btn-label-group">
-              <span className="btn-main-label">SOURCE CODE</span>
+              <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Code2 size={18} strokeWidth={2} />
+                SOURCE CODE
+              </span>
               <span className="btn-sub-label">BROWSE CABINET ENGINE FILE TREE</span>
             </div>
             {menuIndex === 3 && <span className="cursor-arrow-large">▶</span>}
