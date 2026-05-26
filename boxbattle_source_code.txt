@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 1:03:05 AM
+ [SYSTEM] Generated: 5/26/2026, 1:06:43 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8789,6 +8789,7 @@ export class PlayerSFX {
 
     eventBroker.subscribe("HEAL_CANCEL", () => {
       this.playHealCancel(soundSynth.getPlayerX());
+      soundSynth.stopHealDrone();
     });
 
     eventBroker.subscribe("HEAL_COMPLETE", () => {
