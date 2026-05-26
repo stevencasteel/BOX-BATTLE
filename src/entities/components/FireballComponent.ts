@@ -70,7 +70,7 @@ export class FireballComponent implements IEntityComponent {
     const spawnX = this.owner.position.x + normalizedDir.x * 30;
     const spawnY = this.owner.position.y + normalizedDir.y * 30;
 
-    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
+    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1, dirX: normalizedDir.x, dirY: normalizedDir.y });
 
     const proj = this.owner.world.spawnProjectile(
       spawnX,

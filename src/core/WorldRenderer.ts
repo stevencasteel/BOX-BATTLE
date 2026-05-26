@@ -224,6 +224,25 @@ export class WorldRenderer {
       world.boss.draw(this.ctx, alpha);
     }
 
+
+
+    if (world.player) {
+      world.player.draw(this.ctx, alpha);
+      const player = world.player as Player;
+      if (player.attackActive) {
+        this.drawPlayerAttackVisual(this.ctx, player, alpha);
+      }
+    }
+
+    for (const minion of world.minions) {
+      minion.draw(this.ctx, alpha);
+    }
+
+    const activeProjectiles = projectilePool.getActive();
+    for (const proj of activeProjectiles) {
+      proj.draw(this.ctx, alpha);
+    }
+
     for (const p of particles) {
       const pct = p.life / p.maxLife;
       this.ctx.save();
@@ -251,23 +270,6 @@ export class WorldRenderer {
         this.ctx.stroke();
       }
       this.ctx.restore();
-    }
-
-    if (world.player) {
-      world.player.draw(this.ctx, alpha);
-      const player = world.player as Player;
-      if (player.attackActive) {
-        this.drawPlayerAttackVisual(this.ctx, player, alpha);
-      }
-    }
-
-    for (const minion of world.minions) {
-      minion.draw(this.ctx, alpha);
-    }
-
-    const activeProjectiles = projectilePool.getActive();
-    for (const proj of activeProjectiles) {
-      proj.draw(this.ctx, alpha);
     }
 
     if (bossDeathTimer >= 0 && bossDeathPos) {

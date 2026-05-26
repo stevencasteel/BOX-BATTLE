@@ -8,7 +8,7 @@ export type GameEventMap = {
   PLAYER_DASHED: { direction: number };
   PLAYER_POGOED: void;
   PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
-  PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
+  PLAYER_PROJECTILE_FIRED: { level: 1 | 2; dirX: number; dirY: number };
   HEALING_CHARGES_CHANGED: { charges: number };
   DETERMINATION_CHANGED: { determination: number };
   DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
@@ -19,7 +19,7 @@ export type GameEventMap = {
   VICTORY: void;
   CLEAR_DIALOGUES: void;
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number };
-  SPAWN_DUST: { x: number; y: number };
+  SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
   SPAWN_BLAST: { x: number; y: number; color: string };
   PLAYER_LANDED: void;
   HEAL_START: void;

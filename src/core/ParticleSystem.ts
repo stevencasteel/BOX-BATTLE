@@ -99,16 +99,25 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
-        const count = 10;
+      eventBroker.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
+        const count = 14;
+        const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
           const dir = i % 2 === 0 ? 1 : -1;
-          const pSpeedX = dir * (50 + Math.random() * 110);
-          const pSpeedY = -8 - Math.random() * 30;
-          const size = 3 + Math.random() * 3;
-          const life = 0.24;
+          
+          const pSpeedX = isVertical
+            ? -dir * (4 + Math.random() * 10)
+            : dir * (125 + Math.random() * 160);
 
-          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.40)", size, life, "dust");
+          const pSpeedY = isVertical
+            ? dir * (125 + Math.random() * 160)
+            : -4 - Math.random() * 10;
+
+          const size = 3.5 + Math.random() * 3.5;
+          const life = 0.35;
+          const drag = 0.88;
+
+          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.35)", size, life, "dust", drag);
         }
       })
     );

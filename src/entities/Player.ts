@@ -42,12 +42,13 @@ export class Player extends BaseEntity {
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
   private unsubDamageDealt!: () => void;
+  private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
-    this.squashPivot = "feet";
+    this.squashPivot = "center";
 
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -122,8 +123,9 @@ export class Player extends BaseEntity {
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.25, y: 0.75 };
-      this.scaleVelocity = { x: -16.0, y: 16.0 };
+      this.visualScale = { x: 1.55, y: 0.45 }; // Extreme squished visual pop
+      this.scaleVelocity = { x: -35.0, y: 35.0 }; // Fast, rubbery spring rebound
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.15 });
     });
 
     this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
@@ -135,6 +137,24 @@ export class Player extends BaseEntity {
         this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
         eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
       }
+    });
+
+    this.unsubProjectileFired = eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
+      // Linear recoil forces (tuned lower for better control weight)
+      const kbForce = level === 2 ? 160 : 55;
+      const tiltForce = level === 2 ? 6.0 : 2.5;
+
+      // Apply backward velocity pushback proportional to firing direction
+      this.applyKineticImpulse(-dirX * kbForce, -dirY * kbForce);
+
+      // Apply lean-style angular recoil relative to horizontal vector (leans back)
+      this.applyAngularImpulse(-dirX * tiltForce);
+
+      // Highly subtle squash-stretch scale deformation to keep focus purely on rotation lean
+      const sqX = level === 2 ? 0.94 : 0.98;
+      const sqY = level === 2 ? 1.06 : 1.02;
+      this.visualScale = { x: sqX, y: sqY };
+      this.scaleVelocity = { x: (level === 2 ? 12 : 5), y: (level === 2 ? -12 : -5) };
     });
   }
 
@@ -166,12 +186,18 @@ export class Player extends BaseEntity {
 
     if (this.isCharging) {
       const chargeProgress = Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME);
-      const targetSquish = 0.03 * chargeProgress;
-      const vibration = Math.sin(performance.now() * 0.04) * 0.004 * chargeProgress;
+      
+      // Accurately simulate high stored energy with high-frequency scale wobble and angular shiver
+      const time = performance.now();
+      const pulse = Math.sin(time * 0.04) * 0.08 * chargeProgress;
+      const shiverX = (Math.random() * 0.04 - 0.02) * chargeProgress;
+      const shiverY = (Math.random() * 0.04 - 0.02) * chargeProgress;
+
       this.targetVisualScale = { 
-        x: 1.0 - targetSquish + vibration, 
-        y: 1.0 + targetSquish - vibration 
+        x: 1.0 - pulse + shiverX, 
+        y: 1.0 + pulse + shiverY 
       };
+      this.rotation = Math.sin(time * 0.08) * 0.04 * chargeProgress;
 
       // Vortex accretion: Spawn swirling charges rotating in-wards
       if (Math.random() < 0.35) {
@@ -196,6 +222,12 @@ export class Player extends BaseEntity {
       }
     } else {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
+      if (!this.physics.isGrounded) {
+        this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
+      } else {
+        const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+        this.targetRotation = moveAxis * 0.12;
+      }
     }
 
     if (this.hurtTimer > 0) {
@@ -263,7 +295,7 @@ export class Player extends BaseEntity {
         targetScaleY = 1.15;
 
         if (Math.random() < 0.35) {
-          const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+          const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2) + (Math.random() * 8 - 4);
           const contactY = this.position.y + (this.size.height / 2);
           eventBroker.publish("SPAWN_SPARKS", {
             x: contactX,
@@ -333,8 +365,12 @@ export class Player extends BaseEntity {
     this.visualScale = { x: 0.76, y: 1.24 };
 
     const impactSide = this.physics.isOnWallLeft ? -1 : 1;
+    const wallX = this.position.x + impactSide * (this.size.width / 2);
+    
+    // Spawn vertical wall dust puffs on impact alongside sparks
+    eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
     eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x + impactSide * (this.size.width / 2),
+      x: wallX,
       y: this.position.y,
       angle: impactSide > 0 ? Math.PI : 0,
       color: "rgba(255, 255, 255, 0.55)",
@@ -444,10 +480,18 @@ export class Player extends BaseEntity {
     } else if (this.coyoteTimer > 0) {
       this.performJump();
     } else if (this.wallCoyoteTimer > 0) {
-      this.performJump();
+      this.velocity.y = -this.jumpForce;
       this.velocity.x = this.lastWallNormal * 1650;
+      this.coyoteTimer = 0;
       this.wallCoyoteTimer = 0;
+      this.jumpBufferTimer = 0;
+      this.visualScale = { x: 0.82, y: 1.18 };
       this.dashComponent.resetDashCharge();
+
+      // Trigger Symmetrical vertical dust puffs up/down along the wall contact surface
+      const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+      eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
+      eventBroker.publish("PLAYER_JUMPED", undefined);
     } else if (this.hasDoubleJump) {
       this.velocity.y = -this.jumpForce;
       this.hasDoubleJump = false;
@@ -624,6 +668,9 @@ export class Player extends BaseEntity {
     this.unsubHealComplete();
     this.unsubChargeMaxed();
     this.unsubDamageDealt();
+    if (this.unsubProjectileFired) {
+      this.unsubProjectileFired();
+    }
     super.teardown();
   }
 }
