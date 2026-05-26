@@ -29,6 +29,7 @@ interface SessionState {
   menuIndex: number;
   gameResult: GameResultState;
   retryCount: number;
+  transitionActive: "SHUTDOWN" | "POWER_ON" | "NONE";
   navTo: (screen: ScreenState) => void;
   setMenuIndex: (index: number) => void;
   setGameResult: (result: GameResultState) => void;
@@ -40,10 +41,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   menuIndex: 0,
   gameResult: "PLAYING",
   retryCount: 0,
+  transitionActive: "NONE",
   navTo: (screen) => {
     const current = get().currentScreen;
+    if (current === screen && screen !== "PLAYING") return;
 
-    if (soundSynth.initialized && current !== screen) {
+    if (soundSynth.initialized) {
       const currentDepth = SCREEN_DEPTHS[current] ?? 0;
       const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
 
@@ -54,12 +57,31 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }
     }
 
-    set((state) => ({
-      currentScreen: screen,
-      menuIndex: 0,
-      gameResult: "PLAYING",
-      retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
-    }));
+    const needsTransition = screen === "PLAYING" || current === "PLAYING";
+
+    if (needsTransition) {
+      set({ transitionActive: "SHUTDOWN" });
+      setTimeout(() => {
+        set((state) => ({
+          currentScreen: screen,
+          menuIndex: 0,
+          gameResult: "PLAYING",
+          retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
+          transitionActive: "POWER_ON",
+        }));
+
+        setTimeout(() => {
+          set({ transitionActive: "NONE" });
+        }, 400);
+      }, 450);
+    } else {
+      set({
+        currentScreen: screen,
+        menuIndex: 0,
+        gameResult: "PLAYING",
+        transitionActive: "NONE",
+      });
+    }
   },
   setMenuIndex: (index) => set({ menuIndex: index }),
   setGameResult: (result) => set({ gameResult: result }),
@@ -96,7 +118,6 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       if (hp < current) {
         get().triggerGlitch(150);
 
-        // High-performance DOM-direct status panel shaking
         if (typeof document !== "undefined") {
           const panel = document.querySelector(".cabinet-status-panel");
           if (panel) {

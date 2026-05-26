@@ -40,6 +40,7 @@ export default function App() {
   useHudSubscription();
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
+  const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
   const retryCount = useSessionStore((state) => state.retryCount);
@@ -223,7 +224,7 @@ export default function App() {
         )}
 
         <div
-          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"}`}
+          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""}`}
           ref={viewportRef}
           style={
             isTouchDevice

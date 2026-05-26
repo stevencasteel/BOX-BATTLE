@@ -1,0 +1,38 @@
+===========================================================================
+  BOX BATTLE WEB CABINET // DESIGN EXCLUSIONS REGISTER
+  Official Out-of-Scope & Non-Goal Specifications
+===========================================================================
+
+1. OVERVIEW
+-----------
+This document registers design directions, mechanics, and camera behaviors 
+that are explicitly excluded from the Box Battle web engine. Keeping these 
+features out of the project preserves the classic structural framing of a 
+physical arcade cabinet.
+
+2. SPECIFIC EXCLUSIONS
+----------------------
+
+2.1  EXCLUDED: Dynamic Camera Panning (Auto-Framing)
+     * Description: The camera must never dynamically pan, scroll, or shift 
+       its offset coordinates to follow the player, boss, or average 
+       midpoints.
+     * Reason: The game is played inside a fixed-aspect retro CRT monitor 
+       simulated on a single viewport screen. Viewport scrolling degrades 
+       the physical arcade cabinet illusion and makes spatial awareness 
+       unpredictable on high-speed dashes.
+
+2.2  EXCLUDED: Dynamic Auto-Zooming
+     * Description: The viewport scale matrix must remain flat and static 
+       at 1.0 (or its container-defined base scale). The camera must never 
+       zoom in or out based on proximity between combatants.
+     * Reason: Scale alterations introduce pixel-stretching artifacts on a 
+       pure HTML5 Canvas. A fixed scale preserves consistent hit-box 
+       proportions and keeps the screen clean and legible.
+
+3. MAINTENANCE OF DESIGN BOUNDS
+--------------------------------
+Any future layout adjustments must honor these exclusions. The screen area 
+will remain fully visible at all times, with visual movement limited strictly 
+to screenshakes (cam-tremors) during high-impact events (such as damage, 
+dashes, or boss phase changes).

@@ -345,3 +345,179 @@
 .led-shaking-die {
   animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
+/* --- REFINED GAME OVER ELEMENTS & CRT TRANSITIONS --- */
+
+@keyframes crt-shutoff {
+  0% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1.5) contrast(1.2) saturate(1);
+  }
+  40% {
+    transform: scaleY(0.01) scaleX(1.1);
+    filter: brightness(4.0) contrast(1.5) saturate(0);
+    background: #ffffff;
+  }
+  75% {
+    transform: scaleY(0.01) scaleX(0.01);
+    filter: brightness(10.0);
+    background: #ffffff;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+    background: #ffffff;
+  }
+}
+
+@keyframes crt-power-on {
+  0% {
+    transform: scaleY(0.01) scaleX(0);
+    filter: brightness(4.0);
+    opacity: 1;
+  }
+  40% {
+    transform: scaleY(0.01) scaleX(1);
+    filter: brightness(2.0);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1);
+    opacity: 1;
+  }
+}
+
+.crt-transition-active {
+  animation: crt-shutoff 0.45s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
+}
+
+.crt-power-on-active {
+  animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
+}
+
+/* Background Pixel Grid Texture */
+.gameover-overlay::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+  z-index: 1;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+.gameover-box {
+  position: relative;
+  z-index: 2; /* Sits cleanly above background texture */
+}
+
+
+
+
+
+/* Victory Element Easing Animations */
+@keyframes victory-bounce-glow {
+  0% {
+    transform: scale(0.3) translateY(40px);
+    filter: brightness(3) drop-shadow(0 0 20px var(--signal-green-glow));
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1) translateY(-10px);
+    filter: brightness(1.5) drop-shadow(0 0 15px var(--signal-green));
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1) drop-shadow(0 0 10px var(--signal-green-glow));
+    opacity: 1;
+  }
+}
+
+.victory-icon-anim {
+  animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Defeat Element Shiver animations */
+@keyframes defeat-shake-glow {
+  0% {
+    transform: scale(0.3) rotate(-15deg);
+    filter: brightness(3) drop-shadow(0 0 20px var(--signal-red-glow));
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) rotate(8deg);
+    filter: brightness(1.8) drop-shadow(0 0 12px var(--signal-red));
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(0.95) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    filter: brightness(1) drop-shadow(0 0 10px var(--signal-red-glow));
+    opacity: 1;
+  }
+}
+
+.defeat-icon-anim {
+  animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+}
+
+/* Title text flickers */
+@keyframes text-chromatic-flicker-green {
+  0%, 100% { text-shadow: 0 0 15px var(--signal-green-glow), -2px 0 #00ff00, 2px 0 #0000ff; }
+  50% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2), -1px 0 #00ff00, 1px 0 #0000ff; filter: brightness(0.9); }
+  92% { text-shadow: 0 0 25px var(--signal-green), -3px 0 #00ff00, 3px 0 #0000ff; filter: brightness(1.2); }
+}
+
+.victory-title-anim {
+  animation: text-chromatic-flicker-green 3s infinite ease-in-out;
+}
+
+@keyframes text-chromatic-flicker-red {
+  0%, 100% { text-shadow: 0 0 15px var(--signal-red-glow), -2px 0 #ff0000, 2px 0 #0000ff; }
+  45% { text-shadow: 0 0 6px rgba(239, 68, 68, 0.2), -1px 0 #ff0000, 1px 0 #0000ff; filter: brightness(0.85); }
+  85% { text-shadow: 0 0 22px var(--signal-red), -4px 0 #ff0000, 4px 0 #0000ff; filter: brightness(1.3); }
+}
+
+.defeat-title-anim {
+  animation: text-chromatic-flicker-red 2.5s infinite ease-in-out;
+}
+
+/* Stat Card Wipe-in */
+@keyframes terminal-wipe {
+  0% {
+    max-height: 0px;
+    opacity: 0;
+    border-color: rgba(255, 255, 255, 0.01);
+  }
+  100% {
+    max-height: 200px;
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.stat-card-anim {
+  overflow: hidden;
+  animation: terminal-wipe 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Button Slide-up Spring */
+@keyframes spring-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.button-reveal-anim {
+  animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
+}

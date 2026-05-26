@@ -35,6 +35,8 @@ export type GameEventMap = {
   CHARGE_START: void;
   CHARGE_UPDATE: { timer: number };
   CHARGE_STOP: void;
+  REQUEST_RETRY: void;
+  REQUEST_MENU: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
