@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Bj61rQMN.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DXGLljCz.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5509,6 +5509,8 @@ export class Engine {
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
+  private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
+  private unsubPlatformImpact!: () => void;
 
   private cachedPlayerHP: number = -1;
   private cachedBossHP: number = -1;
@@ -5578,6 +5580,19 @@ export class Engine {
     this.particleSystem = new ParticleSystem();
     this.battleDirector = new BattleDirector(() => {});
 
+    this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
+      rect,
+      offsetY: 0,
+      velocityY: 0,
+    }));
+
+    this.unsubPlatformImpact = eventBroker.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
+      const sp = this.springPlatforms.find((s) => s.rect === platform);
+      if (sp) {
+        sp.velocityY += velocityY * massMultiplier * 0.25;
+      }
+    });
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
@@ -5618,6 +5633,11 @@ export class Engine {
 
     this.particleSystem.cleanup();
     this.particleSystem = new ParticleSystem();
+
+    for (const sp of this.springPlatforms) {
+      sp.offsetY = 0;
+      sp.velocityY = 0;
+    }
 
     this.battleDirector.cleanup();
     this.battleDirector = new BattleDirector(() => {});
@@ -5809,6 +5829,14 @@ export class Engine {
 
     Camera.update(dt);
 
+    const K = 320;
+    const D = 14;
+    for (const sp of this.springPlatforms) {
+      const force = -K * sp.offsetY - D * sp.velocityY;
+      sp.velocityY += force * dt;
+      sp.offsetY += sp.velocityY * dt;
+    }
+
     this.battleDirector.update(dt, this.player, this.boss);
 
     this.cachePreIntegrationPositions();
@@ -5851,6 +5879,7 @@ export class Engine {
       this.isPaused,
       this.battleDirector.getDeathVisuals().timer,
       this.battleDirector.getDeathVisuals().pos,
+      this.springPlatforms,
       alpha
     );
   }
@@ -5864,6 +5893,10 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.particleSystem.cleanup();
+
+    if (this.unsubPlatformImpact) {
+      this.unsubPlatformImpact();
+    }
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();
@@ -7653,6 +7686,7 @@ export class WorldRenderer {
     isPaused: boolean,
     bossDeathTimer: number,
     bossDeathPos: { x: number; y: number } | null,
+    springPlatforms: { rect: Rectangle; offsetY: number }[],
     alpha: number
   ) {
     this.ctx.fillStyle = "#0c0d11";
@@ -7670,9 +7704,15 @@ export class WorldRenderer {
 
     this.ctx.fillStyle = "#2c3e50";
     for (const platform of onewayPlatforms) {
+      const sp = springPlatforms.find((s) => s.rect === platform);
+      const offsetY = sp ? sp.offsetY : 0;
+
+      this.ctx.save();
+      this.ctx.translate(0, offsetY);
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
       this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
       this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+      this.ctx.restore();
     }
 
     // Geometric Path Batching: Group hazard rendering triangles into a single GPU state call
@@ -9198,7 +9238,8 @@ export const SFX_PRESETS = {
     },
   },
 };
-`,"src/core/eventBroker.ts":`export type GameEventMap = {
+`,"src/core/eventBroker.ts":`import { Rectangle } from "./Interfaces";
+export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
   MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -9238,6 +9279,7 @@ export const SFX_PRESETS = {
   CHARGE_MAXED: void;
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
+  PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -12626,6 +12668,7 @@ export class MeleeComponent implements IEntityComponent {
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
+import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -12790,10 +12833,14 @@ export class PhysicsComponent implements IEntityComponent {
       for (const platform of platformCandidates) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
           if (previousY + ownerHalfHeight - 4 <= platform.y) {
+            const landingVelY = this.owner.velocity.y;
+            const massMultiplier = this.owner.id === "boss-01" ? 2.5 : 1.0;
             this.owner.position.y = platform.y - ownerHalfHeight;
             this.owner.velocity.y = 0;
             this.isGrounded = true;
             hasCollided = true;
+
+            eventBroker.publish("PLATFORM_IMPACT", { platform, velocityY: landingVelY, massMultiplier });
           }
         }
       }
