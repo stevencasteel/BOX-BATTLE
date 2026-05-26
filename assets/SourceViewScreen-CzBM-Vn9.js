@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BjceS-94.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DIgiKZ1s.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5517,6 +5517,8 @@ export class Engine {
 
   public isPaused: boolean = false;
   private accumulator: number = 0;
+  private currentScale: number = 1.0;
+  private crisisTimer: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
   private levelConfig: LevelConfig;
@@ -5686,6 +5688,11 @@ export class Engine {
       nextHealingCharges !== this.cachedHealingCharges ||
       nextDetermination !== this.cachedDetermination
     ) {
+      // Trigger temporary slomo surge only on the exact frame the player transitions to 1 HP
+      if (nextPlayerHP === 1 && this.cachedPlayerHP > 1) {
+        this.crisisTimer = 0.45;
+      }
+
       this.cachedPlayerHP = nextPlayerHP;
       this.cachedBossHP = nextBossHP;
       this.cachedHealingCharges = nextHealingCharges;
@@ -5710,7 +5717,17 @@ export class Engine {
       inputProvider.postUpdate();
       return;
     }
-    this.accumulator += dt;
+
+    // Decrement the crisis adrenaline slow-motion timer
+    if (this.crisisTimer > 0) {
+      this.crisisTimer -= dt;
+    }
+
+    // Smoothly scale simulation time based on the active adrenaline surge timer
+    const targetScale = this.crisisTimer > 0 ? 0.45 : 1.0;
+    this.currentScale += (targetScale - this.currentScale) * 6.0 * dt;
+
+    this.accumulator += dt * this.currentScale;
     if (this.accumulator > 0.25) {
       this.accumulator = 0.25;
     }
@@ -6457,6 +6474,7 @@ export class PoolableParticle implements Particle, IPoolable {
   public startColor = "";
   public endColor = "";
   public isActive = false;
+  public turbulence = 0;
 
   public activate(
     x: number,
@@ -6469,8 +6487,10 @@ export class PoolableParticle implements Particle, IPoolable {
     shape: "spark" | "dust" | "ring",
     drag: number = 1.0,
     startColor: string = "",
-    endColor: string = ""
+    endColor: string = "",
+    turbulence: number = 0
   ) {
+    this.turbulence = turbulence;
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -6491,6 +6511,7 @@ export class PoolableParticle implements Particle, IPoolable {
     this.drag = 1.0;
     this.startColor = "";
     this.endColor = "";
+    this.turbulence = 0;
   }
 }
 
@@ -6505,7 +6526,7 @@ export class ParticleSystem {
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -6530,7 +6551,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol);
+          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol, turbulence || 0);
         }
       })
     );
@@ -6569,6 +6590,10 @@ export class ParticleSystem {
       if (p.drag !== 1.0) {
         p.vx *= Math.pow(p.drag, dt * 60);
         p.vy *= Math.pow(p.drag, dt * 60);
+      }
+      if (p.turbulence > 0) {
+        const wave = Math.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
+        p.x += wave * dt;
       }
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -9189,7 +9214,7 @@ export const SFX_PRESETS = {
   GAME_OVER: void;
   VICTORY: void;
   CLEAR_DIALOGUES: void;
-  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number };
+  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number };
   SPAWN_DUST: { x: number; y: number };
   SPAWN_BLAST: { x: number; y: number; color: string };
   PLAYER_LANDED: void;
@@ -11111,6 +11136,28 @@ export class Player extends BaseEntity {
         x: 1.0 - targetSquish + vibration, 
         y: 1.0 + targetSquish - vibration 
       };
+
+      // Vortex accretion: Spawn swirling charges rotating in-wards
+      if (Math.random() < 0.35) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 60 - chargeProgress * 30;
+        const spawnX = this.position.x + Math.cos(angle) * dist;
+        const spawnY = this.position.y - 12 + Math.sin(angle) * dist;
+        
+        const targetX = this.position.x;
+        const targetY = this.position.y - 12;
+        const vx = (targetX - spawnX) * 2.5;
+        const vy = (targetY - spawnY) * 2.5;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: spawnX,
+          y: spawnY,
+          angle: Math.atan2(vy, vx),
+          color: chargeProgress >= 1.0 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+          count: 1,
+          turbulence: 35
+        });
+      }
     } else {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
     }
@@ -11128,6 +11175,22 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
+      }
+      
+      // Bubbling healing: Spawn upward-ascending purple embers around player base
+      if (Math.random() < 0.45) {
+        const spawnX = this.position.x + (Math.random() * 32 - 16);
+        const spawnY = this.position.y + this.size.height / 2;
+        const angle = -Math.PI / 2 + (Math.random() * 0.6 - 0.3);
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: spawnX,
+          y: spawnY,
+          angle: angle,
+          color: "hsl(280, 80%, 65%)",
+          count: 1,
+          turbulence: 25
+        });
       }
       return;
     }
