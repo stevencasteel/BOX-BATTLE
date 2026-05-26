@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 10:46:10 PM
+ [SYSTEM] Generated: 5/26/2026, 10:52:35 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -142,7 +142,6 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
-├── patch_renderer.js
 ├── README.md
 ├── tsconfig.app.json
 ├── tsconfig.json
@@ -645,247 +644,6 @@ export default defineConfig([
     "vite": "^8.0.12",
     "prettier": "^3.2.5"
   }
-}
-
-
-
-● ./patch_renderer.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-const targetFile = 'src/core/WorldRenderer.ts';
-let fileContent = fs.readFileSync(targetFile, 'utf8').replace(/\r\n/g, '\n');
-
-const oldSegment1 = `      if (t < 1.0) {
-        const implodeProgress = t;
-        const scale = Math.max(0, 1.0 - Math.pow(implodeProgress, 3));
-        const radius = 135 * scale;
-        const opacity = 1.0 - implodeProgress;
-
-        if (radius > 1) {
-          const rotationY = t * 2.5;
-          const rotationX = t * 1.2;
-
-          this.ctx.save();
-          this.ctx.strokeStyle = \`rgba(34, 197, 94, \${opacity * 0.85})\`;
-          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-          this.ctx.shadowBlur = 20 * (1.0 - implodeProgress);
-          this.ctx.lineWidth = 1.5;
-
-          this.ctx.beginPath();
-
-          const latitudes = [-Math.PI / 4, 0, Math.PI / 4];
-          const segments = 24;
-          const step = (Math.PI * 2) / segments;
-
-          for (let lIdx = 0; lIdx < latitudes.length; lIdx++) {
-            const lat = latitudes[lIdx];
-            const ringR = radius * Math.cos(lat);
-            const ringY = radius * Math.sin(lat);
-
-            for (let i = 0; i < segments; i++) {
-              const theta1 = i * step + rotationY;
-              const theta2 = (i + 1) * step + rotationY;
-
-              const x1_0 = ringR * Math.cos(theta1);
-              const z1_0 = ringR * Math.sin(theta1);
-              const y1_0 = ringY;
-
-              const x1 = x1_0;
-              const y1 = y1_0 * Math.cos(rotationX) - z1_0 * Math.sin(rotationX);
-
-              const x2_0 = ringR * Math.cos(theta2);
-              const z2_0 = ringR * Math.sin(theta2);
-              const y2_0 = ringY;
-
-              const x2 = x2_0;
-              const y2 = y2_0 * Math.cos(rotationX) - z2_0 * Math.sin(rotationX);
-
-              this.ctx.moveTo(px + x1, py + y1 * 0.7);
-              this.ctx.lineTo(px + x2, py + y2 * 0.7);
-            }
-          }
-
-          const longitudes = [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4];
-          for (let loIdx = 0; loIdx < longitudes.length; loIdx++) {
-            const long = longitudes[loIdx];
-            for (let i = 0; i < segments; i++) {
-              const theta1 = i * step + rotationX;
-              const theta2 = (i + 1) * step + rotationX;
-
-              const x1_0 = radius * Math.cos(theta1) * Math.cos(long);
-              const y1_0 = radius * Math.sin(theta1);
-              const z1_0 = radius * Math.cos(theta1) * Math.sin(long);
-
-              const x1 = x1_0 * Math.cos(rotationY) + z1_0 * Math.sin(rotationY);
-              const y1 = y1;
-
-              const x2_0 = radius * Math.cos(theta2) * Math.cos(long);
-              const y2_0 = radius * Math.sin(theta2);
-              const z2_0 = radius * Math.cos(theta2) * Math.sin(long);
-
-              const x2 = x2_0 * Math.cos(rotationY) + z2_0 * Math.sin(rotationY);
-              const y2 = y2;
-
-              this.ctx.moveTo(px + x1, py + y1 * 0.7);
-              this.ctx.lineTo(px + x2, py + y2 * 0.7);
-            }
-          }
-
-          this.ctx.stroke();
-          this.ctx.restore();
-        }
-      }`;
-
-const newSegment1 = `      if (t < 1.0) {
-        const progress = t;
-        this.ctx.save();
-
-        const isPlayer = !!(world.player && world.player.isDead);
-        const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
-        const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
-
-        const sliceCount = 8;
-        const baseWidth = 60;
-        const baseHeight = 60;
-        const scaleY = Math.max(0, 1.0 - progress);
-        const scaleX = 1.0 + Math.sin(progress * Math.PI * 4) * 0.2 * (1.0 - progress);
-
-        if (progress < 0.8) {
-          for (let i = 0; i < sliceCount; i++) {
-            const sliceHeight = (baseHeight / sliceCount);
-            const localY = -baseHeight / 2 + i * sliceHeight;
-            const currentY = py + localY * scaleY;
-
-            const shakeX = (Math.sin(progress * 45 + i * 1.5) * 8 * (1.0 - progress)) + (Math.random() * 4 - 2);
-            const currentX = px + shakeX;
-
-            const sliceWidth = baseWidth * scaleX * (0.5 + 0.5 * Math.sin((i / sliceCount) * Math.PI));
-
-            this.ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
-            this.ctx.globalAlpha = 1.0 - progress;
-            this.ctx.fillRect(currentX - sliceWidth / 2, currentY - (sliceHeight * scaleY) / 2, sliceWidth, sliceHeight * scaleY);
-          }
-        }
-
-        if (progress >= 0.6) {
-          const pinchProgress = (progress - 0.6) / 0.4;
-          const lineLength = Math.max(2, 160 * (1.0 - Math.pow(pinchProgress, 2)));
-          const lineHeight = Math.max(1, 10 * (1.0 - pinchProgress));
-          const lineAlpha = pinchProgress;
-
-          this.ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
-          this.ctx.shadowBlur = 20 * (1.0 - pinchProgress);
-
-          this.ctx.fillStyle = "#ffffff";
-          this.ctx.globalAlpha = lineAlpha;
-          this.ctx.fillRect(px - lineLength / 2, py - lineHeight / 2, lineLength, lineHeight);
-        }
-
-        this.ctx.restore();
-      }`;
-
-const oldSegment2 = `      const particleCount = 24;
-      const particleSpeed = 550;
-      const particleLife = 1.0;
-      const explodeT = t - 1.0;
-      if (explodeT >= 0 && explodeT < particleLife) {
-        const opacity = Math.max(0, 1 - explodeT / particleLife);
-        this.ctx.save();
-        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-        this.ctx.shadowBlur = 15;
-        for (let i = 0; i < particleCount; i++) {
-          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.5 : -explodeT * 0.5);
-          const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
-
-          this.ctx.fillStyle = \`rgba(34, 197, 94, \${opacity})\`;
-          this.ctx.fillRect(x - 4, y - 4, 8, 8);
-          this.ctx.fillStyle = \`rgba(255, 255, 255, \${opacity})\`;
-          this.ctx.fillRect(x - 2, y - 2, 4, 4);
-        }
-        this.ctx.restore();
-      }`;
-
-const newSegment2 = `      const orbCount = 12;
-      const orbSpeed = 620;
-      const orbLife = 1.0;
-      const explodeT = t - 1.0;
-
-      if (explodeT >= 0 && explodeT < orbLife) {
-        const opacity = Math.max(0, 1 - explodeT / orbLife);
-        const isPlayer = !!(world.player && world.player.isDead);
-        const orbColor = isPlayer ? "hsl(142, 100%, 70%)" : "hsl(350, 100%, 70%)";
-        const innerColor = "#ffffff";
-
-        this.ctx.save();
-        for (let i = 0; i < orbCount; i++) {
-          const angle = (i / orbCount) * Math.PI * 2;
-
-          const tailCount = 3;
-          for (let j = 0; j < tailCount; j++) {
-            const tailDelay = j * 0.045;
-            const currentT = explodeT - tailDelay;
-            if (currentT <= 0) continue;
-
-            const currentDist = currentT * orbSpeed;
-            const x = px + Math.cos(angle) * currentDist;
-            const y = py + Math.sin(angle) * currentDist;
-
-            const baseSize = 14 * (1.0 - currentT / orbLife);
-            const size = baseSize * (1.0 - j * 0.28);
-            const tailOpacity = opacity * (1.0 - j * 0.3);
-
-            if (size <= 0.1) continue;
-
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, size, 0, Math.PI * 2);
-            this.ctx.fillStyle = orbColor;
-            this.ctx.globalAlpha = tailOpacity * 0.45;
-            this.ctx.shadowColor = orbColor;
-            this.ctx.shadowBlur = size * 1.5;
-            this.ctx.fill();
-
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, size * 0.75, 0, Math.PI * 2);
-            this.ctx.fillStyle = orbColor;
-            this.ctx.globalAlpha = tailOpacity;
-            this.ctx.shadowBlur = 0;
-            this.ctx.fill();
-
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, size * 0.35, 0, Math.PI * 2);
-            this.ctx.fillStyle = innerColor;
-            this.ctx.globalAlpha = tailOpacity;
-            this.ctx.fill();
-          }
-        }
-        this.ctx.restore();
-      }`;
-
-let success = true;
-
-if (fileContent.includes(oldSegment1)) {
-  fileContent = fileContent.replace(oldSegment1, newSegment1);
-  console.log('Successfully patched Phase 1: De-Rez and CRT Line Pinch.');
-} else {
-  console.error('Error: Old Segment 1 (globe cage) not found in WorldRenderer.ts');
-  success = false;
-}
-
-if (fileContent.includes(oldSegment2)) {
-  fileContent = fileContent.replace(oldSegment2, newSegment2);
-  console.log('Successfully patched Phase 2: Radial Concentric Orb Explosion.');
-} else {
-  console.error('Error: Old Segment 2 (rectangular particles) not found in WorldRenderer.ts');
-  success = false;
-}
-
-if (success) {
-  fs.writeFileSync(targetFile, fileContent, 'utf8');
-} else {
-  process.exit(1);
 }
 
 
@@ -9190,112 +8948,199 @@ export class WorldRenderer {
       const px = bossDeathPos.x;
       const py = bossDeathPos.y;
 
+      const isPlayer = !!(world.player && world.player.isDead);
+      const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
+      const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
+      const shadowColorRGBA = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
+
+      // 1. Quantum Voxel Shatter & Gravity Cascade (Time 0.0s to 1.0s)
       if (t < 1.0) {
         const progress = t;
         this.ctx.save();
 
-        const isPlayer = !!(world.player && world.player.isDead);
-        const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
-        const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
-
-        const sliceCount = 8;
+        const gridCols = 8;
+        const gridRows = 8;
         const baseWidth = 60;
         const baseHeight = 60;
-        const scaleY = Math.max(0, 1.0 - progress);
-        const scaleX = 1.0 + Math.sin(progress * Math.PI * 4) * 0.2 * (1.0 - progress);
 
-        if (progress < 0.8) {
-          for (let i = 0; i < sliceCount; i++) {
-            const sliceHeight = (baseHeight / sliceCount);
-            const localY = -baseHeight / 2 + i * sliceHeight;
-            const currentY = py + localY * scaleY;
+        for (let row = 0; row < gridRows; row++) {
+          const cascadeDir = isPlayer ? -1 : 1;
+          const birthDelay = isPlayer ? (7 - row) * 0.04 : row * 0.04;
+          const activeProgress = Math.max(0, progress - birthDelay) / (1.0 - birthDelay);
 
-            const shakeX = (Math.sin(progress * 45 + i * 1.5) * 8 * (1.0 - progress)) + (Math.random() * 4 - 2);
-            const currentX = px + shakeX;
+          if (activeProgress > 0 && activeProgress < 1.0) {
+            const opacity = 1.0 - activeProgress;
+            const size = (baseWidth / gridCols) * (1.0 - activeProgress * 0.4);
 
-            const sliceWidth = baseWidth * scaleX * (0.5 + 0.5 * Math.sin((i / sliceCount) * Math.PI));
+            const startX = px - baseWidth / 2 + (row % 2 === 0 ? 0.3 : -0.3) * (Math.random() * 4 - 2) + (row + 0.5) * (baseWidth / gridCols);
+            const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
 
-            this.ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
-            this.ctx.globalAlpha = 1.0 - progress;
-            this.ctx.fillRect(currentX - sliceWidth / 2, currentY - (sliceHeight * scaleY) / 2, sliceWidth, sliceHeight * scaleY);
+            const angle = Math.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
+            const thrust = activeProgress * 80;
+            const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
+
+            const curX = startX + Math.cos(angle) * thrust + (Math.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
+            const curY = startY + Math.sin(angle) * thrust + gravityOffset;
+
+            this.ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
+            this.ctx.globalAlpha = opacity;
+            this.ctx.shadowColor = shadowColorRGBA;
+            this.ctx.shadowBlur = 10 * opacity;
+
+            this.ctx.save();
+            this.ctx.translate(curX, curY);
+            this.ctx.rotate(progress * 4 + row);
+            this.ctx.fillRect(-size / 2, -size / 2, size, size);
+            this.ctx.restore();
           }
         }
 
-        if (progress >= 0.6) {
-          const pinchProgress = (progress - 0.6) / 0.4;
-          const lineLength = Math.max(2, 160 * (1.0 - Math.pow(pinchProgress, 2)));
-          const lineHeight = Math.max(1, 10 * (1.0 - pinchProgress));
-          const lineAlpha = pinchProgress;
+        if (progress >= 0.7) {
+          const pinchProgress = (progress - 0.7) / 0.3;
+          const flareAlpha = Math.sin(pinchProgress * Math.PI);
 
-          this.ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
-          this.ctx.shadowBlur = 20 * (1.0 - pinchProgress);
-
+          this.ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
+          this.ctx.shadowBlur = 35 * flareAlpha;
           this.ctx.fillStyle = "#ffffff";
-          this.ctx.globalAlpha = lineAlpha;
-          this.ctx.fillRect(px - lineLength / 2, py - lineHeight / 2, lineLength, lineHeight);
+          this.ctx.globalAlpha = flareAlpha;
+
+          const hLength = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+          const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
+          this.ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
+
+          const vHeight = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+          const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
+          this.ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
+
+          this.ctx.beginPath();
+          this.ctx.arc(px, py, Math.max(2, 12 * (1.0 - pinchProgress)), 0, Math.PI * 2);
+          this.ctx.fill();
         }
 
         this.ctx.restore();
       }
 
+      // 2. Detonation White Flash (Time 1.0s to 1.25s)
       const flashT = t - 1.0;
       if (flashT >= 0 && flashT < 0.25) {
         const flashOpacity = Math.max(0, 0.85 * (1 - flashT / 0.25));
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+        this.ctx.fillStyle = "rgba(255, 255, 255, " + flashOpacity + ")";
         this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
       }
 
-      const ringCount = 3;
-      const speed = 750;
-      for (let i = 0; i < ringCount; i++) {
-        const delay = i * 0.15;
-        const ringTime = t - 1.0 - delay;
-        if (ringTime > 0 && ringTime < 1.2) {
-          const radius = ringTime * speed;
-          const opacity = Math.max(0, 1 - ringTime / 1.2);
+      const explodeT = t - 1.0;
 
-          this.ctx.save();
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(34, 197, 94, ${opacity * 0.85})`;
-          this.ctx.lineWidth = Math.max(1, 14 * (1 - ringTime / 1.2));
-          this.ctx.shadowColor = "rgba(34, 197, 94, 0.9)";
-          this.ctx.shadowBlur = 30 * (1 - ringTime / 1.2);
-          this.ctx.stroke();
+      // 3. Supernova Vector Energy Beams & Chromatic Dispersion Shockwaves (Time 1.0s to 2.2s)
+      if (explodeT >= 0 && explodeT < 1.2) {
+        const explodeProgress = explodeT / 1.2;
+        const opacity = Math.max(0, 1.0 - explodeProgress);
 
+        this.ctx.save();
+
+        const rayCount = 14;
+        const maxRayLength = 480;
+        
+        for (let i = 0; i < rayCount; i++) {
+          const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
+          const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
+          const rayWidth = 18 * Math.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
+
+          const p1_angle = angle - (rayWidth / currentLength);
+          const p2_angle = angle + (rayWidth / currentLength);
+
+          const x1 = px + Math.cos(p1_angle) * currentLength;
+          const y1 = py + Math.sin(p1_angle) * currentLength;
+          const x2 = px + Math.cos(p2_angle) * currentLength;
+          const y2 = py + Math.sin(p2_angle) * currentLength;
+
+          this.ctx.fillStyle = isPlayer ? "hsla(142, 100%, 65%, " + (opacity * 0.35) + ")" : "hsla(350, 100%, 65%, " + (opacity * 0.35) + ")";
+          this.ctx.shadowColor = primaryColor;
+          this.ctx.shadowBlur = 20 * opacity;
           this.ctx.beginPath();
-          this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-          this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.95})`;
-          this.ctx.lineWidth = Math.max(1, 4 * (1 - ringTime / 1.2));
+          this.ctx.moveTo(px, py);
+          this.ctx.lineTo(x1, y1);
+          this.ctx.lineTo(x2, y2);
+          this.ctx.closePath();
+          this.ctx.fill();
+
+          this.ctx.fillStyle = "rgba(255, 255, 255, " + (opacity * 0.75) + ")";
           this.ctx.shadowBlur = 0;
-          this.ctx.stroke();
+          this.ctx.beginPath();
+          this.ctx.moveTo(px, py);
+          this.ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
+          this.ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
+          this.ctx.closePath();
+          this.ctx.fill();
+        }
+
+        const ringCount = 3;
+        const ringSpeed = 820;
+        
+        for (let i = 0; i < ringCount; i++) {
+          const delay = i * 0.12;
+          const ringTime = explodeT - delay;
+
+          if (ringTime > 0 && ringTime < 1.0) {
+            const radius = ringTime * ringSpeed;
+            const ringOpacity = Math.max(0, 1 - ringTime / 1.0);
+
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(px - 3, py, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = isPlayer ? "rgba(168, 85, 247, " + (ringOpacity * 0.4) + ")" : "rgba(239, 68, 68, " + (ringOpacity * 0.4) + ")";
+            this.ctx.lineWidth = Math.max(1, 10 * (1 - ringTime / 1.0));
+            this.ctx.stroke();
+            this.ctx.restore();
+
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(px + 3, py, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = isPlayer ? "rgba(34, 197, 94, " + (ringOpacity * 0.7) + ")" : "rgba(234, 179, 8, " + (ringOpacity * 0.7) + ")";
+            this.ctx.lineWidth = Math.max(1, 6 * (1 - ringTime / 1.0));
+            this.ctx.stroke();
+            this.ctx.restore();
+
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = "rgba(255, 255, 255, " + (ringOpacity * 0.95) + ")";
+            this.ctx.lineWidth = Math.max(1, 3 * (1 - ringTime / 1.0));
+            this.ctx.stroke();
+            this.ctx.restore();
+          }
+        }
+
+        const particleCount = 28;
+        const particleSpeed = 620;
+        const particleLife = 1.0;
+        
+        if (explodeT < particleLife) {
+          const partOpacity = Math.max(0, 1 - explodeT / particleLife);
+          this.ctx.save();
+          this.ctx.shadowColor = primaryColor;
+          this.ctx.shadowBlur = 18 * partOpacity;
+
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
+            const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
+            const x = px + Math.cos(angle) * distance;
+            const y = py + Math.sin(angle) * distance;
+
+            this.ctx.fillStyle = primaryColor;
+            this.ctx.globalAlpha = partOpacity * 0.8;
+            this.ctx.fillRect(x - 5, y - 5, 10, 10);
+
+            this.ctx.fillStyle = "#ffffff";
+            this.ctx.globalAlpha = partOpacity;
+            this.ctx.fillRect(x - 2, y - 2, 4, 4);
+          }
           this.ctx.restore();
         }
-      }
 
-      const particleCount = 24;
-      const particleSpeed = 550;
-      const particleLife = 1.0;
-      const explodeT = t - 1.0;
-      if (explodeT >= 0 && explodeT < particleLife) {
-        const opacity = Math.max(0, 1 - explodeT / particleLife);
-        this.ctx.save();
-        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
-        this.ctx.shadowBlur = 15;
-        for (let i = 0; i < particleCount; i++) {
-          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.5 : -explodeT * 0.5);
-          const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
-
-          this.ctx.fillStyle = `rgba(34, 197, 94, ${opacity})`;
-          this.ctx.fillRect(x - 4, y - 4, 8, 8);
-          this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          this.ctx.fillRect(x - 2, y - 2, 4, 4);
-        }
         this.ctx.restore();
       }
     }
+
 
     if (isPaused) {
       this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";
