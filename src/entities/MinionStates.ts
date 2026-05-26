@@ -1,4 +1,5 @@
 import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
 import { Minion } from "./Minion";
 
 export abstract class MinionState implements IState {
@@ -66,7 +67,7 @@ export class LancerPatrolState extends MinionState {
   }
 
   public update(_dt: number): void {
-    minionPatrolMovement(this.owner);
+    minionPatrolMovement(this.owner, _dt);
 
     const player = this.owner.world.player;
     const playerValid = player && !player.isDead;
@@ -144,8 +145,10 @@ export class LancerCooldownState extends MinionState {
   public exit(): void {}
 }
 
-function minionPatrolMovement(minion: Minion) {
-  minion.velocity.x = minion.facingDirection * minion.patrolSpeed;
+function minionPatrolMovement(minion: Minion, dt: number) {
+  const targetSpeed = minion.facingDirection * minion.patrolSpeed;
+  const rate = targetSpeed !== 0 ? UNITS.MINION_ACCEL : UNITS.MINION_DECEL;
+  minion.velocity.x += (targetSpeed - minion.velocity.x) * rate * dt;
   const physics = minion.physics;
   if (physics) {
     if (physics.isOnWallLeft) minion.facingDirection = 1;
@@ -167,8 +170,10 @@ export class FlyerPatrolState extends MinionState {
     if (dist < 5) {
       this.owner.flyerTarget = this.owner.flyerTarget === "A" ? "B" : "A";
     } else {
-      this.owner.velocity.x = (dx / dist) * this.owner.patrolSpeed;
-      this.owner.velocity.y = (dy / dist) * this.owner.patrolSpeed;
+      const targetVelX = (dx / dist) * this.owner.patrolSpeed;
+      const targetVelY = (dy / dist) * this.owner.patrolSpeed;
+      this.owner.velocity.x += (targetVelX - this.owner.velocity.x) * UNITS.MINION_ACCEL * _dt;
+      this.owner.velocity.y += (targetVelY - this.owner.velocity.y) * UNITS.MINION_ACCEL * _dt;
     }
 
     const player = this.owner.world.player;

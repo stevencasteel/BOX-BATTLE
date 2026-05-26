@@ -308,7 +308,9 @@ export class Player extends BaseEntity {
       const friction = 2000.0;
       this.velocity.x = Math.sign(this.velocity.x) * Math.max(0, Math.abs(this.velocity.x) - friction * dt);
     } else {
-      this.velocity.x = moveAxis * this.moveSpeed;
+      const targetSpeed = moveAxis * this.moveSpeed;
+      const rate = moveAxis !== 0 ? UNITS.PLAYER_ACCEL : UNITS.PLAYER_DECEL;
+      this.velocity.x += (targetSpeed - this.velocity.x) * rate * dt;
     }
 
     if (moveAxis !== 0) {

@@ -1,4 +1,5 @@
 import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { eventBroker } from "@/core/eventBroker";
@@ -40,6 +41,7 @@ export class BossCooldownState extends BossState {
 
   public update(dt: number): void {
     this.duration -= dt;
+    this.owner.velocity.x += (0 - this.owner.velocity.x) * UNITS.BOSS_DECEL * dt;
     if (this.duration <= 0) {
       this.owner.stateMachine.changeState(this.owner.patrolState);
     }
@@ -60,7 +62,8 @@ export class BossPatrolState extends BossState {
     this.duration -= dt;
     const physics = this.owner.getComponent(PhysicsComponent);
 
-    this.owner.velocity.x = this.owner.facingDirection * this.owner.patrolSpeed;
+    const targetSpeed = this.owner.facingDirection * this.owner.patrolSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.BOSS_ACCEL * dt;
 
     if (physics) {
       if (physics.isOnWallLeft) {
@@ -218,7 +221,8 @@ export class BossLungeState extends BossState {
 
   public update(dt: number): void {
     this.duration -= dt;
-    this.owner.velocity.x = this.owner.facingDirection * this.owner.lungeSpeed;
+    const targetSpeed = this.owner.facingDirection * this.owner.lungeSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.BOSS_ACCEL * dt;
 
     const physics = this.owner.getComponent(PhysicsComponent);
     const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
