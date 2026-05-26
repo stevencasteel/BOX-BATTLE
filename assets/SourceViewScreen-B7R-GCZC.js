@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BvUh1BlJ.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BLmZbIDm.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8664,16 +8664,16 @@ export class BaseEntity implements IEntity {
   public isDead: boolean = false;
   public world: IWorld;
 
+  public facingDirection: number = 1;
+
   public visualScale = { x: 1, y: 1 };
   public targetVisualScale = { x: 1, y: 1 };
   public squashPivot: "center" | "feet" = "center";
 
-  // Standard Hooke's Law Spring-Damper parameters for visual scaling
   public scaleVelocity = { x: 0, y: 0 };
   public springStiffness = 180;
   public springDamping = 12;
 
-  // Standard DRY rotation spring fields
   public rotation = 0;
   public rotationVelocity = 0;
   public targetRotation = 0;
@@ -8715,7 +8715,6 @@ export class BaseEntity implements IEntity {
   public update(dt: number) {
     if (this.isDead) return;
 
-    // Standard Hooke's Law visual scale spring physics
     const dispX = this.visualScale.x - this.targetVisualScale.x;
     const dispY = this.visualScale.y - this.targetVisualScale.y;
 
@@ -8731,7 +8730,6 @@ export class BaseEntity implements IEntity {
     this.visualScale.x = Math.max(0.1, this.visualScale.x);
     this.visualScale.y = Math.max(0.1, this.visualScale.y);
 
-    // Standard Hooke's Law visual rotation spring physics
     const dispRot = this.rotation - this.targetRotation;
     const forceRot = -this.springStiffnessRot * dispRot - this.springDampingRot * this.rotationVelocity;
 
@@ -9801,14 +9799,14 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
 import { DashComponent } from "@/entities/components/DashComponent";
-import { MeleeComponent, IMeleeCapable } from "@/entities/components/MeleeComponent";
+import { MeleeComponent } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
-import { HealComponent, IHealCapable } from "@/entities/components/HealComponent";
+import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
-export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
+export class Player extends BaseEntity {
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
@@ -9824,7 +9822,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
   private coyoteTimer: number = 0;
   private jumpBufferTimer: number = 0;
   public hasDoubleJump: boolean = true;
-  public facingDirection: number = 1;
 
   private wallCoyoteTimer: number = 0;
   private lastWallNormal: number = 0;
@@ -9836,6 +9833,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
   public hurtTimer: number = 0;
   private unsubHurt!: () => void;
+  private unsubPogo!: () => void;
+  private unsubHealComplete!: () => void;
+  private unsubDamageDealt!: () => void;
   private wasOnWall: boolean = false;
 
   constructor(id: string, world: IWorld) {
@@ -9858,15 +9858,7 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.fireballComponent = this.addComponent(FireballComponent, new FireballComponent());
     this.healComponent = this.addComponent(HealComponent, new HealComponent());
 
-    this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
-      this.hurtTimer = 0.15;
-      if (this.healComponent.isHealing) {
-        this.healComponent.cancelHealing();
-      }
-      if (this.fireballComponent.isCharging) {
-        this.fireballComponent.cancelCharging();
-      }
-    });
+    this.setupSubscribers();
   }
 
   public get isDashing(): boolean {
@@ -9891,6 +9883,50 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     return this.meleeComponent.attackDirection;
   }
 
+  private setupSubscribers() {
+    this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+      this.hurtTimer = 0.15;
+      if (this.healComponent.isHealing) {
+        this.healComponent.cancelHealing();
+      }
+      if (this.fireballComponent.isCharging) {
+        this.fireballComponent.cancelCharging();
+      }
+    });
+
+    this.unsubPogo = eventBroker.subscribe("PLAYER_POGOED", () => {
+      this.hasDoubleJump = true;
+      this.dashComponent.resetDashCharge();
+    });
+
+    this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
+      this.healingCharges = Math.max(0, this.healingCharges - 1);
+      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
+
+      const health = this.getComponent(HealthComponent);
+      if (health) {
+        health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 1);
+        eventBroker.publish("PLAYER_HEALED", {
+          amount: 1,
+          currentHealth: health.currentHealth,
+          maxHealth: health.maxHealth,
+        });
+      }
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+    });
+
+    this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
+      if (this.healingCharges >= this.maxHealingCharges) return;
+
+      this.determinationCounter++;
+      if (this.determinationCounter >= 5) {
+        this.determinationCounter = 0;
+        this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
+        eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
+      }
+    });
+  }
+
   public update(dt: number) {
     if (this.isDead) {
       super.update(dt);
@@ -9908,7 +9944,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     this.updateGravity(isSliding);
     this.handleHurtTimer(dt);
 
-    // Lean-angle spring updates driven by movement directions
     let targetRotation = 0;
     if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
       targetRotation = moveAxis * 0.12;
@@ -10209,18 +10244,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     return false;
   }
 
-  public registerDamageDealt() {
-    if (this.healingCharges >= this.maxHealingCharges) return;
-
-    this.determinationCounter++;
-    if (this.determinationCounter >= 5) {
-      this.determinationCounter = 0;
-      this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
-      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
-    }
-    eventBroker.publish("DETERMINATION_CHANGED", { determination: this.determinationCounter });
-  }
-
   private checkHazardContact() {
     if (this.health.isInvincible() || this.isDead) return;
 
@@ -10244,7 +10267,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
-          // Springy, elastic visual stretch launcher
           this.visualScale = { x: 0.5, y: 1.5 };
           this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
@@ -10272,7 +10294,6 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
-    // Transform coordinate matrix to rotate the player around the feet pivot
     ctx.save();
     ctx.translate(drawX, feetY);
     ctx.rotate(this.rotation);
@@ -10286,11 +10307,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
     ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
     ctx.shadowBlur = this.isDashing ? 25 : 15;
 
-    // Draw player rect (origin is now feet center, so draw upwards from bottom)
     ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
 
-    // Local center coordinates (relative to feet pivot 0,0)
     const localCenterX = 0;
     const localCenterY = -this.size.height / 2;
 
@@ -10332,6 +10351,9 @@ export class Player extends BaseEntity implements IMeleeCapable, IHealCapable {
 
   public teardown() {
     this.unsubHurt();
+    this.unsubPogo();
+    this.unsubHealComplete();
+    this.unsubDamageDealt();
     super.teardown();
   }
 }
@@ -10865,17 +10887,11 @@ export class FireballComponent implements IEntityComponent {
 }
 `,"src/entities/components/HealComponent.ts":`import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { IEntity } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 
-export interface IHealCapable extends IEntity {
-  healingCharges: number;
-}
-
 export class HealComponent implements IEntityComponent {
-  public owner!: IHealCapable;
+  public owner!: BaseEntity;
 
   public isHealing: boolean = false;
   public healTimer: number = 0;
@@ -10883,7 +10899,7 @@ export class HealComponent implements IEntityComponent {
   private readonly healDuration: number = UNITS.HEAL_DURATION;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as unknown as IHealCapable;
+    this.owner = owner;
   }
 
   public update(dt: number): void {
@@ -10912,20 +10928,6 @@ export class HealComponent implements IEntityComponent {
 
   private completeHealing(): void {
     this.isHealing = false;
-
-    this.owner.healingCharges = Math.max(0, this.owner.healingCharges - 1);
-    eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.owner.healingCharges });
-
-    const health = this.owner.getComponent(HealthComponent);
-    if (health) {
-      health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 1);
-      eventBroker.publish("PLAYER_HEALED", {
-        amount: 1,
-        currentHealth: health.currentHealth,
-        maxHealth: health.maxHealth,
-      });
-    }
-    eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
     eventBroker.publish("HEAL_COMPLETE", undefined);
   }
 }
@@ -11060,27 +11062,18 @@ export class InputReceiverComponent implements IEntityComponent {
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { eventBroker } from "@/core/eventBroker";
-import { EntityStatus, IEntity } from "@/core/Interfaces";
-import { DashComponent } from "@/entities/components/DashComponent";
+import { EntityStatus } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 
-export interface IMeleeCapable extends IEntity {
-  facingDirection: number;
-  hasDoubleJump: boolean;
-  registerDamageDealt?(): void;
-}
-
 export class MeleeComponent implements IEntityComponent {
-  public owner!: IMeleeCapable;
+  public owner!: BaseEntity;
 
-  // High-frequency timing registers
   public attackCooldownTimer: number = 0;
   public attackActiveTimer: number = 0;
   public attackActive: boolean = false;
   public attackDirection: "side" | "up" | "down" | null = null;
   public hasHitEnemyThisSwing: boolean = false;
 
-  // Balancing & Reach parameters
   private readonly pogoForce: number = 450;
   private readonly meleeRangeLimit: number = UNITS.MELEE_MAX_REACH;
   private readonly closeRangeThreshold: number = UNITS.MELEE_CLOSE_RANGE_THRESHOLD;
@@ -11088,13 +11081,12 @@ export class MeleeComponent implements IEntityComponent {
   private readonly verticalReachOffset: number = UNITS.MELEE_VERTICAL_OFFSET;
 
   public setup(owner: BaseEntity): void {
-    this.owner = owner as unknown as IMeleeCapable;
+    this.owner = owner;
   }
 
   public update(dt: number): void {
     this.decayAttackTimers(dt);
 
-    // Evaluate active swing intersections if we have not registered contact yet
     if (this.attackActive && !this.hasHitEnemyThisSwing) {
       if (this.attackDirection === "down") {
         this.checkPogoAttack();
@@ -11144,17 +11136,11 @@ export class MeleeComponent implements IEntityComponent {
     eventBroker.publish("PLAYER_ATTACKED", { direction });
   }
 
-  /**
-   * Main intersection bridge for horizontal (side) and vertical-upward swipes.
-   */
   private checkMeleeAttackContact(): void {
     this.swipeEnemies();
     this.swipeIncomingProjectiles();
   }
 
-  /**
-   * Evaluates and applies swipe damage to valid boss and minion targets within range.
-   */
   private swipeEnemies(): void {
     const targets = this.gatherAwaitingTargets();
     const facing = this.owner.facingDirection;
@@ -11200,7 +11186,7 @@ export class MeleeComponent implements IEntityComponent {
           const registeredDamage = health.takeDamage(damageAmount);
           if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
-            this.owner.registerDamageDealt?.();
+            eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
 
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
@@ -11217,9 +11203,6 @@ export class MeleeComponent implements IEntityComponent {
     }
   }
 
-  /**
-   * Evaluates and releases/deflects incoming hostile projectiles within swipe reach.
-   */
   private swipeIncomingProjectiles(): void {
     const facing = this.owner.facingDirection;
     const activeProjectiles = [...this.owner.world.getProjectiles()];
@@ -11257,16 +11240,13 @@ export class MeleeComponent implements IEntityComponent {
         if (isDeflected) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
           eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
     }
   }
 
-  /**
-   * Main intersection bridge for downward pogo hits against enemies, projectiles, and solid ground.
-   */
   private checkPogoAttack(): void {
     const pogoHitbox = {
       x: this.owner.position.x + UNITS.POGO_HITBOX_X_OFFSET,
@@ -11297,7 +11277,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(UNITS.PLAYER_MELEE_DAMAGE_BASE);
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
         }
 
         this.applyPogoRebound();
@@ -11323,7 +11303,7 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isColliding) {
           this.owner.world.releaseProjectile(proj);
-          this.owner.registerDamageDealt?.();
+          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
           this.applyPogoRebound();
           return true;
         }
@@ -11353,21 +11333,10 @@ export class MeleeComponent implements IEntityComponent {
     }
   }
 
-  /**
-   * Calculates vertical push force upon landing a successful downward strike,
-   * restoring the double-jump and dash registers.
-   */
   private applyPogoRebound(): void {
     this.owner.velocity.y = -this.pogoForce;
     this.owner.position.y -= 2;
     this.hasHitEnemyThisSwing = true;
-    this.owner.hasDoubleJump = true;
-
-    const dash = this.owner.getComponent(DashComponent);
-    if (dash) {
-      dash.resetDashCharge();
-    }
-
     eventBroker.publish("PLAYER_POGOED", undefined);
   }
 
