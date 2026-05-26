@@ -16,6 +16,7 @@ export class PoolableParticle implements Particle, IPoolable {
   public startColor = "";
   public endColor = "";
   public isActive = false;
+  public turbulence = 0;
 
   public activate(
     x: number,
@@ -28,8 +29,10 @@ export class PoolableParticle implements Particle, IPoolable {
     shape: "spark" | "dust" | "ring",
     drag: number = 1.0,
     startColor: string = "",
-    endColor: string = ""
+    endColor: string = "",
+    turbulence: number = 0
   ) {
+    this.turbulence = turbulence;
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -50,6 +53,7 @@ export class PoolableParticle implements Particle, IPoolable {
     this.drag = 1.0;
     this.startColor = "";
     this.endColor = "";
+    this.turbulence = 0;
   }
 }
 
@@ -64,7 +68,7 @@ export class ParticleSystem {
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count }) => {
+      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -89,7 +93,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol);
+          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol, turbulence || 0);
         }
       })
     );
@@ -128,6 +132,10 @@ export class ParticleSystem {
       if (p.drag !== 1.0) {
         p.vx *= Math.pow(p.drag, dt * 60);
         p.vy *= Math.pow(p.drag, dt * 60);
+      }
+      if (p.turbulence > 0) {
+        const wave = Math.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
+        p.x += wave * dt;
       }
       p.x += p.vx * dt;
       p.y += p.vy * dt;

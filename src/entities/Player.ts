@@ -172,6 +172,28 @@ export class Player extends BaseEntity {
         x: 1.0 - targetSquish + vibration, 
         y: 1.0 + targetSquish - vibration 
       };
+
+      // Vortex accretion: Spawn swirling charges rotating in-wards
+      if (Math.random() < 0.35) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 60 - chargeProgress * 30;
+        const spawnX = this.position.x + Math.cos(angle) * dist;
+        const spawnY = this.position.y - 12 + Math.sin(angle) * dist;
+        
+        const targetX = this.position.x;
+        const targetY = this.position.y - 12;
+        const vx = (targetX - spawnX) * 2.5;
+        const vy = (targetY - spawnY) * 2.5;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: spawnX,
+          y: spawnY,
+          angle: Math.atan2(vy, vx),
+          color: chargeProgress >= 1.0 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
+          count: 1,
+          turbulence: 35
+        });
+      }
     } else {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
     }
@@ -189,6 +211,22 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
+      }
+      
+      // Bubbling healing: Spawn upward-ascending purple embers around player base
+      if (Math.random() < 0.45) {
+        const spawnX = this.position.x + (Math.random() * 32 - 16);
+        const spawnY = this.position.y + this.size.height / 2;
+        const angle = -Math.PI / 2 + (Math.random() * 0.6 - 0.3);
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: spawnX,
+          y: spawnY,
+          angle: angle,
+          color: "hsl(280, 80%, 65%)",
+          count: 1,
+          turbulence: 25
+        });
       }
       return;
     }

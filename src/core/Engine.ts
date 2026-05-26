@@ -42,6 +42,8 @@ export class Engine {
 
   public isPaused: boolean = false;
   private accumulator: number = 0;
+  private currentScale: number = 1.0;
+  private crisisTimer: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
   private levelConfig: LevelConfig;
@@ -211,6 +213,11 @@ export class Engine {
       nextHealingCharges !== this.cachedHealingCharges ||
       nextDetermination !== this.cachedDetermination
     ) {
+      // Trigger temporary slomo surge only on the exact frame the player transitions to 1 HP
+      if (nextPlayerHP === 1 && this.cachedPlayerHP > 1) {
+        this.crisisTimer = 0.45;
+      }
+
       this.cachedPlayerHP = nextPlayerHP;
       this.cachedBossHP = nextBossHP;
       this.cachedHealingCharges = nextHealingCharges;
@@ -235,7 +242,17 @@ export class Engine {
       inputProvider.postUpdate();
       return;
     }
-    this.accumulator += dt;
+
+    // Decrement the crisis adrenaline slow-motion timer
+    if (this.crisisTimer > 0) {
+      this.crisisTimer -= dt;
+    }
+
+    // Smoothly scale simulation time based on the active adrenaline surge timer
+    const targetScale = this.crisisTimer > 0 ? 0.45 : 1.0;
+    this.currentScale += (targetScale - this.currentScale) * 6.0 * dt;
+
+    this.accumulator += dt * this.currentScale;
     if (this.accumulator > 0.25) {
       this.accumulator = 0.25;
     }
