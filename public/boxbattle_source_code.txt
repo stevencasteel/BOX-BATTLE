@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 12:25:51 PM
+ [SYSTEM] Generated: 5/26/2026, 12:33:05 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2865,7 +2865,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           borderRadius: "8px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <div id="hud-m-hp-group" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
             <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
           </span>
@@ -2996,7 +2996,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className="cabinet-status-panel neo-pressed">
-      <div className="hud-panel-block" style={{ gap: "4px" }}>
+      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px" }}>
         <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
           PLAYER HP
@@ -6261,10 +6261,27 @@ export class Camera {
   private static shakeAmplitude = 0;
   private static noiseTime = 0;
 
-  public static shake(amplitude: number, duration: number) {
+  private static shakeDirX = 0;
+  private static shakeDirY = 0;
+  private static isDirectional = false;
+
+  public static shake(amplitude: number, duration: number, dirX?: number, dirY?: number) {
     Camera.shakeAmplitude = amplitude;
     Camera.shakeDuration = duration;
     Camera.shakeTimer = duration;
+
+    if (dirX !== undefined && dirY !== undefined) {
+      const len = Math.sqrt(dirX * dirX + dirY * dirY);
+      if (len > 0) {
+        Camera.shakeDirX = dirX / len;
+        Camera.shakeDirY = dirY / len;
+        Camera.isDirectional = true;
+      } else {
+        Camera.isDirectional = false;
+      }
+    } else {
+      Camera.isDirectional = false;
+    }
   }
 
   public static triggerHitStop(duration: number) {
@@ -6294,8 +6311,18 @@ export class Camera {
       if (Camera.shakeTimer > 0) {
         const decay = Camera.shakeTimer / Camera.shakeDuration;
         const currentAmp = Camera.shakeAmplitude * decay;
-        shakeX = this.noise(this.noiseTime) * currentAmp;
-        shakeY = this.noise(this.noiseTime + 100) * currentAmp;
+        const rawX = this.noise(this.noiseTime) * currentAmp;
+        const rawY = this.noise(this.noiseTime + 100) * currentAmp;
+
+        if (Camera.isDirectional) {
+          const parallel = (rawX * Camera.shakeDirX + rawY * Camera.shakeDirY) * 0.8;
+          const perpendicular = (-rawX * Camera.shakeDirY + rawY * Camera.shakeDirX) * 0.2;
+          shakeX = parallel * Camera.shakeDirX - perpendicular * Camera.shakeDirY;
+          shakeY = parallel * Camera.shakeDirY + perpendicular * Camera.shakeDirX;
+        } else {
+          shakeX = rawX;
+          shakeY = rawY;
+        }
       }
     }
 
@@ -6310,6 +6337,9 @@ export class Camera {
     Camera.shakeTimer = 0;
     Camera.hitStopTimer = 0;
     Camera.noiseTime = 0;
+    Camera.shakeDirX = 0;
+    Camera.shakeDirY = 0;
+    Camera.isDirectional = false;
   }
 }
 
@@ -7855,20 +7885,32 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        Camera.shake(15, 0.3);
+        const px = getPlayerX();
+        const bx = getBossX();
+        const dx = px - bx;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+        Camera.shake(15, 0.3, dirX, 0);
         Camera.triggerHitStop(0.08);
         inputProvider.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
+        const bossX = getBossX();
+        const dx = bossX - sourceX;
+        const dy = 1000 - sourceY;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const dirX = len > 0 ? dx / len : -1;
+        const dirY = len > 0 ? dy / len : 0;
+
         if (currentHealth <= 0) {
-          Camera.shake(25, 0.6);
+          Camera.shake(25, 0.6, dirX, dirY);
           Camera.triggerHitStop(0.15);
           inputProvider.triggerHapticFeedback("heavy");
         } else {
-          Camera.shake(8, 0.15);
+          Camera.shake(8, 0.15, dirX, dirY);
           Camera.triggerHitStop(0.04);
           inputProvider.triggerHapticFeedback("light");
         }
@@ -7876,16 +7918,27 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
+        const minionX = getMinionX(id);
+        const dx = minionX - sourceX;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+
         if (currentHealth <= 0) {
-          Camera.shake(4, 0.15);
+          Camera.shake(4, 0.15, dirX, 0);
           Camera.triggerHitStop(0.03);
           inputProvider.triggerHapticFeedback("medium");
         } else {
-          Camera.shake(2, 0.08);
+          Camera.shake(2, 0.08, dirX, 0);
           Camera.triggerHitStop(0.01);
           inputProvider.triggerHapticFeedback("light");
         }
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_POGOED", () => {
+        Camera.shake(4, 0.08, 0, 1);
       })
     );
 
@@ -14188,6 +14241,16 @@ export function useHudSubscription() {
           soundSynth.setLowHPStatus(playerHP === 1);
         }
 
+        const groupD = document.getElementById("hud-d-hp-group");
+        const groupM = document.getElementById("hud-m-hp-group");
+        if (playerHP === 1) {
+          groupD?.classList.add("hud-stress-shiver");
+          groupM?.classList.add("hud-stress-shiver");
+        } else {
+          groupD?.classList.remove("hud-stress-shiver");
+          groupM?.classList.remove("hud-stress-shiver");
+        }
+
         for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
           const isLit = i < playerHP;
           const dotD = document.getElementById("hud-d-php-" + i);
@@ -15596,6 +15659,19 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   justify-content: center !important;
   margin-left: 0 !important;
   margin-top: 0 !important;
+}
+
+/* Structural Stress Jitter and Crisis HP Wobbles */
+@keyframes stress-shiver {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.2px, 0.8px); filter: brightness(1.2); }
+  40% { transform: translate(1.2px, -0.8px); }
+  60% { transform: translate(-0.8px, -1.2px); }
+  80% { transform: translate(0.8px, 1.2px); }
+}
+
+.hud-stress-shiver {
+  animation: stress-shiver 0.12s infinite linear !important;
 }
 
 

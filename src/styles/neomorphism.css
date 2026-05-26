@@ -633,3 +633,16 @@
   margin-left: 0 !important;
   margin-top: 0 !important;
 }
+
+/* Structural Stress Jitter and Crisis HP Wobbles */
+@keyframes stress-shiver {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.2px, 0.8px); filter: brightness(1.2); }
+  40% { transform: translate(1.2px, -0.8px); }
+  60% { transform: translate(-0.8px, -1.2px); }
+  80% { transform: translate(0.8px, 1.2px); }
+}
+
+.hud-stress-shiver {
+  animation: stress-shiver 0.12s infinite linear !important;
+}

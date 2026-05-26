@@ -42,7 +42,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           borderRadius: "8px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <div id="hud-m-hp-group" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
             <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
           </span>
@@ -173,7 +173,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className="cabinet-status-panel neo-pressed">
-      <div className="hud-panel-block" style={{ gap: "4px" }}>
+      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px" }}>
         <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
           PLAYER HP

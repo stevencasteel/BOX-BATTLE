@@ -12,20 +12,32 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        Camera.shake(15, 0.3);
+        const px = getPlayerX();
+        const bx = getBossX();
+        const dx = px - bx;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+        Camera.shake(15, 0.3, dirX, 0);
         Camera.triggerHitStop(0.08);
         inputProvider.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
+        const bossX = getBossX();
+        const dx = bossX - sourceX;
+        const dy = 1000 - sourceY;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const dirX = len > 0 ? dx / len : -1;
+        const dirY = len > 0 ? dy / len : 0;
+
         if (currentHealth <= 0) {
-          Camera.shake(25, 0.6);
+          Camera.shake(25, 0.6, dirX, dirY);
           Camera.triggerHitStop(0.15);
           inputProvider.triggerHapticFeedback("heavy");
         } else {
-          Camera.shake(8, 0.15);
+          Camera.shake(8, 0.15, dirX, dirY);
           Camera.triggerHitStop(0.04);
           inputProvider.triggerHapticFeedback("light");
         }
@@ -33,16 +45,27 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
+        const minionX = getMinionX(id);
+        const dx = minionX - sourceX;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+
         if (currentHealth <= 0) {
-          Camera.shake(4, 0.15);
+          Camera.shake(4, 0.15, dirX, 0);
           Camera.triggerHitStop(0.03);
           inputProvider.triggerHapticFeedback("medium");
         } else {
-          Camera.shake(2, 0.08);
+          Camera.shake(2, 0.08, dirX, 0);
           Camera.triggerHitStop(0.01);
           inputProvider.triggerHapticFeedback("light");
         }
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_POGOED", () => {
+        Camera.shake(4, 0.08, 0, 1);
       })
     );
 

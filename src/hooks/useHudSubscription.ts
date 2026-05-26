@@ -22,6 +22,16 @@ export function useHudSubscription() {
           soundSynth.setLowHPStatus(playerHP === 1);
         }
 
+        const groupD = document.getElementById("hud-d-hp-group");
+        const groupM = document.getElementById("hud-m-hp-group");
+        if (playerHP === 1) {
+          groupD?.classList.add("hud-stress-shiver");
+          groupM?.classList.add("hud-stress-shiver");
+        } else {
+          groupD?.classList.remove("hud-stress-shiver");
+          groupM?.classList.remove("hud-stress-shiver");
+        }
+
         for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
           const isLit = i < playerHP;
           const dotD = document.getElementById("hud-d-php-" + i);

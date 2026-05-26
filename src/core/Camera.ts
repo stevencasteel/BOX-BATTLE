@@ -8,10 +8,27 @@ export class Camera {
   private static shakeAmplitude = 0;
   private static noiseTime = 0;
 
-  public static shake(amplitude: number, duration: number) {
+  private static shakeDirX = 0;
+  private static shakeDirY = 0;
+  private static isDirectional = false;
+
+  public static shake(amplitude: number, duration: number, dirX?: number, dirY?: number) {
     Camera.shakeAmplitude = amplitude;
     Camera.shakeDuration = duration;
     Camera.shakeTimer = duration;
+
+    if (dirX !== undefined && dirY !== undefined) {
+      const len = Math.sqrt(dirX * dirX + dirY * dirY);
+      if (len > 0) {
+        Camera.shakeDirX = dirX / len;
+        Camera.shakeDirY = dirY / len;
+        Camera.isDirectional = true;
+      } else {
+        Camera.isDirectional = false;
+      }
+    } else {
+      Camera.isDirectional = false;
+    }
   }
 
   public static triggerHitStop(duration: number) {
@@ -41,8 +58,18 @@ export class Camera {
       if (Camera.shakeTimer > 0) {
         const decay = Camera.shakeTimer / Camera.shakeDuration;
         const currentAmp = Camera.shakeAmplitude * decay;
-        shakeX = this.noise(this.noiseTime) * currentAmp;
-        shakeY = this.noise(this.noiseTime + 100) * currentAmp;
+        const rawX = this.noise(this.noiseTime) * currentAmp;
+        const rawY = this.noise(this.noiseTime + 100) * currentAmp;
+
+        if (Camera.isDirectional) {
+          const parallel = (rawX * Camera.shakeDirX + rawY * Camera.shakeDirY) * 0.8;
+          const perpendicular = (-rawX * Camera.shakeDirY + rawY * Camera.shakeDirX) * 0.2;
+          shakeX = parallel * Camera.shakeDirX - perpendicular * Camera.shakeDirY;
+          shakeY = parallel * Camera.shakeDirY + perpendicular * Camera.shakeDirX;
+        } else {
+          shakeX = rawX;
+          shakeY = rawY;
+        }
       }
     }
 
@@ -57,5 +84,8 @@ export class Camera {
     Camera.shakeTimer = 0;
     Camera.hitStopTimer = 0;
     Camera.noiseTime = 0;
+    Camera.shakeDirX = 0;
+    Camera.shakeDirY = 0;
+    Camera.isDirectional = false;
   }
 }
