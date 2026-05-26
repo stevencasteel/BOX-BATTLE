@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 9:44:32 AM
+ [SYSTEM] Generated: 5/26/2026, 9:48:43 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -144,6 +144,8 @@
 ├── package-lock.json
 ├── package.json
 ├── patch-boss-hp.js
+├── patch-phase2-robust.js
+├── patch-phase2.js
 ├── patch-saveselect.js
 ├── README.md
 ├── tsconfig.app.json
@@ -699,6 +701,81 @@ patchFile(
         eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
       }
     }`
+);
+
+
+
+● ./patch-phase2-robust.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+function patchFile(filePath, patches) {
+  if (!fs.existsSync(filePath)) {
+    console.error("File not found: " + filePath);
+    process.exit(1);
+  }
+  let content = fs.readFileSync(filePath, 'utf8');
+  for (const [search, replace] of patches) {
+    if (!content.includes(search)) {
+      console.error("Search target not found in " + filePath + ": " + search);
+      process.exit(1);
+    }
+    content = content.replace(search, replace);
+  }
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log("Successfully patched: " + filePath);
+}
+
+patchFile('src/core/Engine.ts', [
+  ['const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;', 'const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;'],
+  ['const nextBossHP = bHealth ? bHealth.currentHealth : 30;', 'const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;']
+]);
+
+patchFile('src/entities/Player.ts', [
+  ['maxHealth: 5,', 'maxHealth: UNITS.PLAYER_MAX_HP,']
+]);
+
+patchFile('src/hooks/useHudSubscription.ts', [
+  ['let lastPlayerHP = 5;', 'let lastPlayerHP = UNITS.PLAYER_MAX_HP;']
+]);
+
+
+
+● ./patch-phase2.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+function patchFile(filePath, search, replace) {
+  if (!fs.existsSync(filePath)) {
+    console.error("File not found: " + filePath);
+    process.exit(1);
+  }
+  let content = fs.readFileSync(filePath, 'utf8');
+  if (!content.includes(search)) {
+    console.error("Search target not found in " + filePath);
+    process.exit(1);
+  }
+  content = content.replace(search, replace);
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log("Successfully patched: " + filePath);
+}
+
+patchFile(
+  'src/core/Engine.ts',
+  'const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;\n    const nextBossHP = bHealth ? bHealth.currentHealth : 30;',
+  'const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;\n    const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;'
+);
+
+patchFile(
+  'src/entities/Player.ts',
+  '    this.health = this.addComponent(HealthComponent, new HealthComponent(), {\n      maxHealth: 5,\n      invincibilityDuration: 1.5,\n    });',
+  '    this.health = this.addComponent(HealthComponent, new HealthComponent(), {\n      maxHealth: UNITS.PLAYER_MAX_HP,\n      invincibilityDuration: 1.5,\n    });'
+);
+
+patchFile(
+  'src/hooks/useHudSubscription.ts',
+  'let lastPlayerHP = 5;',
+  'let lastPlayerHP = UNITS.PLAYER_MAX_HP;'
 );
 
 
@@ -11944,7 +12021,7 @@ export class Player extends BaseEntity {
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 5,
+      maxHealth: UNITS.PLAYER_MAX_HP,
       invincibilityDuration: 1.5,
     });
 
@@ -14065,130 +14142,143 @@ import { soundSynth } from "@/core/SoundSynth";
 import { UNITS } from "@/core/Units";
 
 // Keep track of player health changes across update ticks
-let lastPlayerHP = 5;
-
 export function useHudSubscription() {
   useEffect(() => {
+    let lastHP = -1;
+    let lastHealCharges = -1;
+    let lastDet = -1;
+    let lastBHP = -1;
+
     const unsub = useGameplayStore.subscribe((state) => {
       const { playerHP, bossHP, healingCharges, determination } = state;
 
-      // Check if player HP dropped
-      const tookDamage = playerHP < lastPlayerHP;
+      // 1. Player HP updates
+      if (playerHP !== lastHP) {
+        const tookDamage = playerHP < lastHP && lastHP !== -1;
 
-      if (soundSynth.initialized) {
-        soundSynth.setLowHPStatus(playerHP === 1);
-      }
+        if (soundSynth.initialized) {
+          soundSynth.setLowHPStatus(playerHP === 1);
+        }
 
-      for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
-        const isLit = i < playerHP;
-        const dotD = document.getElementById("hud-d-php-" + i);
-        const dotM = document.getElementById("hud-m-php-" + i);
+        for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
+          const isLit = i < playerHP;
+          const dotD = document.getElementById("hud-d-php-" + i);
+          const dotM = document.getElementById("hud-m-php-" + i);
 
-        if (dotD) {
-          const wasLit = dotD.classList.contains("led-green");
-          if (isLit) {
-            dotD.classList.add("led-green");
-            // Shake remaining green dots on damage taken
-            if (tookDamage) {
-              dotD.classList.add("led-shaking");
-              setTimeout(() => dotD.classList.remove("led-shaking"), 350);
+          if (dotD) {
+            const wasLit = dotD.classList.contains("led-green");
+            if (isLit) {
+              dotD.classList.add("led-green");
+              if (tookDamage) {
+                dotD.classList.add("led-shaking");
+                setTimeout(() => dotD.classList.remove("led-shaking"), 350);
+              }
+            } else {
+              dotD.classList.remove("led-green");
+              if (wasLit && tookDamage) {
+                dotD.classList.add("led-shaking-die");
+                setTimeout(() => dotD.classList.remove("led-shaking-die"), 450);
+              }
             }
-          } else {
-            dotD.classList.remove("led-green");
-            // Violently shake and pop lost green dots
-            if (wasLit && tookDamage) {
-              dotD.classList.add("led-shaking-die");
-              setTimeout(() => dotD.classList.remove("led-shaking-die"), 450);
+          }
+
+          if (dotM) {
+            const wasLit = dotM.classList.contains("led-green");
+            if (isLit) {
+              dotM.classList.add("led-green");
+              if (tookDamage) {
+                dotM.classList.add("led-shaking");
+                setTimeout(() => dotM.classList.remove("led-shaking"), 350);
+              }
+            } else {
+              dotM.classList.remove("led-green");
+              if (wasLit && tookDamage) {
+                dotM.classList.add("led-shaking-die");
+                setTimeout(() => dotM.classList.remove("led-shaking-die"), 450);
+              }
             }
           }
         }
+        lastHP = playerHP;
+      }
 
-        if (dotM) {
-          const wasLit = dotM.classList.contains("led-green");
-          if (isLit) {
-            dotM.classList.add("led-green");
-            if (tookDamage) {
-              dotM.classList.add("led-shaking");
-              setTimeout(() => dotM.classList.remove("led-shaking"), 350);
+      // 2. Healing Charges updates
+      if (healingCharges !== lastHealCharges) {
+        for (let i = 0; i < 3; i++) {
+          const isLit = i < healingCharges;
+          const dotD = document.getElementById("hud-d-heal-" + i);
+          const dotM = document.getElementById("hud-m-heal-" + i);
+          if (dotD) {
+            const wasLit = dotD.classList.contains("led-yellow");
+            if (isLit) {
+              dotD.classList.add("led-yellow");
+              if (!wasLit) {
+                dotD.classList.add("led-pop");
+                setTimeout(() => dotD.classList.remove("led-pop"), 300);
+              }
+            } else {
+              dotD.classList.remove("led-yellow");
             }
-          } else {
-            dotM.classList.remove("led-green");
-            if (wasLit && tookDamage) {
-              dotM.classList.add("led-shaking-die");
-              setTimeout(() => dotM.classList.remove("led-shaking-die"), 450);
+
+            if (healingCharges === 3) {
+              dotD.classList.add("led-overflow-wobble");
+            } else {
+              dotD.classList.remove("led-overflow-wobble");
+            }
+          }
+          if (dotM) {
+            const wasLit = dotM.classList.contains("led-yellow");
+            if (isLit) {
+              dotM.classList.add("led-yellow");
+              if (!wasLit) {
+                dotM.classList.add("led-pop");
+                setTimeout(() => dotM.classList.remove("led-pop"), 300);
+              }
+            } else {
+              dotM.classList.remove("led-yellow");
+            }
+
+            if (healingCharges === 3) {
+              dotM.classList.add("led-overflow-wobble");
+            } else {
+              dotM.classList.remove("led-overflow-wobble");
             }
           }
         }
+        lastHealCharges = healingCharges;
       }
 
-      lastPlayerHP = playerHP; // Update cache
+      // 3. Determination updates
+      if (determination !== lastDet) {
+        const detD = document.getElementById("hud-d-det-bar");
+        const detM = document.getElementById("hud-m-det-bar");
+        const detWidth = (determination / 5) * 100 + "%";
+        if (detD) detD.style.width = detWidth;
+        if (detM) detM.style.width = detWidth;
+        lastDet = determination;
+      }
 
-      for (let i = 0; i < 3; i++) {
-        const isLit = i < healingCharges;
-        const dotD = document.getElementById("hud-d-heal-" + i);
-        const dotM = document.getElementById("hud-m-heal-" + i);
-        if (dotD) {
-          const wasLit = dotD.classList.contains("led-yellow");
-          if (isLit) {
-            dotD.classList.add("led-yellow");
-            if (!wasLit) {
-              dotD.classList.add("led-pop");
-              setTimeout(() => dotD.classList.remove("led-pop"), 300);
-            }
-          } else {
-            dotD.classList.remove("led-yellow");
-          }
-
-          if (healingCharges === 3) {
-            dotD.classList.add("led-overflow-wobble");
-          } else {
-            dotD.classList.remove("led-overflow-wobble");
-          }
+      // 4. Boss HP updates
+      if (bossHP !== lastBHP) {
+        const bossD = document.getElementById("hud-d-boss-bar");
+        const bossM = document.getElementById("hud-m-boss-bar");
+        const bossWidth = (bossHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+        if (bossD) {
+          bossD.style.width = bossWidth;
+          if (bossHP > 0) bossD.classList.add("led-red");
+          else bossD.classList.remove("led-red");
         }
-        if (dotM) {
-          const wasLit = dotM.classList.contains("led-yellow");
-          if (isLit) {
-            dotM.classList.add("led-yellow");
-            if (!wasLit) {
-              dotM.classList.add("led-pop");
-              setTimeout(() => dotM.classList.remove("led-pop"), 300);
-            }
-          } else {
-            dotM.classList.remove("led-yellow");
-          }
-
-          if (healingCharges === 3) {
-            dotM.classList.add("led-overflow-wobble");
-          } else {
-            dotM.classList.remove("led-overflow-wobble");
-          }
+        if (bossM) {
+          bossM.style.width = bossWidth;
+          if (bossHP > 0) bossM.classList.add("led-red");
+          else bossM.classList.remove("led-red");
         }
-      }
-
-      const detD = document.getElementById("hud-d-det-bar");
-      const detM = document.getElementById("hud-m-det-bar");
-      const detWidth = (determination / 5) * 100 + "%";
-      if (detD) detD.style.width = detWidth;
-      if (detM) detM.style.width = detWidth;
-
-      const bossD = document.getElementById("hud-d-boss-bar");
-      const bossM = document.getElementById("hud-m-boss-bar");
-      const bossWidth = (bossHP / UNITS.BOSS_MAX_HP) * 100 + "%";
-      if (bossD) {
-        bossD.style.width = bossWidth;
-        if (bossHP > 0) bossD.classList.add("led-red");
-        else bossD.classList.remove("led-red");
-      }
-      if (bossM) {
-        bossM.style.width = bossWidth;
-        if (bossHP > 0) bossM.classList.add("led-red");
-        else bossM.classList.remove("led-red");
+        lastBHP = bossHP;
       }
     });
     return unsub;
   }, []);
 }
-
 
 
 ● ./src/hooks/useMusicLifecycle.ts

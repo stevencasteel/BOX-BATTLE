@@ -52,7 +52,7 @@ export class Player extends BaseEntity {
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 5,
+      maxHealth: UNITS.PLAYER_MAX_HP,
       invincibilityDuration: 1.5,
     });
 
