@@ -53,7 +53,6 @@ export function SourceViewFooter({
           flexDirection: "row",
           gap: "8px",
           width: "100%",
-          justifyContent: "space-between",
           boxSizing: "border-box",
           marginTop: "12px",
           flexShrink: 0,
@@ -124,6 +123,7 @@ export function SourceViewFooter({
         flexDirection: "row",
         gap: "16px",
         width: "100%",
+        height: "8.5vmin",
         boxSizing: "border-box",
         marginTop: "12px",
         flexShrink: 0,
@@ -134,9 +134,10 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength)}
         onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
         leftIcon={<GithubIcon />}
-        mainLabel="GITHUB REPO"
-        subLabel="VIEW AND DOWNLOAD CODE ARCHIVE"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="GITHUB"
+        subLabel="OPEN SOURCE"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
 
       <MenuButton
@@ -144,9 +145,10 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
         leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="DOWNLOAD SOURCE"
-        subLabel="SAVE ALL CODE AS SINGLE .TXT FILE"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="DOWNLOAD .TXT"
+        subLabel="SINGLE FILE FOR LLM CHAT"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
 
       <MenuButton
@@ -154,9 +156,9 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
         leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="BACK TO MENU"
-        subLabel="EXIT SOURCE CODE VIEW"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="BACK"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
     </div>
   );

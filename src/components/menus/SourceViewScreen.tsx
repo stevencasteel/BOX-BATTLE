@@ -160,7 +160,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   return (
     <div
       className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}
+      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 12px" }}
     >
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2

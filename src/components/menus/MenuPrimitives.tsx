@@ -1,6 +1,7 @@
 import React from "react";
 import { soundSynth } from "@/core/SoundSynth";
 import { useCursorStore } from "@/store/useCursorStore";
+import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
 interface MenuContainerProps {
@@ -65,6 +66,7 @@ export function MenuButton({
   onMouseEnter,
   ...props
 }: MenuButtonProps) {
+
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     useCursorStore.getState().setCursorType("button");
     if (playHoverTick) {
@@ -91,13 +93,17 @@ export function MenuButton({
 
   if (variant === "large") {
     return (
-      <button
+      <motion.button
         className={`neo-btn-large ${isFocused ? "neo-btn-large-focused" : ""} ${className}`}
-        {...props}
+        {...(props as Record<string, unknown>)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        whileHover={{ scale: 1.025, x: 4 }}
+        whileTap={{ scale: 0.97 }}
+        animate={isFocused ? { scale: 1.025, x: 4 } : { scale: 1.0, x: 0 }}
+        transition={{ type: "spring", stiffness: 450, damping: 14 }}
       >
-        <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
+        <div className="btn-indicator-light"  />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {leftIcon}
@@ -105,23 +111,39 @@ export function MenuButton({
           </span>
           {subLabel && <span className="btn-sub-label">{subLabel}</span>}
         </div>
-        {isFocused && showArrow && <span className="cursor-arrow-large">▶</span>}
-      </button>
+        {isFocused && showArrow && (
+          <span className="cursor-arrow-large">
+            <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", fill: "currentColor", display: "block" }}>
+              <polygon points="20,15 80,50 20,85" />
+            </svg>
+          </span>
+        )}
+      </motion.button>
     );
   }
 
   return (
-    <button
+    <motion.button
       className={`neo-btn-led ${isFocused ? "neo-btn-led-focused" : ""} ${className}`}
-      {...props}
+      {...(props as Record<string, unknown>)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      whileHover={{ scale: 1.02, x: 2 }}
+      whileTap={{ scale: 0.98 }}
+      animate={isFocused ? { scale: 1.02, x: 2 } : { scale: 1.0, x: 0 }}
+      transition={{ type: "spring", stiffness: 450, damping: 14 }}
     >
       <div className={`btn-indicator-light ${indicatorClass}`} style={isFocused ? undefined : { background: "#1e2430" }} />
       {leftIcon}
       <span>{mainLabel}</span>
-      {isFocused && showArrow && <span className="cursor-arrow" style={{ marginLeft: "auto" }}>▶</span>}
-    </button>
+      {isFocused && showArrow && (
+          <span className="cursor-arrow">
+            <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", fill: "currentColor", display: "block" }}>
+              <polygon points="20,15 80,50 20,85" />
+            </svg>
+          </span>
+        )}
+    </motion.button>
   );
 }
 

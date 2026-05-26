@@ -127,7 +127,7 @@
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
-  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   outline: none;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -157,7 +157,7 @@
   border-radius: 50%;
   background: #1e2430;
   margin-right: 24px;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
@@ -182,7 +182,8 @@
   color: #a0aec0;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: nowrap;
 }
 
 .neo-btn-large-focused .btn-main-label {
@@ -196,7 +197,9 @@
   color: #4a5568;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: pre-line;
+  line-height: 1.4;
 }
 
 .neo-btn-large-focused .btn-sub-label {
@@ -213,10 +216,16 @@
 }
 
 .cursor-arrow {
+  position: absolute;
+  right: 3.2vmin;
   color: var(--signal-green);
   font-weight: bold;
-  display: inline-block;
   animation: arrow-blink 0.4s infinite alternate;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 @keyframes arrow-blink {
@@ -391,4 +400,38 @@
   .neo-btn-large {
     padding: 10px 16px;
   }
+}
+
+
+/* Consolidated Vector Cursor Centering Overrides */
+.cursor-arrow-large {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.8vmin !important;
+  height: 1.8vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+}
+
+.cursor-arrow {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.4vmin !important;
+  height: 1.4vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
 }
