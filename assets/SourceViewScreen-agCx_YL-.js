@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-BLHd_0G5.js";var m=e(n(),1),h={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-DqgVzURU.js";var m=e(n(),1),h={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2322,23 +2322,20 @@ export function AudioScreen({
             playHoverTick();
             setMenuIndex(3);
           }}
-          className={\`neo-btn \${menuIndex === 3 ? "neo-btn-focused" : ""}\`}
+          className={\`neo-btn-led \${menuIndex === 3 ? "neo-btn-led-focused" : ""}\`}
           style={{
             width: "100%",
-            padding: "1.4vmin 2vmin",
-            fontSize: "1.4vmin",
-            borderRadius: "1vmin",
-            whiteSpace: "nowrap",
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px"
+            gap: "12px"
           }}
         >
-          {menuIndex === 3 && <span className="cursor-arrow">▶</span>}
+          <div className="btn-indicator-light" />
           <RotateCcw size={14} style={{ flexShrink: 0 }} />
-          RESET ALL TO 100%
-          {menuIndex === 3 && <span className="cursor-arrow">◀</span>}
+          <span>RESET ALL TO 100%</span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
         </button>
 
         <button
@@ -2347,23 +2344,20 @@ export function AudioScreen({
             playHoverTick();
             setMenuIndex(4);
           }}
-          className={\`neo-btn \${menuIndex === 4 ? "neo-btn-focused" : ""}\`}
+          className={\`neo-btn-led \${menuIndex === 4 ? "neo-btn-led-focused" : ""}\`}
           style={{
             width: "100%",
-            padding: "1.4vmin 2vmin",
-            fontSize: "1.4vmin",
-            borderRadius: "1vmin",
-            whiteSpace: "nowrap",
+            borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px"
+            gap: "12px"
           }}
         >
-          {menuIndex === 4 && <span className="cursor-arrow">▶</span>}
+          <div className="btn-indicator-light" />
           <ArrowLeft size={14} style={{ flexShrink: 0 }} />
-          Back
-          {menuIndex === 4 && <span className="cursor-arrow">◀</span>}
+          <span>Back</span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
         </button>
       </div>
     </div>
@@ -2641,13 +2635,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(0);
               }}
-              className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
+              className={\`neo-btn-led \${menuIndex === 0 ? "neo-btn-led-focused" : ""}\`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 0
                     ? "#22c55e"
@@ -2658,20 +2649,10 @@ export function ControlsScreen({
                   menuIndex === 0 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_1" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Keyboard size={16} style={{ flexShrink: 0 }} />
-              PRESET 1
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 0 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>PRESET 1</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
             </button>
             <button
               onClick={() => {
@@ -2683,13 +2664,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(1);
               }}
-              className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
+              className={\`neo-btn-led \${menuIndex === 1 ? "neo-btn-led-focused" : ""}\`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 1
                     ? "#22c55e"
@@ -2700,20 +2678,10 @@ export function ControlsScreen({
                   menuIndex === 1 ? "#22c55e" : settingsManager.getCurrentPreset() === "DEFAULT_2" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Cpu size={16} style={{ flexShrink: 0 }} />
-              PRESET 2
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 1 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>PRESET 2</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
             </button>
             <button
               onClick={() => {
@@ -2725,13 +2693,10 @@ export function ControlsScreen({
                 playHoverTick();
                 setMenuIndex(2);
               }}
-              className={\`neo-btn \${menuIndex === 2 ? "neo-btn-focused" : ""}\`}
+              className={\`neo-btn-led \${menuIndex === 2 ? "neo-btn-led-focused" : ""}\`}
               style={{
                 padding: "16px 28px",
                 fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
                 borderColor:
                   menuIndex === 2
                     ? "#22c55e"
@@ -2741,20 +2706,10 @@ export function ControlsScreen({
                 color: menuIndex === 2 ? "#22c55e" : settingsManager.getCurrentPreset() === "CUSTOM" ? "#22c55e" : "",
               }}
             >
-              <span
-                className="cursor-arrow"
-                style={{ marginRight: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}
-              >
-                ▶
-              </span>
+              <div className="btn-indicator-light" />
               <Sliders size={16} style={{ flexShrink: 0 }} />
-              CUSTOM
-              <span
-                className="cursor-arrow"
-                style={{ marginLeft: "8px", visibility: menuIndex === 2 ? "visible" : "hidden" }}
-              >
-                ◀
-              </span>
+              <span>CUSTOM</span>
+              <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
             </button>
           </div>
 
@@ -2817,23 +2772,13 @@ export function ControlsScreen({
           playHoverTick();
           setMenuIndex(backBtnIndex);
         }}
-        className={\`neo-btn \${menuIndex === backBtnIndex ? "neo-btn-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+        className={\`neo-btn-led \${menuIndex === backBtnIndex ? "neo-btn-led-focused" : ""}\`}
+        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
       >
-        <span
-          className="cursor-arrow"
-          style={{ marginRight: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}
-        >
-          ▶
-        </span>
+        <div className="btn-indicator-light" />
         <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        Back
-        <span
-          className="cursor-arrow"
-          style={{ marginLeft: "8px", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}
-        >
-          ◀
-        </span>
+        <span>Back</span>
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === backBtnIndex ? "visible" : "hidden" }}>▶</span>
       </button>
     </div>
   );
@@ -3046,13 +2991,13 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 
       <button
         onClick={onBack}
-        className="neo-btn neo-btn-focused"
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+        className="neo-btn-led neo-btn-led-focused"
+        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
       >
-        <span className="cursor-arrow">▶</span>
+        <div className="btn-indicator-light" />
         <ArrowLeft size={16} style={{ flexShrink: 0 }} />
-        Back
-        <span className="cursor-arrow">◀</span>
+        <span>Back</span>
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: "visible" }}>▶</span>
       </button>
     </div>
   );
@@ -3249,31 +3194,17 @@ export function SaveSelectScreen({
               playHoverTick();
               setMenuIndex(3);
             }}
-            className={\`neo-btn \${menuIndex === 3 ? "neo-btn-focused" : isCopyMode ? "neo-btn-active" : ""}\`}
+            className={\`neo-btn-led \${menuIndex === 3 ? "neo-btn-led-focused" : isCopyMode ? "neo-btn-led-active" : ""}\`}
             style={{
               flex: 1,
               padding: "18px",
               fontSize: "16px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
             }}
           >
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ▶
-                </span>
+            <div className="btn-indicator-light" />
             <Copy size={16} style={{ flexShrink: 0 }} />
-            <span>Copy Slot</span>
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 3 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ◀
-                </span>
+            <span>COPY SLOT</span>
+            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 3 ? "visible" : "hidden" }}>▶</span>
           </button>
           <button
             onClick={toggleEraseMode}
@@ -3281,31 +3212,17 @@ export function SaveSelectScreen({
               playHoverTick();
               setMenuIndex(4);
             }}
-            className={\`neo-btn \${menuIndex === 4 ? "neo-btn-focused" : isEraseMode ? "neo-btn-active" : ""}\`}
+            className={\`neo-btn-led \${menuIndex === 4 ? "neo-btn-led-focused" : isEraseMode ? "neo-btn-led-active" : ""}\`}
             style={{
               flex: 1,
               padding: "18px",
               fontSize: "16px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
             }}
           >
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ▶
-                </span>
+            <div className="btn-indicator-light" />
             <Trash2 size={16} style={{ flexShrink: 0 }} />
-            <span>Delete Slot</span>
-            <span
-              className="cursor-arrow"
-              style={{ visibility: menuIndex === 4 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-            >
-              ◀
-                </span>
+            <span>DELETE SLOT</span>
+            <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 4 ? "visible" : "hidden" }}>▶</span>
           </button>
         </div>
         <button
@@ -3314,30 +3231,16 @@ export function SaveSelectScreen({
             playHoverTick();
             setMenuIndex(5);
           }}
-          className={\`neo-btn \${menuIndex === 5 ? "neo-btn-focused" : ""}\`}
+          className={\`neo-btn-led \${menuIndex === 5 ? "neo-btn-led-focused" : ""}\`}
           style={{
             padding: "18px",
             fontSize: "16px",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "8px",
           }}
         >
-          <span
-            className="cursor-arrow"
-            style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-          >
-            ▶
-              </span>
+          <div className="btn-indicator-light" />
           <ArrowLeft size={16} style={{ flexShrink: 0 }} />
           <span>Back</span>
-          <span
-            className="cursor-arrow"
-            style={{ visibility: menuIndex === 5 ? "visible" : "hidden", width: "16px", display: "inline-block" }}
-          >
-            ◀
-              </span>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 5 ? "visible" : "hidden" }}>▶</span>
         </button>
       </div>
     </div>
@@ -3363,8 +3266,8 @@ export function SettingsScreen({
   setMenuIndex,
 }: SettingsScreenProps) {
   return (
-    <div className="flex-col h-full w-full" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <div className="title-banner">
+    <div className="title-screen-container">
+      <div className="title-banner" style={{ zIndex: 2 }}>
         <h2
           style={{
             fontSize: "2rem",
@@ -3378,38 +3281,47 @@ export function SettingsScreen({
           SETTINGS
         </h2>
         <p style={{ color: "#718096", margin: "6px 0 0", fontSize: "12px", letterSpacing: "0.15em" }}>
-          Adjust sounds and change keys
+          Configure sound decibels and keyboard matrices
         </p>
       </div>
 
-      <div className="btn-container" style={{ margin: "auto 0" }}>
+      <div className="btn-container-overhauled" style={{ zIndex: 2 }}>
         <button
           onClick={onAudio}
           onMouseEnter={() => {
             playHoverTick();
             setMenuIndex(0);
           }}
-          className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
-          style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          className={\`neo-btn-large \${menuIndex === 0 ? "neo-btn-large-focused" : ""}\`}
         >
-          {menuIndex === 0 && <span className="cursor-arrow">▶</span>}
-          <Volume2 size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          SOUND SETTINGS
-          {menuIndex === 0 && <span className="cursor-arrow">◀</span>}
+          <div className="btn-indicator-light" />
+          <div className="btn-label-group">
+            <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Volume2 size={18} strokeWidth={2} style={{ flexShrink: 0 }} />
+              SOUND SETTINGS
+            </span>
+            <span className="btn-sub-label">ADJUST GAME SOUNDS AND MUSIC VOLUME</span>
+          </div>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 0 ? "visible" : "hidden" }}>▶</span>
         </button>
+
         <button
           onClick={onControls}
           onMouseEnter={() => {
             playHoverTick();
             setMenuIndex(1);
           }}
-          className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
-          style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          className={\`neo-btn-large \${menuIndex === 1 ? "neo-btn-large-focused" : ""}\`}
         >
-          {menuIndex === 1 && <span className="cursor-arrow">▶</span>}
-          <Keyboard size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-          KEYBOARD CONTROLS
-          {menuIndex === 1 && <span className="cursor-arrow">◀</span>}
+          <div className="btn-indicator-light" />
+          <div className="btn-label-group">
+            <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Keyboard size={18} strokeWidth={2} style={{ flexShrink: 0 }} />
+              KEYBOARD CONTROLS
+            </span>
+            <span className="btn-sub-label">CALIBRATE INPUTS AND REMAP KEYS</span>
+          </div>
+          <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 1 ? "visible" : "hidden" }}>▶</span>
         </button>
       </div>
 
@@ -3419,13 +3331,13 @@ export function SettingsScreen({
           playHoverTick();
           setMenuIndex(2);
         }}
-        className={\`neo-btn \${menuIndex === 2 ? "neo-btn-focused" : ""}\`}
-        style={{ width: "100%", maxWidth: "240px", display: "flex", alignItems: "center", gap: "10px" }}
+        className={\`neo-btn-led \${menuIndex === 2 ? "neo-btn-led-focused" : ""}\`}
+        style={{ width: "100%", maxWidth: "38vmin", display: "flex", alignItems: "center", gap: "10px", zIndex: 2 }}
       >
-        {menuIndex === 2 && <span className="cursor-arrow">▶</span>}
+        <div className="btn-indicator-light" />
         <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-        Back
-        {menuIndex === 2 && <span className="cursor-arrow">◀</span>}
+        <span>Back</span>
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: menuIndex === 2 ? "visible" : "hidden" }}>▶</span>
       </button>
     </div>
   );
@@ -3438,6 +3350,7 @@ interface SourceViewFooterProps {
   isMobile: boolean;
   activeIndex: number;
   visibleNodesLength: number;
+  setActiveIndex: (idx: number) => void;
 }
 
 function GithubIcon() {
@@ -3457,7 +3370,7 @@ function GithubIcon() {
   );
 }
 
-export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength }: SourceViewFooterProps) {
+export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLength, setActiveIndex }: SourceViewFooterProps) {
   const handleDownload = () => {
     soundSynth.playHitConfirm();
     const link = document.createElement("a");
@@ -3556,6 +3469,10 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
         rel="noopener noreferrer"
         className={\`neo-btn-large \${activeIndex === visibleNodesLength ? "neo-btn-large-focused" : ""}\`}
         style={{ flex: 1, textDecoration: "none", boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -3565,13 +3482,17 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">VIEW AND DOWNLOAD CODE ARCHIVE</span>
         </div>
-        {activeIndex === visibleNodesLength && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength ? "visible" : "hidden" }}>▶</span>
       </a>
 
       <button
         onClick={handleDownload}
         className={\`neo-btn-large \${activeIndex === visibleNodesLength + 1 ? "neo-btn-large-focused" : ""}\`}
         style={{ flex: 1, boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength + 1);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -3581,13 +3502,17 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">SAVE ALL CODE AS SINGLE .TXT FILE</span>
         </div>
-        {activeIndex === visibleNodesLength + 1 && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 1 ? "visible" : "hidden" }}>▶</span>
       </button>
 
       <button
         onClick={onBack}
         className={\`neo-btn-large \${activeIndex === visibleNodesLength + 2 ? "neo-btn-large-focused" : ""}\`}
         style={{ flex: 1, boxSizing: "border-box" }}
+        onMouseEnter={() => {
+          soundSynth.playSelectTick();
+          setActiveIndex(visibleNodesLength + 2);
+        }}
       >
         <div className="btn-indicator-light" />
         <div className="btn-label-group">
@@ -3597,7 +3522,7 @@ export function SourceViewFooter({ onBack, isMobile, activeIndex, visibleNodesLe
           </span>
           <span className="btn-sub-label">EXIT SOURCE CODE VIEW</span>
         </div>
-        {activeIndex === visibleNodesLength + 2 && <span className="cursor-arrow-large">▶</span>}
+        <span className="cursor-arrow" style={{ marginLeft: "auto", visibility: activeIndex === visibleNodesLength + 2 ? "visible" : "hidden" }}>▶</span>
       </button>
     </div>
   );
@@ -3847,7 +3772,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             color: "#fff",
           }}
         >
-          SOURCE VIEWER
+          SOURCE BROWSER
         </h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
           {isMobile
@@ -4031,6 +3956,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
         isMobile={isMobile}
         activeIndex={activeIndex}
         visibleNodesLength={visibleNodes.length}
+        setActiveIndex={setActiveIndex}
       />
     </div>
   );
@@ -12674,6 +12600,177 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   text-shadow: 0 0 8px var(--signal-green-glow);
 }
 
+/* Centralized Large Neomorphic Led Buttons */
+.neo-btn-large {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 24px 32px;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.neo-btn-large:hover,
+.neo-btn-large-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+}
+
+.neo-btn-large:active {
+  transform: scale(0.98);
+}
+
+.neo-btn-large .btn-indicator-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  margin-right: 24px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-large:hover .btn-indicator-light,
+.neo-btn-large-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow:
+    0 0 10px var(--signal-green),
+    0 0 20px var(--signal-green-glow);
+}
+
+.btn-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.btn-main-label {
+  font-size: clamp(14px, 4vw, 18px);
+  font-weight: 800;
+  color: #a0aec0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large:hover .btn-main-label,
+.neo-btn-large-focused .btn-main-label {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.btn-sub-label {
+  font-size: clamp(8px, 2.5vw, 10px);
+  font-weight: 500;
+  color: #4a5568;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.neo-btn-large:hover .btn-sub-label,
+.neo-btn-large-focused .btn-sub-label {
+  color: var(--signal-green);
+  opacity: 0.85;
+}
+
+/* Centralized Compact Neomorphic Led Buttons */
+.neo-btn-led {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #0f1218;
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.015),
+    6px 6px 15px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 1.6vmin 3.2vmin;
+  font-size: 1.5vmin;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  gap: 12px;
+  color: #a0aec0;
+  justify-content: flex-start;
+}
+
+.neo-btn-led:hover,
+.neo-btn-led-focused {
+  background: #0c0e12;
+  border-color: var(--signal-green);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.15),
+    inset 0 0 8px rgba(34, 197, 94, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95);
+  color: #ffffff;
+  text-shadow: 0 0 8px var(--signal-green-glow);
+}
+
+.neo-btn-led:active {
+  transform: scale(0.98);
+}
+
+.neo-btn-led .btn-indicator-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e2430;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.neo-btn-led:hover .btn-indicator-light,
+.neo-btn-led-focused .btn-indicator-light {
+  background: var(--signal-green);
+  box-shadow:
+    0 0 10px var(--signal-green),
+    0 0 20px var(--signal-green-glow);
+}
+
+.neo-btn-led-active {
+  background: #0c0e12;
+  border-color: var(--signal-yellow) !important;
+  box-shadow:
+    0 0 15px rgba(234, 179, 8, 0.15),
+    inset 0 0 8px rgba(234, 179, 8, 0.1),
+    6px 6px 18px rgba(0, 0, 0, 0.95) !important;
+  color: #ffffff !important;
+}
+
+.neo-btn-led-active .btn-indicator-light {
+  background: var(--signal-yellow) !important;
+  box-shadow:
+    0 0 10px var(--signal-yellow),
+    0 0 20px var(--signal-yellow-glow) !important;
+}
+
 .led-dot {
   width: 1.3vmin;
   height: 1.3vmin;
@@ -12797,7 +12894,6 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   }
 }
 
-
 @keyframes led-wobble {
   0% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(1px, -1px) scale(1.15); filter: brightness(1.2) drop-shadow(0 0 6px var(--signal-yellow-glow)); }
@@ -12806,4 +12902,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
 }
-`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[a,s]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,a):[],[E,a]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length})]})}export{C as SourceViewScreen};
+`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let o=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:o,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r?`visible`:`hidden`},children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:o,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r+1)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r+1?`visible`:`hidden`},children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},onMouseEnter:()=>{f.playSelectTick(),i(r+2)},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),(0,_.jsx)(`span`,{className:`cursor-arrow`,style:{marginLeft:`auto`,visibility:n===r+2?`visible`:`hidden`},children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[a,s]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,a):[],[E,a]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length,setActiveIndex:k})]})}export{C as SourceViewScreen};
