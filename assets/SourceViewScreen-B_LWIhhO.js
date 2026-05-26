@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BjCijh7s.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-B2E2lUKl.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -818,6 +818,7 @@ import { HudPanel } from "@/components/HudPanel";
 import { DialogueConsole } from "@/components/DialogueConsole";
 import { TouchOverlay } from "@/components/TouchOverlay";
 import { ChromaticAberrationFilter } from "@/components/ChromaticAberrationFilter";
+import { Cursor } from "@/components/cursor/Cursor";
 import { useHudSubscription } from "@/hooks/useHudSubscription";
 import { useMusicLifecycle } from "@/hooks/useMusicLifecycle";
 import { useFirstGesture } from "@/hooks/useFirstGesture";
@@ -1189,6 +1190,7 @@ export default function App() {
       </div>
 
       <ChromaticAberrationFilter />
+      <Cursor />
     </div>
   );
 }
@@ -2463,6 +2465,300 @@ export function TouchOverlay() {
     </div>
   );
 }
+`,"src/components/cursor/Cursor.tsx":`import { useEffect, useState } from "react";
+import { useMotionValue, motion } from "framer-motion";
+import { useCursorStore } from "@/store/useCursorStore";
+import { CURSOR_VARIANTS } from "./CursorVariants";
+import { CursorLayer } from "./CursorLayer";
+
+export function Cursor() {
+  const cursorType = useCursorStore((state) => state.cursorType);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isSafari] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const ua = navigator.userAgent.toLowerCase();
+    return ua.includes("safari") && !ua.includes("chrome") && !ua.includes("android");
+  });
+
+  const mouseX = useMotionValue(-100);
+  const mouseY = useMotionValue(-100);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handlePointerEnter = () => setIsVisible(true);
+    const handlePointerLeave = () => setIsVisible(false);
+
+    const handlePointerDown = () => setIsPressed(true);
+    const handlePointerUp = () => setIsPressed(false);
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("pointerenter", handlePointerEnter);
+    document.addEventListener("pointerleave", handlePointerLeave);
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerenter", handlePointerEnter);
+      document.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [mouseX, mouseY, isVisible]);
+
+  const variant = CURSOR_VARIANTS[cursorType];
+
+  return (
+    <motion.div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        x: mouseX,
+        y: mouseY,
+        translateX: "-50%",
+        translateY: "-50%",
+        width: 80,
+        height: 80,
+        pointerEvents: "none",
+        zIndex: 99999,
+        mixBlendMode: isSafari ? "normal" : variant.blendMode,
+      }}
+      className="[@media(pointer:coarse)]:hidden"
+      animate={{
+        opacity: isVisible && cursorType !== "hidden" ? 1 : 0,
+      }}
+      transition={{ duration: 0.25 }}
+    >
+      <CursorLayer cursorType={cursorType} isPressed={isPressed} />
+    </motion.div>
+  );
+}
+`,"src/components/cursor/CursorLayer.tsx":`import { motion, AnimatePresence } from "framer-motion";
+import { CURSOR_VARIANTS } from "./CursorVariants";
+import { CursorType } from "@/store/useCursorStore";
+import { Eye, Play } from "lucide-react";
+
+interface CursorLayerProps {
+  cursorType: CursorType;
+  isPressed: boolean;
+}
+
+export function CursorLayer({ cursorType, isPressed }: CursorLayerProps) {
+  const variant = CURSOR_VARIANTS[cursorType];
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* Layer A — Aura (optional prismatic ring) */}
+      <motion.div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          x: "-50%",
+          y: "-50%",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0) 70%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+        animate={{
+          width: (variant.bubbleSize > 0 && cursorType !== "text") ? variant.bubbleSize + 24 : 0,
+          height: (variant.bubbleSize > 0 && cursorType !== "text") ? variant.bubbleSize + 24 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 180, damping: 15 }}
+      />
+
+      {/* Layer B — Icon Bubble */}
+      <motion.div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          x: "-50%",
+          y: "-50%",
+          borderRadius: "50%",
+          backgroundColor: variant.bubbleBg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          zIndex: 2,
+        }}
+        animate={{
+          width: variant.bubbleSize,
+          height: variant.bubbleSize,
+        }}
+        transition={{ type: "spring", stiffness: 180, damping: 15 }}
+      >
+        <AnimatePresence mode="wait">
+          {cursorType === "view" && (
+            <motion.div
+              key="view-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Eye size={32} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "view-small" && (
+            <motion.div
+              key="view-small-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Eye size={20} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "play" && (
+            <motion.div
+              key="play-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Play size={32} fill={variant.color} color={variant.color} />
+            </motion.div>
+          )}
+          {cursorType === "text" && (
+            <motion.div
+              key="text-icon"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <svg width="26" height="26" viewBox="0 0 83 83" style={{ display: "block" }}>
+                <path
+                  fill="none"
+                  stroke={variant.color}
+                  strokeLinecap="round"
+                  strokeWidth="4"
+                  d="M43 71h11M43 12h11M25.5 71h11m-11-59h11m3.5 5v50"
+                />
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Layer C — Triangle Pointer positioned at exact tracking center with offset compensation */}
+      {variant.isBase && (
+        <motion.div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            x: "-5.5px",
+            y: "-3.2px",
+            zIndex: 3,
+            pointerEvents: "none",
+            transformOrigin: "top left",
+          }}
+          animate={{
+            scale: isPressed ? 0.85 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        >
+          <svg width="24" height="24" viewBox="0 0 100 100" style={{ display: "block" }}>
+            <path
+              d="M22.917,13.375l51.333,51.333l-19.03,-3.781l14.863,23.031l-8.833,8.834l-14.863,-23.032l-4.387,27.198l-19.083,-83.583Z"
+              fill={variant.color}
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth="2"
+            />
+          </svg>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+`,"src/components/cursor/CursorVariants.ts":`import { CursorType } from "@/store/useCursorStore";
+
+export interface CursorVariantConfig {
+  blendMode: "normal" | "difference" | "exclusion";
+  color: string;
+  isBase: boolean;
+  bubbleSize: number;
+  bubbleBg: string;
+}
+
+export const CURSOR_VARIANTS: Record<CursorType, CursorVariantConfig> = {
+  default: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: true,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  button: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: true,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  view: {
+    blendMode: "difference",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  "view-small": {
+    blendMode: "difference",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 48,
+    bubbleBg: "#ffffff",
+  },
+  play: {
+    blendMode: "exclusion",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  video: {
+    blendMode: "exclusion",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 80,
+    bubbleBg: "#ffffff",
+  },
+  text: {
+    blendMode: "normal",
+    color: "hsl(142, 71%, 58%)",
+    isBase: false,
+    bubbleSize: 64,
+    bubbleBg: "transparent",
+  },
+  grab: {
+    blendMode: "normal",
+    color: "var(--signal-green)",
+    isBase: false,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+  hidden: {
+    blendMode: "normal",
+    color: "transparent",
+    isBase: false,
+    bubbleSize: 0,
+    bubbleBg: "transparent",
+  },
+};
 `,"src/components/menus/AudioScreen.css":`.mixer-board {
   width: 100%;
   max-width: 60vmin;
@@ -3255,6 +3551,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 }
 `,"src/components/menus/MenuPrimitives.tsx":`import React from "react";
 import { soundSynth } from "@/core/SoundSynth";
+import { useCursorStore } from "@/store/useCursorStore";
 import { ArrowLeft } from "lucide-react";
 
 interface MenuContainerProps {
@@ -3320,6 +3617,7 @@ export function MenuButton({
   ...props
 }: MenuButtonProps) {
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("button");
     if (playHoverTick) {
       playHoverTick();
     } else {
@@ -3333,14 +3631,22 @@ export function MenuButton({
     }
   };
 
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    useCursorStore.getState().setCursorType("default");
+    if (props.onMouseLeave) {
+      props.onMouseLeave(e);
+    }
+  };
+
   const indicatorClass = isFocused ? \`led-\${indicatorColor}\` : "";
 
   if (variant === "large") {
     return (
       <button
         className={\`neo-btn-large \${isFocused ? "neo-btn-large-focused" : ""} \${className}\`}
-        onMouseEnter={handleMouseEnter}
         {...props}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
         <div className="btn-label-group">
@@ -3358,8 +3664,9 @@ export function MenuButton({
   return (
     <button
       className={\`neo-btn-led \${isFocused ? "neo-btn-led-focused" : ""} \${className}\`}
-      onMouseEnter={handleMouseEnter}
       {...props}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className={\`btn-indicator-light \${indicatorClass}\`} style={isFocused ? undefined : { background: "#1e2430" }} />
       {leftIcon}
@@ -3916,6 +4223,7 @@ import { sourceCodeManifest } from "@/core/sourceCodeManifest";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSourceViewKeyboard } from "@/hooks/useSourceViewKeyboard";
+import { useCursorStore } from "@/store/useCursorStore";
 import { SourceViewFooter } from "./SourceViewFooter";
 import { Folder, FolderOpen, FileCode, FileText } from "lucide-react";
 
@@ -4178,6 +4486,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
         {(!isMobile || mobileView === "CODE") && (
           <div
+            onMouseOver={() => useCursorStore.getState().setCursorType("text")}
+            onMouseLeave={() => useCursorStore.getState().setCursorType("default")}
             className="code-viewer-pane neo-pressed"
             style={{
               WebkitOverflowScrolling: "touch",
@@ -12203,6 +12513,47 @@ export function useBootSequence() {
 
   return bootStage;
 }
+`,"src/hooks/useButtonHandlers.ts":`import { useCursorStore, CursorType } from "@/store/useCursorStore";
+import { useRef } from "react";
+
+interface ButtonHandlerOptions {
+  cursor?: CursorType;
+  onClick?: (e: React.MouseEvent) => void;
+}
+
+export function useButtonHandlers(options: ButtonHandlerOptions = {}) {
+  const setCursorType = useCursorStore((state) => state.setCursorType);
+  const timeoutRef = useRef<number | null>(null);
+
+  const onMouseEnter = () => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setCursorType(options.cursor || "button");
+  };
+
+  const onMouseLeave = () => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = window.setTimeout(() => {
+      setCursorType("default");
+    }, 150);
+  };
+
+  const onClick = (e: React.MouseEvent) => {
+    if (options.onClick) {
+      options.onClick(e);
+    }
+  };
+
+  return {
+    onMouseEnter,
+    onMouseLeave,
+    onClick,
+  };
+}
 `,"src/hooks/useEngineSubscriptions.ts":`import { useEffect, useRef } from "react";
 import { eventBroker } from "@/core/eventBroker";
 import { useGameplayStore } from "@/store/useGameStore";
@@ -12877,6 +13228,27 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #4ade80;
 }
+
+
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after,
+  html, body, #root,
+  iframe, canvas, video, svg, path,
+  :hover, :focus, :active,
+  ::backdrop {
+    cursor: none !important;
+  }
+}
+
+
+/* Enable native text selection and custom scroll operations specifically inside the code viewer panel */
+.code-viewer-pane,
+.code-viewer-pane * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
 `,"src/main.tsx":`import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -12887,6 +13259,28 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>
 );
+`,"src/store/useCursorStore.ts":`import { create } from "zustand";
+
+export type CursorType =
+  | "default"
+  | "text"
+  | "view"
+  | "view-small"
+  | "play"
+  | "video"
+  | "grab"
+  | "button"
+  | "hidden";
+
+interface CursorStore {
+  cursorType: CursorType;
+  setCursorType: (type: CursorType) => void;
+}
+
+export const useCursorStore = create<CursorStore>((set) => ({
+  cursorType: "default",
+  setCursorType: (type) => set({ cursorType: type }),
+}));
 `,"src/store/useGameStore.ts":`import { create } from "zustand";
 import { soundSynth } from "@/core/SoundSynth";
 import { UNITS } from "@/core/Units";
@@ -13637,4 +14031,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
     padding: 10px 16px;
   }
 }
-`};function _({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,h.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(f(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else p(m)?(m.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):f(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var v=u();function y(){return(0,v.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,v.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function b({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let o=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,v.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,v.jsx)(y,{})})}),(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:o,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,v.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,v.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,v.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,v.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,v.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,v.jsx)(m,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,v.jsx)(y,{}),mainLabel:`GITHUB REPO`,subLabel:`VIEW AND DOWNLOAD CODE ARCHIVE`,style:{flex:1,boxSizing:`border-box`}}),(0,v.jsx)(m,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:o,leftIcon:(0,v.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD SOURCE`,subLabel:`SAVE ALL CODE AS SINGLE .TXT FILE`,style:{flex:1,boxSizing:`border-box`}}),(0,v.jsx)(m,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,v.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,subLabel:`EXIT SOURCE CODE VIEW`,style:{flex:1,boxSizing:`border-box`}})]})}function x(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function S(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>S(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>S(e,t,n)),n)}function C(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function w({onBack:e}){let[n]=(0,h.useState)(g),[a,s]=(0,h.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,h.useState)((0,h.useMemo)(()=>Object.keys(g).sort(),[])[0]||``),[p,m]=(0,h.useState)(!1),[y,w]=(0,h.useState)(`TOC`),T=(0,h.useRef)(null),E=(0,h.useMemo)(()=>x(Object.keys(g)),[]),D=(0,h.useMemo)(()=>E?S(E,a):[],[E,a]),[O,k]=(0,h.useState)(0);return _({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:f,onBack:e,isMobile:p,mobileView:y,setMobileView:w,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,h.useEffect)(()=>{if(typeof window<`u`){let e=()=>{m(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,h.useEffect)(()=>{if(O<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[O,D.length]),(0,v.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,v.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,v.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,v.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?y===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,v.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||y===`TOC`)&&(0,v.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===O,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,v.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,v.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,v.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,v.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,v.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,v.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,v.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||y===`CODE`)&&(0,v.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,v.jsx)(`button`,{onClick:()=>{d.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,v.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,v.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,v.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,v.jsx)(t,{language:C(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,v.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,v.jsx)(b,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length,setActiveIndex:k})]})}export{w as SourceViewScreen};
+`};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB REPO`,subLabel:`VIEW AND DOWNLOAD CODE ARCHIVE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD SOURCE`,subLabel:`SAVE ALL CODE AS SINGLE .TXT FILE`,style:{flex:1,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,subLabel:`EXIT SOURCE CODE VIEW`,style:{flex:1,boxSizing:`border-box`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
