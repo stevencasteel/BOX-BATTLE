@@ -1,9 +1,9 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CJyfJoXM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-U4iwe3Rq.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>BOX BATTLE</title>
   </head>
   <body>
@@ -526,6 +526,9 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   .screen-inner {
     border-radius: 0;
     padding: 12px 10px;
+    overflow-y: auto;
+    justify-content: space-around;
+    gap: 8px;
   }
 
   .title-banner {
@@ -1395,6 +1398,83 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   }
 }
 
+.gameover-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  border-radius: 20px;
+  background: rgba(12, 14, 18, 0.96);
+  max-width: 440px;
+  width: 85%;
+  box-sizing: border-box;
+  text-align: center;
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease;
+}
+
+.gameover-box.victory-border {
+  border: 2px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1);
+}
+
+.gameover-box.defeat-border {
+  border: 2px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+.gameover-btn-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+}
+
+.gameover-btn {
+  flex: 1;
+  padding: 16px 20px;
+  font-size: 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) and (pointer: coarse) {
+  .gameover-box {
+    padding: 24px !important;
+    width: 90% !important;
+  }
+  .gameover-btn-container {
+    gap: 12px !important;
+    padding: 0 10px !important;
+  }
+  .gameover-btn {
+    padding: 12px 12px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .gameover-box {
+    padding: 16px !important;
+    width: 95% !important;
+  }
+  .gameover-btn-container {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 0 !important;
+  }
+  .gameover-btn {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    font-size: 12px !important;
+  }
+}
+
 .dialogue-console {
   width: 100%;
   height: 8.5vmin;
@@ -1772,30 +1852,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           {gameResult !== "PLAYING" && stagger >= 1 && (
             <div className="gameover-overlay" style={{ opacity: 1, transition: "opacity 0.4s ease" }}>
               <div
-                className="gameover-box neo-elevated"
+                className={\`gameover-box neo-elevated \${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}\`}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "40px",
-                  borderRadius: "20px",
-                  border:
-                    gameResult === "GAMEOVER"
-                      ? "2px solid rgba(239, 68, 68, 0.35)"
-                      : "2px solid rgba(34, 197, 94, 0.35)",
-                  boxShadow:
-                    gameResult === "GAMEOVER"
-                      ? "0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1)"
-                      : "0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1)",
-                  background: "rgba(12, 14, 18, 0.96)",
-                  maxWidth: "440px",
-                  width: "85%",
-                  boxSizing: "border-box",
-                  textAlign: "center",
                   transform: stagger >= 2 ? "scale(1)" : "scale(0.92)",
                   opacity: stagger >= 2 ? 1 : 0.8,
-                  transition: "transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease",
                 }}
               >
                 {stagger >= 2 && (
@@ -1903,11 +1963,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
                 {/* Navigation Buttons */}
                 <div
-                  className="flex-row button-reveal-anim"
+                  className="gameover-btn-container button-reveal-anim"
                   style={{
-                    gap: "16px",
-                    width: "100%",
-                    justifyContent: "center",
                     opacity: stagger >= 4 ? 1 : 0,
                     transform: stagger >= 4 ? "translateY(0)" : "translateY(15px)",
                     transition: "opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)",
@@ -1922,24 +1979,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       playHoverTick();
                       setMenuIndex(0);
                     }}
-                    className={\`neo-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
-                    style={{
-                      flex: 1,
-                      padding: "16px 20px",
-                      fontSize: "14px",
-                      borderRadius: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      ...(gameResult === "GAMEOVER" && menuIndex === 0
+                    className={\`neo-btn gameover-btn \${menuIndex === 0 ? "neo-btn-focused" : ""}\`}
+                    style={
+                      gameResult === "GAMEOVER" && menuIndex === 0
                         ? {
                             color: "var(--signal-red)",
                             borderColor: "rgba(239, 68, 68, 0.25)",
                             textShadow: "0 0 8px var(--signal-red-glow)",
                           }
-                        : {}),
-                    }}
+                        : {}
+                    }
                   >
                     <span
                       className="cursor-arrow"
@@ -1970,24 +2019,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       playHoverTick();
                       setMenuIndex(1);
                     }}
-                    className={\`neo-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
-                    style={{
-                      flex: 1,
-                      padding: "16px 20px",
-                      fontSize: "14px",
-                      borderRadius: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      ...(gameResult === "GAMEOVER" && menuIndex === 1
+                    className={\`neo-btn gameover-btn \${menuIndex === 1 ? "neo-btn-focused" : ""}\`}
+                    style={
+                      gameResult === "GAMEOVER" && menuIndex === 1
                         ? {
                             color: "var(--signal-red)",
                             borderColor: "rgba(239, 68, 68, 0.25)",
                             textShadow: "0 0 8px var(--signal-red-glow)",
                           }
-                        : {}),
-                    }}
+                        : {}
+                    }
                   >
                     <span
                       className="cursor-arrow"
@@ -2939,9 +2980,9 @@ export function AudioScreen({
         </div>
       </div>
 
-      <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "38vmin", marginTop: "1vmin" }}>
+      <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "58vmin", marginTop: "1.5vmin" }}>
         <MenuButton
-          variant="led"
+          variant="large"
           isFocused={menuIndex === 3}
           onFocused={() => setMenuIndex(3)}
           playHoverTick={playHoverTick}
@@ -3541,7 +3582,6 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
       <MenuBackButton
         isFocused={true}
         onBack={onBack}
-        style={{ width: "100%", maxWidth: "240px", padding: "16px 32px", fontSize: "16px", borderRadius: "10px" }}
       />
     </MenuContainer>
   );
@@ -3685,11 +3725,12 @@ export function MenuBackButton({
   onFocused,
   playHoverTick,
   style,
+  variant = "large",
   ...props
 }: MenuBackButtonProps) {
   const defaultStyle: React.CSSProperties = {
     width: "100%",
-    maxWidth: "38vmin",
+    maxWidth: "58vmin",
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
@@ -3700,7 +3741,7 @@ export function MenuBackButton({
 
   return (
     <MenuButton
-      variant="led"
+      variant={variant}
       isFocused={isFocused}
       onFocused={onFocused}
       playHoverTick={playHoverTick}
@@ -8413,8 +8454,8 @@ export class InterfaceSFX {
       envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.15 },
     }).connect(this.playerDialoguePanner);
 
-    this.dialogueSynthPlayer.maxPolyphony = 4;
-    this.dialogueSynthBoss.maxPolyphony = 4;
+    this.dialogueSynthPlayer.maxPolyphony = 16;
+    this.dialogueSynthBoss.maxPolyphony = 16;
   }
 
   public playSelectTick() {
