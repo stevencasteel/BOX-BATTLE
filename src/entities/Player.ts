@@ -48,6 +48,9 @@ export class Player extends BaseEntity {
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
 
+  public doubleJumpDiskTimer: number = 0;
+  public doubleJumpDiskPos: { x: number; y: number } = { x: 0, y: 0 };
+
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
@@ -261,6 +264,10 @@ export class Player extends BaseEntity {
 
     if (this.recoilTimer > 0) {
       this.recoilTimer -= dt;
+    }
+
+    if (this.doubleJumpDiskTimer > 0) {
+      this.doubleJumpDiskTimer -= dt;
     }
 
     let targetRotation = 0;
@@ -663,6 +670,10 @@ export class Player extends BaseEntity {
       this.hasDoubleJump = false;
       this.jumpBufferTimer = 0;
       this.visualScale = { x: 0.82, y: 1.18 };
+
+      this.doubleJumpDiskTimer = 0.22;
+      this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
+
       eventBroker.publish("PLAYER_JUMPED", undefined);
     }
   }
@@ -767,6 +778,32 @@ export class Player extends BaseEntity {
       const gHeight = this.size.height * this.visualScale.y;
       const gFeetY = ghost.y + this.size.height / 2;
       ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
+    }
+
+    if (this.doubleJumpDiskTimer > 0) {
+      const p = 1.0 - this.doubleJumpDiskTimer / 0.22;
+      const alphaDisk = (1.0 - p) * 0.8;
+      const radius = 18 + p * 44;
+
+      ctx.save();
+      ctx.translate(this.doubleJumpDiskPos.x, this.doubleJumpDiskPos.y);
+
+      ctx.strokeStyle = `hsla(142, 71%, 58%, ${alphaDisk})`;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
+      ctx.shadowBlur = 12 * (1.0 - p);
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = `hsla(142, 100%, 80%, ${alphaDisk * 0.5})`;
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 0.6, radius * 0.6 * 0.28, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     const vWidth = this.size.width * this.visualScale.x;
