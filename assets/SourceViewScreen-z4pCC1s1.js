@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-CbHsezVf.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-DKoErON5.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -580,6 +580,182 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 .led-shaking-die {
   animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
+/* --- REFINED GAME OVER ELEMENTS & CRT TRANSITIONS --- */
+
+@keyframes crt-shutoff {
+  0% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1.5) contrast(1.2) saturate(1);
+  }
+  40% {
+    transform: scaleY(0.01) scaleX(1.1);
+    filter: brightness(4.0) contrast(1.5) saturate(0);
+    background: #ffffff;
+  }
+  75% {
+    transform: scaleY(0.01) scaleX(0.01);
+    filter: brightness(10.0);
+    background: #ffffff;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+    background: #ffffff;
+  }
+}
+
+@keyframes crt-power-on {
+  0% {
+    transform: scaleY(0.01) scaleX(0);
+    filter: brightness(4.0);
+    opacity: 1;
+  }
+  40% {
+    transform: scaleY(0.01) scaleX(1);
+    filter: brightness(2.0);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1);
+    opacity: 1;
+  }
+}
+
+.crt-transition-active {
+  animation: crt-shutoff 0.45s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
+}
+
+.crt-power-on-active {
+  animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
+}
+
+/* Background Pixel Grid Texture */
+.gameover-overlay::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+  z-index: 1;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+.gameover-box {
+  position: relative;
+  z-index: 2; /* Sits cleanly above background texture */
+}
+
+
+
+
+
+/* Victory Element Easing Animations */
+@keyframes victory-bounce-glow {
+  0% {
+    transform: scale(0.3) translateY(40px);
+    filter: brightness(3) drop-shadow(0 0 20px var(--signal-green-glow));
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1) translateY(-10px);
+    filter: brightness(1.5) drop-shadow(0 0 15px var(--signal-green));
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1) drop-shadow(0 0 10px var(--signal-green-glow));
+    opacity: 1;
+  }
+}
+
+.victory-icon-anim {
+  animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Defeat Element Shiver animations */
+@keyframes defeat-shake-glow {
+  0% {
+    transform: scale(0.3) rotate(-15deg);
+    filter: brightness(3) drop-shadow(0 0 20px var(--signal-red-glow));
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) rotate(8deg);
+    filter: brightness(1.8) drop-shadow(0 0 12px var(--signal-red));
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(0.95) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    filter: brightness(1) drop-shadow(0 0 10px var(--signal-red-glow));
+    opacity: 1;
+  }
+}
+
+.defeat-icon-anim {
+  animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+}
+
+/* Title text flickers */
+@keyframes text-chromatic-flicker-green {
+  0%, 100% { text-shadow: 0 0 15px var(--signal-green-glow), -2px 0 #00ff00, 2px 0 #0000ff; }
+  50% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2), -1px 0 #00ff00, 1px 0 #0000ff; filter: brightness(0.9); }
+  92% { text-shadow: 0 0 25px var(--signal-green), -3px 0 #00ff00, 3px 0 #0000ff; filter: brightness(1.2); }
+}
+
+.victory-title-anim {
+  animation: text-chromatic-flicker-green 3s infinite ease-in-out;
+}
+
+@keyframes text-chromatic-flicker-red {
+  0%, 100% { text-shadow: 0 0 15px var(--signal-red-glow), -2px 0 #ff0000, 2px 0 #0000ff; }
+  45% { text-shadow: 0 0 6px rgba(239, 68, 68, 0.2), -1px 0 #ff0000, 1px 0 #0000ff; filter: brightness(0.85); }
+  85% { text-shadow: 0 0 22px var(--signal-red), -4px 0 #ff0000, 4px 0 #0000ff; filter: brightness(1.3); }
+}
+
+.defeat-title-anim {
+  animation: text-chromatic-flicker-red 2.5s infinite ease-in-out;
+}
+
+/* Stat Card Wipe-in */
+@keyframes terminal-wipe {
+  0% {
+    max-height: 0px;
+    opacity: 0;
+    border-color: rgba(255, 255, 255, 0.01);
+  }
+  100% {
+    max-height: 200px;
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.stat-card-anim {
+  overflow: hidden;
+  animation: terminal-wipe 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Button Slide-up Spring */
+@keyframes spring-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.button-reveal-anim {
+  animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
+}
 `,"src/App.tsx":`import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
@@ -622,6 +798,7 @@ export default function App() {
   useHudSubscription();
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
+  const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const gameResult = useSessionStore((state) => state.gameResult);
   const retryCount = useSessionStore((state) => state.retryCount);
@@ -805,7 +982,7 @@ export default function App() {
         )}
 
         <div
-          className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"}\`}
+          className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"} \${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} \${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""}\`}
           ref={viewportRef}
           style={
             isTouchDevice
@@ -1335,11 +1512,13 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   }
 }
 `,"src/components/GameArena.tsx":`import "./GameArena.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
-import { Trophy, Skull, RotateCcw, Home } from "lucide-react";
+import { soundSynth } from "@/core/SoundSynth";
+import { saveManager } from "@/core/SaveManager";
+import { Trophy, Skull, RotateCcw, Home, BarChart2 } from "lucide-react";
 
 interface GameArenaProps {
   triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
@@ -1349,6 +1528,20 @@ interface GameArenaProps {
 export function GameArena({ playHoverTick }: GameArenaProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
+
+  // Staggered state sequence: 0 (Hidden), 1 (Fading Base), 2 (Header Pop & Sound), 3 (Tallying Stats), 4 (Buttons Visible)
+  const [stagger, setStagger] = useState(0);
+  const [displayWins, setDisplayWins] = useState(0);
+  const [displayLosses, setDisplayLosses] = useState(0);
+
+  // Grouped selector bindings
+  const currentScreen = useSessionStore((state) => state.currentScreen);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const menuIndex = useSessionStore((state) => state.menuIndex);
+  const navTo = useSessionStore((state) => state.navTo);
+  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
+  const retryCount = useSessionStore((state) => state.retryCount);
+  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1387,12 +1580,76 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, []);
 
-  const gameResult = useSessionStore((state) => state.gameResult);
-  const menuIndex = useSessionStore((state) => state.menuIndex);
-  const navTo = useSessionStore((state) => state.navTo);
-  const setMenuIndex = useSessionStore((state) => state.setMenuIndex);
-  const retryCount = useSessionStore((state) => state.retryCount);
-  const currentScreen = useSessionStore((state) => state.currentScreen);
+  // Staggered animation triggers on game conclusion
+  useEffect(() => {
+    if (gameResult === "PLAYING") {
+      queueMicrotask(() => {
+        setStagger(0);
+        setDisplayWins(0);
+        setDisplayLosses(0);
+      });
+      return;
+    }
+
+    // Step 1: Base panel entry
+    const t1 = setTimeout(() => {
+      setStagger(1);
+      soundSynth.playMenuConfirm();
+    }, 200);
+
+    // Step 2: Primary banner pop & screen shake
+    const t2 = setTimeout(() => {
+      setStagger(2);
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
+      if (gameResult === "VICTORY") {
+        soundSynth.playHealComplete();
+      } else {
+        soundSynth.playHealCancel();
+      }
+    }, 750);
+
+    // Step 3: Run stat ticks count-up
+    const t3 = setTimeout(() => {
+      setStagger(3);
+      const slotIdx = saveManager.getCurrentSlotIndex();
+      const slot = slotIdx !== -1 ? saveManager.getSlot(slotIdx) : null;
+      const targetWins = slot ? slot.wins : 0;
+      const targetLosses = slot ? slot.losses : 0;
+
+      let currentW = 0;
+      let currentL = 0;
+
+      const winTimer = setInterval(() => {
+        if (currentW < targetWins) {
+          currentW++;
+          setDisplayWins(currentW);
+          soundSynth.playSelectTick();
+        } else {
+          clearInterval(winTimer);
+          
+          const lossTimer = setInterval(() => {
+            if (currentL < targetLosses) {
+              currentL++;
+              setDisplayLosses(currentL);
+              soundSynth.playSelectTick();
+            } else {
+              clearInterval(lossTimer);
+              
+              // Step 4: Display retry buttons smoothly
+              setStagger(4);
+              soundSynth.playDashRecharge();
+            }
+          }, 120);
+        }
+      }, 120);
+    }, 1500);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [gameResult]);
 
   const initialRetryCountRef = useRef(retryCount);
 
@@ -1401,8 +1658,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       engineRef.current?.reset();
     }
   }, [retryCount, currentScreen]);
-
-  const resetGameSession = useGameplayStore((state) => state.resetGameSession);
 
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -1439,8 +1694,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
           <div className="vignette-overlay" />
 
-          {gameResult !== "PLAYING" && (
-            <div className="gameover-overlay">
+          {gameResult !== "PLAYING" && stagger >= 1 && (
+            <div className="gameover-overlay" style={{ opacity: 1, transition: "opacity 0.4s ease" }}>
               <div
                 className="gameover-box neo-elevated"
                 style={{
@@ -1458,64 +1713,107 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     gameResult === "GAMEOVER"
                       ? "0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1)"
                       : "0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1)",
-                  background: "rgba(12, 14, 18, 0.95)",
+                  background: "rgba(12, 14, 18, 0.96)",
                   maxWidth: "440px",
                   width: "85%",
                   boxSizing: "border-box",
                   textAlign: "center",
+                  transform: stagger >= 2 ? "scale(1)" : "scale(0.92)",
+                  opacity: stagger >= 2 ? 1 : 0.8,
+                  transition: "transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.15), opacity 0.3s ease",
                 }}
               >
-                {gameResult === "GAMEOVER" ? (
-                  <div className="flex-col-center">
-                    <Skull
-                      size={64}
-                      style={{
-                        color: "var(--signal-red)",
-                        filter: "drop-shadow(0 0 10px var(--signal-red-glow))",
-                        marginBottom: "16px",
-                        animation: "rumble-anim 0.08s infinite alternate",
-                      }}
-                    />
-                    <h1
-                      style={{
-                        fontSize: "2.6rem",
-                        margin: 0,
-                        color: "var(--signal-red)",
-                        fontWeight: 900,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.22em",
-                        textShadow: "0 0 15px var(--signal-red-glow)",
-                        lineHeight: "1.1",
-                      }}
-                    >
-                      DEFEATED
-                    </h1>
-                  </div>
-                ) : (
-                  <div className="flex-col-center">
-                    <Trophy
-                      size={64}
-                      style={{
-                        color: "var(--signal-green)",
-                        filter: "drop-shadow(0 0 10px var(--signal-green-glow))",
-                        marginBottom: "16px",
-                        animation: "crt-pulse 1.5s infinite alternate",
-                      }}
-                    />
-                    <h1
-                      style={{
-                        fontSize: "2.6rem",
-                        margin: 0,
-                        color: "var(--signal-green)",
-                        fontWeight: 900,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.22em",
-                        textShadow: "0 0 15px var(--signal-green-glow)",
-                        lineHeight: "1.1",
-                      }}
-                    >
-                      VICTORY
-                    </h1>
+                {stagger >= 2 && (
+                  <>
+                    {gameResult === "GAMEOVER" ? (
+                      <div className="flex-col-center">
+                        <Skull
+                          size={64}
+                          className="defeat-icon-anim"
+                          style={{
+                            color: "var(--signal-red)",
+                            marginBottom: "16px",
+                          }}
+                        />
+                        <h1
+                          className="defeat-title-anim"
+                          style={{
+                            fontSize: "2.6rem",
+                            margin: 0,
+                            color: "var(--signal-red)",
+                            fontWeight: 900,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.22em",
+                            lineHeight: "1.1",
+                          }}
+                        >
+                          DEFEATED
+                        </h1>
+                      </div>
+                    ) : (
+                      <div className="flex-col-center">
+                        <Trophy
+                          size={64}
+                          className="victory-icon-anim"
+                          style={{
+                            color: "var(--signal-green)",
+                            marginBottom: "16px",
+                          }}
+                        />
+                        <h1
+                          className="victory-title-anim"
+                          style={{
+                            fontSize: "2.6rem",
+                            margin: 0,
+                            color: "var(--signal-green)",
+                            fontWeight: 900,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.22em",
+                            lineHeight: "1.1",
+                          }}
+                        >
+                          VICTORY
+                        </h1>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Save Stats Tally */}
+                {stagger >= 3 && (
+                  <div
+                    className="stat-card-anim"
+                    style={{
+                      width: "100%",
+                      marginTop: "24px",
+                      padding: "16px 20px",
+                      background: "rgba(7, 8, 11, 0.6)",
+                      border: "1px solid rgba(255,255,255,0.03)",
+                      borderRadius: "10px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center", color: "#718096" }}>
+                      <BarChart2 size={14} />
+                      <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                        SAVE SLOT PERFORMANCE
+                      </span>
+                    </div>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.04)" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL WINS</span>
+                      <span style={{ fontSize: "18px", color: "var(--signal-green)", fontWeight: "bold", fontFamily: "monospace" }}>
+                        {displayWins}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "12px", color: "#4a5568", fontWeight: "bold", letterSpacing: "0.1em" }}>TOTAL LOSSES</span>
+                      <span style={{ fontSize: "18px", color: "var(--signal-red)", fontWeight: "bold", fontFamily: "monospace" }}>
+                        {displayLosses}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -1528,7 +1826,18 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   }}
                 />
 
-                <div className="flex-row" style={{ gap: "16px", width: "100%", justifyContent: "center" }}>
+                {/* Navigation Buttons */}
+                <div
+                  className="flex-row button-reveal-anim"
+                  style={{
+                    gap: "16px",
+                    width: "100%",
+                    justifyContent: "center",
+                    opacity: stagger >= 4 ? 1 : 0,
+                    transform: stagger >= 4 ? "translateY(0)" : "translateY(15px)",
+                    transition: "opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)",
+                  }}
+                >
                   <button
                     onClick={() => {
                       resetGameSession();
@@ -8314,6 +8623,8 @@ export const SFX_PRESETS = {
   CHARGE_START: void;
   CHARGE_UPDATE: { timer: number };
   CHARGE_STOP: void;
+  REQUEST_RETRY: void;
+  REQUEST_MENU: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -12553,6 +12864,7 @@ interface SessionState {
   menuIndex: number;
   gameResult: GameResultState;
   retryCount: number;
+  transitionActive: "SHUTDOWN" | "POWER_ON" | "NONE";
   navTo: (screen: ScreenState) => void;
   setMenuIndex: (index: number) => void;
   setGameResult: (result: GameResultState) => void;
@@ -12564,10 +12876,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   menuIndex: 0,
   gameResult: "PLAYING",
   retryCount: 0,
+  transitionActive: "NONE",
   navTo: (screen) => {
     const current = get().currentScreen;
+    if (current === screen && screen !== "PLAYING") return;
 
-    if (soundSynth.initialized && current !== screen) {
+    if (soundSynth.initialized) {
       const currentDepth = SCREEN_DEPTHS[current] ?? 0;
       const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
 
@@ -12578,12 +12892,31 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }
     }
 
-    set((state) => ({
-      currentScreen: screen,
-      menuIndex: 0,
-      gameResult: "PLAYING",
-      retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
-    }));
+    const needsTransition = screen === "PLAYING" || current === "PLAYING";
+
+    if (needsTransition) {
+      set({ transitionActive: "SHUTDOWN" });
+      setTimeout(() => {
+        set((state) => ({
+          currentScreen: screen,
+          menuIndex: 0,
+          gameResult: "PLAYING",
+          retryCount: screen === "PLAYING" ? state.retryCount + 1 : state.retryCount,
+          transitionActive: "POWER_ON",
+        }));
+
+        setTimeout(() => {
+          set({ transitionActive: "NONE" });
+        }, 400);
+      }, 450);
+    } else {
+      set({
+        currentScreen: screen,
+        menuIndex: 0,
+        gameResult: "PLAYING",
+        transitionActive: "NONE",
+      });
+    }
   },
   setMenuIndex: (index) => set({ menuIndex: index }),
   setGameResult: (result) => set({ gameResult: result }),
@@ -12620,7 +12953,6 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       if (hp < current) {
         get().triggerGlitch(150);
 
-        // High-performance DOM-direct status panel shaking
         if (typeof document !== "undefined") {
           const panel = document.querySelector(".cabinet-status-panel");
           if (panel) {
