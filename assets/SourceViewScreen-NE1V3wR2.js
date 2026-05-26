@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-CXvECCdi.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BvUh1BlJ.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6117,18 +6117,11 @@ import { inputProvider } from "@/core/InputProvider";
 export class SimulationSystems {
   private unsubscribes: (() => void)[] = [];
 
-  private getPlayerX!: () => number;
-  private getBossX!: () => number;
-  private getMinionX!: (id: string) => number;
-
   public setup(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void {
-    this.getPlayerX = getPlayerX;
-    this.getBossX = getBossX;
-    this.getMinionX = getMinionX;
+    soundSynth.registerCoordinateProviders(getPlayerX, getBossX, getMinionX);
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        soundSynth.playHurt(this.getPlayerX());
         Camera.shake(15, 0.3);
         Camera.triggerHitStop(0.08);
         inputProvider.triggerHapticFeedback("medium");
@@ -6137,7 +6130,6 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
-        soundSynth.playHitConfirm(this.getBossX(), "boss-01");
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6);
           Camera.triggerHitStop(0.15);
@@ -6151,9 +6143,7 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
-        const mX = this.getMinionX(id);
-        soundSynth.playHitConfirm(mX, id);
+      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15);
           Camera.triggerHitStop(0.03);
@@ -6167,38 +6157,9 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_JUMPED", () => {
-        soundSynth.playJump(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_DASHED", () => {
-        soundSynth.playDash(this.getPlayerX());
         Camera.triggerHitStop(0.035);
         inputProvider.triggerHapticFeedback("light");
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_POGOED", () => {
-        soundSynth.playPogo(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
-        soundSynth.playSlash(direction, this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
-        if (level === 2) {
-          soundSynth.playFireballLvl2(this.getPlayerX());
-        } else {
-          soundSynth.playFireballLvl1(this.getPlayerX());
-        }
       })
     );
 
@@ -6215,93 +6176,8 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_LANDED", () => {
-        soundSynth.playLanding(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("HEAL_START", () => {
-        soundSynth.playHealStart(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("HEAL_CANCEL", () => {
-        soundSynth.playHealCancel(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("HEAL_COMPLETE", () => {
-        soundSynth.playHealComplete();
-      })
-    );
-
-    this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_SPIKED", () => {
-        soundSynth.playSpikeStrike(this.getPlayerX());
         inputProvider.triggerHapticFeedback("heavy");
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
-        soundSynth.playBossPhaseShift(this.getBossX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("MINION_SPAWNING", () => {
-        soundSynth.playMinionSpawning();
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("MINION_DISSOLVING", () => {
-        soundSynth.playMinionDeconstruct();
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
-        soundSynth.playDashRecharge(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_SWIPED", () => {
-        soundSynth.playBossSwipe(this.getBossX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_TELEGRAPH", () => {
-        soundSynth.playBossTelegraph(this.getBossX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_LUNGED", () => {
-        soundSynth.playBossLunge(this.getBossX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_START", () => {
-        soundSynth.playChargeStart(this.getPlayerX());
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
-        soundSynth.updateChargeTimer(timer);
-      })
-    );
-
-    this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_STOP", () => {
-        soundSynth.stopChargeDrone();
       })
     );
   }
@@ -6324,11 +6200,37 @@ class SoundSynth {
   private music: MusicSequencer;
   private drones: DroneManager;
 
+  private getPlayerXFn?: () => number;
+  private getBossXFn?: () => number;
+  private getMinionXFn?: (id: string) => number;
+
   constructor() {
     this.ctxManager = new AudioContextManager();
     this.sfx = new SFXManager(this.ctxManager);
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
+  }
+
+  public registerCoordinateProviders(
+    playerX: () => number,
+    bossX: () => number,
+    minionX: (id: string) => number
+  ) {
+    this.getPlayerXFn = playerX;
+    this.getBossXFn = bossX;
+    this.getMinionXFn = minionX;
+  }
+
+  public getPlayerX(): number | undefined {
+    return this.getPlayerXFn?.();
+  }
+
+  public getBossX(): number | undefined {
+    return this.getBossXFn?.();
+  }
+
+  public getMinionX(id: string): number | undefined {
+    return this.getMinionXFn?.(id);
   }
 
   public get hasUserGestured(): boolean {
@@ -7502,6 +7404,8 @@ export class SFXManager {
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { eventBroker } from "@/core/eventBroker";
+import { soundSynth } from "@/core/SoundSynth";
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -7516,16 +7420,17 @@ export class BossSFX {
   private teleportSynth!: Tone.Synth;
   private dialogueSynthPlayer!: Tone.Synth;
 
-  // Track combos independently for each unique target entity
   private entityComboMap = new Map<string, { lastHitTime: number; hitSequenceCount: number }>();
 
-  // Track spike bounces
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
-    ctxManager.registerOnInit(() => this.init(ctxManager));
+    ctxManager.registerOnInit(() => {
+      this.init(ctxManager);
+      this.setupSubscriptions();
+    });
   }
 
   private init(ctxManager: AudioContextManager) {
@@ -7568,6 +7473,51 @@ export class BossSFX {
       oscillator: { type: "sine" },
       envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
     }).connect(this.impactPanner);
+  }
+
+  private setupSubscriptions() {
+    eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+      this.playHitConfirm(soundSynth.getBossX(), "boss-01");
+      if (currentHealth <= 0) {
+        this.playBossExplosion(soundSynth.getBossX());
+      }
+    });
+
+    eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+      const mX = soundSynth.getMinionX(id);
+      this.playHitConfirm(mX, id);
+      if (currentHealth <= 0) {
+        this.playMinionDeconstruct(mX);
+      }
+    });
+
+    eventBroker.subscribe("PLAYER_SPIKED", () => {
+      this.playSpikeStrike(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+      this.playBossPhaseShift(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("MINION_SPAWNING", () => {
+      this.playMinionSpawning();
+    });
+
+    eventBroker.subscribe("MINION_DISSOLVING", () => {
+      this.playMinionDeconstruct();
+    });
+
+    eventBroker.subscribe("BOSS_SWIPED", () => {
+      this.playBossSwipe(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("BOSS_TELEGRAPH", () => {
+      this.playBossTelegraph(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("BOSS_LUNGED", () => {
+      this.playBossLunge(soundSynth.getBossX());
+    });
   }
 
   public playBossTelegraph(x?: number) {
@@ -7630,7 +7580,6 @@ export class BossSFX {
 
   public playSpikeStrike(x?: number) {
     const nowPerformance = performance.now();
-    // Escalate pitch on consecutive spike hits within 2.5 seconds (uncapped)
     if (nowPerformance - this.lastSpikeTime < 2500) {
       this.spikeSequenceCount = this.spikeSequenceCount + 1;
     } else {
@@ -7659,7 +7608,7 @@ export class BossSFX {
     }
 
     if (nowPerformance - combo.lastHitTime < 1500) {
-      combo.hitSequenceCount = combo.hitSequenceCount + 1; // Uncapped combo pitch escalation
+      combo.hitSequenceCount = combo.hitSequenceCount + 1;
     } else {
       combo.hitSequenceCount = 0;
     }
@@ -7771,6 +7720,8 @@ export class InterfaceSFX {
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { eventBroker } from "@/core/eventBroker";
+import { soundSynth } from "@/core/SoundSynth";
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -7800,7 +7751,10 @@ export class PlayerSFX {
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
-    ctxManager.registerOnInit(() => this.init(ctxManager));
+    ctxManager.registerOnInit(() => {
+      this.init(ctxManager);
+      this.setupSubscriptions();
+    });
   }
 
   private init(ctxManager: AudioContextManager) {
@@ -7883,6 +7837,68 @@ export class PlayerSFX {
     });
     this.slashNoisePuff.chain(this.slashFilterPuff, this.slashEnvPuff, this.playerPanner);
     this.slashNoisePuff.start();
+  }
+
+  private setupSubscriptions() {
+    eventBroker.subscribe("PLAYER_HURT", () => {
+      this.playHurt(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_JUMPED", () => {
+      this.playJump(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_DASHED", () => {
+      this.playDash(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_POGOED", () => {
+      this.playPogo(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
+      this.playSlash(direction, soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
+      if (level === 2) {
+        this.playFireballLvl2(soundSynth.getPlayerX());
+      } else {
+        this.playFireballLvl1(soundSynth.getPlayerX());
+      }
+    });
+
+    eventBroker.subscribe("PLAYER_LANDED", () => {
+      this.playLanding(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_START", () => {
+      soundSynth.playHealStart(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_CANCEL", () => {
+      this.playHealCancel(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_COMPLETE", () => {
+      soundSynth.playHealComplete();
+    });
+
+    eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
+      this.playDashRecharge(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_START", () => {
+      soundSynth.playChargeStart(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+      soundSynth.updateChargeTimer(timer);
+    });
+
+    eventBroker.subscribe("CHARGE_STOP", () => {
+      soundSynth.stopChargeDrone();
+    });
   }
 
   public playDashRecharge(x?: number) {
