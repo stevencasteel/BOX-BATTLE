@@ -2,7 +2,12 @@ import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
-import { IMinionBehavior, TurretBehavior, LancerBehavior, FlyerBehavior } from "./MinionBehaviors";
+import { StateMachine } from "@/core/StateMachine";
+import {
+  TurretPatrolState,
+  LancerPatrolState,
+  FlyerPatrolState
+} from "./MinionStates";
 import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
@@ -18,10 +23,9 @@ export class Minion extends BaseEntity {
   public minionType: MinionType;
   public health!: HealthComponent;
   public physics!: PhysicsComponent;
-  private behavior: IMinionBehavior;
+  public stateMachine: StateMachine;
 
   public patrolSpeed: number = 100;
-  public facingDirection: number = 1;
   public stateTimer: number = 0;
 
   public pointA: { x: number; y: number } = { x: 0, y: 0 };
@@ -45,12 +49,12 @@ export class Minion extends BaseEntity {
     this.position = { ...startPos };
     this.previousPosition = { ...startPos };
 
-    // Set miniature baseline scale and apply spring outward velocity kick on spawn
     this.visualScale = { x: 0.1, y: 0.1 };
     this.targetVisualScale = { x: 1.0, y: 1.0 };
     this.scaleVelocity = { x: 15.0, y: 15.0 };
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
+    this.stateMachine = new StateMachine();
 
     if (type === "TURRET") {
       this.size = { width: 44, height: 44 };
@@ -60,7 +64,7 @@ export class Minion extends BaseEntity {
       });
       this.physics.gravity = 0;
       this.squashPivot = "feet";
-      this.behavior = new TurretBehavior();
+      this.stateMachine.changeState(new TurretPatrolState(this));
     } else if (type === "LANCER") {
       this.size = { width: 40, height: 50 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -68,7 +72,7 @@ export class Minion extends BaseEntity {
         invincibilityDuration: 0.15,
       });
       this.squashPivot = "feet";
-      this.behavior = new LancerBehavior();
+      this.stateMachine.changeState(new LancerPatrolState(this));
     } else {
       this.size = { width: 36, height: 36 };
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -80,7 +84,7 @@ export class Minion extends BaseEntity {
       this.pointA = { ...startPos };
       this.pointB = { x: startPos.x, y: startPos.y - 180 };
       this.squashPivot = "center";
-      this.behavior = new FlyerBehavior();
+      this.stateMachine.changeState(new FlyerPatrolState(this));
     }
     eventBroker.publish("MINION_SPAWNING", undefined);
   }
@@ -176,37 +180,33 @@ export class Minion extends BaseEntity {
     this.stateTimer -= dt;
     this.shootTimer -= dt;
 
-    this.behavior.update(this, dt);
+    this.stateMachine.update(dt);
 
-    // Highly visible standardized target lean based on minion move state
     if (this.minionType === "LANCER" && this.attackState === "ATTACK") {
-      this.targetRotation = this.facingDirection * 0.21; // Aggressive charging lean (~12deg)
+      this.targetRotation = this.facingDirection * 0.21;
     } else if (this.attackState === "TELEGRAPH" && !this.isDying) {
-      // Direct inject high-frequency wobble to bypass the spring-damper lowpass filter
       this.targetRotation = 0;
       this.rotation = Math.sin(performance.now() * 0.055) * 0.25;
       this.rotationVelocity = 0;
     } else {
-      this.targetRotation = Math.sign(this.velocity.x) * 0.12; // Standard running tilt (~7deg)
+      this.targetRotation = Math.sign(this.velocity.x) * 0.12;
     }
 
-    // Spawn engine exhaust / thrust details
     this.exhaustTimer -= dt;
     if (this.exhaustTimer <= 0) {
       const isTelegraph = this.attackState === "TELEGRAPH";
       
       if (this.minionType === "FLYER") {
-        this.exhaustTimer = isTelegraph ? 0.04 : 0.08; // Faster thrust rate
+        this.exhaustTimer = isTelegraph ? 0.04 : 0.08;
         const sparkColor = isTelegraph ? "hsl(45, 100%, 60%)" : "hsl(200, 80%, 65%)";
         eventBroker.publish("SPAWN_SPARKS", {
           x: this.position.x,
           y: this.position.y + this.size.height / 2,
-          angle: Math.PI / 2, // jetting straight downwards
+          angle: Math.PI / 2,
           color: sparkColor,
-          count: isTelegraph ? 6 : 2 // Spawn a visible stream
+          count: isTelegraph ? 6 : 2
         });
       } else if (this.minionType === "LANCER") {
-        // Lancers leave ground scrapes / running sparks
         if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
           this.exhaustTimer = isTelegraph ? 0.05 : 0.15;
           const scrapeColor = isTelegraph ? "hsl(45, 100%, 60%)" : "rgba(255, 255, 255, 0.4)";
@@ -219,7 +219,6 @@ export class Minion extends BaseEntity {
           });
         }
       } else if (this.minionType === "TURRET") {
-        // Shoot plasma sparks straight up representing high pressure venting
         if (isTelegraph) {
           this.exhaustTimer = 0.06;
           eventBroker.publish("SPAWN_SPARKS", {
@@ -280,7 +279,6 @@ export class Minion extends BaseEntity {
             this.velocity.y = -550;
             this.physics.isGrounded = false;
           }
-          // Springy, elastic visual stretch launcher
           this.visualScale = { x: 0.5, y: 1.5 };
           this.scaleVelocity = { x: 10.0, y: -15.0 };
         }
@@ -332,7 +330,6 @@ export class Minion extends BaseEntity {
 
     const localY = this.squashPivot === "feet" ? -this.size.height / 2 : 0;
 
-    // Apply rotation standard
     if (this.squashPivot === "feet") {
       const feetY = drawY + this.size.height / 2;
       ctx.translate(drawX, feetY);
@@ -346,7 +343,6 @@ export class Minion extends BaseEntity {
 
     ctx.shadowBlur = 0;
 
-    // Render eye details inside standard local coordinate space
     ctx.fillStyle = "black";
     const faceDirection = this.minionType === "LANCER" ? this.facingDirection : 1;
     ctx.fillRect(faceDirection * 8 - 2, localY - 12, 6, 4);
