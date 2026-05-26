@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DXGLljCz.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BBCJAms-.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6590,16 +6590,25 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_DUST", ({ x, y }) => {
-        const count = 10;
+      eventBroker.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
+        const count = 14;
+        const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
           const dir = i % 2 === 0 ? 1 : -1;
-          const pSpeedX = dir * (50 + Math.random() * 110);
-          const pSpeedY = -8 - Math.random() * 30;
-          const size = 3 + Math.random() * 3;
-          const life = 0.24;
+          
+          const pSpeedX = isVertical
+            ? -dir * (4 + Math.random() * 10)
+            : dir * (125 + Math.random() * 160);
 
-          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.40)", size, life, "dust");
+          const pSpeedY = isVertical
+            ? dir * (125 + Math.random() * 160)
+            : -4 - Math.random() * 10;
+
+          const size = 3.5 + Math.random() * 3.5;
+          const life = 0.35;
+          const drag = 0.88;
+
+          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.35)", size, life, "dust", drag);
         }
       })
     );
@@ -7733,6 +7742,25 @@ export class WorldRenderer {
       world.boss.draw(this.ctx, alpha);
     }
 
+
+
+    if (world.player) {
+      world.player.draw(this.ctx, alpha);
+      const player = world.player as Player;
+      if (player.attackActive) {
+        this.drawPlayerAttackVisual(this.ctx, player, alpha);
+      }
+    }
+
+    for (const minion of world.minions) {
+      minion.draw(this.ctx, alpha);
+    }
+
+    const activeProjectiles = projectilePool.getActive();
+    for (const proj of activeProjectiles) {
+      proj.draw(this.ctx, alpha);
+    }
+
     for (const p of particles) {
       const pct = p.life / p.maxLife;
       this.ctx.save();
@@ -7760,23 +7788,6 @@ export class WorldRenderer {
         this.ctx.stroke();
       }
       this.ctx.restore();
-    }
-
-    if (world.player) {
-      world.player.draw(this.ctx, alpha);
-      const player = world.player as Player;
-      if (player.attackActive) {
-        this.drawPlayerAttackVisual(this.ctx, player, alpha);
-      }
-    }
-
-    for (const minion of world.minions) {
-      minion.draw(this.ctx, alpha);
-    }
-
-    const activeProjectiles = projectilePool.getActive();
-    for (const proj of activeProjectiles) {
-      proj.draw(this.ctx, alpha);
     }
 
     if (bossDeathTimer >= 0 && bossDeathPos) {
@@ -9248,7 +9259,7 @@ export type GameEventMap = {
   PLAYER_DASHED: { direction: number };
   PLAYER_POGOED: void;
   PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
-  PLAYER_PROJECTILE_FIRED: { level: 1 | 2 };
+  PLAYER_PROJECTILE_FIRED: { level: 1 | 2; dirX: number; dirY: number };
   HEALING_CHARGES_CHANGED: { charges: number };
   DETERMINATION_CHANGED: { determination: number };
   DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
@@ -9259,7 +9270,7 @@ export type GameEventMap = {
   VICTORY: void;
   CLEAR_DIALOGUES: void;
   SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number };
-  SPAWN_DUST: { x: number; y: number };
+  SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
   SPAWN_BLAST: { x: number; y: number; color: string };
   PLAYER_LANDED: void;
   HEAL_START: void;
@@ -11051,12 +11062,13 @@ export class Player extends BaseEntity {
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
   private unsubDamageDealt!: () => void;
+  private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 40, height: 80 };
-    this.squashPivot = "feet";
+    this.squashPivot = "center";
 
     this.position = { x: 0, y: 0 };
     this.previousPosition = { x: 0, y: 0 };
@@ -11131,8 +11143,9 @@ export class Player extends BaseEntity {
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.25, y: 0.75 };
-      this.scaleVelocity = { x: -16.0, y: 16.0 };
+      this.visualScale = { x: 1.55, y: 0.45 }; // Extreme squished visual pop
+      this.scaleVelocity = { x: -35.0, y: 35.0 }; // Fast, rubbery spring rebound
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.15 });
     });
 
     this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
@@ -11144,6 +11157,24 @@ export class Player extends BaseEntity {
         this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
         eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
       }
+    });
+
+    this.unsubProjectileFired = eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
+      // Linear recoil forces (tuned lower for better control weight)
+      const kbForce = level === 2 ? 160 : 55;
+      const tiltForce = level === 2 ? 6.0 : 2.5;
+
+      // Apply backward velocity pushback proportional to firing direction
+      this.applyKineticImpulse(-dirX * kbForce, -dirY * kbForce);
+
+      // Apply lean-style angular recoil relative to horizontal vector (leans back)
+      this.applyAngularImpulse(-dirX * tiltForce);
+
+      // Highly subtle squash-stretch scale deformation to keep focus purely on rotation lean
+      const sqX = level === 2 ? 0.94 : 0.98;
+      const sqY = level === 2 ? 1.06 : 1.02;
+      this.visualScale = { x: sqX, y: sqY };
+      this.scaleVelocity = { x: (level === 2 ? 12 : 5), y: (level === 2 ? -12 : -5) };
     });
   }
 
@@ -11175,12 +11206,18 @@ export class Player extends BaseEntity {
 
     if (this.isCharging) {
       const chargeProgress = Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME);
-      const targetSquish = 0.03 * chargeProgress;
-      const vibration = Math.sin(performance.now() * 0.04) * 0.004 * chargeProgress;
+      
+      // Accurately simulate high stored energy with high-frequency scale wobble and angular shiver
+      const time = performance.now();
+      const pulse = Math.sin(time * 0.04) * 0.08 * chargeProgress;
+      const shiverX = (Math.random() * 0.04 - 0.02) * chargeProgress;
+      const shiverY = (Math.random() * 0.04 - 0.02) * chargeProgress;
+
       this.targetVisualScale = { 
-        x: 1.0 - targetSquish + vibration, 
-        y: 1.0 + targetSquish - vibration 
+        x: 1.0 - pulse + shiverX, 
+        y: 1.0 + pulse + shiverY 
       };
+      this.rotation = Math.sin(time * 0.08) * 0.04 * chargeProgress;
 
       // Vortex accretion: Spawn swirling charges rotating in-wards
       if (Math.random() < 0.35) {
@@ -11205,6 +11242,12 @@ export class Player extends BaseEntity {
       }
     } else {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
+      if (!this.physics.isGrounded) {
+        this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
+      } else {
+        const moveAxis = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+        this.targetRotation = moveAxis * 0.12;
+      }
     }
 
     if (this.hurtTimer > 0) {
@@ -11272,7 +11315,7 @@ export class Player extends BaseEntity {
         targetScaleY = 1.15;
 
         if (Math.random() < 0.35) {
-          const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+          const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2) + (Math.random() * 8 - 4);
           const contactY = this.position.y + (this.size.height / 2);
           eventBroker.publish("SPAWN_SPARKS", {
             x: contactX,
@@ -11342,8 +11385,12 @@ export class Player extends BaseEntity {
     this.visualScale = { x: 0.76, y: 1.24 };
 
     const impactSide = this.physics.isOnWallLeft ? -1 : 1;
+    const wallX = this.position.x + impactSide * (this.size.width / 2);
+    
+    // Spawn vertical wall dust puffs on impact alongside sparks
+    eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
     eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x + impactSide * (this.size.width / 2),
+      x: wallX,
       y: this.position.y,
       angle: impactSide > 0 ? Math.PI : 0,
       color: "rgba(255, 255, 255, 0.55)",
@@ -11453,10 +11500,18 @@ export class Player extends BaseEntity {
     } else if (this.coyoteTimer > 0) {
       this.performJump();
     } else if (this.wallCoyoteTimer > 0) {
-      this.performJump();
+      this.velocity.y = -this.jumpForce;
       this.velocity.x = this.lastWallNormal * 1650;
+      this.coyoteTimer = 0;
       this.wallCoyoteTimer = 0;
+      this.jumpBufferTimer = 0;
+      this.visualScale = { x: 0.82, y: 1.18 };
       this.dashComponent.resetDashCharge();
+
+      // Trigger Symmetrical vertical dust puffs up/down along the wall contact surface
+      const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+      eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
+      eventBroker.publish("PLAYER_JUMPED", undefined);
     } else if (this.hasDoubleJump) {
       this.velocity.y = -this.jumpForce;
       this.hasDoubleJump = false;
@@ -11633,6 +11688,9 @@ export class Player extends BaseEntity {
     this.unsubHealComplete();
     this.unsubChargeMaxed();
     this.unsubDamageDealt();
+    if (this.unsubProjectileFired) {
+      this.unsubProjectileFired();
+    }
     super.teardown();
   }
 }
@@ -12161,7 +12219,7 @@ export class FireballComponent implements IEntityComponent {
     const spawnX = this.owner.position.x + normalizedDir.x * 30;
     const spawnY = this.owner.position.y + normalizedDir.y * 30;
 
-    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1 });
+    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1, dirX: normalizedDir.x, dirY: normalizedDir.y });
 
     const proj = this.owner.world.spawnProjectile(
       spawnX,
