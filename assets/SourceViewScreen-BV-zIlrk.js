@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CVv3CoWm.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CeU2FGtj.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10748,7 +10748,7 @@ export class Minion extends BaseEntity {
   public volleyTimer: number = 0;
 
   public isSpawning: boolean = true;
-  public spawnTimer: number = 0.6;
+  public spawnTimer: number = 1.2;
   public isDying: boolean = false;
   public dissolveTimer: number = 0.5;
   private exhaustTimer: number = 0;
@@ -11023,10 +11023,20 @@ export class Minion extends BaseEntity {
     const backCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
     const frontCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
 
+    const totalSpawnTime = 1.2;
+    const elapsedTime = totalSpawnTime - this.spawnTimer;
+    const spawnPct = Math.max(0, Math.min(1.0, elapsedTime / totalSpawnTime));
+
+    ctx.save();
+
     if (this.isSpawning) {
-      const pct = 1.0 - this.spawnTimer / 0.6;
+      const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
+
+      const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
+      const accordionScale = 1.0 - Math.pow(1.0 - firstHalfProgress, 3) * Math.cos(firstHalfProgress * 3.5 * Math.PI);
+      
       const staticFlicker = Math.random() < 0.04 ? 0.45 : 1.0;
-      const cageAlpha = (1.0 - pct) * 0.85 * staticFlicker;
+      const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
 
       const mColor =
         this.minionType === "LANCER"
@@ -11040,7 +11050,13 @@ export class Minion extends BaseEntity {
       const R = W * 0.72;
 
       const rotation = nowTime * 0.005;
-      const ringHeights = [0, H / 2, H];
+      const hMid = H / 2;
+
+      const hBottom = hMid - hMid * accordionScale;
+      const hMiddle = hMid;
+      const hTop = hMid + hMid * accordionScale;
+
+      const ringHeights = [hBottom, hMiddle, hTop];
       const segments = 24;
       const step = (Math.PI * 2) / segments;
 
@@ -11075,8 +11091,8 @@ export class Minion extends BaseEntity {
       for (const angle of strutAngles) {
         const theta = angle + rotation;
         const x = R * Math.cos(theta);
-        const yBottom = 0 + R * Math.sin(theta) * 0.28;
-        const yTop = -H + R * Math.sin(theta) * 0.28;
+        const yBottom = -hBottom + R * Math.sin(theta) * 0.28;
+        const yTop = -hTop + R * Math.sin(theta) * 0.28;
 
         const isBehind = Math.sin(theta) < 0;
         const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
@@ -11087,6 +11103,10 @@ export class Minion extends BaseEntity {
         }
       }
     }
+
+    const feetY = drawY + this.size.height / 2;
+    ctx.translate(drawX, feetY);
+    ctx.rotate(this.rotation);
 
     const drawCageSegments = (segments: typeof backCage) => {
       for (let s = 0; s < segments.length; s++) {
@@ -11100,23 +11120,6 @@ export class Minion extends BaseEntity {
       }
     };
 
-    ctx.save();
-
-    if (this.isSpawning) {
-      const pct = 1.0 - this.spawnTimer / 0.6;
-      ctx.globalAlpha = pct;
-    } else if (this.isDying) {
-      const pct = this.dissolveTimer / 0.5;
-      ctx.globalAlpha = pct;
-      ctx.translate(drawX, drawY);
-      ctx.scale(pct, pct);
-      ctx.translate(-drawX, -drawY);
-    }
-
-    const feetY = drawY + this.size.height / 2;
-    ctx.translate(drawX, feetY);
-    ctx.rotate(this.rotation);
-
     if (this.isSpawning) {
       ctx.save();
       ctx.shadowBlur = 10;
@@ -11126,6 +11129,18 @@ export class Minion extends BaseEntity {
     }
 
     ctx.save();
+
+    if (this.isSpawning) {
+      const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
+      ctx.globalAlpha = secondHalfProgress;
+    } else if (this.isDying) {
+      const pct = this.dissolveTimer / 0.5;
+      ctx.globalAlpha = pct;
+      ctx.translate(0, -this.size.height / 2);
+      ctx.scale(pct, pct);
+      ctx.translate(0, this.size.height / 2);
+    }
+
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
     } else {
