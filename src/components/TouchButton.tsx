@@ -27,20 +27,8 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className="neo-btn"
-      style={{
-        ...style,
-        userSelect: "none",
-        touchAction: "none",
-        padding: "0",
-        borderRadius: "12px",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxSizing: "border-box",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)",
-      }}
+      className="neo-btn touch-action-btn"
+      style={style}
     >
       {label}
     </button>

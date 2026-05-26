@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 9:51:23 AM
+ [SYSTEM] Generated: 5/26/2026, 10:09:25 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -143,10 +143,6 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
-├── patch-boss-hp.js
-├── patch-phase2-robust.js
-├── patch-phase2.js
-├── patch-saveselect.js
 ├── README.md
 ├── tsconfig.app.json
 ├── tsconfig.json
@@ -323,14 +319,16 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
      temporary or auxiliary Node.js scripts must use ES Module syntax 
      (e.g., use "import fs from 'fs';" instead of "const fs = require('fs');").
 
-2.2  Surgical Patch Scripts
+2.2  Surgical Patch Scripts & Immediate Cleanup
      When modifying large source files, prefer writing temporary Node.js 
      scripts (utilizing `fs.readFileSync` and `.replace()`) over full file 
      overwrites to prevent command truncation or buffer loss.
-     CRITICAL: Always append the cleanup command (e.g., "&& rm ./patch.js") 
-     on the exact same execution line to keep the repository untracked space clean.
-     Actively clean up and delete any other transient scripts or patch helpers 
-     immediately after execution to prevent workspace clutter.
+     
+     CRITICAL: All temporary scripts, patches, diagnostics, or evaluation 
+     helpers must be deleted immediately within the same terminal command chain 
+     using an appended deletion statement (e.g., "node patch.js && rm patch.js"). 
+     Transient files must never remain in the workspace, and under no 
+     circumstances should they be staged or committed to the repository history.
 
 2.3  Zsh Compatibility & Escaping
      The development environment is on macOS running Zsh. Never use raw, unescaped 
@@ -481,7 +479,7 @@ misc:
 A toy pull string that ratchets back
 Physics reaction knockback from minion when you hit it.
 
-Is there anything in my source code I shouldn't be sharing publicly?
+Please overhaul the mobile version of the project's menus and UI to be polished like the desktop version. This isn't a focus on the desktop breakpoints, it is a focus on mobile. Make sure everything is properly DRY / Standardized / responsive. Also, that mobile browser/os navigation bars are accounted for and won't accidentally cover or interfere with the game space on android/ios.
 
 
 ● ./eslint.config.js
@@ -578,337 +576,6 @@ export default defineConfig([
     "vite": "^8.0.12",
     "prettier": "^3.2.5"
   }
-}
-
-
-
-● ./patch-boss-hp.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-function patchFile(filePath, searchStr, replaceStr) {
-  let content = fs.readFileSync(filePath, 'utf8');
-  if (!content.includes(searchStr)) {
-    console.error("Could not find search pattern in: " + filePath);
-    process.exit(1);
-  }
-  content = content.replace(searchStr, replaceStr);
-  fs.writeFileSync(filePath, content, 'utf8');
-  console.log("Successfully patched: " + filePath);
-}
-
-// 1. Boss.ts
-patchFile(
-  'src/entities/Boss.ts',
-  `    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 30,
-      invincibilityDuration: 0.25,
-    });`,
-  `    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: 38,
-      invincibilityDuration: 0.25,
-    });`
-);
-
-// 2. useGameStore.ts (State Initialization)
-patchFile(
-  'src/store/useGameStore.ts',
-  `  playerHP: 5,
-  bossHP: 30,`,
-  `  playerHP: 5,
-  bossHP: 38,`
-);
-
-// 3. useGameStore.ts (State Reset)
-patchFile(
-  'src/store/useGameStore.ts',
-  `  resetGameSession: () => {
-    set({
-      playerHP: 5,
-      bossHP: 30,`,
-  `  resetGameSession: () => {
-    set({
-      playerHP: 5,
-      bossHP: 38,`
-);
-
-// 4. Engine.ts
-patchFile(
-  'src/core/Engine.ts',
-  `    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
-    const nextBossHP = bHealth ? bHealth.currentHealth : 30;`,
-  `    const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;
-    const nextBossHP = bHealth ? bHealth.currentHealth : 38;`
-);
-
-// 5. useHudSubscription.ts
-patchFile(
-  'src/hooks/useHudSubscription.ts',
-  `      const bossWidth = (bossHP / 30) * 100 + "%";`,
-  `      const bossWidth = (bossHP / 38) * 100 + "%";`
-);
-
-// 6. BattleDirector.ts
-patchFile(
-  'src/core/BattleDirector.ts',
-  `    const bHealth = boss.getComponent(HealthComponent);
-    if (bHealth) {
-      if (bHealth.currentHealth < 30 && !this.hasTriggeredFirstHit) {
-        this.hasTriggeredFirstHit = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
-      }
-
-      if (bHealth.currentHealth <= 21 && !this.hasTriggeredPhase2) {
-        this.hasTriggeredPhase2 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "You won't beat me! Watch out for my rapid fire!",
-        });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-      }
-
-      if (bHealth.currentHealth <= 12 && !this.hasTriggeredPhase3) {
-        this.hasTriggeredPhase3 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "This is my final stand! Prepare yourself!",
-        });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-      }
-    }`,
-  `    const bHealth = boss.getComponent(HealthComponent);
-    if (bHealth) {
-      if (bHealth.currentHealth < 38 && !this.hasTriggeredFirstHit) {
-        this.hasTriggeredFirstHit = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
-      }
-
-      if (bHealth.currentHealth <= 27 && !this.hasTriggeredPhase2) {
-        this.hasTriggeredPhase2 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "You won't beat me! Watch out for my rapid fire!",
-        });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-      }
-
-      if (bHealth.currentHealth <= 15 && !this.hasTriggeredPhase3) {
-        this.hasTriggeredPhase3 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "This is my final stand! Prepare yourself!",
-        });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
-      }
-    }`
-);
-
-
-
-● ./patch-phase2-robust.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-function patchFile(filePath, patches) {
-  if (!fs.existsSync(filePath)) {
-    console.error("File not found: " + filePath);
-    process.exit(1);
-  }
-  let content = fs.readFileSync(filePath, 'utf8');
-  for (const [search, replace] of patches) {
-    if (!content.includes(search)) {
-      console.error("Search target not found in " + filePath + ": " + search);
-      process.exit(1);
-    }
-    content = content.replace(search, replace);
-  }
-  fs.writeFileSync(filePath, content, 'utf8');
-  console.log("Successfully patched: " + filePath);
-}
-
-patchFile('src/core/Engine.ts', [
-  ['const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;', 'const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;'],
-  ['const nextBossHP = bHealth ? bHealth.currentHealth : 30;', 'const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;']
-]);
-
-patchFile('src/entities/Player.ts', [
-  ['maxHealth: 5,', 'maxHealth: UNITS.PLAYER_MAX_HP,']
-]);
-
-patchFile('src/hooks/useHudSubscription.ts', [
-  ['let lastPlayerHP = 5;', 'let lastPlayerHP = UNITS.PLAYER_MAX_HP;']
-]);
-
-
-
-● ./patch-phase2.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-function patchFile(filePath, search, replace) {
-  if (!fs.existsSync(filePath)) {
-    console.error("File not found: " + filePath);
-    process.exit(1);
-  }
-  let content = fs.readFileSync(filePath, 'utf8');
-  if (!content.includes(search)) {
-    console.error("Search target not found in " + filePath);
-    process.exit(1);
-  }
-  content = content.replace(search, replace);
-  fs.writeFileSync(filePath, content, 'utf8');
-  console.log("Successfully patched: " + filePath);
-}
-
-patchFile(
-  'src/core/Engine.ts',
-  'const nextPlayerHP = pHealth ? pHealth.currentHealth : 5;\n    const nextBossHP = bHealth ? bHealth.currentHealth : 30;',
-  'const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;\n    const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;'
-);
-
-patchFile(
-  'src/entities/Player.ts',
-  '    this.health = this.addComponent(HealthComponent, new HealthComponent(), {\n      maxHealth: 5,\n      invincibilityDuration: 1.5,\n    });',
-  '    this.health = this.addComponent(HealthComponent, new HealthComponent(), {\n      maxHealth: UNITS.PLAYER_MAX_HP,\n      invincibilityDuration: 1.5,\n    });'
-);
-
-patchFile(
-  'src/hooks/useHudSubscription.ts',
-  'let lastPlayerHP = 5;',
-  'let lastPlayerHP = UNITS.PLAYER_MAX_HP;'
-);
-
-
-
-● ./patch-saveselect.js
-────────────────────────────────────────────────────
-import fs from 'fs';
-
-const file = 'src/components/menus/SaveSelectScreen.tsx';
-let content = fs.readFileSync(file, 'utf8');
-
-const p1 = `                  <div className="flex-row" style={{ alignItems: "center", gap: "8px" }}>
-                    {slot.empty ? (
-                      <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
-                    ) : (
-                      <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
-                    )}
-                    <div className="flex-col" style={{ textAlign: "left" }}>
-                      <span
-                        style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
-                      >
-                        Slot {i + 1}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          textTransform: "uppercase",
-                          color: menuIndex === i ? "#22c55e" : "#a0aec0",
-                          marginTop: "6px",
-                        }}
-                      >
-                        {slot.empty ? "NO SAVE DATA" : \`WINS: \${slot.wins} / LOSSES: \${slot.losses}\`}
-                      </span>
-                    </div>
-                  </div>`;
-
-const r1 = `                  <div className="flex-row" style={{ alignItems: "center", gap: "8px" }}>
-                    <div className="flex-col" style={{ textAlign: "left" }}>
-                      <span
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        {slot.empty ? (
-                          <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
-                        ) : (
-                          <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
-                        )}
-                        Slot {i + 1}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          textTransform: "uppercase",
-                          color: menuIndex === i ? "#22c55e" : "#a0aec0",
-                          marginTop: "6px",
-                          paddingLeft: "26px",
-                        }}
-                      >
-                        {slot.empty ? "NO SAVE DATA" : \`WINS: \${slot.wins} / LOSSES: \${slot.losses}\`}
-                      </span>
-                    </div>
-                  </div>`;
-
-const p2 = `              <MenuButton
-                variant="led"
-                isFocused={menuIndex === 3}
-                onFocused={() => setMenuIndex(3)}
-                playHoverTick={playHoverTick}
-                onClick={toggleCopyMode}
-                leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
-                mainLabel="COPY SLOT"
-                showArrow={false}
-                className={isCopyMode ? "neo-btn-led-active" : ""}
-                indicatorColor={isCopyMode ? "yellow" : "green"}
-                style={{ flex: 1, padding: "18px" }}
-              />`;
-
-const r2 = `              <MenuButton
-                variant="led"
-                isFocused={menuIndex === 3}
-                onFocused={() => setMenuIndex(3)}
-                playHoverTick={playHoverTick}
-                onClick={toggleCopyMode}
-                leftIcon={<Copy size={16} style={{ flexShrink: 0 }} />}
-                mainLabel="COPY SLOT"
-                showArrow={false}
-                className={isCopyMode ? "neo-btn-led-active" : ""}
-                indicatorColor={isCopyMode ? "yellow" : "green"}
-                style={{ flex: 1, padding: "18px", justifyContent: "center" }}
-              />`;
-
-const p3 = `              <MenuButton
-                variant="led"
-                isFocused={menuIndex === 4}
-                onFocused={() => setMenuIndex(4)}
-                playHoverTick={playHoverTick}
-                onClick={toggleEraseMode}
-                leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
-                mainLabel="DELETE SLOT"
-                showArrow={false}
-                className={isEraseMode ? "neo-btn-led-active" : ""}
-                indicatorColor={isEraseMode ? "yellow" : "green"}
-                style={{ flex: 1, padding: "18px" }}
-              />`;
-
-const r3 = `              <MenuButton
-                variant="led"
-                isFocused={menuIndex === 4}
-                onFocused={() => setMenuIndex(4)}
-                playHoverTick={playHoverTick}
-                onClick={toggleEraseMode}
-                leftIcon={<Trash2 size={16} style={{ flexShrink: 0 }} />}
-                mainLabel="DELETE SLOT"
-                showArrow={false}
-                className={isEraseMode ? "neo-btn-led-active" : ""}
-                indicatorColor={isEraseMode ? "yellow" : "green"}
-                style={{ flex: 1, padding: "18px", justifyContent: "center" }}
-              />`;
-
-if (content.includes(p2)) {
-  content = content.replace(p1, r1).replace(p2, r2).replace(p3, r3);
-  fs.writeFileSync(file, content, 'utf8');
-  console.log("SaveSelectScreen.tsx patched successfully.");
-} else {
-  console.error("Target pattern block was not found.");
-  process.exit(1);
 }
 
 
@@ -1251,6 +918,21 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   transition: all 0.2s ease-in-out;
 }
 
+.cabinet-outer.cabinet-mobile {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 8px calc(10px + var(--safe-bottom)) 8px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .cabinet-wide-source {
   width: 95vw !important;
   height: 95vh !important;
@@ -1415,19 +1097,98 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   }
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
-  .cabinet-outer,
-  .cabinet-wide-source {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
+.game-viewport-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--void-bg);
+  position: relative;
+  contain: layout style paint;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
 
+.game-viewport-container.viewport-mobile {
+  flex-grow: 1;
+  width: 100%;
+  height: 0px;
+  aspect-ratio: auto;
+}
+
+.game-viewport-container.viewport-mobile.viewport-playing {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 1/1;
+  max-height: calc(100vh - 230px - var(--safe-bottom) - var(--safe-top));
+  max-height: calc(100dvh - 230px - var(--safe-bottom) - var(--safe-top));
+  height: auto;
+}
+
+.touch-overlay-panel {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  background: #0c0e12;
+  box-sizing: border-box;
+  flex-grow: 1;
+  height: 0px;
+  padding-top: 6px;
+}
+
+.touch-joystick-side {
+  flex: 1.3;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-vertical-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-row {
+  display: flex;
+  gap: 6px;
+  flex: 1.2;
+}
+
+.touch-label-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.neo-btn.touch-action-btn {
+  user-select: none;
+  touch-action: none;
+  padding: 0;
+  border-radius: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  min-height: 44px;
+}
+
+@media (max-width: 768px) and (pointer: coarse) {
   .screen-inner {
     border-radius: 0;
     padding: 12px 10px;
@@ -1457,7 +1218,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   }
 }
 
-/* -- Dynamic Game Juice HUD Keyframes -- */
 @keyframes hud-cabinet-shake {
   0% {
     transform: translate(1px, 1px) rotate(0deg);
@@ -1529,7 +1289,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: active-led-glow 0.8s infinite alternate ease-in-out;
 }
 
-/* -- Dynamic HP Indicator Decay shakes -- */
 @keyframes led-shake-sympathy {
   0% {
     transform: translate(1px, 0px) rotate(0deg);
@@ -1580,8 +1339,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* --- REFINED GAME OVER ELEMENTS & CRT TRANSITIONS --- */
-
 @keyframes crt-shutoff {
   0% {
     transform: scaleY(1) scaleX(1);
@@ -1630,7 +1387,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
 }
 
-/* Rich CRT Glass Phosphor Grid Texture */
 .gameover-overlay::before {
   content: " ";
   display: block;
@@ -1644,14 +1400,9 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 
 .gameover-box {
   position: relative;
-  z-index: 2; /* Sits cleanly above background texture */
+  z-index: 2;
 }
 
-
-
-
-
-/* Victory Element Easing Animations */
 @keyframes victory-bounce-glow {
   0% {
     transform: scale(0.3) translateY(40px);
@@ -1674,7 +1425,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, victory-float-glow 2s infinite ease-in-out 0.8s;
 }
 
-/* Defeat Element Shiver animations */
 @keyframes defeat-shake-glow {
   0% {
     transform: scale(0.3) rotate(-15deg);
@@ -1700,7 +1450,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards, defeat-shiver-glow 0.22s infinite linear 0.8s;
 }
 
-/* Title text flickers */
 @keyframes text-chromatic-flicker-green {
   0%, 100% { text-shadow: 0 0 15px var(--signal-green-glow), -2px 0 #00ff00, 2px 0 #0000ff; }
   50% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2), -1px 0 #00ff00, 1px 0 #0000ff; filter: brightness(0.9); }
@@ -1721,7 +1470,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: text-chromatic-flicker-red 2.5s infinite ease-in-out;
 }
 
-/* Stat Card Wipe-in */
 @keyframes terminal-wipe {
   0% {
     max-height: 0px;
@@ -1740,7 +1488,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: terminal-wipe 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* Button Slide-up Spring */
 @keyframes spring-up {
   0% {
     transform: translateY(30px);
@@ -1756,8 +1503,6 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
 }
 
-
-/* --- ACTIVE ELEMENT ANIMATION LOOPS --- */
 @keyframes victory-float-glow {
   0% {
     transform: translateY(0) scale(1);
@@ -2002,18 +1747,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div
-        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""}`}
-        style={
-          isTouchDevice
-            ? {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                padding: "10px",
-                height: "100vh",
-              }
-            : undefined
-        }
+        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""} ${isTouchDevice ? "cabinet-mobile" : ""}`}
       >
         {!isFullHeightScreen && (
           <HudPanel
@@ -2024,27 +1758,8 @@ export default function App() {
         )}
 
         <div
-          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""}`}
+          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} ${isTouchDevice ? "viewport-mobile" : ""}`}
           ref={viewportRef}
-          style={
-            isTouchDevice
-              ? isPlayingScreen
-                ? {
-                    flexGrow: 0,
-                    flexShrink: 0,
-                    width: "100%",
-                    aspectRatio: "1/1",
-                    maxHeight: "calc(100vh - 250px)",
-                    height: "auto",
-                  }
-                : {
-                    flexGrow: 1,
-                    width: "100%",
-                    height: "0px",
-                    aspectRatio: "auto",
-                  }
-              : undefined
-          }
         >
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -2244,88 +1959,46 @@ interface DialogueConsoleProps {
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
+  const mobileClass = isTouchDevice ? "is-mobile" : "";
   return (
-    <div
-      className="dialogue-console"
-      style={
-        isTouchDevice
-          ? {
-              height: "54px",
-              marginTop: "4px",
-              gap: "4px",
-              padding: "0",
-              flexShrink: 0,
-            }
-          : undefined
-      }
-    >
+    <div className={`dialogue-console ${mobileClass}`}>
       <div
-        className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"}`}
-        style={
-          isTouchDevice
-            ? {
-                padding: "4px 8px",
-                gap: "8px",
-                borderRadius: "6px",
-                height: "100%",
-              }
-            : undefined
-        }
+        className={`dialogue-box-left neo-pressed ${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"} ${mobileClass}`}
       >
         <div
-          className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""}`}
+          className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
           style={{
             background: playerDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "68px",
-            height: isTouchDevice ? "32px" : "68px",
           }}
         />
         <div className="dialogue-text-container">
-          <div className="dialogue-speaker-label" style={isTouchDevice ? { fontSize: "10px" } : undefined}>
+          <div className={`dialogue-speaker-label ${mobileClass}`}>
             PLAYER
           </div>
-          <div
-            className="dialogue-body-text"
-            style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
-          >
+          <div className={`dialogue-body-text ${mobileClass}`}>
             {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
       </div>
 
       <div
-        className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"}`}
-        style={
-          isTouchDevice
-            ? {
-                padding: "4px 8px",
-                gap: "8px",
-                borderRadius: "6px",
-                height: "100%",
-              }
-            : undefined
-        }
+        className={`dialogue-box-right neo-pressed ${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"} ${mobileClass}`}
       >
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
-            className="dialogue-speaker-label"
-            style={isTouchDevice ? { fontSize: "10px", color: "var(--signal-red)" } : { color: "var(--signal-red)" }}
+            className={`dialogue-speaker-label ${mobileClass}`}
+            style={{ color: "var(--signal-red)" }}
           >
             BOSS
           </div>
-          <div
-            className="dialogue-body-text"
-            style={isTouchDevice ? { fontSize: "10px", lineHeight: "1.2" } : undefined}
-          >
+          <div className={`dialogue-body-text ${mobileClass}`}>
             {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
         <div
-          className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""}`}
+          className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
           style={{
             background: bossDialogue.active ? "" : "#07080b",
-            width: isTouchDevice ? "32px" : "68px",
-            height: isTouchDevice ? "32px" : "68px",
           }}
         />
       </div>
@@ -2410,14 +2083,22 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin; /* Compact sizing returned to original standards */
+  height: 8.5vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1vmin; /* Perfect 1vmin gap symmetry matching the top panel! */
+  margin-top: 1vmin;
   box-sizing: border-box;
   flex-shrink: 0;
+}
+
+.dialogue-console.is-mobile {
+  height: 54px !important;
+  margin-top: 4px !important;
+  gap: 4px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 .dialogue-box-left,
@@ -2436,6 +2117,14 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   transform: scale(0.97);
+}
+
+.dialogue-box-left.is-mobile,
+.dialogue-box-right.is-mobile {
+  padding: 4px 8px !important;
+  gap: 8px !important;
+  border-radius: 6px !important;
+  height: 100% !important;
 }
 
 .dialogue-active-green {
@@ -2464,15 +2153,20 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .portrait-square {
-  width: 6.5vmin; /* Sized down proportionally */
+  width: 6.5vmin;
   height: 6.5vmin;
   min-width: 36px;
   min-height: 36px;
-  max-width: 72px; /* Limits adjusted to match the compact 68px desktop layout */
+  max-width: 72px;
   max-height: 72px;
   border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.portrait-square.is-mobile {
+  width: 32px !important;
+  height: 32px !important;
 }
 
 .dialogue-text-container {
@@ -2490,6 +2184,10 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   color: var(--signal-green);
 }
 
+.dialogue-speaker-label.is-mobile {
+  font-size: 10px !important;
+}
+
 .dialogue-body-text {
   font-size: clamp(11px, 1.5vmin, 15px);
   line-height: 1.35;
@@ -2497,6 +2195,11 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow: hidden;
+}
+
+.dialogue-body-text.is-mobile {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
 }
 
 .portrait-rumble {
@@ -3393,20 +3096,8 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className="neo-btn"
-      style={{
-        ...style,
-        userSelect: "none",
-        touchAction: "none",
-        padding: "0",
-        borderRadius: "12px",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        boxSizing: "border-box",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.6)",
-      }}
+      className="neo-btn touch-action-btn"
+      style={style}
     >
       {label}
     </button>
@@ -3422,48 +3113,21 @@ import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ArrowUpToLine, Swords, Zap }
 
 export function TouchOverlay() {
   return (
-    <div
-      style={{
-        display: "flex",
-        width: "100%",
-        gap: "8px",
-        background: "#0c0e12",
-        boxSizing: "border-box",
-        flexGrow: 1,
-        height: "0px",
-        paddingTop: "6px",
-      }}
-    >
-      <div
-        style={{
-          flex: 1.3,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "6px",
-          height: "100%",
-        }}
-      >
+    <div className="touch-overlay-panel">
+      <div className="touch-joystick-side">
         <TouchButton action="MOVE_LEFT" label={<ArrowLeft size={24} />} style={{ height: "100%" }} />
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
+        <div className="touch-vertical-group">
           <TouchButton action="MOVE_UP" label={<ArrowUp size={20} />} style={{ flex: 1 }} />
           <TouchButton action="MOVE_DOWN" label={<ArrowDown size={20} />} style={{ flex: 1 }} />
         </div>
         <TouchButton action="MOVE_RIGHT" label={<ArrowRight size={24} />} style={{ height: "100%" }} />
       </div>
 
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-          height: "100%",
-        }}
-      >
+      <div className="touch-action-side">
         <TouchButton
           action="DASH"
           label={
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+            <div className="touch-label-inner">
               <Zap size={14} />
               <span>DASH</span>
             </div>
@@ -3474,13 +3138,13 @@ export function TouchOverlay() {
             color: "var(--signal-yellow)",
           }}
         />
-        <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
+        <div className="touch-action-row">
           <TouchButton
             action="ATTACK"
             label={
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+              <div className="touch-label-inner">
                 <Swords size={14} />
-                <span>ATK</span>
+                <span>ATK/CHG</span>
               </div>
             }
             style={{ flex: 1, borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
@@ -3488,7 +3152,7 @@ export function TouchOverlay() {
           <TouchButton
             action="JUMP"
             label={
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+              <div className="touch-label-inner">
                 <ArrowUpToLine size={14} />
                 <span>JMP</span>
               </div>
@@ -5186,6 +4850,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
@@ -5201,6 +4868,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
@@ -5299,21 +4969,20 @@ export function SourceViewFooter({
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+@media (max-width: 800px) {
   .source-view-workspace {
     flex-direction: column;
     gap: 12px;
     margin: 10px 0;
   }
   .directory-tree-pane {
-    width: 100%;
-    height: 35%;
-    min-height: 140px;
+    width: 100% !important;
+    height: 100% !important;
     padding: 8px;
   }
   .code-viewer-pane {
-    width: 100%;
-    height: 65%;
+    width: 100% !important;
+    height: 100% !important;
     padding: 10px;
   }
   .source-view-footer {
@@ -14608,6 +14277,11 @@ export function useSourceViewKeyboard({
   --shadow-dark: 6px 6px 18px rgba(0, 0, 0, 0.75);
   --shadow-inset-light: inset -2px -2px 6px rgba(255, 255, 255, 0.01);
   --shadow-inset-dark: inset 3px 3px 10px rgba(0, 0, 0, 0.9);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 html,
@@ -14617,12 +14291,14 @@ body,
   padding: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: #050505;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 body {
@@ -14685,7 +14361,6 @@ body {
   background: #4ade80;
 }
 
-
 @media (pointer: fine) {
   *,
   *::before,
@@ -14698,8 +14373,6 @@ body {
   }
 }
 
-
-/* Enable native text selection and custom scroll operations specifically inside the code viewer panel */
 .code-viewer-pane,
 .code-viewer-pane * {
   -webkit-user-select: text !important;

@@ -17,6 +17,21 @@
   transition: all 0.2s ease-in-out;
 }
 
+.cabinet-outer.cabinet-mobile {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 8px calc(10px + var(--safe-bottom)) 8px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .cabinet-wide-source {
   width: 95vw !important;
   height: 95vh !important;
@@ -181,19 +196,98 @@
   }
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
-  .cabinet-outer,
-  .cabinet-wide-source {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
+.game-viewport-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--void-bg);
+  position: relative;
+  contain: layout style paint;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
 
+.game-viewport-container.viewport-mobile {
+  flex-grow: 1;
+  width: 100%;
+  height: 0px;
+  aspect-ratio: auto;
+}
+
+.game-viewport-container.viewport-mobile.viewport-playing {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 1/1;
+  max-height: calc(100vh - 230px - var(--safe-bottom) - var(--safe-top));
+  max-height: calc(100dvh - 230px - var(--safe-bottom) - var(--safe-top));
+  height: auto;
+}
+
+.touch-overlay-panel {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  background: #0c0e12;
+  box-sizing: border-box;
+  flex-grow: 1;
+  height: 0px;
+  padding-top: 6px;
+}
+
+.touch-joystick-side {
+  flex: 1.3;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-vertical-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.touch-action-row {
+  display: flex;
+  gap: 6px;
+  flex: 1.2;
+}
+
+.touch-label-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.neo-btn.touch-action-btn {
+  user-select: none;
+  touch-action: none;
+  padding: 0;
+  border-radius: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  min-height: 44px;
+}
+
+@media (max-width: 768px) and (pointer: coarse) {
   .screen-inner {
     border-radius: 0;
     padding: 12px 10px;
@@ -223,7 +317,6 @@
   }
 }
 
-/* -- Dynamic Game Juice HUD Keyframes -- */
 @keyframes hud-cabinet-shake {
   0% {
     transform: translate(1px, 1px) rotate(0deg);
@@ -295,7 +388,6 @@
   animation: active-led-glow 0.8s infinite alternate ease-in-out;
 }
 
-/* -- Dynamic HP Indicator Decay shakes -- */
 @keyframes led-shake-sympathy {
   0% {
     transform: translate(1px, 0px) rotate(0deg);
@@ -346,8 +438,6 @@
   animation: led-shake-die-decay 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* --- REFINED GAME OVER ELEMENTS & CRT TRANSITIONS --- */
-
 @keyframes crt-shutoff {
   0% {
     transform: scaleY(1) scaleX(1);
@@ -396,7 +486,6 @@
   animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
 }
 
-/* Rich CRT Glass Phosphor Grid Texture */
 .gameover-overlay::before {
   content: " ";
   display: block;
@@ -410,14 +499,9 @@
 
 .gameover-box {
   position: relative;
-  z-index: 2; /* Sits cleanly above background texture */
+  z-index: 2;
 }
 
-
-
-
-
-/* Victory Element Easing Animations */
 @keyframes victory-bounce-glow {
   0% {
     transform: scale(0.3) translateY(40px);
@@ -440,7 +524,6 @@
   animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, victory-float-glow 2s infinite ease-in-out 0.8s;
 }
 
-/* Defeat Element Shiver animations */
 @keyframes defeat-shake-glow {
   0% {
     transform: scale(0.3) rotate(-15deg);
@@ -466,7 +549,6 @@
   animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards, defeat-shiver-glow 0.22s infinite linear 0.8s;
 }
 
-/* Title text flickers */
 @keyframes text-chromatic-flicker-green {
   0%, 100% { text-shadow: 0 0 15px var(--signal-green-glow), -2px 0 #00ff00, 2px 0 #0000ff; }
   50% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2), -1px 0 #00ff00, 1px 0 #0000ff; filter: brightness(0.9); }
@@ -487,7 +569,6 @@
   animation: text-chromatic-flicker-red 2.5s infinite ease-in-out;
 }
 
-/* Stat Card Wipe-in */
 @keyframes terminal-wipe {
   0% {
     max-height: 0px;
@@ -506,7 +587,6 @@
   animation: terminal-wipe 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* Button Slide-up Spring */
 @keyframes spring-up {
   0% {
     transform: translateY(30px);
@@ -522,8 +602,6 @@
   animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
 }
 
-
-/* --- ACTIVE ELEMENT ANIMATION LOOPS --- */
 @keyframes victory-float-glow {
   0% {
     transform: translateY(0) scale(1);

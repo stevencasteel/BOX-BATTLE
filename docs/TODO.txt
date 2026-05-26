@@ -21,4 +21,4 @@ misc:
 A toy pull string that ratchets back
 Physics reaction knockback from minion when you hit it.
 
-Is there anything in my source code I shouldn't be sharing publicly?
+Please overhaul the mobile version of the project's menus and UI to be polished like the desktop version. This isn't a focus on the desktop breakpoints, it is a focus on mobile. Make sure everything is properly DRY / Standardized / responsive. Also, that mobile browser/os navigation bars are accounted for and won't accidentally cover or interfere with the game space on android/ios.

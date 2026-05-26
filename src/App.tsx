@@ -203,18 +203,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div
-        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""}`}
-        style={
-          isTouchDevice
-            ? {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                padding: "10px",
-                height: "100vh",
-              }
-            : undefined
-        }
+        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""} ${isTouchDevice ? "cabinet-mobile" : ""}`}
       >
         {!isFullHeightScreen && (
           <HudPanel
@@ -225,27 +214,8 @@ export default function App() {
         )}
 
         <div
-          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""}`}
+          className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} ${isTouchDevice ? "viewport-mobile" : ""}`}
           ref={viewportRef}
-          style={
-            isTouchDevice
-              ? isPlayingScreen
-                ? {
-                    flexGrow: 0,
-                    flexShrink: 0,
-                    width: "100%",
-                    aspectRatio: "1/1",
-                    maxHeight: "calc(100vh - 250px)",
-                    height: "auto",
-                  }
-                : {
-                    flexGrow: 1,
-                    width: "100%",
-                    height: "0px",
-                    aspectRatio: "auto",
-                  }
-              : undefined
-          }
         >
           {isPlayingScreen ? (
             <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>

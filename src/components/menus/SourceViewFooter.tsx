@@ -86,6 +86,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
@@ -101,6 +104,9 @@ export function SourceViewFooter({
               padding: "12px",
               fontSize: "12px",
               boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />

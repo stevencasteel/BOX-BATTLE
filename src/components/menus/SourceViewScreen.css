@@ -37,21 +37,20 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
+@media (max-width: 800px) {
   .source-view-workspace {
     flex-direction: column;
     gap: 12px;
     margin: 10px 0;
   }
   .directory-tree-pane {
-    width: 100%;
-    height: 35%;
-    min-height: 140px;
+    width: 100% !important;
+    height: 100% !important;
     padding: 8px;
   }
   .code-viewer-pane {
-    width: 100%;
-    height: 65%;
+    width: 100% !important;
+    height: 100% !important;
     padding: 10px;
   }
   .source-view-footer {

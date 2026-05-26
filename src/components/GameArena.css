@@ -71,14 +71,22 @@
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin; /* Compact sizing returned to original standards */
+  height: 8.5vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1vmin; /* Perfect 1vmin gap symmetry matching the top panel! */
+  margin-top: 1vmin;
   box-sizing: border-box;
   flex-shrink: 0;
+}
+
+.dialogue-console.is-mobile {
+  height: 54px !important;
+  margin-top: 4px !important;
+  gap: 4px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 .dialogue-box-left,
@@ -97,6 +105,14 @@
     box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   transform: scale(0.97);
+}
+
+.dialogue-box-left.is-mobile,
+.dialogue-box-right.is-mobile {
+  padding: 4px 8px !important;
+  gap: 8px !important;
+  border-radius: 6px !important;
+  height: 100% !important;
 }
 
 .dialogue-active-green {
@@ -125,15 +141,20 @@
 }
 
 .portrait-square {
-  width: 6.5vmin; /* Sized down proportionally */
+  width: 6.5vmin;
   height: 6.5vmin;
   min-width: 36px;
   min-height: 36px;
-  max-width: 72px; /* Limits adjusted to match the compact 68px desktop layout */
+  max-width: 72px;
   max-height: 72px;
   border-radius: 1vmin;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.portrait-square.is-mobile {
+  width: 32px !important;
+  height: 32px !important;
 }
 
 .dialogue-text-container {
@@ -151,6 +172,10 @@
   color: var(--signal-green);
 }
 
+.dialogue-speaker-label.is-mobile {
+  font-size: 10px !important;
+}
+
 .dialogue-body-text {
   font-size: clamp(11px, 1.5vmin, 15px);
   line-height: 1.35;
@@ -158,6 +183,11 @@
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow: hidden;
+}
+
+.dialogue-body-text.is-mobile {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
 }
 
 .portrait-rumble {
