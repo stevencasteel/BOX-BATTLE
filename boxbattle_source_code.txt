@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 5:46:52 PM
+ [SYSTEM] Generated: 5/26/2026, 5:52:22 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -542,6 +542,8 @@ Physics reaction knockback from minion when you hit it.
 Reactive Spring-Loaded HUD Elements
 
 Charging should feel like a DBZ kii charge.
+
+Bouncing over and over and spikes should move up scale properly.
 
 
 
@@ -9418,8 +9420,8 @@ export class BossSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_SPIKED", () => {
-      this.playSpikeStrike(soundSynth.getPlayerX());
+    eventBroker.subscribe("PLAYER_SPIKED", ({ x }) => {
+      this.playSpikeStrike(x);
     });
 
     eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
@@ -9506,20 +9508,23 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
-    const nowPerformance = performance.now();
-    if (nowPerformance - this.lastSpikeTime < 2500) {
-      this.spikeSequenceCount = this.spikeSequenceCount + 1;
-    } else {
-      this.spikeSequenceCount = 0;
-    }
-    this.lastSpikeTime = nowPerformance;
-
-    const preset = SFX_PRESETS.boss.spike_strike;
-    const comboMultiplier = 1.0 + this.spikeSequenceCount * 0.15;
-    const adjustedFreq = preset.frequency * comboMultiplier;
-    const adjustedTargetFreq = (preset.targetFrequency || 700) * comboMultiplier;
-
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
+      const nowPerformance = performance.now();
+      if (nowPerformance - this.lastSpikeTime < 2500) {
+        this.spikeSequenceCount = this.spikeSequenceCount + 1;
+      } else {
+        this.spikeSequenceCount = 0;
+      }
+      this.lastSpikeTime = nowPerformance;
+
+      const scaleIndex = this.spikeSequenceCount % DORIAN_RATIOS.length;
+      const octaveMultiplier = Math.pow(2, Math.floor(this.spikeSequenceCount / DORIAN_RATIOS.length));
+      const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
+      const preset = SFX_PRESETS.boss.spike_strike;
+      const adjustedFreq = preset.frequency * ratio;
+      const adjustedTargetFreq = (preset.targetFrequency || 700) * ratio;
+
       this.spikeSynth.triggerAttackRelease(adjustedFreq, "16n", now);
       this.spikeSynth.frequency.rampTo(adjustedTargetFreq, preset.rampDuration, now);
     });
@@ -10215,7 +10220,7 @@ export type GameEventMap = {
   HEAL_START: void;
   HEAL_CANCEL: void;
   HEAL_COMPLETE: void;
-  PLAYER_SPIKED: void;
+  PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;
   MINION_SPAWNING: void;
   MINION_DISSOLVING: void;
@@ -11013,8 +11018,8 @@ export class Boss extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
@@ -11651,8 +11656,8 @@ export class Minion extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           if (this.minionType !== "TURRET" && !this.isDying) {
@@ -12544,12 +12549,12 @@ export class Player extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
+      if (isHit && this.velocity.y >= 0) {
         if (this.healComponent.isHealing) {
           this.healComponent.cancelHealing();
         }
 
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;

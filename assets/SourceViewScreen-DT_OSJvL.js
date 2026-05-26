@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DIgiKZ1s.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Bj61rQMN.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8449,8 +8449,8 @@ export class BossSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_SPIKED", () => {
-      this.playSpikeStrike(soundSynth.getPlayerX());
+    eventBroker.subscribe("PLAYER_SPIKED", ({ x }) => {
+      this.playSpikeStrike(x);
     });
 
     eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
@@ -8537,20 +8537,23 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
-    const nowPerformance = performance.now();
-    if (nowPerformance - this.lastSpikeTime < 2500) {
-      this.spikeSequenceCount = this.spikeSequenceCount + 1;
-    } else {
-      this.spikeSequenceCount = 0;
-    }
-    this.lastSpikeTime = nowPerformance;
-
-    const preset = SFX_PRESETS.boss.spike_strike;
-    const comboMultiplier = 1.0 + this.spikeSequenceCount * 0.15;
-    const adjustedFreq = preset.frequency * comboMultiplier;
-    const adjustedTargetFreq = (preset.targetFrequency || 700) * comboMultiplier;
-
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
+      const nowPerformance = performance.now();
+      if (nowPerformance - this.lastSpikeTime < 2500) {
+        this.spikeSequenceCount = this.spikeSequenceCount + 1;
+      } else {
+        this.spikeSequenceCount = 0;
+      }
+      this.lastSpikeTime = nowPerformance;
+
+      const scaleIndex = this.spikeSequenceCount % DORIAN_RATIOS.length;
+      const octaveMultiplier = Math.pow(2, Math.floor(this.spikeSequenceCount / DORIAN_RATIOS.length));
+      const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
+      const preset = SFX_PRESETS.boss.spike_strike;
+      const adjustedFreq = preset.frequency * ratio;
+      const adjustedTargetFreq = (preset.targetFrequency || 700) * ratio;
+
       this.spikeSynth.triggerAttackRelease(adjustedFreq, "16n", now);
       this.spikeSynth.frequency.rampTo(adjustedTargetFreq, preset.rampDuration, now);
     });
@@ -9221,7 +9224,7 @@ export const SFX_PRESETS = {
   HEAL_START: void;
   HEAL_CANCEL: void;
   HEAL_COMPLETE: void;
-  PLAYER_SPIKED: void;
+  PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;
   MINION_SPAWNING: void;
   MINION_DISSOLVING: void;
@@ -9989,8 +9992,8 @@ export class Boss extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
@@ -10612,8 +10615,8 @@ export class Minion extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           if (this.minionType !== "TURRET" && !this.isDying) {
@@ -11490,12 +11493,12 @@ export class Player extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
+      if (isHit && this.velocity.y >= 0) {
         if (this.healComponent.isHealing) {
           this.healComponent.cancelHealing();
         }
 
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;
