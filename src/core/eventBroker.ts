@@ -1,3 +1,4 @@
+import { Rectangle } from "./Interfaces";
 export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -38,6 +39,7 @@ export type GameEventMap = {
   CHARGE_MAXED: void;
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
+  PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
 };
 
 export type EventCallback<T> = (payload: T) => void;

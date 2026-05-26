@@ -2,6 +2,7 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
+import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -166,10 +167,14 @@ export class PhysicsComponent implements IEntityComponent {
       for (const platform of platformCandidates) {
         if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
           if (previousY + ownerHalfHeight - 4 <= platform.y) {
+            const landingVelY = this.owner.velocity.y;
+            const massMultiplier = this.owner.id === "boss-01" ? 2.5 : 1.0;
             this.owner.position.y = platform.y - ownerHalfHeight;
             this.owner.velocity.y = 0;
             this.isGrounded = true;
             hasCollided = true;
+
+            eventBroker.publish("PLATFORM_IMPACT", { platform, velocityY: landingVelY, massMultiplier });
           }
         }
       }

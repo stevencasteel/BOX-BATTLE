@@ -34,6 +34,8 @@ export class Engine {
   private player!: Player;
   private boss!: Boss;
   private activeSpawners: Spawner[] = [];
+  private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
+  private unsubPlatformImpact!: () => void;
 
   private cachedPlayerHP: number = -1;
   private cachedBossHP: number = -1;
@@ -103,6 +105,19 @@ export class Engine {
     this.particleSystem = new ParticleSystem();
     this.battleDirector = new BattleDirector(() => {});
 
+    this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
+      rect,
+      offsetY: 0,
+      velocityY: 0,
+    }));
+
+    this.unsubPlatformImpact = eventBroker.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
+      const sp = this.springPlatforms.find((s) => s.rect === platform);
+      if (sp) {
+        sp.velocityY += velocityY * massMultiplier * 0.25;
+      }
+    });
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
@@ -143,6 +158,11 @@ export class Engine {
 
     this.particleSystem.cleanup();
     this.particleSystem = new ParticleSystem();
+
+    for (const sp of this.springPlatforms) {
+      sp.offsetY = 0;
+      sp.velocityY = 0;
+    }
 
     this.battleDirector.cleanup();
     this.battleDirector = new BattleDirector(() => {});
@@ -334,6 +354,14 @@ export class Engine {
 
     Camera.update(dt);
 
+    const K = 320;
+    const D = 14;
+    for (const sp of this.springPlatforms) {
+      const force = -K * sp.offsetY - D * sp.velocityY;
+      sp.velocityY += force * dt;
+      sp.offsetY += sp.velocityY * dt;
+    }
+
     this.battleDirector.update(dt, this.player, this.boss);
 
     this.cachePreIntegrationPositions();
@@ -376,6 +404,7 @@ export class Engine {
       this.isPaused,
       this.battleDirector.getDeathVisuals().timer,
       this.battleDirector.getDeathVisuals().pos,
+      this.springPlatforms,
       alpha
     );
   }
@@ -389,6 +418,10 @@ export class Engine {
     Camera.reset();
     this.systems.teardown();
     this.particleSystem.cleanup();
+
+    if (this.unsubPlatformImpact) {
+      this.unsubPlatformImpact();
+    }
 
     for (const spawner of this.activeSpawners) {
       spawner.cleanup();

@@ -177,6 +177,7 @@ export class WorldRenderer {
     isPaused: boolean,
     bossDeathTimer: number,
     bossDeathPos: { x: number; y: number } | null,
+    springPlatforms: { rect: Rectangle; offsetY: number }[],
     alpha: number
   ) {
     this.ctx.fillStyle = "#0c0d11";
@@ -194,9 +195,15 @@ export class WorldRenderer {
 
     this.ctx.fillStyle = "#2c3e50";
     for (const platform of onewayPlatforms) {
+      const sp = springPlatforms.find((s) => s.rect === platform);
+      const offsetY = sp ? sp.offsetY : 0;
+
+      this.ctx.save();
+      this.ctx.translate(0, offsetY);
       this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
       this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
       this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+      this.ctx.restore();
     }
 
     // Geometric Path Batching: Group hazard rendering triangles into a single GPU state call
