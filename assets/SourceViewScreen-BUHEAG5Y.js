@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-B2E2lUKl.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C19pgynB.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6220,7 +6220,7 @@ export interface IWorld {
   boss: IEntity | null;
   minions: IEntity[];
   physicsWorld: IPhysicsWorld;
-  getProjectiles(): IProjectile[];
+  getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
     x: number,
@@ -7227,9 +7227,9 @@ export class World implements IWorld {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
   }
 
-  public getProjectiles(): IProjectile[] {
+  public getProjectiles(): readonly IProjectile[] {
     if (!this.projectilePool) return [];
-    return [...this.projectilePool.getActive()];
+    return this.projectilePool.getActive();
   }
 
   public releaseProjectile(proj: IProjectile): void {
@@ -7273,27 +7273,38 @@ import { Projectile } from "@/entities/Projectile";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 
+const colorCache = new Map<string, { h: number; s: number; l: number } | null>();
+
+function parseHsl(str: string): { h: number; s: number; l: number } | null {
+  if (colorCache.has(str)) {
+    return colorCache.get(str)!;
+  }
+  const regex = /hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/;
+  const match = str.match(regex);
+  if (!match) {
+    colorCache.set(str, null);
+    return null;
+  }
+  const result = {
+    h: parseFloat(match[1]),
+    s: parseFloat(match[2]),
+    l: parseFloat(match[3]),
+  };
+  colorCache.set(str, result);
+  return result;
+}
+
 function lerpHsl(startStr: string, endStr: string, pct: number): string {
   if (!startStr || !endStr) return startStr;
-  if (!startStr.startsWith("hsl") || !endStr.startsWith("hsl")) {
-    return startStr;
-  }
-  try {
-    const regex = /hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/;
-    const m1 = startStr.match(regex);
-    const m2 = endStr.match(regex);
-    if (!m1 || !m2) return startStr;
-    const h1 = parseFloat(m1[1]), s1 = parseFloat(m1[2]), l1 = parseFloat(m1[3]);
-    const h2 = parseFloat(m2[1]), s2 = parseFloat(m2[2]), l2 = parseFloat(m2[3]);
-    
-    const factor = 1 - pct;
-    const h = h1 + (h2 - h1) * factor;
-    const s = s1 + (s2 - s1) * factor;
-    const l = l1 + (l2 - l1) * factor;
-    return \`hsl(\${h}, \${s}%, \${l}%)\`;
-  } catch {
-    return startStr;
-  }
+  const c1 = parseHsl(startStr);
+  const c2 = parseHsl(endStr);
+  if (!c1 || !c2) return startStr;
+
+  const factor = 1 - pct;
+  const h = c1.h + (c2.h - c1.h) * factor;
+  const s = c1.s + (c2.s - c1.s) * factor;
+  const l = c1.l + (c2.l - c1.l) * factor;
+  return \`hsl(\${h}, \${s}%, \${l}%)\`;
 }
 
 export class WorldRenderer {
@@ -11365,7 +11376,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
 
-    const activeProjectiles = [...this.world.getProjectiles()];
+    const activeProjectiles = this.world.getProjectiles();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const other = activeProjectiles[i];
       if (other && other.isActive && other.ownerId === "boss") {
@@ -11910,6 +11921,7 @@ export class MeleeComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
   public attackCooldownTimer: number = 0;
+  private targetsScratchpad: BaseEntity[] = [];
   public attackActiveTimer: number = 0;
   public attackActive: boolean = false;
   public attackDirection: "side" | "up" | "down" | null = null;
@@ -12181,17 +12193,19 @@ export class MeleeComponent implements IEntityComponent {
     eventBroker.publish("PLAYER_POGOED", undefined);
   }
 
-  private gatherAwaitingTargets(): BaseEntity[] {
-    const targets: BaseEntity[] = [];
+  private gatherAwaitingTargets(): readonly BaseEntity[] {
+    this.targetsScratchpad.length = 0;
     if (this.owner.world.boss && !this.owner.world.boss.isDead) {
-      targets.push(this.owner.world.boss as BaseEntity);
+      this.targetsScratchpad.push(this.owner.world.boss as BaseEntity);
     }
-    for (const minion of this.owner.world.minions) {
+    const minions = this.owner.world.minions;
+    for (let i = 0; i < minions.length; i++) {
+      const minion = minions[i];
       if (minion && minion.status === EntityStatus.ACTIVE) {
-        targets.push(minion as BaseEntity);
+        this.targetsScratchpad.push(minion as BaseEntity);
       }
     }
-    return targets;
+    return this.targetsScratchpad;
   }
 
   private calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
