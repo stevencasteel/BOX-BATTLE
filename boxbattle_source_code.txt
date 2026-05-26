@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 11:04:58 PM
+ [SYSTEM] Generated: 5/26/2026, 11:11:39 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -7484,7 +7484,8 @@ export interface IWorld {
     ownerId: "player" | "boss",
     damage: number,
     speed: number,
-    lifespan: number
+    lifespan: number,
+    customColor?: string
   ): IProjectile;
 }
 
@@ -8615,7 +8616,8 @@ export class World implements IWorld {
     ownerId: "player" | "boss",
     damage: number,
     speed: number,
-    lifespan: number
+    lifespan: number,
+    customColor?: string
   ): IProjectile {
     if (!this.projectilePool) {
       throw new Error("Projectile pool not initialized on World.");
@@ -8630,7 +8632,8 @@ export class World implements IWorld {
       speed,
       lifespan,
       (p: Projectile) => this.releaseProjectile(p),
-      this
+      this,
+      customColor
     );
   }
 }
@@ -12394,6 +12397,16 @@ export class Minion extends BaseEntity {
     super.update(dt);
   }
 
+  public get minionColor(): string {
+    if (this.minionType === "LANCER") {
+      return "hsl(280, 60%, 55%)";
+    } else if (this.minionType === "FLYER") {
+      return "hsl(200, 70%, 55%)";
+    } else {
+      return "hsl(215, 20%, 65%)";
+    }
+  }
+
   public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
@@ -12411,7 +12424,8 @@ export class Minion extends BaseEntity {
       "boss",
       1,
       400,
-      5.0
+      5.0,
+      this.minionColor
     );
   }
 
@@ -13930,6 +13944,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public isActive = false;
   public ownerId: "player" | "boss" = "player";
   public damage = 1;
+  public customColor: string | null = null;
 
   private lifespan = 0;
   private onRelease?: (proj: Projectile) => void;
@@ -13951,7 +13966,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     speed: number,
     lifespan: number,
     onRelease: (proj: Projectile) => void,
-    world: IWorld
+    world: IWorld,
+    customColor?: string
   ) {
     this.position = { x, y };
     this.previousPosition = { x, y };
@@ -13962,6 +13978,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.lifespan = lifespan;
     this.onRelease = onRelease;
     this.world = world;
+    this.customColor = customColor || null;
 
     this.isActive = true;
     this.isDead = false;
@@ -14169,7 +14186,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   private selfRelease() {
     const isPlayer = this.ownerId === "player";
-    const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : "hsl(350, 80%, 60%)";
+    const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
     const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
 
     eventBroker.publish("SPAWN_BLAST", {
@@ -14273,11 +14290,22 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.stroke();
         }
       } else {
-        const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-        grad.addColorStop(0.0, "rgba(239, 68, 68, 0.45)");
-        grad.addColorStop(1.0, "rgba(239, 68, 68, 0.0)");
-        ctx.strokeStyle = grad;
-        ctx.shadowColor = "rgba(239, 68, 68, 0.5)";
+        const trailColor = this.customColor || "hsl(350, 80%, 60%)";
+          const alphaColor0 = trailColor.startsWith("hsl") 
+            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.45)") 
+            : "rgba(239, 68, 68, 0.45)";
+          const alphaColor1 = trailColor.startsWith("hsl") 
+            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)") 
+            : "rgba(239, 68, 68, 0.0)";
+          const shadowCol = trailColor.startsWith("hsl") 
+            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.5)") 
+            : "rgba(239, 68, 68, 0.5)";
+
+          const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
+          grad.addColorStop(0.0, alphaColor0);
+          grad.addColorStop(1.0, alphaColor1);
+          ctx.strokeStyle = grad;
+          ctx.shadowColor = shadowCol;
         ctx.lineWidth = this.size.width;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
@@ -14352,8 +14380,13 @@ export class Projectile extends BaseEntity implements IPoolable {
         ctx.fill();
       }
     } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)";
-      ctx.shadowColor = "rgba(239, 68, 68, 0.6)";
+      const bodyColor = this.customColor || "hsl(350, 80%, 60%)";
+          const shadowCol = bodyColor.startsWith("hsl") 
+            ? bodyColor.replace("hsl", "hsla").replace(")", ", 0.6)") 
+            : "rgba(239, 68, 68, 0.6)";
+
+          ctx.fillStyle = bodyColor;
+          ctx.shadowColor = shadowCol;
       ctx.shadowBlur = 10;
       ctx.beginPath();
       ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
