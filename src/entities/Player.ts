@@ -271,70 +271,7 @@ export class Player extends BaseEntity {
       this.doubleJumpDiskTimer -= dt;
     }
 
-    let targetRotation = 0;
-    if (this.physics.isGrounded && !this.meleeComponent.attackActive && !this.healComponent.isHealing) {
-      targetRotation = moveAxis * 0.12;
-    } else if (!this.physics.isGrounded && !this.meleeComponent.attackActive) {
-      targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
-    }
-
-    this.targetRotation = targetRotation;
-
-    if (this.isCharging) {
-      const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
-      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
-
-      const time = performance.now();
-      const pulse = Math.sin(time * 0.045) * 0.03 * progress;
-      const shiverX = (Math.random() * 0.012 - 0.006) * progress;
-      const shiverY = (Math.random() * 0.012 - 0.006) * progress;
-
-      this.targetVisualScale = { 
-        x: 1.0 - pulse + shiverX, 
-        y: 1.0 + pulse + shiverY 
-      };
-      this.rotation = Math.sin(time * 0.09) * 0.02 * progress;
-
-      if (Math.random() < 0.3 + progress * 0.5) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 80 - progress * 50;
-        const startX = this.position.x + Math.cos(angle) * radius;
-        const startY = this.position.y - 12 + Math.sin(angle) * radius;
-
-        const targetX = this.position.x;
-        const targetY = this.position.y - 12;
-        const vx = (targetX - startX) * 3.5;
-        const vy = (targetY - startY) * 3.5;
-
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: Math.atan2(vy, vx),
-          color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-          count: 1,
-          shape: "line",
-          turbulence: 20
-        });
-      }
-
-      if (isLvl2 && Math.random() < 0.12) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 60;
-        const startX = this.position.x + Math.cos(angle) * radius;
-        const startY = this.position.y - 12 + Math.sin(angle) * radius;
-
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: angle + Math.PI,
-          color: "hsl(190, 100%, 85%)",
-          count: 3,
-          shape: "line",
-          turbulence: 45
-        });
-        eventBroker.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
-      }
-    } else {
+    if (!this.isCharging) {
       this.targetVisualScale = { x: 1.0, y: 1.0 };
       if (!this.physics.isGrounded) {
         this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
@@ -357,82 +294,7 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
-        return;
       }
-
-      this.velocity.x = 0;
-      const now = performance.now();
-      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
-
-      this.visualScale = { 
-        x: 1.0 + Math.sin(now * 0.045) * 0.015 * progress, 
-        y: 1.0 - Math.sin(now * 0.045) * 0.015 * progress 
-      };
-
-      if (Math.random() < 0.2 + progress * 0.4) {
-        eventBroker.publish("CAMERA_SHAKE", { amplitude: 0.5 + progress * 3.5, duration: 0.05 });
-      }
-
-      if (Math.random() < 0.3 + progress * 0.4) {
-        const spawnX = this.position.x + (Math.random() * 32 - 16);
-        const spawnY = this.position.y + this.size.height / 2;
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: spawnX,
-          y: spawnY,
-          angle: -Math.PI / 2 + (Math.random() * 0.15 - 0.075),
-          color: "hsl(280, 85%, 65%)",
-          count: 1,
-          shape: "line"
-        });
-      }
-
-      const sparkChance = 0.35 + progress * 0.65;
-      if (Math.random() < sparkChance) {
-        const spawnX = this.position.x + (Math.random() * 44 - 22);
-        const spawnY = this.position.y + this.size.height / 2 - (Math.random() * this.size.height);
-        const angle = -Math.PI / 2 + (Math.random() * 0.3 - 0.15);
-
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: spawnX,
-          y: spawnY,
-          angle: angle,
-          color: progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)",
-          count: Math.random() < 0.2 ? 2 : 1,
-          shape: Math.random() < 0.35 ? "line" : "spark",
-          turbulence: 15 + progress * 40
-        });
-      }
-
-      if (Math.random() < 0.25 + progress * 0.45) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 90 - progress * 55;
-        const startX = this.position.x + Math.cos(angle) * radius;
-        const startY = this.position.y - 10 + Math.sin(angle) * radius;
-
-        const targetX = this.position.x;
-        const targetY = this.position.y - 10;
-        const vx = (targetX - startX) * 4.0;
-        const vy = (targetY - startY) * 4.0;
-
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: Math.atan2(vy, vx),
-          color: "hsl(280, 100%, 75%)",
-          count: 1,
-          shape: "line",
-          turbulence: 20
-        });
-      }
-
-      if (Math.random() < 0.08 + progress * 0.15) {
-        eventBroker.publish("SPAWN_DUST", {
-          x: this.position.x,
-          y: this.position.y + this.size.height / 2,
-          direction: "horizontal"
-        });
-      }
-
       return;
     }
 
@@ -663,352 +525,333 @@ export class Player extends BaseEntity {
       this.visualScale = { x: 0.82, y: 1.18 };
       this.dashComponent.resetDashCharge();
 
-      const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
-      eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
-      eventBroker.publish("PLAYER_JUMPED", undefined);
-    } else if (this.hasDoubleJump) {
-      this.velocity.y = -this.jumpForce;
-      this.hasDoubleJump = false;
-      this.jumpBufferTimer = 0;
-      this.visualScale = { x: 0.82, y: 1.18 };
+          const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+          eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
+          eventBroker.publish("PLAYER_JUMPED", undefined);
+        } else if (this.hasDoubleJump) {
+          this.velocity.y = -this.jumpForce;
+          this.hasDoubleJump = false;
+          this.jumpBufferTimer = 0;
+          this.visualScale = { x: 0.82, y: 1.18 };
 
-      this.doubleJumpDiskTimer = 0.22;
-      this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
+          this.doubleJumpDiskTimer = 0.22;
+          this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
 
-      eventBroker.publish("PLAYER_JUMPED", undefined);
-    }
-  }
-
-  private performJump() {
-    this.velocity.y = -this.jumpForce;
-    this.coyoteTimer = 0;
-    this.jumpBufferTimer = 0;
-    this.visualScale = { x: 0.82, y: 1.18 };
-    eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-    eventBroker.publish("PLAYER_JUMPED", undefined);
-  }
-
-  private handleJumpRelease() {
-    if (this.inputReceiver.isJustReleased("JUMP") && this.velocity.y < 0) {
-      this.velocity.y *= 0.4;
-    }
-  }
-
-  private handleAttack() {
-    if (this.inputReceiver.consumeBufferedAction("ATTACK", 100)) {
-      this.fireballComponent.startCharging();
-
-      if (this.meleeComponent.attackCooldownTimer <= 0) {
-        if (this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
-          this.meleeComponent.triggerAttack("down");
-        } else if (this.inputReceiver.isPressed("MOVE_UP")) {
-          this.meleeComponent.triggerAttack("up");
-        } else {
-          this.meleeComponent.triggerAttack("side");
+          eventBroker.publish("PLAYER_JUMPED", undefined);
         }
       }
-    }
 
-    if (this.inputReceiver.isJustReleased("ATTACK")) {
-      const dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
-      const dirY = this.inputReceiver.isPressed("MOVE_UP")
-        ? -1
-        : this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded
-          ? 1
-          : 0;
-      this.fireballComponent.releaseCharge(dirX, dirY, this.facingDirection);
-    }
-  }
+      private performJump() {
+        this.velocity.y = -this.jumpForce;
+        this.coyoteTimer = 0;
+        this.jumpBufferTimer = 0;
+        this.visualScale = { x: 0.82, y: 1.18 };
+        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+        eventBroker.publish("PLAYER_JUMPED", undefined);
+      }
 
-  private isStandingOnOneway(): boolean {
-    const ownerHalfH = this.size.height / 2;
-    const feetY = this.position.y + ownerHalfH;
-    const halfW = this.size.width / 2;
-
-    for (const platform of this.world.physicsWorld.onewayPlatforms) {
-      if (this.position.x + halfW > platform.x && this.position.x - halfW < platform.x + platform.width) {
-        if (Math.abs(feetY - platform.y) <= 12) {
-          return true;
+      private handleJumpRelease() {
+        if (this.inputReceiver.isJustReleased("JUMP") && this.velocity.y < 0) {
+          this.velocity.y *= 0.4;
         }
       }
-    }
-    return false;
-  }
 
-  private checkHazardContact() {
-    if (this.health.isInvincible() || this.isDead) return;
+      private handleAttack() {
+        if (this.inputReceiver.consumeBufferedAction("ATTACK", 100)) {
+          this.fireballComponent.startCharging();
 
-    const halfW = this.size.width / 2;
-    const halfH = this.size.height / 2;
-
-    for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit =
-        this.position.x + halfW > hazard.x &&
-        this.position.x - halfW < hazard.x + hazard.width &&
-        this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.velocity.y >= 0) {
-        if (this.healComponent.isHealing) {
-          this.healComponent.cancelHealing();
-        }
-
-        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
-        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
-        if (damaged && !this.isDead) {
-          this.velocity.y = -550;
-          this.physics.isGrounded = false;
-          this.visualScale = { x: 0.5, y: 1.5 };
-          this.scaleVelocity = { x: 10.0, y: -15.0 };
-        }
-        break;
-      }
-    }
-  }
-
-  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
-    if (this.isDead) return;
-
-    const alphaVal = alpha !== undefined ? alpha : 1.0;
-    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
-    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
-
-    for (const ghost of this.dashComponent.ghosts) {
-      ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
-      const gWidth = this.size.width * this.visualScale.x;
-      const gHeight = this.size.height * this.visualScale.y;
-      const gFeetY = ghost.y + this.size.height / 2;
-      ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
-    }
-
-    if (this.doubleJumpDiskTimer > 0) {
-      const p = 1.0 - this.doubleJumpDiskTimer / 0.22;
-      const alphaDisk = (1.0 - p) * 0.8;
-      const radius = 18 + p * 44;
-
-      ctx.save();
-      ctx.translate(this.doubleJumpDiskPos.x, this.doubleJumpDiskPos.y);
-
-      ctx.strokeStyle = `hsla(142, 71%, 58%, ${alphaDisk})`;
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
-      ctx.shadowBlur = 12 * (1.0 - p);
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.strokeStyle = `hsla(142, 100%, 80%, ${alphaDisk * 0.5})`;
-      ctx.lineWidth = 1.0;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radius * 0.6, radius * 0.6 * 0.28, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    const vWidth = this.size.width * this.visualScale.x;
-    const vHeight = this.size.height * this.visualScale.y;
-    const feetY = drawY + this.size.height / 2;
-
-    const nowTime = performance.now();
-    const healCounts = { back: 0, front: 0 };
-    const chargeCounts = { back: 0, front: 0 };
-
-    if (this.isHealing) {
-      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
-      PlayerFxRenderer.prepareHealSegments(nowTime, progress, healCounts);
-    }
-
-    if (this.isCharging) {
-      PlayerFxRenderer.prepareChargeSegments(nowTime, this.chargeTimer, this.size.height, chargeCounts);
-    }
-
-    ctx.save();
-    ctx.translate(drawX, feetY);
-    ctx.rotate(this.rotation);
-
-    if (this.isHealing) {
-      ctx.save();
-      ctx.lineWidth = 3.5;
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      PlayerFxRenderer.renderHealBuffer(ctx, true, healCounts.back);
-      ctx.restore();
-    }
-
-    if (this.isCharging) {
-      ctx.save();
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      PlayerFxRenderer.renderChargeBuffer(ctx, true, chargeCounts.back);
-      ctx.restore();
-    }
-
-    if (this.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-    }
-
-    ctx.shadowColor = "rgba(34, 197, 94, 0.4)";
-    ctx.shadowBlur = this.isDashing ? 25 : 15;
-
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
-    ctx.shadowBlur = 0;
-
-    const localCenterX = 0;
-    const localCenterY = -this.size.height / 2;
-
-    if (this.isHealing) {
-      ctx.save();
-      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
-      const baseW = this.size.width * (1.15 + progress * 0.75);
-      const baseH = this.size.height * (1.1 + progress * 0.55);
-
-      const auraColors = [
-        'hsla(280, 90%, 25%, 0.35)',
-        'hsla(285, 95%, 45%, 0.55)',
-        'hsla(290, 100%, 75%, 0.8)',
-        'hsla(0, 0%, 100%, 0.95)'
-      ];
-
-      ctx.shadowColor = 'rgba(168, 85, 247, 0.9)';
-      ctx.shadowBlur = 15 + progress * 25;
-
-      auraColors.forEach((color, layerIdx) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-
-        const scaleFactor = 1.0 - layerIdx * 0.22;
-        const width = baseW * scaleFactor;
-        const height = baseH * scaleFactor;
-
-        const bottomY = 0;
-        const topY = -height;
-
-        ctx.moveTo(-width / 2, bottomY);
-
-        const leftSteps = 8;
-        for (let j = 1; j <= leftSteps; j++) {
-          const t = j / leftSteps;
-          const currentY = bottomY - height * t;
-          const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5;
-          const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
-          const currentX = -width / 2 * (1 - t) + spikeDist;
-          ctx.lineTo(currentX, currentY);
-        }
-
-        ctx.lineTo(0 + (Math.random() * 12 - 6) * progress, topY);
-
-        const rightSteps = 8;
-        for (let j = rightSteps - 1; j >= 0; j--) {
-          const t = j / rightSteps;
-          const currentY = bottomY - height * t;
-          const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5 + Math.PI;
-          const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
-          const currentX = width / 2 * (1 - t) + spikeDist;
-          ctx.lineTo(currentX, currentY);
-        }
-
-        ctx.lineTo(width / 2, bottomY);
-        ctx.closePath();
-        ctx.fill();
-      });
-
-      ctx.restore();
-
-      ctx.save();
-      ctx.lineWidth = 3.5;
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      PlayerFxRenderer.renderHealBuffer(ctx, false, healCounts.front);
-      ctx.restore();
-
-      const trembleX = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
-      const trembleY = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
-      ctx.translate(trembleX, trembleY);
-    }
-
-    if (this.isCharging) {
-      const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
-      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
-
-      ctx.save();
-      const glowColor = isLvl2 
-        ? 'rgba(234, 179, 8, 0.9)' 
-        : 'rgba(34, 197, 94, ' + (0.4 + chargeProgress * 0.5) + ')';
-      
-      ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 15 + chargeProgress * 20;
-
-      const coreRadius = (8 + chargeProgress * 14);
-      const coreGrad = ctx.createRadialGradient(
-        localCenterX, localCenterY, 0,
-        localCenterX, localCenterY, coreRadius
-      );
-      coreGrad.addColorStop(0.0, '#ffffff');
-      coreGrad.addColorStop(0.3, isLvl2 ? 'hsl(45, 100%, 75%)' : 'hsl(142, 100%, 80%)');
-      coreGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
-      
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.save();
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      PlayerFxRenderer.renderChargeBuffer(ctx, false, chargeCounts.front);
-      ctx.restore();
-
-      if (chargeProgress > 0.5) {
-        const dischargeCount = isLvl2 ? 3 : 1;
-        ctx.strokeStyle = isLvl2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(132, 239, 158, 0.8)';
-        ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
-        
-        for (let d = 0; d < dischargeCount; d++) {
-          if (Math.random() < 0.35) {
-            const startAngle = Math.random() * Math.PI * 2;
-            const rMax = (this.size.height * 0.35) + 20 * chargeProgress;
-            
-            ctx.beginPath();
-            const cx = localCenterX + Math.cos(startAngle) * rMax;
-            const cy = localCenterY + Math.sin(startAngle) * rMax;
-            ctx.moveTo(cx, cy);
-
-            const steps = 3;
-            for (let s = 1; s <= steps; s++) {
-              const t = s / steps;
-              const nextAngle = startAngle + (Math.random() * 0.6 - 0.3);
-              const nextRadius = rMax * (1.0 - t);
-              const targetX = localCenterX + Math.cos(nextAngle) * nextRadius;
-              const targetY = localCenterY + Math.sin(nextAngle) * nextRadius;
-              
-              ctx.lineTo(targetX, targetY);
+          if (this.meleeComponent.attackCooldownTimer <= 0) {
+            if (this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded) {
+              this.meleeComponent.triggerAttack("down");
+            } else if (this.inputReceiver.isPressed("MOVE_UP")) {
+              this.meleeComponent.triggerAttack("up");
+            } else {
+              this.meleeComponent.triggerAttack("side");
             }
-            ctx.stroke();
+          }
+        }
+
+        if (this.inputReceiver.isJustReleased("ATTACK")) {
+          const dirX = this.inputReceiver.getAxis("MOVE_LEFT", "MOVE_RIGHT");
+          const dirY = this.inputReceiver.isPressed("MOVE_UP")
+            ? -1
+            : this.inputReceiver.isPressed("MOVE_DOWN") && !this.physics.isGrounded
+              ? 1
+              : 0;
+          this.fireballComponent.releaseCharge(dirX, dirY, this.facingDirection);
+        }
+      }
+
+      private isStandingOnOneway(): boolean {
+        const ownerHalfH = this.size.height / 2;
+        const feetY = this.position.y + ownerHalfH;
+        const halfW = this.size.width / 2;
+
+        for (const platform of this.world.physicsWorld.onewayPlatforms) {
+          if (this.position.x + halfW > platform.x && this.position.x - halfW < platform.x + platform.width) {
+            if (Math.abs(feetY - platform.y) <= 12) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      private checkHazardContact() {
+        if (this.health.isInvincible() || this.isDead) return;
+
+        const halfW = this.size.width / 2;
+        const halfH = this.size.height / 2;
+
+        for (const hazard of this.world.physicsWorld.hazards) {
+          const isHit =
+            this.position.x + halfW > hazard.x &&
+            this.position.x - halfW < hazard.x + hazard.width &&
+            this.position.y + halfH > hazard.y &&
+            this.position.y - halfH < hazard.y + hazard.height;
+
+          if (isHit && this.velocity.y >= 0) {
+            if (this.healComponent.isHealing) {
+              this.healComponent.cancelHealing();
+            }
+
+            eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
+            const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
+            if (damaged && !this.isDead) {
+              this.velocity.y = -550;
+              this.physics.isGrounded = false;
+              this.visualScale = { x: 0.5, y: 1.5 };
+              this.scaleVelocity = { x: 10.0, y: -15.0 };
+            }
+            break;
           }
         }
       }
 
-      ctx.restore();
-    }
+      public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
+        if (this.isDead) return;
 
-    ctx.restore();
-  }
+        const alphaVal = alpha !== undefined ? alpha : 1.0;
+        const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
+        const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
-  public teardown() {
-    this.unsubHurt();
-    this.unsubPogo();
-    this.unsubHealComplete();
-    this.unsubHealCancel();
-    this.unsubChargeMaxed();
-    this.unsubChargeCancel();
-    this.unsubDamageDealt();
-    if (this.unsubProjectileFired) {
-      this.unsubProjectileFired();
+        for (const ghost of this.dashComponent.ghosts) {
+          ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+          const gWidth = this.size.width * this.visualScale.x;
+          const gHeight = this.size.height * this.visualScale.y;
+          const gFeetY = ghost.y + this.size.height / 2;
+          ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
+        }
+
+        if (this.doubleJumpDiskTimer > 0) {
+          const p = 1.0 - this.doubleJumpDiskTimer / 0.22;
+          const alphaDisk = (1.0 - p) * 0.8;
+          const radius = 18 + p * 44;
+
+          ctx.save();
+          ctx.translate(this.doubleJumpDiskPos.x, this.doubleJumpDiskPos.y);
+
+          ctx.strokeStyle = `hsla(142, 71%, 58%, ${alphaDisk})`;
+          ctx.lineWidth = 2.5;
+
+          ctx.beginPath();
+          ctx.ellipse(0, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.strokeStyle = `hsla(142, 100%, 80%, ${alphaDisk * 0.5})`;
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, radius * 0.6, radius * 0.6 * 0.28, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.restore();
+        }
+
+        const vWidth = this.size.width * this.visualScale.x;
+        const vHeight = this.size.height * this.visualScale.y;
+        const feetY = drawY + this.size.height / 2;
+
+        const nowTime = performance.now();
+        const healCounts = { back: 0, front: 0 };
+        const chargeCounts = { back: 0, front: 0 };
+
+        if (this.isHealing) {
+          const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+          PlayerFxRenderer.prepareHealSegments(nowTime, progress, healCounts);
+        }
+
+        if (this.isCharging) {
+          PlayerFxRenderer.prepareChargeSegments(nowTime, this.chargeTimer, this.size.height, chargeCounts);
+        }
+
+        ctx.save();
+        ctx.translate(drawX, feetY);
+        ctx.rotate(this.rotation);
+
+        if (this.isHealing) {
+          ctx.save();
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = "round";
+          const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+          PlayerFxRenderer.renderHealBuffer(ctx, true, healCounts.back, progress);
+          ctx.restore();
+        }
+
+        if (this.isCharging) {
+          ctx.save();
+          ctx.lineCap = "round";
+          PlayerFxRenderer.renderChargeBuffer(ctx, true, chargeCounts.back);
+          ctx.restore();
+        }
+
+        if (this.health.isFlashing()) {
+          ctx.fillStyle = "white";
+        } else {
+          ctx.fillStyle = "hsl(142, 71%, 58%)";
+        }
+
+        ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
+
+        const localCenterX = 0;
+        const localCenterY = -this.size.height / 2;
+
+        if (this.isHealing) {
+          ctx.save();
+          const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+          const baseW = this.size.width * (1.15 + progress * 0.75);
+          const baseH = this.size.height * (1.1 + progress * 0.55);
+
+          const auraColors = [
+            'hsla(280, 90%, 25%, 0.35)',
+            'hsla(285, 95%, 45%, 0.55)',
+            'hsla(290, 100%, 75%, 0.8)',
+            'hsla(0, 0%, 100%, 0.95)'
+          ];
+
+          ctx.globalCompositeOperation = "lighter";
+
+          auraColors.forEach((color, layerIdx) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+
+            const scaleFactor = 1.0 - layerIdx * 0.22;
+            const width = baseW * scaleFactor;
+            const height = baseH * scaleFactor;
+
+            const bottomY = 0;
+            const topY = -height;
+
+            ctx.moveTo(-width / 2, bottomY);
+
+            const leftSteps = 8;
+            for (let j = 1; j <= leftSteps; j++) {
+              const t = j / leftSteps;
+              const currentY = bottomY - height * t;
+              const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5;
+              const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
+              const currentX = -width / 2 * (1 - t) + spikeDist;
+              ctx.lineTo(currentX, currentY);
+            }
+
+            ctx.lineTo(0, topY);
+
+            const rightSteps = 8;
+            for (let j = rightSteps - 1; j >= 0; j--) {
+              const t = j / rightSteps;
+              const currentY = bottomY - height * t;
+              const angle = nowTime * 0.055 + j * 2.3 + layerIdx * 1.5 + Math.PI;
+              const spikeDist = (12 + progress * 16) * (1 - t * 0.5) * Math.sin(angle);
+              const currentX = width / 2 * (1 - t) + spikeDist;
+              ctx.lineTo(currentX, currentY);
+            }
+
+            ctx.lineTo(width / 2, bottomY);
+            ctx.closePath();
+            ctx.fill();
+          });
+
+          ctx.restore();
+
+          ctx.save();
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = "round";
+          PlayerFxRenderer.renderHealBuffer(ctx, false, healCounts.front, progress);
+          ctx.restore();
+        }
+
+        if (this.isCharging) {
+          const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
+          const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+
+          const coreRadius = (8 + chargeProgress * 14);
+          const coreGrad = ctx.createRadialGradient(
+            localCenterX, localCenterY, 0,
+            localCenterX, localCenterY, coreRadius
+          );
+          coreGrad.addColorStop(0.0, '#ffffff');
+          coreGrad.addColorStop(0.3, isLvl2 ? 'hsl(45, 100%, 75%)' : 'hsl(142, 100%, 80%)');
+          coreGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
+          
+          ctx.fillStyle = coreGrad;
+          ctx.beginPath();
+          ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.save();
+          ctx.lineCap = "round";
+          PlayerFxRenderer.renderChargeBuffer(ctx, false, chargeCounts.front);
+          ctx.restore();
+
+          if (chargeProgress > 0.5) {
+            const dischargeCount = isLvl2 ? 3 : 1;
+            ctx.strokeStyle = isLvl2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(132, 239, 158, 0.8)';
+            ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
+            
+            for (let d = 0; d < dischargeCount; d++) {
+              if (Math.random() < 0.35) {
+                const startAngle = Math.random() * Math.PI * 2;
+                const rMax = (this.size.height * 0.35) + 20 * chargeProgress;
+                
+                ctx.beginPath();
+                const cx = localCenterX + Math.cos(startAngle) * rMax;
+                const cy = localCenterY + Math.sin(startAngle) * rMax;
+                ctx.moveTo(cx, cy);
+
+                const steps = 3;
+                for (let s = 1; s <= steps; s++) {
+                  const t = s / steps;
+                  const nextAngle = startAngle + (Math.random() * 0.6 - 0.3);
+                  const nextRadius = rMax * (1.0 - t);
+                  const targetX = localCenterX + Math.cos(nextAngle) * nextRadius;
+                  const targetY = localCenterY + Math.sin(nextAngle) * nextRadius;
+                  
+                  ctx.lineTo(targetX, targetY);
+                }
+                ctx.stroke();
+              }
+            }
+          }
+
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      public teardown() {
+        this.unsubHurt();
+        this.unsubPogo();
+        this.unsubHealComplete();
+        this.unsubHealCancel();
+        this.unsubChargeMaxed();
+        this.unsubChargeCancel();
+        this.unsubDamageDealt();
+        if (this.unsubProjectileFired) {
+          this.unsubProjectileFired();
+        }
+        super.teardown();
+      }
     }
-    super.teardown();
-  }
-}

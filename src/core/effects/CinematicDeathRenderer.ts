@@ -17,16 +17,18 @@ export class CinematicDeathRenderer {
     const isPlayer = !!(world.player && world.player.isDead);
     const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
     const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
-    const shadowColorRGBA = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
+
+    ctx.save();
 
     if (t < 1.0) {
       const progress = t;
-      ctx.save();
 
       const gridCols = 8;
       const gridRows = 8;
       const baseWidth = 60;
       const baseHeight = 60;
+
+      ctx.globalCompositeOperation = "lighter";
 
       for (let row = 0; row < gridRows; row++) {
         const cascadeDir = isPlayer ? -1 : 1;
@@ -52,8 +54,6 @@ export class CinematicDeathRenderer {
 
           ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
           ctx.globalAlpha = opacity;
-          ctx.shadowColor = shadowColorRGBA;
-          ctx.shadowBlur = 10 * opacity;
 
           ctx.save();
           ctx.translate(curX, curY);
@@ -67,8 +67,6 @@ export class CinematicDeathRenderer {
         const pinchProgress = (progress - 0.7) / 0.3;
         const flareAlpha = Math.sin(pinchProgress * Math.PI);
 
-        ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
-        ctx.shadowBlur = 35 * flareAlpha;
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = flareAlpha;
 
@@ -84,14 +82,13 @@ export class CinematicDeathRenderer {
         ctx.arc(px, py, Math.max(2, 12 * (1.0 - pinchProgress)), 0, Math.PI * 2);
         ctx.fill();
       }
-
-      ctx.restore();
     }
 
     const flashT = t - 1.0;
     if (flashT >= 0 && flashT < 0.25) {
       const flashOpacity = Math.max(0, 0.85 * (1 - flashT / 0.25));
-      ctx.fillStyle = "rgba(255, 255, 255, " + flashOpacity + ")";
+      ctx.fillStyle = "#ffffff";
+      ctx.globalAlpha = flashOpacity;
       ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
     }
 
@@ -101,11 +98,15 @@ export class CinematicDeathRenderer {
       const explodeProgress = explodeT / 1.2;
       const opacity = Math.max(0, 1.0 - explodeProgress);
 
-      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
 
       const rayCount = 14;
       const maxRayLength = 480;
       
+      ctx.fillStyle = isPlayer ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)";
+      ctx.globalAlpha = opacity * 0.35;
+
+      ctx.beginPath();
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
         const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
@@ -119,25 +120,25 @@ export class CinematicDeathRenderer {
         const x2 = px + Math.cos(p2_angle) * currentLength;
         const y2 = py + Math.sin(p2_angle) * currentLength;
 
-        ctx.fillStyle = isPlayer ? "hsla(142, 100%, 65%, " + (opacity * 0.35) + ")" : "hsla(350, 100%, 65%, " + (opacity * 0.35) + ")";
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 20 * opacity;
-        ctx.beginPath();
         ctx.moveTo(px, py);
         ctx.lineTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.closePath();
-        ctx.fill();
+      }
+      ctx.fill();
 
-        ctx.fillStyle = "rgba(255, 255, 255, " + (opacity * 0.75) + ")";
-        ctx.shadowBlur = 0;
-        ctx.beginPath();
+      ctx.fillStyle = "#ffffff";
+      ctx.globalAlpha = opacity * 0.75;
+      ctx.beginPath();
+      for (let i = 0; i < rayCount; i++) {
+        const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
+        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
         ctx.moveTo(px, py);
         ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
         ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
         ctx.closePath();
-        ctx.fill();
       }
+      ctx.fill();
 
       const ringCount = 3;
       const ringSpeed = 820;
@@ -150,29 +151,26 @@ export class CinematicDeathRenderer {
           const radius = ringTime * ringSpeed;
           const ringOpacity = Math.max(0, 1 - ringTime / 1.0);
 
-          ctx.save();
           ctx.beginPath();
           ctx.arc(px - 3, py, radius, 0, Math.PI * 2);
-          ctx.strokeStyle = isPlayer ? "rgba(168, 85, 247, " + (ringOpacity * 0.4) + ")" : "rgba(239, 68, 68, " + (ringOpacity * 0.4) + ")";
+          ctx.strokeStyle = isPlayer ? "rgb(168, 85, 247)" : "rgb(239, 68, 68)";
           ctx.lineWidth = Math.max(1, 10 * (1 - ringTime / 1.0));
+          ctx.globalAlpha = ringOpacity * 0.4;
           ctx.stroke();
-          ctx.restore();
 
-          ctx.save();
           ctx.beginPath();
           ctx.arc(px + 3, py, radius, 0, Math.PI * 2);
-          ctx.strokeStyle = isPlayer ? "rgba(34, 197, 94, " + (ringOpacity * 0.7) + ")" : "rgba(234, 179, 8, " + (ringOpacity * 0.7) + ")";
+          ctx.strokeStyle = isPlayer ? "rgb(34, 197, 94)" : "rgb(234, 179, 8)";
           ctx.lineWidth = Math.max(1, 6 * (1 - ringTime / 1.0));
+          ctx.globalAlpha = ringOpacity * 0.7;
           ctx.stroke();
-          ctx.restore();
 
-          ctx.save();
           ctx.beginPath();
           ctx.arc(px, py, radius, 0, Math.PI * 2);
-          ctx.strokeStyle = "rgba(255, 255, 255, " + (ringOpacity * 0.95) + ")";
+          ctx.strokeStyle = "#ffffff";
           ctx.lineWidth = Math.max(1, 3 * (1 - ringTime / 1.0));
+          ctx.globalAlpha = ringOpacity * 0.95;
           ctx.stroke();
-          ctx.restore();
         }
       }
 
@@ -182,28 +180,29 @@ export class CinematicDeathRenderer {
       
       if (explodeT < particleLife) {
         const partOpacity = Math.max(0, 1 - explodeT / particleLife);
-        ctx.save();
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 18 * partOpacity;
+        ctx.fillStyle = primaryColor;
+        ctx.globalAlpha = partOpacity * 0.8;
 
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
           const x = px + Math.cos(angle) * distance;
           const y = py + Math.sin(angle) * distance;
-
-          ctx.fillStyle = primaryColor;
-          ctx.globalAlpha = partOpacity * 0.8;
           ctx.fillRect(x - 5, y - 5, 10, 10);
+        }
 
-          ctx.fillStyle = "#ffffff";
-          ctx.globalAlpha = partOpacity;
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = partOpacity;
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
+          const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
+          const x = px + Math.cos(angle) * distance;
+          const y = py + Math.sin(angle) * distance;
           ctx.fillRect(x - 2, y - 2, 4, 4);
         }
-        ctx.restore();
       }
-
-      ctx.restore();
     }
+
+    ctx.restore();
   }
 }

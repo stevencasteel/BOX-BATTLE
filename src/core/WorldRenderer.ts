@@ -8,6 +8,7 @@ import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 
 const colorCache = new Map<string, { h: number; s: number; l: number } | null>();
+const lerpCache = new Map<string, string>();
 
 function parseHsl(str: string): { h: number; s: number; l: number } | null {
   if (colorCache.has(str)) {
@@ -30,15 +31,25 @@ function parseHsl(str: string): { h: number; s: number; l: number } | null {
 
 function lerpHsl(startStr: string, endStr: string, pct: number): string {
   if (!startStr || !endStr) return startStr;
+  
+  const step = Math.round(pct * 20); // 21 discrete steps are visually indistinguishable from continuous
+  const cacheKey = `${startStr}_${endStr}_${step}`;
+  
+  const cached = lerpCache.get(cacheKey);
+  if (cached) return cached;
+  
   const c1 = parseHsl(startStr);
   const c2 = parseHsl(endStr);
   if (!c1 || !c2) return startStr;
 
-  const factor = 1 - pct;
+  const factor = 1 - (step / 20);
   const h = c1.h + (c2.h - c1.h) * factor;
   const s = c1.s + (c2.s - c1.s) * factor;
   const l = c1.l + (c2.l - c1.l) * factor;
-  return `hsl(${h}, ${s}%, ${l}%)`;
+  
+  const result = `hsl(${h}, ${s}%, ${l}%)`;
+  lerpCache.set(cacheKey, result);
+  return result;
 }
 
 function convertToHsla(colorStr: string, alpha: number): string {
@@ -67,6 +78,7 @@ export class WorldRenderer {
     this.cachedMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
     this.cachedMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
     this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    this.ctx.fillStyle = this.cachedMeleeGradient;
     this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
   }
 
@@ -96,8 +108,6 @@ export class WorldRenderer {
       ctx.translate(cx, cy);
       ctx.globalAlpha = opacity;
       ctx.fillStyle = this.cachedMeleeGradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20;
 
       ctx.beginPath();
       ctx.arc(
@@ -135,8 +145,6 @@ export class WorldRenderer {
       gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
 
       ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
 
       ctx.beginPath();
       ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
@@ -160,8 +168,6 @@ export class WorldRenderer {
       gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
 
       ctx.fillStyle = gradient;
-      ctx.shadowColor = "rgba(132, 239, 158, 0.85)";
-      ctx.shadowBlur = 20 * opacity;
 
       ctx.beginPath();
       ctx.arc(cx, cy, currentRadius, 0, Math.PI);
@@ -290,8 +296,6 @@ export class WorldRenderer {
         this.ctx.strokeStyle = p.color;
         this.ctx.globalAlpha = pct;
         this.ctx.lineWidth = 2.5;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 10 * pct;
         this.ctx.stroke();
       }
       this.ctx.restore();
@@ -300,7 +304,6 @@ export class WorldRenderer {
     if (bossDeathTimer >= 0 && bossDeathPos) {
       CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos);
     }
-
 
     if (isPaused) {
       this.ctx.fillStyle = "rgba(12, 13, 17, 0.65)";

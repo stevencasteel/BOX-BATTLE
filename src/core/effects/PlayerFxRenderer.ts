@@ -105,17 +105,39 @@ export class PlayerFxRenderer {
     outCounts.front = frontIdx;
   }
 
-  public static renderHealBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number): void {
+  public static renderHealBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number, progress: number): void {
+    if (count === 0) return;
     const buffer = isBehind ? healBackBuffer : healFrontBuffer;
+    const coilHeight = progress * 84;
+
+    ctx.save();
+    
+    // Zero-alloc vertical linear gradient representation of coil depth
+    const grad = ctx.createLinearGradient(0, 0, 0, -coilHeight);
+    grad.addColorStop(0, `hsla(280, 100%, 75%, ${progress})`);
+    grad.addColorStop(1, `hsla(280, 100%, 75%, ${progress * 0.75})`);
+    
+    // Apply additive composite glow safely
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = grad;
+    ctx.lineCap = "round";
+
+    // Draw wider outer core glow
+    ctx.beginPath();
     for (let s = 0; s < count; s++) {
       const seg = buffer[s];
-      ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
-      ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
-      ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
     }
+    ctx.lineWidth = 4.5;
+    ctx.stroke();
+
+    // Draw inner core path
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   public static prepareChargeSegments(
@@ -219,15 +241,33 @@ export class PlayerFxRenderer {
   }
 
   public static renderChargeBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number): void {
+    if (count === 0) return;
     const buffer = isBehind ? chargeBackBuffer : chargeFrontBuffer;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+
+    let currentStyle = "";
+    let currentWidth = 1.0;
+
+    ctx.beginPath();
     for (let s = 0; s < count; s++) {
       const seg = buffer[s];
-      ctx.strokeStyle = seg.color;
-      ctx.lineWidth = seg.width;
-      ctx.beginPath();
+      if (seg.color !== currentStyle || seg.width !== currentWidth) {
+        if (s > 0) {
+          ctx.stroke();
+        }
+        currentStyle = seg.color;
+        currentWidth = seg.width;
+        ctx.strokeStyle = currentStyle;
+        ctx.lineWidth = currentWidth;
+        ctx.beginPath();
+      }
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
-      ctx.stroke();
     }
+    ctx.stroke();
+    ctx.restore();
   }
 }
