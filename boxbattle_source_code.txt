@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 10:24:09 PM
+ [SYSTEM] Generated: 5/26/2026, 10:32:08 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -547,7 +547,6 @@ In our cabinet middle header in the arena, we should start by showing the zxc on
 
 
 
-When SAVE SLOT PERFORMANCE BOX APPEARS, the UI elements should stagger in quickly, and the tics should wait a beat before beginning instead of starting the same time save slot performance box appears.
 
 
 
@@ -2680,52 +2679,57 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
     const t3 = setTimeout(() => {
       setStagger(3);
-      const slotIdx = saveManager.getCurrentSlotIndex();
-      const slot = slotIdx !== -1 ? saveManager.getSlot(slotIdx) : null;
-      const targetWins = slot ? slot.wins : 0;
-      const targetLosses = slot ? slot.losses : 0;
 
-      let currentW = 0;
-      let currentL = 0;
+      const startTickTimeout = setTimeout(() => {
+        const slotIdx = saveManager.getCurrentSlotIndex();
+        const slot = slotIdx !== -1 ? saveManager.getSlot(slotIdx) : null;
+        const targetWins = slot ? slot.wins : 0;
+        const targetLosses = slot ? slot.losses : 0;
 
-      const getDelay = (current: number, target: number) => {
-        if (target <= 1) return 180;
-        const progress = current / target;
-        const minDelay = 25;
-        const maxDelay = 260;
-        return minDelay + (maxDelay - minDelay) * Math.pow(progress, 2);
-      };
+        let currentW = 0;
+        let currentL = 0;
 
-      const tickWins = () => {
-        if (currentW < targetWins) {
-          const delay = getDelay(currentW, targetWins);
-          currentW++;
-          setDisplayWins(currentW);
-          soundSynth.playSelectTick();
-          tickTimeoutRef.current = setTimeout(tickWins, delay);
+        const getDelay = (current: number, target: number) => {
+          if (target <= 1) return 180;
+          const progress = current / target;
+          const minDelay = 25;
+          const maxDelay = 260;
+          return minDelay + (maxDelay - minDelay) * Math.pow(progress, 2);
+        };
+
+        const tickWins = () => {
+          if (currentW < targetWins) {
+            const delay = getDelay(currentW, targetWins);
+            currentW++;
+            setDisplayWins(currentW);
+            soundSynth.playSelectTick();
+            tickTimeoutRef.current = setTimeout(tickWins, delay);
+          } else {
+            tickTimeoutRef.current = setTimeout(tickLosses, 150);
+          }
+        };
+
+        const tickLosses = () => {
+          if (currentL < targetLosses) {
+            const delay = getDelay(currentL, targetLosses);
+            currentL++;
+            setDisplayLosses(currentL);
+            soundSynth.playSelectTick();
+            tickTimeoutRef.current = setTimeout(tickLosses, delay);
+          } else {
+            setStagger(4);
+            soundSynth.playDashRecharge();
+          }
+        };
+
+        if (targetWins > 0) {
+          tickWins();
         } else {
-          tickTimeoutRef.current = setTimeout(tickLosses, 150);
+          tickLosses();
         }
-      };
+      }, 900);
 
-      const tickLosses = () => {
-        if (currentL < targetLosses) {
-          const delay = getDelay(currentL, targetLosses);
-          currentL++;
-          setDisplayLosses(currentL);
-          soundSynth.playSelectTick();
-          tickTimeoutRef.current = setTimeout(tickLosses, delay);
-        } else {
-          setStagger(4);
-          soundSynth.playDashRecharge();
-        }
-      };
-
-      if (targetWins > 0) {
-        tickWins();
-      } else {
-        tickLosses();
-      }
+      tickTimeoutRef.current = startTickTimeout;
     }, 5200);
 
     return () => {
@@ -2863,7 +2867,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         key="buttons-section"
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: "spring", stiffness: 220, damping: 22 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.3 }}
                         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
                       >
                         <div className="gameover-divider" />

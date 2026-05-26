@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DWqHDHAC.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C9OKnAcP.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1920,52 +1920,57 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
     const t3 = setTimeout(() => {
       setStagger(3);
-      const slotIdx = saveManager.getCurrentSlotIndex();
-      const slot = slotIdx !== -1 ? saveManager.getSlot(slotIdx) : null;
-      const targetWins = slot ? slot.wins : 0;
-      const targetLosses = slot ? slot.losses : 0;
 
-      let currentW = 0;
-      let currentL = 0;
+      const startTickTimeout = setTimeout(() => {
+        const slotIdx = saveManager.getCurrentSlotIndex();
+        const slot = slotIdx !== -1 ? saveManager.getSlot(slotIdx) : null;
+        const targetWins = slot ? slot.wins : 0;
+        const targetLosses = slot ? slot.losses : 0;
 
-      const getDelay = (current: number, target: number) => {
-        if (target <= 1) return 180;
-        const progress = current / target;
-        const minDelay = 25;
-        const maxDelay = 260;
-        return minDelay + (maxDelay - minDelay) * Math.pow(progress, 2);
-      };
+        let currentW = 0;
+        let currentL = 0;
 
-      const tickWins = () => {
-        if (currentW < targetWins) {
-          const delay = getDelay(currentW, targetWins);
-          currentW++;
-          setDisplayWins(currentW);
-          soundSynth.playSelectTick();
-          tickTimeoutRef.current = setTimeout(tickWins, delay);
+        const getDelay = (current: number, target: number) => {
+          if (target <= 1) return 180;
+          const progress = current / target;
+          const minDelay = 25;
+          const maxDelay = 260;
+          return minDelay + (maxDelay - minDelay) * Math.pow(progress, 2);
+        };
+
+        const tickWins = () => {
+          if (currentW < targetWins) {
+            const delay = getDelay(currentW, targetWins);
+            currentW++;
+            setDisplayWins(currentW);
+            soundSynth.playSelectTick();
+            tickTimeoutRef.current = setTimeout(tickWins, delay);
+          } else {
+            tickTimeoutRef.current = setTimeout(tickLosses, 150);
+          }
+        };
+
+        const tickLosses = () => {
+          if (currentL < targetLosses) {
+            const delay = getDelay(currentL, targetLosses);
+            currentL++;
+            setDisplayLosses(currentL);
+            soundSynth.playSelectTick();
+            tickTimeoutRef.current = setTimeout(tickLosses, delay);
+          } else {
+            setStagger(4);
+            soundSynth.playDashRecharge();
+          }
+        };
+
+        if (targetWins > 0) {
+          tickWins();
         } else {
-          tickTimeoutRef.current = setTimeout(tickLosses, 150);
+          tickLosses();
         }
-      };
+      }, 900);
 
-      const tickLosses = () => {
-        if (currentL < targetLosses) {
-          const delay = getDelay(currentL, targetLosses);
-          currentL++;
-          setDisplayLosses(currentL);
-          soundSynth.playSelectTick();
-          tickTimeoutRef.current = setTimeout(tickLosses, delay);
-        } else {
-          setStagger(4);
-          soundSynth.playDashRecharge();
-        }
-      };
-
-      if (targetWins > 0) {
-        tickWins();
-      } else {
-        tickLosses();
-      }
+      tickTimeoutRef.current = startTickTimeout;
     }, 5200);
 
     return () => {
@@ -2103,7 +2108,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         key="buttons-section"
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: "spring", stiffness: 220, damping: 22 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.3 }}
                         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
                       >
                         <div className="gameover-divider" />
