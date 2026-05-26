@@ -526,12 +526,12 @@ export class Player extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
+      if (isHit && this.velocity.y >= 0) {
         if (this.healComponent.isHealing) {
           this.healComponent.cancelHealing();
         }
 
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;

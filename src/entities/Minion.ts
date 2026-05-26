@@ -281,8 +281,8 @@ export class Minion extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           if (this.minionType !== "TURRET" && !this.isDying) {

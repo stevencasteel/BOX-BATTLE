@@ -25,3 +25,5 @@ Physics reaction knockback from minion when you hit it.
 Reactive Spring-Loaded HUD Elements
 
 Charging should feel like a DBZ kii charge.
+
+Bouncing over and over and spikes should move up scale properly.

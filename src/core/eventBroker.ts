@@ -24,7 +24,7 @@ export type GameEventMap = {
   HEAL_START: void;
   HEAL_CANCEL: void;
   HEAL_COMPLETE: void;
-  PLAYER_SPIKED: void;
+  PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;
   MINION_SPAWNING: void;
   MINION_DISSOLVING: void;

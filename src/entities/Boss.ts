@@ -211,8 +211,8 @@ export class Boss extends BaseEntity {
         this.position.y + halfH > hazard.y &&
         this.position.y - halfH < hazard.y + hazard.height;
 
-      if (isHit) {
-        eventBroker.publish("PLAYER_SPIKED", undefined);
+      if (isHit && this.velocity.y >= 0) {
+        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;

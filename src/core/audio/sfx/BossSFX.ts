@@ -92,8 +92,8 @@ export class BossSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_SPIKED", () => {
-      this.playSpikeStrike(soundSynth.getPlayerX());
+    eventBroker.subscribe("PLAYER_SPIKED", ({ x }) => {
+      this.playSpikeStrike(x);
     });
 
     eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
@@ -180,20 +180,23 @@ export class BossSFX {
   }
 
   public playSpikeStrike(x?: number) {
-    const nowPerformance = performance.now();
-    if (nowPerformance - this.lastSpikeTime < 2500) {
-      this.spikeSequenceCount = this.spikeSequenceCount + 1;
-    } else {
-      this.spikeSequenceCount = 0;
-    }
-    this.lastSpikeTime = nowPerformance;
-
-    const preset = SFX_PRESETS.boss.spike_strike;
-    const comboMultiplier = 1.0 + this.spikeSequenceCount * 0.15;
-    const adjustedFreq = preset.frequency * comboMultiplier;
-    const adjustedTargetFreq = (preset.targetFrequency || 700) * comboMultiplier;
-
     this.helper.execute("spike_strike", 80, x, this.impactPanner, (now) => {
+      const nowPerformance = performance.now();
+      if (nowPerformance - this.lastSpikeTime < 2500) {
+        this.spikeSequenceCount = this.spikeSequenceCount + 1;
+      } else {
+        this.spikeSequenceCount = 0;
+      }
+      this.lastSpikeTime = nowPerformance;
+
+      const scaleIndex = this.spikeSequenceCount % DORIAN_RATIOS.length;
+      const octaveMultiplier = Math.pow(2, Math.floor(this.spikeSequenceCount / DORIAN_RATIOS.length));
+      const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
+
+      const preset = SFX_PRESETS.boss.spike_strike;
+      const adjustedFreq = preset.frequency * ratio;
+      const adjustedTargetFreq = (preset.targetFrequency || 700) * ratio;
+
       this.spikeSynth.triggerAttackRelease(adjustedFreq, "16n", now);
       this.spikeSynth.frequency.rampTo(adjustedTargetFreq, preset.rampDuration, now);
     });
