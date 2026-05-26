@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DP4DxX5D.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Btp1QbUw.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -3923,6 +3923,7 @@ export function MenuBackButton({
   box-sizing: border-box;
   outline: none;
   -webkit-tap-highlight-color: transparent;
+  border: 1px solid transparent;
 }
 
 .slot-card:active {
@@ -3932,14 +3933,14 @@ export function MenuBackButton({
 .slot-card-empty {
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 0, 0, 0.3);
   color: #4a5568;
 }
 
 .slot-card-loaded {
   background: var(--surface-elevated);
   box-shadow: var(--shadow-light), var(--shadow-dark);
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.02);
   color: #ffffff;
 }
 
