@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-vONtB1Xt.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-CXvECCdi.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5118,7 +5118,126 @@ export default GameLoop;
 
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
 
+export interface IInputDevice {
+  update(): Record<Action, boolean>;
+  isPauseJustPressed?(): boolean;
+  cleanup?(): void;
+}
+
+export class KeyboardInputDevice implements IInputDevice {
+  private pressed: Record<Action, boolean> = {
+    MOVE_LEFT: false,
+    MOVE_RIGHT: false,
+    MOVE_UP: false,
+    MOVE_DOWN: false,
+    JUMP: false,
+    ATTACK: false,
+    DASH: false,
+  };
+  private pauseJustPressed = false;
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", this.handleKeyDown);
+      window.addEventListener("keyup", this.handleKeyUp);
+    }
+  }
+
+  private getActionFromCode(code: string): Action | null {
+    const keyMap = settingsManager.getKeyMap();
+    for (const action in keyMap) {
+      if (keyMap[action as Action]?.includes(code)) {
+        return action as Action;
+      }
+    }
+    return null;
+  }
+
+  private handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === "KeyP") {
+      e.preventDefault();
+      this.pauseJustPressed = true;
+      return;
+    }
+    const action = this.getActionFromCode(e.code);
+    if (action) {
+      e.preventDefault();
+      this.pressed[action] = true;
+    }
+  };
+
+  private handleKeyUp = (e: KeyboardEvent) => {
+    const action = this.getActionFromCode(e.code);
+    if (action) {
+      e.preventDefault();
+      this.pressed[action] = false;
+    }
+  };
+
+  public update(): Record<Action, boolean> {
+    return { ...this.pressed };
+  }
+
+  public triggerTouchStart(action: Action) {
+    this.pressed[action] = true;
+  }
+
+  public triggerTouchEnd(action: Action) {
+    this.pressed[action] = false;
+  }
+
+  public isPauseJustPressed(): boolean {
+    const val = this.pauseJustPressed;
+    this.pauseJustPressed = false;
+    return val;
+  }
+
+  public cleanup() {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("keydown", this.handleKeyDown);
+      window.removeEventListener("keyup", this.handleKeyUp);
+    }
+  }
+}
+
+export class GamepadInputDevice implements IInputDevice {
+  public update(): Record<Action, boolean> {
+    const pressed: Record<Action, boolean> = {
+      MOVE_LEFT: false,
+      MOVE_RIGHT: false,
+      MOVE_UP: false,
+      MOVE_DOWN: false,
+      JUMP: false,
+      ATTACK: false,
+      DASH: false,
+    };
+
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return pressed;
+
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      const gp = gamepads[i];
+      if (!gp) continue;
+
+      if (gp.buttons[0]?.pressed) pressed["JUMP"] = true;
+      if (gp.buttons[2]?.pressed || gp.buttons[3]?.pressed) pressed["ATTACK"] = true;
+      if (gp.buttons[1]?.pressed || gp.buttons[5]?.pressed || gp.buttons[7]?.pressed)
+        pressed["DASH"] = true;
+
+      const axisThreshold = 0.35;
+      if (gp.axes[0] < -axisThreshold || gp.buttons[14]?.pressed) pressed["MOVE_LEFT"] = true;
+      if (gp.axes[0] > axisThreshold || gp.buttons[15]?.pressed) pressed["MOVE_RIGHT"] = true;
+      if (gp.axes[1] < -axisThreshold || gp.buttons[12]?.pressed) pressed["MOVE_UP"] = true;
+      if (gp.axes[1] > axisThreshold || gp.buttons[13]?.pressed) pressed["MOVE_DOWN"] = true;
+    }
+
+    return pressed;
+  }
+}
+
 class InputProvider {
+  private devices: IInputDevice[] = [];
+  private keyboardDevice!: KeyboardInputDevice;
   private pauseJustPressed = false;
   private pressTimestamps: Record<Action, number> = {
     MOVE_LEFT: 0,
@@ -5128,26 +5247,6 @@ class InputProvider {
     JUMP: 0,
     ATTACK: 0,
     DASH: 0,
-  };
-
-  private keyboardPressed: Record<Action, boolean> = {
-    MOVE_LEFT: false,
-    MOVE_RIGHT: false,
-    MOVE_UP: false,
-    MOVE_DOWN: false,
-    JUMP: false,
-    ATTACK: false,
-    DASH: false,
-  };
-
-  private gamepadPressed: Record<Action, boolean> = {
-    MOVE_LEFT: false,
-    MOVE_RIGHT: false,
-    MOVE_UP: false,
-    MOVE_DOWN: false,
-    JUMP: false,
-    ATTACK: false,
-    DASH: false,
   };
 
   private pressed: Record<Action, boolean> = {
@@ -5183,52 +5282,19 @@ class InputProvider {
   private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
 
   constructor() {
+    this.keyboardDevice = new KeyboardInputDevice();
+    this.devices.push(this.keyboardDevice);
+    this.devices.push(new GamepadInputDevice());
+
     if (typeof window !== "undefined") {
-      window.addEventListener("keydown", this.handleKeyDown);
-      window.addEventListener("keyup", this.handleKeyUp);
       window.addEventListener("blur", this.handleBlur);
     }
   }
 
-  private getActionFromCode(code: string): Action | null {
-    const keyMap = settingsManager.getKeyMap();
-    for (const action in keyMap) {
-      if (keyMap[action as Action]?.includes(code)) {
-        return action as Action;
-      }
-    }
-    return null;
-  }
-
-  private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === "KeyP") {
-      e.preventDefault();
-      this.pauseJustPressed = true;
-      return;
-    }
-    const action = this.getActionFromCode(e.code);
-    if (action) {
-      e.preventDefault();
-      if (!this.keyboardPressed[action]) {
-        this.keyboardPressed[action] = true;
-      }
-    }
-  };
-
-  private handleKeyUp = (e: KeyboardEvent) => {
-    const action = this.getActionFromCode(e.code);
-    if (action) {
-      e.preventDefault();
-      this.keyboardPressed[action] = false;
-    }
-  };
-
   private handleBlur = () => {
     this.pauseJustPressed = false;
-    for (const key in this.keyboardPressed) {
+    for (const key in this.pressed) {
       const action = key as Action;
-      this.keyboardPressed[action] = false;
-      this.gamepadPressed[action] = false;
       this.pressed[action] = false;
       this.justPressed[action] = false;
       this.justReleased[action] = false;
@@ -5237,13 +5303,11 @@ class InputProvider {
   };
 
   public triggerTouchStart(action: Action) {
-    if (!this.keyboardPressed[action]) {
-      this.keyboardPressed[action] = true;
-    }
+    this.keyboardDevice.triggerTouchStart(action);
   }
 
   public triggerTouchEnd(action: Action) {
-    this.keyboardPressed[action] = false;
+    this.keyboardDevice.triggerTouchEnd(action);
   }
 
   public consumeBufferedAction(action: Action, windowMs = 100): boolean {
@@ -5274,42 +5338,7 @@ class InputProvider {
     return axis;
   }
 
-  public pollGamepads() {
-    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
-
-    const gamepads = navigator.getGamepads();
-
-    const currentGamepadPressed: Record<Action, boolean> = {
-      MOVE_LEFT: false,
-      MOVE_RIGHT: false,
-      MOVE_UP: false,
-      MOVE_DOWN: false,
-      JUMP: false,
-      ATTACK: false,
-      DASH: false,
-    };
-
-    for (let i = 0; i < gamepads.length; i++) {
-      const gp = gamepads[i];
-      if (!gp) continue;
-
-      if (gp.buttons[0]?.pressed) currentGamepadPressed["JUMP"] = true;
-      if (gp.buttons[2]?.pressed || gp.buttons[3]?.pressed) currentGamepadPressed["ATTACK"] = true;
-      if (gp.buttons[1]?.pressed || gp.buttons[5]?.pressed || gp.buttons[7]?.pressed)
-        currentGamepadPressed["DASH"] = true;
-
-      const axisThreshold = 0.35;
-      if (gp.axes[0] < -axisThreshold || gp.buttons[14]?.pressed) currentGamepadPressed["MOVE_LEFT"] = true;
-      if (gp.axes[0] > axisThreshold || gp.buttons[15]?.pressed) currentGamepadPressed["MOVE_RIGHT"] = true;
-      if (gp.axes[1] < -axisThreshold || gp.buttons[12]?.pressed) currentGamepadPressed["MOVE_UP"] = true;
-      if (gp.axes[1] > axisThreshold || gp.buttons[13]?.pressed) currentGamepadPressed["MOVE_DOWN"] = true;
-    }
-
-    this.gamepadPressed = currentGamepadPressed;
-  }
-
   public triggerHapticFeedback(strength: "light" | "medium" | "heavy") {
-    // 1. Mobile Web Vibration API
     if (this.hasVibrationSupport) {
       if (strength === "light") {
         navigator.vibrate(30);
@@ -5320,7 +5349,6 @@ class InputProvider {
       }
     }
 
-    // 2. Gamepad API Dual-Rumble
     if (typeof navigator === "undefined" || !navigator.getGamepads) return;
     const gamepads = navigator.getGamepads();
     for (const gp of gamepads) {
@@ -5352,11 +5380,32 @@ class InputProvider {
   }
 
   public update() {
-    this.pollGamepads();
+    const combinedPressed: Record<Action, boolean> = {
+      MOVE_LEFT: false,
+      MOVE_RIGHT: false,
+      MOVE_UP: false,
+      MOVE_DOWN: false,
+      JUMP: false,
+      ATTACK: false,
+      DASH: false,
+    };
+
+    for (const device of this.devices) {
+      const devicePressed = device.update();
+      for (const key in combinedPressed) {
+        const action = key as Action;
+        if (devicePressed[action]) {
+          combinedPressed[action] = true;
+        }
+      }
+      if (device.isPauseJustPressed && device.isPauseJustPressed()) {
+        this.pauseJustPressed = true;
+      }
+    }
 
     const actions: Action[] = ["MOVE_LEFT", "MOVE_RIGHT", "MOVE_UP", "MOVE_DOWN", "JUMP", "ATTACK", "DASH"];
     for (const action of actions) {
-      const isNowPressed = this.keyboardPressed[action] || this.gamepadPressed[action];
+      const isNowPressed = combinedPressed[action];
       const wasPressed = this.pressed[action];
 
       this.pressed[action] = isNowPressed;
@@ -5384,9 +5433,12 @@ class InputProvider {
   }
 
   public cleanup() {
+    for (const device of this.devices) {
+      if (device.cleanup) {
+        device.cleanup();
+      }
+    }
     if (typeof window !== "undefined") {
-      window.removeEventListener("keydown", this.handleKeyDown);
-      window.removeEventListener("keyup", this.handleKeyUp);
       window.removeEventListener("blur", this.handleBlur);
     }
   }
