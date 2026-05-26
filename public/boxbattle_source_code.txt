@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 4:44:38 PM
+ [SYSTEM] Generated: 5/26/2026, 4:46:35 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -12557,7 +12557,6 @@ export class Player extends BaseEntity {
         });
       }
 
-      // High impact Ki explosion waves representing restored health vitality
       eventBroker.publish("SPAWN_BLAST", {
         x: this.position.x,
         y: this.position.y,
@@ -12570,7 +12569,6 @@ export class Player extends BaseEntity {
         color: "hsl(142, 71%, 58%)",
       });
 
-      // Exploding rain of glowing lavender particles
       eventBroker.publish("SPAWN_SPARKS", {
         x: this.position.x,
         y: this.position.y,
@@ -12598,8 +12596,8 @@ export class Player extends BaseEntity {
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.10, y: 0.90 }; // Toned down crisp visual pop
-      this.scaleVelocity = { x: -10.0, y: 10.0 }; // Gentler snappy recovery
+      this.visualScale = { x: 1.10, y: 0.90 };
+      this.scaleVelocity = { x: -10.0, y: 10.0 };
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
     });
 
@@ -12620,15 +12618,12 @@ export class Player extends BaseEntity {
       const baseLift = isLvl2 ? 150 : 70;
       const tiltForce = isLvl2 ? 14.0 : 6.0;
 
-      // Physically break ground contact to allow natural rotational tilt and back-corner leaning
       this.physics.isGrounded = false;
       this.recoilTimer = isLvl2 ? 0.35 : 0.22;
 
-      // Additive momentum shove opposite to the shot vector
       this.velocity.x -= dirX * recoilForce;
       this.velocity.y -= (baseLift + dirY * recoilForce);
 
-      // Apply backward angular recoil tilt driven by the horizontal shot component
       this.applyAngularImpulse(-dirX * tiltForce);
 
       const sqX = isLvl2 ? 0.90 : 0.96;
@@ -12636,7 +12631,6 @@ export class Player extends BaseEntity {
       this.visualScale = { x: sqX, y: sqY };
       this.scaleVelocity = { x: (isLvl2 ? 16 : 8), y: (isLvl2 ? -16 : -8) };
 
-      // Spawn muzzle blast sparks and dust ring at projectile launch coordinate
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
 
@@ -12688,7 +12682,7 @@ export class Player extends BaseEntity {
 
     this.targetRotation = targetRotation;
 
-if (this.isCharging) {
+    if (this.isCharging) {
       const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
 
@@ -12703,7 +12697,6 @@ if (this.isCharging) {
       };
       this.rotation = Math.sin(time * 0.09) * 0.02 * progress;
 
-      // Swirling vortex accretion kii particles
       if (Math.random() < 0.3 + progress * 0.5) {
         const angle = Math.random() * Math.PI * 2;
         const radius = 80 - progress * 50;
@@ -12726,7 +12719,6 @@ if (this.isCharging) {
         });
       }
 
-      // High-tension golden electric lightning line discharges arcing into core
       if (isLvl2 && Math.random() < 0.12) {
         const angle = Math.random() * Math.PI * 2;
         const radius = 60;
@@ -12779,12 +12771,10 @@ if (this.isCharging) {
         y: 1.0 - Math.sin(now * 0.045) * 0.015 * progress 
       };
 
-      // Satisfying progressive screen shake
       if (Math.random() < 0.2 + progress * 0.4) {
         eventBroker.publish("CAMERA_SHAKE", { amplitude: 0.5 + progress * 3.5, duration: 0.05 });
       }
 
-      // Rising Ki column sparks
       if (Math.random() < 0.3 + progress * 0.4) {
         const spawnX = this.position.x + (Math.random() * 32 - 16);
         const spawnY = this.position.y + this.size.height / 2;
@@ -12798,7 +12788,6 @@ if (this.isCharging) {
         });
       }
 
-      // Spawning rising lightning and aura flare particles
       const sparkChance = 0.35 + progress * 0.65;
       if (Math.random() < sparkChance) {
         const spawnX = this.position.x + (Math.random() * 44 - 22);
@@ -12816,7 +12805,6 @@ if (this.isCharging) {
         });
       }
 
-      // Vortex-style inward pulling kii accretion sparks
       if (Math.random() < 0.25 + progress * 0.45) {
         const angle = Math.random() * Math.PI * 2;
         const radius = 90 - progress * 55;
@@ -12839,7 +12827,6 @@ if (this.isCharging) {
         });
       }
 
-      // Pressure ground-dust emissions
       if (Math.random() < 0.08 + progress * 0.15) {
         eventBroker.publish("SPAWN_DUST", {
           x: this.position.x,
@@ -12926,7 +12913,7 @@ if (this.isCharging) {
     const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
 
     if (isSliding) {
-      this.physics.gravity = 650; // Provide steady gravity friction to slide smoothly rather than sticking vertically
+      this.physics.gravity = 650;
     } else if (isPogoing) {
       this.physics.gravity = 1200 * 0.85;
     } else if (isNearJumpApex) {
@@ -12955,7 +12942,6 @@ if (this.isCharging) {
     const impactSide = this.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.position.x + impactSide * (this.size.width / 2);
     
-    // Spawn vertical wall dust puffs on impact alongside sparks
     eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
     eventBroker.publish("SPAWN_SPARKS", {
       x: wallX,
@@ -13079,7 +13065,6 @@ if (this.isCharging) {
       this.visualScale = { x: 0.82, y: 1.18 };
       this.dashComponent.resetDashCharge();
 
-      // Trigger Symmetrical vertical dust puffs up/down along the wall contact surface
       const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
       eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.position.y, direction: "vertical" });
       eventBroker.publish("PLAYER_JUMPED", undefined);
@@ -13198,9 +13183,75 @@ if (this.isCharging) {
     const vHeight = this.size.height * this.visualScale.y;
     const feetY = drawY + this.size.height / 2;
 
+    const nowTime = performance.now();
+    const progress = this.isHealing 
+      ? Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION))
+      : 0;
+
+    const backSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
+    const frontSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
+
+    if (this.isHealing) {
+      const segmentsCount = 120;
+      const loops = 4.0;
+      const maxAngle = loops * Math.PI * 2;
+      const rotationOffset = nowTime * 0.008;
+      const coilHeight = progress * 84;
+
+      for (let i = 0; i < segmentsCount; i++) {
+        const t1 = i / segmentsCount;
+        const t2 = (i + 1) / segmentsCount;
+
+        const angle1 = t1 * maxAngle + rotationOffset;
+        const angle2 = t2 * maxAngle + rotationOffset;
+
+        const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
+        const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
+
+        const x1 = r1 * Math.cos(angle1);
+        const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
+
+        const x2 = r2 * Math.cos(angle2);
+        const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
+
+        const midAngle = (angle1 + angle2) / 2;
+        const isBehind = Math.sin(midAngle) < 0;
+
+        const segmentAlpha = (1.0 - t1 * 0.25) * progress;
+
+        const segment = { x1, y1, x2, y2, alpha: segmentAlpha };
+        if (isBehind) {
+          backSegments.push(segment);
+        } else {
+          frontSegments.push(segment);
+        }
+      }
+    }
+
+    const drawCoilSegments = (segments: typeof backSegments) => {
+      for (let s = 0; s < segments.length; s++) {
+        const seg = segments[s];
+        ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
+        ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.lineTo(seg.x2, seg.y2);
+        ctx.stroke();
+      }
+    };
+
     ctx.save();
     ctx.translate(drawX, feetY);
     ctx.rotate(this.rotation);
+
+    if (this.isHealing) {
+      ctx.save();
+      ctx.lineWidth = 3.5;
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawCoilSegments(backSegments);
+      ctx.restore();
+    }
 
     if (this.health.isFlashing()) {
       ctx.fillStyle = "white";
@@ -13218,14 +13269,10 @@ if (this.isCharging) {
     const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
-      const nowTime = performance.now();
-      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
-
       ctx.save();
       const baseW = this.size.width * (1.15 + progress * 0.75);
       const baseH = this.size.height * (1.1 + progress * 0.55);
 
-      // DBZ inspired blazing jagged aura spikes
       const auraColors = [
         'hsla(280, 90%, 25%, 0.35)',
         'hsla(285, 95%, 45%, 0.55)',
@@ -13249,7 +13296,6 @@ if (this.isCharging) {
 
         ctx.moveTo(-width / 2, bottomY);
 
-        // Jagged aura spikes going up on the left side
         const leftSteps = 8;
         for (let j = 1; j <= leftSteps; j++) {
           const t = j / leftSteps;
@@ -13260,10 +13306,8 @@ if (this.isCharging) {
           ctx.lineTo(currentX, currentY);
         }
 
-        // Top violent flare point
         ctx.lineTo(0 + (Math.random() * 12 - 6) * progress, topY);
 
-        // Jagged aura spikes going down on the right side
         const rightSteps = 8;
         for (let j = rightSteps - 1; j >= 0; j--) {
           const t = j / rightSteps;
@@ -13281,42 +13325,19 @@ if (this.isCharging) {
 
       ctx.restore();
 
-      // Redesign the ground rings to look like a violent expanding shockwave crater
       ctx.save();
-      const wavePulse = Math.sin(nowTime * 0.035) * 6;
-      const radius = (this.size.width * 1.0) + progress * 28 + wavePulse;
-
-      ctx.strokeStyle = 'hsl(280, 100%, 75%)';
-      ctx.lineWidth = 2.0 + progress * 3.0;
-      ctx.shadowColor = 'rgba(168, 85, 247, 0.9)';
-      ctx.shadowBlur = 15;
-
-      ctx.beginPath();
-      ctx.ellipse(localCenterX, 0, radius, radius * 0.28, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Secondary outer shockwave lines
-      if (progress > 0.4) {
-        const ringCycle = (nowTime * 0.004) % 1.0;
-        const outerRadius = radius + ringCycle * 45;
-        ctx.strokeStyle = 'hsla(285, 100%, 75%, ' + (1.0 - ringCycle) + ')';
-        ctx.lineWidth = 1.0;
-        ctx.beginPath();
-        ctx.ellipse(localCenterX, 0, outerRadius, outerRadius * 0.28, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
+      ctx.lineWidth = 3.5;
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      drawCoilSegments(frontSegments);
       ctx.restore();
 
-      // Subtle body shuddering tremble (Shakes local draw position safely)
       const trembleX = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
       const trembleY = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
       ctx.translate(trembleX, trembleY);
     }
 
-if (this.isCharging) {
-      const nowTime = performance.now();
-      const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
+    if (this.isCharging) {
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
 
       ctx.save();
@@ -13327,7 +13348,6 @@ if (this.isCharging) {
       ctx.shadowColor = glowColor;
       ctx.shadowBlur = 15 + progress * 20;
 
-      // 1. Draw glowing condensed buster core at center
       const coreRadius = (8 + progress * 14);
       const coreGrad = ctx.createRadialGradient(
         localCenterX, localCenterY, 0,
@@ -13342,7 +13362,6 @@ if (this.isCharging) {
       ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Draw outer rotating power rings
       const shieldCount = isLvl2 ? 3 : 2;
       for (let s = 0; s < shieldCount; s++) {
         const rotationSpeed = (s % 2 === 0 ? 1 : -1) * 0.003 * nowTime;
@@ -13352,7 +13371,7 @@ if (this.isCharging) {
         const ringColor = isLvl2
           ? (s === 0 ? "rgba(234, 179, 8, 0.85)" : s === 1 ? "rgba(134, 212, 51, 0.85)" : "rgba(34, 197, 94, 0.95)")
           : (s === 0 ? "rgba(234, 179, 8, 0.65)" : "rgba(34, 197, 94, 0.75)");
-        ctx.strokeStyle = ringColor;;
+        ctx.strokeStyle = ringColor;
         ctx.lineWidth = isLvl2 ? (s === 2 ? 3 : 1.5) : 1.0;
 
         ctx.beginPath();
@@ -13374,7 +13393,6 @@ if (this.isCharging) {
         ctx.stroke();
       }
 
-      // 3. Draw random crackling plasma discharges when highly charged
       if (progress > 0.5) {
         const dischargeCount = isLvl2 ? 3 : 1;
         ctx.strokeStyle = isLvl2 ? 'rgba(255, 255, 255, 0.9)' : 'rgba(132, 239, 158, 0.8)';
@@ -13390,7 +13408,6 @@ if (this.isCharging) {
             const cy = localCenterY + Math.sin(startAngle) * rMax;
             ctx.moveTo(cx, cy);
 
-            // Create jagged lightning-bolt nodes heading inward to the core
             const steps = 3;
             for (let s = 1; s <= steps; s++) {
               const t = s / steps;
