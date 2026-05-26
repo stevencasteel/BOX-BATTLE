@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 6:37:01 PM
+ [SYSTEM] Generated: 5/26/2026, 7:04:13 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8308,6 +8308,10 @@ class SoundSynth {
     this.drones.playHealStart(x);
   }
 
+  public updateHealTimer(timer: number): void {
+    this.drones.updateHealTimer(timer);
+  }
+
   public stopHealDrone(): void {
     this.drones.stopHealDrone();
   }
@@ -9038,7 +9042,9 @@ export class DroneManager {
   private panner!: Tone.Panner;
 
   private healOsc!: Tone.Oscillator;
+  private healOscSub!: Tone.Oscillator;
   private healFilter!: Tone.Filter;
+  private healLfo!: Tone.LFO;
   private healGain!: Tone.Gain;
   private isHealDroneRunning: boolean = false;
 
@@ -9062,11 +9068,15 @@ export class DroneManager {
   private init() {
     this.panner = new Tone.Panner(0).connect(this.ctxManager.sfxGain);
 
-    this.healOsc = new Tone.Oscillator({ type: "sine", frequency: 220 }).start();
-    this.healFilter = new Tone.Filter({ frequency: 440, type: "bandpass", Q: 3.0 });
+    this.healOsc = new Tone.Oscillator({ type: "sawtooth", frequency: 110 }).start();
+    this.healOscSub = new Tone.Oscillator({ type: "triangle", frequency: 55 }).start();
+    this.healFilter = new Tone.Filter({ frequency: 220, type: "bandpass", Q: 7.0 });
+    this.healLfo = new Tone.LFO({ frequency: 12.0, min: -150, max: 150 }).start();
     this.healGain = new Tone.Gain(0);
 
+    this.healLfo.connect(this.healFilter.frequency);
     this.healOsc.connect(this.healFilter);
+    this.healOscSub.connect(this.healFilter);
     this.healFilter.connect(this.healGain);
     this.healGain.connect(this.panner);
 
@@ -9100,21 +9110,70 @@ export class DroneManager {
     }
 
     const now = Tone.now();
-
-    this.healOsc.frequency.setValueAtTime(220, now);
-    this.healFilter.frequency.setValueAtTime(440, now);
-
-    this.healOsc.frequency.rampTo(660, 2.0);
-    this.healFilter.frequency.rampTo(1320, 2.0);
-    this.healGain.gain.rampTo(0.25, 0.15);
+    this.healOsc.frequency.setValueAtTime(110, now);
+    this.healOscSub.frequency.setValueAtTime(55, now);
+    this.healFilter.frequency.setValueAtTime(220, now);
+    this.healLfo.frequency.setValueAtTime(12.0, now);
+    this.healLfo.amplitude.setValueAtTime(150 / 350, now);
+    this.healGain.gain.rampTo(0.35, 0.1);
 
     this.isHealDroneRunning = true;
   }
 
+  public updateHealTimer(timer: number) {
+    if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
+    const now = Tone.now();
+    
+    // Strict clamp progress to normal range [0, 1]
+    const progress = Math.max(0, Math.min(1.0, (2.0 - timer) / 2.0));
+
+    const baseFreq = 110 + progress * 220;
+    const subFreq = 55 + progress * 55;
+    const filterFreq = 220 + Math.pow(progress, 1.5) * 1400;
+    const lfoFreq = 12.0 + progress * 16.0;
+    
+    // Scale LFO amplitude safely and clamp to [0, 1] normal range
+    const lfoAmp = Math.max(0, Math.min(1.0, 0.42 + progress * 0.45));
+
+    this.healOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
+    this.healOscSub.frequency.setTargetAtTime(subFreq, now, 0.05);
+    this.healFilter.frequency.setTargetAtTime(filterFreq, now, 0.05);
+    this.healLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
+    this.healLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
+    
+    // Clamp output gain value to [0, 1] normal range
+    const gainVal = Math.max(0, Math.min(1.0, 0.35 + progress * 0.25));
+    this.healGain.gain.setTargetAtTime(gainVal, now, 0.05);
+  }
+
   public stopHealDrone() {
     if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
-    this.healGain.gain.rampTo(0, 0.1);
+    const now = Tone.now();
+    this.healGain.gain.cancelScheduledValues(now);
+    this.healGain.gain.setValueAtTime(this.healGain.gain.value, now);
+    this.healGain.gain.rampTo(0, 0.12);
     this.isHealDroneRunning = false;
+  }
+
+  public playHealComplete() {
+    this.stopHealDrone();
+    if (!this.ctxManager.initialized) return;
+
+    const now = Tone.now();
+    const chimeNotes = ["C5", "Eb5", "G5", "C6", "Eb6"];
+    chimeNotes.forEach((note, idx) => {
+      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
+    });
+
+    const impactSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
+      oscillator: { type: "sawtooth" }
+    }).connect(this.ctxManager.sfxGain);
+
+    impactSynth.triggerAttackRelease("C1", "2n", now);
+    setTimeout(() => {
+      impactSynth.dispose();
+    }, 2000);
   }
 
   public playChargeStart(x?: number) {
@@ -9160,7 +9219,6 @@ export class DroneManager {
     } else if (timer >= 1.12) {
       if (this.currentChargeLevel < 2) {
         this.currentChargeLevel = 2;
-        this.playChargeCompleteDing();
       }
       const vibration = Math.sin(now * 30) * 8;
       this.chargeOsc.frequency.setTargetAtTime(660 + vibration, now, 0.08);
@@ -9171,28 +9229,11 @@ export class DroneManager {
     }
   }
 
-  private playChargeCompleteDing() {
-    if (!this.ctxManager.initialized) return;
-    // Silent (ding sound disabled)
-  }
-
   public stopChargeDrone() {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
     this.currentChargeLevel = 0;
-  }
-
-  public playHealComplete() {
-    this.stopHealDrone();
-    if (!this.ctxManager.initialized) return;
-
-    const chimeNotes = ["C5", "E5", "G5", "C6"];
-    const now = Tone.now();
-
-    chimeNotes.forEach((note, idx) => {
-      this.musicSeq.musicArpSynth.triggerAttackRelease(note, "4n", now + idx * 0.05);
-    });
   }
 
   public setHeartbeat(active: boolean) {
@@ -9951,6 +9992,10 @@ export class PlayerSFX {
       this.playLanding(soundSynth.getPlayerX());
     });
 
+    eventBroker.subscribe("HEAL_UPDATE", ({ timer }) => {
+      soundSynth.updateHealTimer(timer);
+    });
+
     eventBroker.subscribe("HEAL_START", () => {
       soundSynth.playHealStart(soundSynth.getPlayerX());
     });
@@ -10349,6 +10394,7 @@ export type GameEventMap = {
   PLAYER_LANDED: void;
   HEAL_START: void;
   HEAL_CANCEL: void;
+  HEAL_UPDATE: { timer: number };
   HEAL_COMPLETE: void;
   PLAYER_SPIKED: { x: number };
   BOSS_PHASE_SHIFT: void;
@@ -12195,6 +12241,7 @@ export class Player extends BaseEntity {
   private maxFallSpeed: number = 0;
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
+  private unsubHealCancel!: () => void;
   private unsubDamageDealt!: () => void;
   private unsubProjectileFired!: () => void;
   private wasOnWall: boolean = false;
@@ -12258,6 +12305,18 @@ export class Player extends BaseEntity {
     this.unsubPogo = eventBroker.subscribe("PLAYER_POGOED", () => {
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
+    });
+
+    this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
+      eventBroker.publish("SPAWN_SPARKS", {
+        x: this.position.x,
+        y: this.position.y,
+        angle: 0,
+        color: "hsl(280, 80%, 65%)",
+        radial: true,
+        count: 18,
+      });
+      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
     this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
@@ -12397,23 +12456,68 @@ export class Player extends BaseEntity {
     if (this.healComponent.isHealing) {
       if (!this.inputReceiver.isPressed("MOVE_DOWN") || !this.inputReceiver.isPressed("JUMP")) {
         this.healComponent.cancelHealing();
+        return;
       }
-      
-      // Bubbling healing: Spawn upward-ascending purple embers around player base
-      if (Math.random() < 0.45) {
-        const spawnX = this.position.x + (Math.random() * 32 - 16);
-        const spawnY = this.position.y + this.size.height / 2;
-        const angle = -Math.PI / 2 + (Math.random() * 0.6 - 0.3);
+
+      this.velocity.x = 0;
+      const now = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+
+      this.visualScale = { 
+        x: 1.0 + Math.sin(now * 0.045) * 0.04 * progress, 
+        y: 1.0 - Math.sin(now * 0.045) * 0.04 * progress 
+      };
+
+      // Spawning rising lightning and aura flare particles
+      const sparkChance = 0.35 + progress * 0.65;
+      if (Math.random() < sparkChance) {
+        const spawnX = this.position.x + (Math.random() * 44 - 22);
+        const spawnY = this.position.y + this.size.height / 2 - (Math.random() * this.size.height);
+        const angle = -Math.PI / 2 + (Math.random() * 0.3 - 0.15);
 
         eventBroker.publish("SPAWN_SPARKS", {
           x: spawnX,
           y: spawnY,
           angle: angle,
-          color: "hsl(280, 80%, 65%)",
-          count: 1,
-          turbulence: 25
+          color: progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)",
+          count: Math.random() < 0.2 ? 2 : 1,
+          shape: Math.random() < 0.35 ? "line" : "spark",
+          turbulence: 15 + progress * 40
         });
       }
+
+      // Vortex-style inward pulling kii accretion sparks
+      if (Math.random() < 0.25 + progress * 0.45) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 90 - progress * 55;
+        const startX = this.position.x + Math.cos(angle) * radius;
+        const startY = this.position.y - 10 + Math.sin(angle) * radius;
+
+        const targetX = this.position.x;
+        const targetY = this.position.y - 10;
+        const vx = (targetX - startX) * 4.0;
+        const vy = (targetY - startY) * 4.0;
+
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: startX,
+          y: startY,
+          angle: Math.atan2(vy, vx),
+          color: "hsl(280, 100%, 75%)",
+          count: 1,
+          shape: "line",
+          turbulence: 20
+        });
+      }
+
+      // Pressure ground-dust emissions
+      if (Math.random() < 0.08 + progress * 0.15) {
+        eventBroker.publish("SPAWN_DUST", {
+          x: this.position.x,
+          y: this.position.y + this.size.height / 2,
+          direction: "horizontal"
+        });
+      }
+
       return;
     }
 
@@ -12781,21 +12885,77 @@ export class Player extends BaseEntity {
     const localCenterY = -this.size.height / 2;
 
     if (this.isHealing) {
-      const cycle = performance.now() * 0.008;
-      ctx.strokeStyle = "hsl(280, 80%, 65%)";
-      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
-      ctx.shadowBlur = 15;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
+      const nowTime = performance.now();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
 
-      const radius1 = 44 + Math.sin(cycle) * 8;
-      const radius2 = 28 + Math.cos(cycle * 1.5) * 6;
-      ctx.arc(localCenterX, localCenterY, radius1, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.save();
+      ctx.shadowColor = "rgba(168, 85, 247, 0.95)";
+      ctx.shadowBlur = 20 + progress * 20;
+
+      const baseW = this.size.width * (1.1 + progress * 0.6);
+      const baseH = this.size.height * (1.05 + progress * 0.4);
+
+      const flameLayers = [
+        { color: "hsla(280, 85%, 35%, 0.4)", waveSpeed: 0.03, heightScale: 1.0 },
+        { color: "hsla(285, 90%, 55%, 0.6)", waveSpeed: 0.045, heightScale: 0.85 },
+        { color: "hsla(290, 100%, 75%, 0.8)", waveSpeed: 0.06, heightScale: 0.7 }
+      ];
+
+      flameLayers.forEach((layer) => {
+        ctx.fillStyle = layer.color;
+        ctx.beginPath();
+
+        const leftX = -baseW / 2;
+        const rightX = baseW / 2;
+        const bottomY = 0;
+
+        ctx.moveTo(leftX, bottomY);
+
+        const segments = 10;
+        for (let j = 1; j <= segments; j++) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5) * wiggleAmp;
+          const currentX = leftX + (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        for (let j = segments; j >= 0; j--) {
+          const t = j / segments;
+          const currentY = -baseH * t * layer.heightScale;
+          const wiggleAmp = (10 + progress * 14) * (1 - t * 0.6);
+          const wiggle = Math.sin(nowTime * layer.waveSpeed + j * 1.5 + Math.PI) * wiggleAmp;
+          const currentX = rightX - (rightX - leftX) * t * 0.1 + wiggle;
+          ctx.lineTo(currentX, currentY);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // Ground crack concentric ellipse
+      ctx.save();
+      ctx.strokeStyle = "hsl(280, 85%, 65%)";
+      ctx.lineWidth = 1.5 + progress * 2.5;
+      ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
+      ctx.shadowBlur = 10;
+
+      const ringCycle = (nowTime * 0.005) % 1.0;
+      const ringRadius = (this.size.width * 1.1) + ringCycle * 60;
+      const ringOpacity = Math.max(0, 1.0 - ringCycle);
+
+      ctx.globalAlpha = ringOpacity;
       ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, radius2, 0, Math.PI * 2);
+      ctx.ellipse(localCenterX, 0, ringRadius, ringRadius * 0.3, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Body trembling shudder
+      const tremble = (Math.random() * 2 - 1) * (1.0 + progress * 4.5);
+      ctx.translate(tremble, tremble);
     }
 
     if (this.isCharging && this.chargeTimer >= 0.25) {
@@ -12820,6 +12980,7 @@ export class Player extends BaseEntity {
     this.unsubHurt();
     this.unsubPogo();
     this.unsubHealComplete();
+    this.unsubHealCancel();
     this.unsubChargeMaxed();
     this.unsubDamageDealt();
     if (this.unsubProjectileFired) {
@@ -13419,6 +13580,7 @@ export class HealComponent implements IEntityComponent {
     if (this.isHealing) {
       this.owner.velocity.x = 0;
       this.healTimer -= dt;
+      eventBroker.publish("HEAL_UPDATE", { timer: this.healTimer });
 
       if (this.healTimer <= 0) {
         this.completeHealing();
