@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-IDXGlnxo.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BjceS-94.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2106,7 +2106,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           borderRadius: "8px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <div id="hud-m-hp-group" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
             <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
           </span>
@@ -2237,7 +2237,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className="cabinet-status-panel neo-pressed">
-      <div className="hud-panel-block" style={{ gap: "4px" }}>
+      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px" }}>
         <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
           PLAYER HP
@@ -5392,10 +5392,27 @@ export class BattleDirector {
   private static shakeAmplitude = 0;
   private static noiseTime = 0;
 
-  public static shake(amplitude: number, duration: number) {
+  private static shakeDirX = 0;
+  private static shakeDirY = 0;
+  private static isDirectional = false;
+
+  public static shake(amplitude: number, duration: number, dirX?: number, dirY?: number) {
     Camera.shakeAmplitude = amplitude;
     Camera.shakeDuration = duration;
     Camera.shakeTimer = duration;
+
+    if (dirX !== undefined && dirY !== undefined) {
+      const len = Math.sqrt(dirX * dirX + dirY * dirY);
+      if (len > 0) {
+        Camera.shakeDirX = dirX / len;
+        Camera.shakeDirY = dirY / len;
+        Camera.isDirectional = true;
+      } else {
+        Camera.isDirectional = false;
+      }
+    } else {
+      Camera.isDirectional = false;
+    }
   }
 
   public static triggerHitStop(duration: number) {
@@ -5425,8 +5442,18 @@ export class BattleDirector {
       if (Camera.shakeTimer > 0) {
         const decay = Camera.shakeTimer / Camera.shakeDuration;
         const currentAmp = Camera.shakeAmplitude * decay;
-        shakeX = this.noise(this.noiseTime) * currentAmp;
-        shakeY = this.noise(this.noiseTime + 100) * currentAmp;
+        const rawX = this.noise(this.noiseTime) * currentAmp;
+        const rawY = this.noise(this.noiseTime + 100) * currentAmp;
+
+        if (Camera.isDirectional) {
+          const parallel = (rawX * Camera.shakeDirX + rawY * Camera.shakeDirY) * 0.8;
+          const perpendicular = (-rawX * Camera.shakeDirY + rawY * Camera.shakeDirX) * 0.2;
+          shakeX = parallel * Camera.shakeDirX - perpendicular * Camera.shakeDirY;
+          shakeY = parallel * Camera.shakeDirY + perpendicular * Camera.shakeDirX;
+        } else {
+          shakeX = rawX;
+          shakeY = rawY;
+        }
       }
     }
 
@@ -5441,6 +5468,9 @@ export class BattleDirector {
     Camera.shakeTimer = 0;
     Camera.hitStopTimer = 0;
     Camera.noiseTime = 0;
+    Camera.shakeDirX = 0;
+    Camera.shakeDirY = 0;
+    Camera.isDirectional = false;
   }
 }
 `,"src/core/Engine.ts":`import GameLoop from "@/core/GameLoop";
@@ -6936,20 +6966,32 @@ export class SimulationSystems {
 
     this.unsubscribes.push(
       eventBroker.subscribe("PLAYER_HURT", () => {
-        Camera.shake(15, 0.3);
+        const px = getPlayerX();
+        const bx = getBossX();
+        const dx = px - bx;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+        Camera.shake(15, 0.3, dirX, 0);
         Camera.triggerHitStop(0.08);
         inputProvider.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
+        const bossX = getBossX();
+        const dx = bossX - sourceX;
+        const dy = 1000 - sourceY;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const dirX = len > 0 ? dx / len : -1;
+        const dirY = len > 0 ? dy / len : 0;
+
         if (currentHealth <= 0) {
-          Camera.shake(25, 0.6);
+          Camera.shake(25, 0.6, dirX, dirY);
           Camera.triggerHitStop(0.15);
           inputProvider.triggerHapticFeedback("heavy");
         } else {
-          Camera.shake(8, 0.15);
+          Camera.shake(8, 0.15, dirX, dirY);
           Camera.triggerHitStop(0.04);
           inputProvider.triggerHapticFeedback("light");
         }
@@ -6957,16 +6999,27 @@ export class SimulationSystems {
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ currentHealth }) => {
+      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
+        const minionX = getMinionX(id);
+        const dx = minionX - sourceX;
+        const len = Math.abs(dx);
+        const dirX = len > 0 ? dx / len : 1;
+
         if (currentHealth <= 0) {
-          Camera.shake(4, 0.15);
+          Camera.shake(4, 0.15, dirX, 0);
           Camera.triggerHitStop(0.03);
           inputProvider.triggerHapticFeedback("medium");
         } else {
-          Camera.shake(2, 0.08);
+          Camera.shake(2, 0.08, dirX, 0);
           Camera.triggerHitStop(0.01);
           inputProvider.triggerHapticFeedback("light");
         }
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("PLAYER_POGOED", () => {
+        Camera.shake(4, 0.08, 0, 1);
       })
     );
 
@@ -13054,6 +13107,16 @@ export function useHudSubscription() {
           soundSynth.setLowHPStatus(playerHP === 1);
         }
 
+        const groupD = document.getElementById("hud-d-hp-group");
+        const groupM = document.getElementById("hud-m-hp-group");
+        if (playerHP === 1) {
+          groupD?.classList.add("hud-stress-shiver");
+          groupM?.classList.add("hud-stress-shiver");
+        } else {
+          groupD?.classList.remove("hud-stress-shiver");
+          groupM?.classList.remove("hud-stress-shiver");
+        }
+
         for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
           const isLit = i < playerHP;
           const dotD = document.getElementById("hud-d-php-" + i);
@@ -14417,5 +14480,18 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   justify-content: center !important;
   margin-left: 0 !important;
   margin-top: 0 !important;
+}
+
+/* Structural Stress Jitter and Crisis HP Wobbles */
+@keyframes stress-shiver {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.2px, 0.8px); filter: brightness(1.2); }
+  40% { transform: translate(1.2px, -0.8px); }
+  60% { transform: translate(-0.8px, -1.2px); }
+  80% { transform: translate(0.8px, 1.2px); }
+}
+
+.hud-stress-shiver {
+  animation: stress-shiver 0.12s infinite linear !important;
 }
 `};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,height:`8.5vmin`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB`,subLabel:`OPEN SOURCE`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD .TXT`,subLabel:`SINGLE FILE FOR LLM CHAT`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 12px`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
