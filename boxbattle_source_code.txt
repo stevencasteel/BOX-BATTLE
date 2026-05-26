@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 4:15:37 PM
+ [SYSTEM] Generated: 5/26/2026, 5:00:03 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -4357,6 +4357,7 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
 import React from "react";
 import { soundSynth } from "@/core/SoundSynth";
 import { useCursorStore } from "@/store/useCursorStore";
+import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
 interface MenuContainerProps {
@@ -4421,6 +4422,7 @@ export function MenuButton({
   onMouseEnter,
   ...props
 }: MenuButtonProps) {
+
   const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     useCursorStore.getState().setCursorType("button");
     if (playHoverTick) {
@@ -4447,13 +4449,17 @@ export function MenuButton({
 
   if (variant === "large") {
     return (
-      <button
+      <motion.button
         className={`neo-btn-large ${isFocused ? "neo-btn-large-focused" : ""} ${className}`}
-        {...props}
+        {...(props as Record<string, unknown>)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        whileHover={{ scale: 1.025, x: 4 }}
+        whileTap={{ scale: 0.97 }}
+        animate={isFocused ? { scale: 1.025, x: 4 } : { scale: 1.0, x: 0 }}
+        transition={{ type: "spring", stiffness: 450, damping: 14 }}
       >
-        <div className="btn-indicator-light" style={isFocused ? undefined : { background: "#1e2430" }} />
+        <div className="btn-indicator-light"  />
         <div className="btn-label-group">
           <span className="btn-main-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {leftIcon}
@@ -4461,23 +4467,39 @@ export function MenuButton({
           </span>
           {subLabel && <span className="btn-sub-label">{subLabel}</span>}
         </div>
-        {isFocused && showArrow && <span className="cursor-arrow-large">▶</span>}
-      </button>
+        {isFocused && showArrow && (
+          <span className="cursor-arrow-large">
+            <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", fill: "currentColor", display: "block" }}>
+              <polygon points="20,15 80,50 20,85" />
+            </svg>
+          </span>
+        )}
+      </motion.button>
     );
   }
 
   return (
-    <button
+    <motion.button
       className={`neo-btn-led ${isFocused ? "neo-btn-led-focused" : ""} ${className}`}
-      {...props}
+      {...(props as Record<string, unknown>)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      whileHover={{ scale: 1.02, x: 2 }}
+      whileTap={{ scale: 0.98 }}
+      animate={isFocused ? { scale: 1.02, x: 2 } : { scale: 1.0, x: 0 }}
+      transition={{ type: "spring", stiffness: 450, damping: 14 }}
     >
       <div className={`btn-indicator-light ${indicatorClass}`} style={isFocused ? undefined : { background: "#1e2430" }} />
       {leftIcon}
       <span>{mainLabel}</span>
-      {isFocused && showArrow && <span className="cursor-arrow" style={{ marginLeft: "auto" }}>▶</span>}
-    </button>
+      {isFocused && showArrow && (
+          <span className="cursor-arrow">
+            <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", fill: "currentColor", display: "block" }}>
+              <polygon points="20,15 80,50 20,85" />
+            </svg>
+          </span>
+        )}
+    </motion.button>
   );
 }
 
@@ -4870,7 +4892,6 @@ export function SourceViewFooter({
           flexDirection: "row",
           gap: "8px",
           width: "100%",
-          justifyContent: "space-between",
           boxSizing: "border-box",
           marginTop: "12px",
           flexShrink: 0,
@@ -4941,6 +4962,7 @@ export function SourceViewFooter({
         flexDirection: "row",
         gap: "16px",
         width: "100%",
+        height: "8.5vmin",
         boxSizing: "border-box",
         marginTop: "12px",
         flexShrink: 0,
@@ -4951,9 +4973,10 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength)}
         onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
         leftIcon={<GithubIcon />}
-        mainLabel="GITHUB REPO"
-        subLabel="VIEW AND DOWNLOAD CODE ARCHIVE"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="GITHUB"
+        subLabel="OPEN SOURCE"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
 
       <MenuButton
@@ -4961,9 +4984,10 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
         leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="DOWNLOAD SOURCE"
-        subLabel="SAVE ALL CODE AS SINGLE .TXT FILE"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="DOWNLOAD .TXT"
+        subLabel="SINGLE FILE FOR LLM CHAT"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
 
       <MenuButton
@@ -4971,9 +4995,9 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
         leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="BACK TO MENU"
-        subLabel="EXIT SOURCE CODE VIEW"
-        style={{ flex: 1, boxSizing: "border-box" }}
+        mainLabel="BACK"
+        showArrow={false}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
       />
     </div>
   );
@@ -5219,7 +5243,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   return (
     <div
       className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 0" }}
+      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 12px" }}
     >
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2
@@ -5557,7 +5581,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
-  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   outline: none;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -5587,7 +5611,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   border-radius: 50%;
   background: #1e2430;
   margin-right: 24px;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
@@ -5612,7 +5636,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   color: #a0aec0;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: nowrap;
 }
 
 .neo-btn-large-focused .btn-main-label {
@@ -5626,7 +5651,9 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   color: #4a5568;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: pre-line;
+  line-height: 1.4;
 }
 
 .neo-btn-large-focused .btn-sub-label {
@@ -5643,10 +5670,16 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .cursor-arrow {
+  position: absolute;
+  right: 3.2vmin;
   color: var(--signal-green);
   font-weight: bold;
-  display: inline-block;
   animation: arrow-blink 0.4s infinite alternate;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 @keyframes arrow-blink {
@@ -5821,6 +5854,40 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   .neo-btn-large {
     padding: 10px 16px;
   }
+}
+
+
+/* Consolidated Vector Cursor Centering Overrides */
+.cursor-arrow-large {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.8vmin !important;
+  height: 1.8vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+}
+
+.cursor-arrow {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.4vmin !important;
+  height: 1.4vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
 }
 
 
@@ -14826,7 +14893,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   text-transform: uppercase;
   border-radius: 1.2vmin;
   cursor: pointer;
-  transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
   outline: none;
   display: flex;
   align-items: center;
@@ -14972,7 +15039,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
-  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   outline: none;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
@@ -14998,7 +15065,7 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   border-radius: 50%;
   background: #1e2430;
   margin-right: 2.4vmin;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
@@ -15024,7 +15091,8 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   color: #a0aec0;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: nowrap;
 }
 
 .neo-btn-large:hover .btn-main-label,
@@ -15039,7 +15107,9 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   color: #4a5568;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  white-space: pre-line;
+  line-height: 1.4;
 }
 
 .neo-btn-large:hover .btn-sub-label,
@@ -15049,18 +15119,31 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 }
 
 .cursor-arrow-large {
+  position: absolute;
+  right: 3.2vmin;
   color: var(--signal-green);
   font-size: 1.8vmin;
   font-weight: bold;
   animation: arrow-blink 0.4s infinite alternate;
-  margin-left: 1vmin;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .cursor-arrow {
+  position: absolute;
+  right: 3.2vmin;
+  width: 1.2vmin;
+  height: 1.2vmin;
   color: var(--signal-green);
-  font-weight: bold;
-  display: inline-block;
   animation: arrow-blink 0.4s infinite alternate;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes arrow-blink {
@@ -15386,6 +15469,40 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
   .neo-btn-large {
     padding: 10px 16px;
   }
+}
+
+
+/* Consolidated Vector Cursor Centering Overrides */
+.cursor-arrow-large {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.8vmin !important;
+  height: 1.8vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+}
+
+.cursor-arrow {
+  position: absolute !important;
+  right: 3.2vmin !important;
+  width: 1.4vmin !important;
+  height: 1.4vmin !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
 }
 
 
