@@ -12,6 +12,9 @@ export class PoolableParticle implements Particle, IPoolable {
   public life = 0;
   public maxLife = 0;
   public shape: "spark" | "dust" | "ring" = "spark";
+  public drag = 1.0;
+  public startColor = "";
+  public endColor = "";
   public isActive = false;
 
   public activate(
@@ -22,7 +25,10 @@ export class PoolableParticle implements Particle, IPoolable {
     color: string,
     size: number,
     life: number,
-    shape: "spark" | "dust" | "ring"
+    shape: "spark" | "dust" | "ring",
+    drag: number = 1.0,
+    startColor: string = "",
+    endColor: string = ""
   ) {
     this.x = x;
     this.y = y;
@@ -33,11 +39,17 @@ export class PoolableParticle implements Particle, IPoolable {
     this.life = life;
     this.maxLife = life;
     this.shape = shape;
+    this.drag = drag;
+    this.startColor = startColor || color;
+    this.endColor = endColor || color;
     this.isActive = true;
   }
 
   public deactivate() {
     this.isActive = false;
+    this.drag = 1.0;
+    this.startColor = "";
+    this.endColor = "";
   }
 }
 
@@ -66,7 +78,18 @@ export class ParticleSystem {
           const size = 2.5 + Math.random() * 3.5;
           const life = 0.22;
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, "spark");
+          const drag = 0.94;
+          let sCol = pColor;
+          let eCol = pColor;
+          if (pColor.includes("350") || pColor.includes("red") || pColor.includes("280")) {
+            sCol = "hsl(45, 100%, 75%)";
+            eCol = "hsl(350, 80%, 40%)";
+          } else if (pColor.includes("142") || pColor.includes("green")) {
+            sCol = "hsl(120, 100%, 80%)";
+            eCol = "hsl(142, 100%, 30%)";
+          }
+
+          this.pool.get(x, y, vx, vy, pColor, size, life, "spark", drag, sCol, eCol);
         }
       })
     );
@@ -101,6 +124,10 @@ export class ParticleSystem {
       if (p.life <= 0) {
         this.pool.release(p);
         continue;
+      }
+      if (p.drag !== 1.0) {
+        p.vx *= Math.pow(p.drag, dt * 60);
+        p.vy *= Math.pow(p.drag, dt * 60);
       }
       p.x += p.vx * dt;
       p.y += p.vy * dt;

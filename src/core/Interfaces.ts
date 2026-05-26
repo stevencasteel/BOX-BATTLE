@@ -29,6 +29,9 @@ export interface Particle {
   life: number;
   maxLife: number;
   shape: "spark" | "dust" | "ring";
+  drag?: number;
+  startColor?: string;
+  endColor?: string;
 }
 
 export interface IAbilityUser {

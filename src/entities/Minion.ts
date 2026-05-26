@@ -190,6 +190,9 @@ export class Minion extends BaseEntity {
       this.rotationVelocity = 0;
     } else {
       this.targetRotation = Math.sign(this.velocity.x) * 0.12;
+      if (this.attackState === "PATROL" && !this.isDying && !this.isSpawning) {
+        this.targetRotation += Math.sin(performance.now() * 0.008 + this.position.x) * 0.04;
+      }
     }
 
     this.exhaustTimer -= dt;
