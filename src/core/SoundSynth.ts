@@ -9,11 +9,37 @@ class SoundSynth {
   private music: MusicSequencer;
   private drones: DroneManager;
 
+  private getPlayerXFn?: () => number;
+  private getBossXFn?: () => number;
+  private getMinionXFn?: (id: string) => number;
+
   constructor() {
     this.ctxManager = new AudioContextManager();
     this.sfx = new SFXManager(this.ctxManager);
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
+  }
+
+  public registerCoordinateProviders(
+    playerX: () => number,
+    bossX: () => number,
+    minionX: (id: string) => number
+  ) {
+    this.getPlayerXFn = playerX;
+    this.getBossXFn = bossX;
+    this.getMinionXFn = minionX;
+  }
+
+  public getPlayerX(): number | undefined {
+    return this.getPlayerXFn?.();
+  }
+
+  public getBossX(): number | undefined {
+    return this.getBossXFn?.();
+  }
+
+  public getMinionX(id: string): number | undefined {
+    return this.getMinionXFn?.(id);
   }
 
   public get hasUserGestured(): boolean {

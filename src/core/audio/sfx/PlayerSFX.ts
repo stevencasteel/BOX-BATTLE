@@ -2,6 +2,8 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { eventBroker } from "@/core/eventBroker";
+import { soundSynth } from "@/core/SoundSynth";
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -31,7 +33,10 @@ export class PlayerSFX {
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
-    ctxManager.registerOnInit(() => this.init(ctxManager));
+    ctxManager.registerOnInit(() => {
+      this.init(ctxManager);
+      this.setupSubscriptions();
+    });
   }
 
   private init(ctxManager: AudioContextManager) {
@@ -114,6 +119,68 @@ export class PlayerSFX {
     });
     this.slashNoisePuff.chain(this.slashFilterPuff, this.slashEnvPuff, this.playerPanner);
     this.slashNoisePuff.start();
+  }
+
+  private setupSubscriptions() {
+    eventBroker.subscribe("PLAYER_HURT", () => {
+      this.playHurt(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_JUMPED", () => {
+      this.playJump(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_DASHED", () => {
+      this.playDash(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_POGOED", () => {
+      this.playPogo(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
+      this.playSlash(direction, soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
+      if (level === 2) {
+        this.playFireballLvl2(soundSynth.getPlayerX());
+      } else {
+        this.playFireballLvl1(soundSynth.getPlayerX());
+      }
+    });
+
+    eventBroker.subscribe("PLAYER_LANDED", () => {
+      this.playLanding(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_START", () => {
+      soundSynth.playHealStart(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_CANCEL", () => {
+      this.playHealCancel(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_COMPLETE", () => {
+      soundSynth.playHealComplete();
+    });
+
+    eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
+      this.playDashRecharge(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_START", () => {
+      soundSynth.playChargeStart(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+      soundSynth.updateChargeTimer(timer);
+    });
+
+    eventBroker.subscribe("CHARGE_STOP", () => {
+      soundSynth.stopChargeDrone();
+    });
   }
 
   public playDashRecharge(x?: number) {

@@ -2,6 +2,8 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { eventBroker } from "@/core/eventBroker";
+import { soundSynth } from "@/core/SoundSynth";
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -16,16 +18,17 @@ export class BossSFX {
   private teleportSynth!: Tone.Synth;
   private dialogueSynthPlayer!: Tone.Synth;
 
-  // Track combos independently for each unique target entity
   private entityComboMap = new Map<string, { lastHitTime: number; hitSequenceCount: number }>();
 
-  // Track spike bounces
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
-    ctxManager.registerOnInit(() => this.init(ctxManager));
+    ctxManager.registerOnInit(() => {
+      this.init(ctxManager);
+      this.setupSubscriptions();
+    });
   }
 
   private init(ctxManager: AudioContextManager) {
@@ -68,6 +71,51 @@ export class BossSFX {
       oscillator: { type: "sine" },
       envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.05 },
     }).connect(this.impactPanner);
+  }
+
+  private setupSubscriptions() {
+    eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+      this.playHitConfirm(soundSynth.getBossX(), "boss-01");
+      if (currentHealth <= 0) {
+        this.playBossExplosion(soundSynth.getBossX());
+      }
+    });
+
+    eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+      const mX = soundSynth.getMinionX(id);
+      this.playHitConfirm(mX, id);
+      if (currentHealth <= 0) {
+        this.playMinionDeconstruct(mX);
+      }
+    });
+
+    eventBroker.subscribe("PLAYER_SPIKED", () => {
+      this.playSpikeStrike(soundSynth.getPlayerX());
+    });
+
+    eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+      this.playBossPhaseShift(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("MINION_SPAWNING", () => {
+      this.playMinionSpawning();
+    });
+
+    eventBroker.subscribe("MINION_DISSOLVING", () => {
+      this.playMinionDeconstruct();
+    });
+
+    eventBroker.subscribe("BOSS_SWIPED", () => {
+      this.playBossSwipe(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("BOSS_TELEGRAPH", () => {
+      this.playBossTelegraph(soundSynth.getBossX());
+    });
+
+    eventBroker.subscribe("BOSS_LUNGED", () => {
+      this.playBossLunge(soundSynth.getBossX());
+    });
   }
 
   public playBossTelegraph(x?: number) {
@@ -130,7 +178,6 @@ export class BossSFX {
 
   public playSpikeStrike(x?: number) {
     const nowPerformance = performance.now();
-    // Escalate pitch on consecutive spike hits within 2.5 seconds (uncapped)
     if (nowPerformance - this.lastSpikeTime < 2500) {
       this.spikeSequenceCount = this.spikeSequenceCount + 1;
     } else {
@@ -159,7 +206,7 @@ export class BossSFX {
     }
 
     if (nowPerformance - combo.lastHitTime < 1500) {
-      combo.hitSequenceCount = combo.hitSequenceCount + 1; // Uncapped combo pitch escalation
+      combo.hitSequenceCount = combo.hitSequenceCount + 1;
     } else {
       combo.hitSequenceCount = 0;
     }
