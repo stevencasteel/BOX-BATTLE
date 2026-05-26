@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Z7HnSHzc.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DP4DxX5D.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1272,7 +1272,8 @@ export default function App() {
     </svg>
   );
 }
-`,"src/components/DialogueConsole.tsx":`import { DialogueState } from "@/hooks/useGameDialogue";
+`,"src/components/DialogueConsole.tsx":`import { motion } from "framer-motion";
+import { DialogueState } from "@/hooks/useGameDialogue";
 
 interface DialogueConsoleProps {
   playerDialogue: DialogueState;
@@ -1282,10 +1283,49 @@ interface DialogueConsoleProps {
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
   const mobileClass = isTouchDevice ? "is-mobile" : "";
+
+  const leftState = playerDialogue.active 
+    ? "active" 
+    : bossDialogue.active 
+      ? "inactive" 
+      : "idle";
+
+  const rightState = bossDialogue.active 
+    ? "active" 
+    : playerDialogue.active 
+      ? "inactive" 
+      : "idle";
+
+  const getVariants = (speaker: "player" | "boss") => ({
+    active: {
+      scale: 1.02,
+      opacity: 1,
+      borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)",
+      boxShadow: speaker === "player" 
+        ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)"
+        : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)",
+    },
+    inactive: {
+      scale: 0.96,
+      opacity: 0.15,
+      borderColor: "rgba(0, 0, 0, 0.3)",
+      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
+    },
+    idle: {
+      scale: 0.98,
+      opacity: 0.35,
+      borderColor: "rgba(0, 0, 0, 0.3)",
+      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
+    }
+  });
+
   return (
     <div className={\`dialogue-console \${mobileClass}\`}>
-      <div
-        className={\`dialogue-box-left neo-pressed \${playerDialogue.active ? "dialogue-active-green" : "dialogue-inactive"} \${mobileClass}\`}
+      <motion.div
+        animate={leftState}
+        variants={getVariants("player")}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className={\`dialogue-box-left neo-pressed \${mobileClass}\`}
       >
         <div
           className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""} \${mobileClass}\`}
@@ -1301,10 +1341,13 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div
-        className={\`dialogue-box-right neo-pressed \${bossDialogue.active ? "dialogue-active-red" : "dialogue-inactive"} \${mobileClass}\`}
+      <motion.div
+        animate={rightState}
+        variants={getVariants("boss")}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className={\`dialogue-box-right neo-pressed \${mobileClass}\`}
       >
         <div className="dialogue-text-container" style={{ textAlign: "right" }}>
           <div
@@ -1323,7 +1366,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             background: bossDialogue.active ? "" : "#07080b",
           }}
         />
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -2980,11 +3023,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 0 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 0 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               {audio.masterMuted ? (
                 <VolumeX size={14} style={{ flexShrink: 0 }} />
               ) : (
@@ -3017,11 +3055,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 1 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 1 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Zap size={14} style={{ flexShrink: 0 }} />
               SOUND EFFECTS
             </span>
@@ -3050,11 +3083,6 @@ export function AudioScreen({
         <div className="mixer-strip">
           <div className="mixer-header" style={{ color: menuIndex === 2 ? "#22c55e" : "#718096", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {menuIndex === 2 && (
-                <span className="cursor-arrow" style={{ marginRight: "6px" }}>
-                  ▶
-                </span>
-              )}
               <Music size={14} style={{ flexShrink: 0 }} />
               MUSIC
             </span>
@@ -3101,8 +3129,7 @@ export function AudioScreen({
       </div>
     </MenuContainer>
   );
-}
-`,"src/components/menus/ControlsScreen.css":`.binding-board {
+}`,"src/components/menus/ControlsScreen.css":`.binding-board {
   width: 100%;
   max-width: 64vmin;
   padding: 1.6vmin 2vmin;
@@ -3445,8 +3472,7 @@ export function ControlsScreen({
                     }}
                   >
                     <span
-                      className="cursor-arrow"
-                      style={{ marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
+                      style={{ color: "var(--signal-green)", marginRight: "8px", visibility: isFocusedRow ? "visible" : "hidden" }}
                     >
                       ▶
                     </span>
@@ -3939,6 +3965,7 @@ export function MenuBackButton({
 import { SaveSlotData } from "@/core/SaveManager";
 import { Save, FolderPlus, Copy, Trash2 } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
+import { motion } from "framer-motion";
 
 interface SaveSelectScreenProps {
   slots: SaveSlotData[];
@@ -3969,10 +3996,10 @@ export function SaveSelectScreen({
 }: SaveSelectScreenProps) {
   const selectHeaderTitle = isCopyMode
     ? copySourceIndex === -1
-      ? "CHOOSE SLOT TO COPY"
+      ? "COPY A SLAVE SLOT"
       : "CHOOSE WHERE TO COPY"
     : isEraseMode
-      ? "CHOOSE SLOT TO DELETE"
+      ? "DELETE A SAVE SLOT"
       : "CHOOSE A SAVE SLOT";
 
   return (
@@ -3981,24 +4008,37 @@ export function SaveSelectScreen({
 
       <div className="slot-list">
         {slots.map((slot, i) => (
-          <button
+          <motion.button
             key={i}
             onClick={() => handleSlotSelect(i)}
             onMouseEnter={() => {
               playHoverTick();
               setMenuIndex(i);
             }}
+            whileTap={{ scale: 0.985 }}
+            animate={
+              copySourceIndex === i 
+                ? { scale: [1, 1.015, 1], borderColor: ["rgba(234, 179, 8, 0.15)", "rgba(234, 179, 8, 0.85)", "rgba(234, 179, 8, 0.15)"] } 
+                : isEraseMode && !slot.empty 
+                  ? { scale: [1, 1.015, 1], borderColor: ["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.85)", "rgba(239, 68, 68, 0.15)"] }
+                  : {}
+            }
+            transition={
+              (copySourceIndex === i || (isEraseMode && !slot.empty))
+                ? { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+                : { type: "spring", stiffness: 450, damping: 14 }
+            }
             className={\`slot-card \${menuIndex === i ? "slot-card-focused" : slot.empty ? "slot-card-empty" : "slot-card-loaded"}\`}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <div className="flex-row" style={{ alignItems: "center", gap: "12px" }}>
               <span
-                className="cursor-arrow"
                 style={{
                   visibility: menuIndex === i ? "visible" : "hidden",
                   width: "16px",
                   display: "inline-block",
                   textAlign: "center",
+                  color: "var(--signal-green)"
                 }}
               >
                 ▶
@@ -4048,7 +4088,7 @@ export function SaveSelectScreen({
                 {slot.empty ? "EMPTY" : "SAVED GAME"}
               </span>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -4094,8 +4134,7 @@ export function SaveSelectScreen({
       </div>
     </MenuContainer>
   );
-}
-`,"src/components/menus/SettingsScreen.tsx":`import { Volume2, Keyboard } from "lucide-react";
+}`,"src/components/menus/SettingsScreen.tsx":`import { Volume2, Keyboard } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton, MenuBackButton } from "./MenuPrimitives";
 
 interface SettingsScreenProps {
@@ -4749,8 +4788,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       />
     </div>
   );
-}
-`,"src/components/menus/TitleScreen.css":`.title-screen-container {
+}`,"src/components/menus/TitleScreen.css":`.title-screen-container {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
