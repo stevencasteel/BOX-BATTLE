@@ -50,6 +50,15 @@ export class DashComponent implements IEntityComponent {
           opacity: 0.6,
         });
         this.ghostSpawnTimer = 0.025;
+
+        // Spawn high speed trailing wind resistance lines matching trajectory angle
+        eventBroker.publish("SPAWN_SPARKS", {
+          x: this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
+          y: this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
+          angle: Math.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (Math.random() * 0.4 - 0.2),
+          color: "rgba(255, 255, 255, 0.22)",
+          count: 2,
+        });
       }
 
       if (this.dashTimer <= 0) {

@@ -35,6 +35,7 @@ export type GameEventMap = {
   CHARGE_START: void;
   CHARGE_UPDATE: { timer: number };
   CHARGE_STOP: void;
+  CHARGE_MAXED: void;
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
 };

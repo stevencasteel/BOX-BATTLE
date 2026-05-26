@@ -1,4 +1,5 @@
 import { eventBroker } from "@/core/eventBroker";
+import { UNITS } from "@/core/Units";
 import { Camera } from "@/core/Camera";
 import { soundSynth } from "@/core/SoundSynth";
 import { inputProvider } from "@/core/InputProvider";
@@ -61,6 +62,26 @@ export class SimulationSystems {
     this.unsubscribes.push(
       eventBroker.subscribe("HIT_STOP", ({ duration }) => {
         Camera.triggerHitStop(duration);
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+        if (timer >= UNITS.CHARGE_LVL2_TIME) {
+          if (Math.random() < 0.16) {
+            inputProvider.triggerHapticFeedback("light");
+          }
+        } else if (timer >= UNITS.CHARGE_LVL1_TIME) {
+          if (Math.random() < 0.08) {
+            inputProvider.triggerHapticFeedback("light");
+          }
+        }
+      })
+    );
+
+    this.unsubscribes.push(
+      eventBroker.subscribe("CHARGE_MAXED", () => {
+        inputProvider.triggerHapticFeedback("medium");
       })
     );
 

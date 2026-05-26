@@ -7,6 +7,7 @@ export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
   public isCharging: boolean = false;
+  private hasPoppedLvl2: boolean = false;
   public chargeTimer: number = 0;
 
   public setup(owner: BaseEntity): void {
@@ -17,6 +18,11 @@ export class FireballComponent implements IEntityComponent {
     if (this.isCharging) {
       this.chargeTimer += dt;
       eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
+
+      if (this.chargeTimer >= UNITS.CHARGE_LVL2_TIME && !this.hasPoppedLvl2) {
+        this.hasPoppedLvl2 = true;
+        eventBroker.publish("CHARGE_MAXED", undefined);
+      }
     }
   }
 
@@ -37,6 +43,7 @@ export class FireballComponent implements IEntityComponent {
   public releaseCharge(dirX: number, dirY: number, facingDirection: number): void {
     if (!this.isCharging) return;
     this.isCharging = false;
+    this.hasPoppedLvl2 = false;
     eventBroker.publish("CHARGE_STOP", undefined);
 
     if (this.chargeTimer >= UNITS.CHARGE_LVL1_TIME) {

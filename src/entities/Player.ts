@@ -37,6 +37,8 @@ export class Player extends BaseEntity {
 
   public hurtTimer: number = 0;
   private unsubHurt!: () => void;
+  private unsubChargeMaxed!: () => void;
+  private maxFallSpeed: number = 0;
   private unsubPogo!: () => void;
   private unsubHealComplete!: () => void;
   private unsubDamageDealt!: () => void;
@@ -119,6 +121,11 @@ export class Player extends BaseEntity {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
     });
 
+    this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
+      this.visualScale = { x: 1.25, y: 0.75 };
+      this.scaleVelocity = { x: -16.0, y: 16.0 };
+    });
+
     this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
       if (this.healingCharges >= this.maxHealingCharges) return;
 
@@ -156,6 +163,18 @@ export class Player extends BaseEntity {
     }
 
     this.targetRotation = targetRotation;
+
+    if (this.isCharging) {
+      const chargeProgress = Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME);
+      const targetSquish = 0.03 * chargeProgress;
+      const vibration = Math.sin(performance.now() * 0.04) * 0.004 * chargeProgress;
+      this.targetVisualScale = { 
+        x: 1.0 - targetSquish + vibration, 
+        y: 1.0 + targetSquish - vibration 
+      };
+    } else {
+      this.targetVisualScale = { x: 1.0, y: 1.0 };
+    }
 
     if (this.hurtTimer > 0) {
       super.update(dt);
@@ -205,14 +224,15 @@ export class Player extends BaseEntity {
         targetScaleX = 0.85;
         targetScaleY = 1.15;
 
-        if (Math.random() < 0.12) {
+        if (Math.random() < 0.35) {
           const contactX = this.position.x - this.lastWallNormal * (this.size.width / 2);
+          const contactY = this.position.y + (this.size.height / 2);
           eventBroker.publish("SPAWN_SPARKS", {
             x: contactX,
-            y: this.position.y + (Math.random() * 30 - 15),
-            angle: this.lastWallNormal === 1 ? 0 : Math.PI,
-            color: "rgba(255, 255, 255, 0.35)",
-            count: 2,
+            y: contactY,
+            angle: this.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15,
+            color: "hsl(45, 100%, 65%)",
+            count: 1,
           });
         }
       }
@@ -224,17 +244,21 @@ export class Player extends BaseEntity {
   private updateAirTime(dt: number) {
     if (!this.physics.isGrounded) {
       this.airtimeDuration += dt;
+      this.maxFallSpeed = Math.max(this.maxFallSpeed, this.velocity.y);
     } else {
-      if (this.airtimeDuration > 0.18) {
-        const rawFactor = Math.min(1, Math.max(0, (this.airtimeDuration - 0.18) / 0.52));
-        const factor = rawFactor * rawFactor; // Soft quadratic easing to prevent flat squishing on short falls
-        this.visualScale = { x: 1.0 + 0.22 * factor, y: 1.0 - 0.22 * factor };
-        this.scaleVelocity = { x: 8 * factor, y: -15 * factor };
-        this.velocity.x *= (1.0 - 0.75 * factor);
-        eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
-        eventBroker.publish("PLAYER_LANDED", undefined);
+      if (this.airtimeDuration > 0.15) {
+        const speedFactor = Math.max(0, (this.maxFallSpeed - 120) / 680);
+        const factor = Math.min(1.0, 0.3 * speedFactor + 0.7 * speedFactor * speedFactor);
+        if (factor > 0.01) {
+          this.visualScale = { x: 1.0 + 0.28 * factor, y: 1.0 - 0.28 * factor };
+          this.scaleVelocity = { x: 10 * factor, y: -18 * factor };
+          this.velocity.x *= (1.0 - 0.8 * factor);
+          eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
+          eventBroker.publish("PLAYER_LANDED", undefined);
+        }
       }
       this.airtimeDuration = 0;
+      this.maxFallSpeed = 0;
     }
   }
 
@@ -244,7 +268,7 @@ export class Player extends BaseEntity {
     const isNearJumpApex = !this.physics.isGrounded && Math.abs(this.velocity.y) < 120;
 
     if (isSliding) {
-      this.physics.gravity = 0;
+      this.physics.gravity = 650; // Provide steady gravity friction to slide smoothly rather than sticking vertically
     } else if (isPogoing) {
       this.physics.gravity = 1200 * 0.85;
     } else if (isNearJumpApex) {
@@ -560,6 +584,7 @@ export class Player extends BaseEntity {
     this.unsubHurt();
     this.unsubPogo();
     this.unsubHealComplete();
+    this.unsubChargeMaxed();
     this.unsubDamageDealt();
     super.teardown();
   }
