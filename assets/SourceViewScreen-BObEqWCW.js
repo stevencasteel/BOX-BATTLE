@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-DKoErON5.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-Cm2ufLSX.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -631,13 +631,13 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
   animation: crt-power-on 0.4s cubic-bezier(0.25, 1, 0.3, 1) forwards !important;
 }
 
-/* Background Pixel Grid Texture */
+/* Rich CRT Glass Phosphor Grid Texture */
 .gameover-overlay::before {
   content: " ";
   display: block;
   position: absolute;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.42) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.12), rgba(0, 255, 0, 0.04), rgba(0, 0, 255, 0.12));
   z-index: 1;
   background-size: 100% 4px, 6px 100%;
   pointer-events: none;
@@ -672,7 +672,7 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 }
 
 .victory-icon-anim {
-  animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: victory-bounce-glow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, victory-float-glow 2s infinite ease-in-out 0.8s;
 }
 
 /* Defeat Element Shiver animations */
@@ -698,7 +698,7 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 }
 
 .defeat-icon-anim {
-  animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards;
+  animation: defeat-shake-glow 0.8s cubic-bezier(0.25, 0.8, 0.25, 1.1) forwards, defeat-shiver-glow 0.22s infinite linear 0.8s;
 }
 
 /* Title text flickers */
@@ -755,6 +755,43 @@ Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.
 
 .button-reveal-anim {
   animation: spring-up 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.15) forwards;
+}
+
+
+/* --- ACTIVE ELEMENT ANIMATION LOOPS --- */
+@keyframes victory-float-glow {
+  0% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));
+  }
+  50% {
+    transform: translateY(-6px) scale(1.05);
+    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.85));
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.4));
+  }
+}
+
+@keyframes defeat-shiver-glow {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4));
+  }
+  20% {
+    transform: translate(-1.5px, 1px) rotate(-1.5deg);
+  }
+  40% {
+    transform: translate(1.5px, -1px) rotate(2deg);
+    filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.85));
+  }
+  60% {
+    transform: translate(-1.5px, -1px) rotate(-1.5deg);
+  }
+  80% {
+    transform: translate(1.5px, 1.5px) rotate(1deg);
+  }
 }
 `,"src/App.tsx":`import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
