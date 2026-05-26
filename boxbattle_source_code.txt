@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 10:52:35 PM
+ [SYSTEM] Generated: 5/26/2026, 11:04:58 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -75,6 +75,9 @@
 │   │   │   ├── MusicSequencer.ts
 │   │   │   ├── SFXManager.ts
 │   │   │   └── sfxPresetData.ts
+│   │   ├── effects/
+│   │   │   ├── CinematicDeathRenderer.ts
+│   │   │   └── PlayerFxRenderer.ts
 │   │   ├── BattleDirector.ts
 │   │   ├── Camera.ts
 │   │   ├── Engine.ts
@@ -535,15 +538,6 @@ misc:
 
 
 
-A toy pull string that ratchets back
-Physics reaction knockback from minion when you hit it.
-
-
-Reactive Spring-Loaded HUD Elements
-
-
-
-In our cabinet middle header in the arena, we should start by showing the zxc on the left, and arrow configuration key caps. as the user pressing each one they visually change to indicate they've been "used". After each button has been pressed, we take turns showing the combo they should press to do each kind of move in the game (like street fighter). for example, up dash next. then how to charge shot. then, how to determination charge. then, how to drop from one way platform. once all have been shown, then box battle, what we have there already, appears and we don't show any more move tips. (if user presses the preset 2 buttons, that will also count as "using" the keys". and if they have preset 2 chosen in settings, then preset 2 key caps are shown. I'm not sure what to do if player has custom key binding chosen.
 
 
 
@@ -8645,6 +8639,7 @@ export class World implements IWorld {
 
 ● ./src/core/WorldRenderer.ts
 ────────────────────────────────────────────────────
+import { CinematicDeathRenderer } from "@/core/effects/CinematicDeathRenderer";
 import { Player } from "@/entities/Player";
 import { Camera } from "./Camera";
 import { World } from "./World";
@@ -8944,201 +8939,7 @@ export class WorldRenderer {
     }
 
     if (bossDeathTimer >= 0 && bossDeathPos) {
-      const t = bossDeathTimer;
-      const px = bossDeathPos.x;
-      const py = bossDeathPos.y;
-
-      const isPlayer = !!(world.player && world.player.isDead);
-      const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
-      const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
-      const shadowColorRGBA = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
-
-      // 1. Quantum Voxel Shatter & Gravity Cascade (Time 0.0s to 1.0s)
-      if (t < 1.0) {
-        const progress = t;
-        this.ctx.save();
-
-        const gridCols = 8;
-        const gridRows = 8;
-        const baseWidth = 60;
-        const baseHeight = 60;
-
-        for (let row = 0; row < gridRows; row++) {
-          const cascadeDir = isPlayer ? -1 : 1;
-          const birthDelay = isPlayer ? (7 - row) * 0.04 : row * 0.04;
-          const activeProgress = Math.max(0, progress - birthDelay) / (1.0 - birthDelay);
-
-          if (activeProgress > 0 && activeProgress < 1.0) {
-            const opacity = 1.0 - activeProgress;
-            const size = (baseWidth / gridCols) * (1.0 - activeProgress * 0.4);
-
-            const startX = px - baseWidth / 2 + (row % 2 === 0 ? 0.3 : -0.3) * (Math.random() * 4 - 2) + (row + 0.5) * (baseWidth / gridCols);
-            const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
-
-            const angle = Math.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
-            const thrust = activeProgress * 80;
-            const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
-
-            const curX = startX + Math.cos(angle) * thrust + (Math.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
-            const curY = startY + Math.sin(angle) * thrust + gravityOffset;
-
-            this.ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
-            this.ctx.globalAlpha = opacity;
-            this.ctx.shadowColor = shadowColorRGBA;
-            this.ctx.shadowBlur = 10 * opacity;
-
-            this.ctx.save();
-            this.ctx.translate(curX, curY);
-            this.ctx.rotate(progress * 4 + row);
-            this.ctx.fillRect(-size / 2, -size / 2, size, size);
-            this.ctx.restore();
-          }
-        }
-
-        if (progress >= 0.7) {
-          const pinchProgress = (progress - 0.7) / 0.3;
-          const flareAlpha = Math.sin(pinchProgress * Math.PI);
-
-          this.ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
-          this.ctx.shadowBlur = 35 * flareAlpha;
-          this.ctx.fillStyle = "#ffffff";
-          this.ctx.globalAlpha = flareAlpha;
-
-          const hLength = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
-          const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
-          this.ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
-
-          const vHeight = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
-          const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
-          this.ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
-
-          this.ctx.beginPath();
-          this.ctx.arc(px, py, Math.max(2, 12 * (1.0 - pinchProgress)), 0, Math.PI * 2);
-          this.ctx.fill();
-        }
-
-        this.ctx.restore();
-      }
-
-      // 2. Detonation White Flash (Time 1.0s to 1.25s)
-      const flashT = t - 1.0;
-      if (flashT >= 0 && flashT < 0.25) {
-        const flashOpacity = Math.max(0, 0.85 * (1 - flashT / 0.25));
-        this.ctx.fillStyle = "rgba(255, 255, 255, " + flashOpacity + ")";
-        this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
-      }
-
-      const explodeT = t - 1.0;
-
-      // 3. Supernova Vector Energy Beams & Chromatic Dispersion Shockwaves (Time 1.0s to 2.2s)
-      if (explodeT >= 0 && explodeT < 1.2) {
-        const explodeProgress = explodeT / 1.2;
-        const opacity = Math.max(0, 1.0 - explodeProgress);
-
-        this.ctx.save();
-
-        const rayCount = 14;
-        const maxRayLength = 480;
-        
-        for (let i = 0; i < rayCount; i++) {
-          const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
-          const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
-          const rayWidth = 18 * Math.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
-
-          const p1_angle = angle - (rayWidth / currentLength);
-          const p2_angle = angle + (rayWidth / currentLength);
-
-          const x1 = px + Math.cos(p1_angle) * currentLength;
-          const y1 = py + Math.sin(p1_angle) * currentLength;
-          const x2 = px + Math.cos(p2_angle) * currentLength;
-          const y2 = py + Math.sin(p2_angle) * currentLength;
-
-          this.ctx.fillStyle = isPlayer ? "hsla(142, 100%, 65%, " + (opacity * 0.35) + ")" : "hsla(350, 100%, 65%, " + (opacity * 0.35) + ")";
-          this.ctx.shadowColor = primaryColor;
-          this.ctx.shadowBlur = 20 * opacity;
-          this.ctx.beginPath();
-          this.ctx.moveTo(px, py);
-          this.ctx.lineTo(x1, y1);
-          this.ctx.lineTo(x2, y2);
-          this.ctx.closePath();
-          this.ctx.fill();
-
-          this.ctx.fillStyle = "rgba(255, 255, 255, " + (opacity * 0.75) + ")";
-          this.ctx.shadowBlur = 0;
-          this.ctx.beginPath();
-          this.ctx.moveTo(px, py);
-          this.ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
-          this.ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
-          this.ctx.closePath();
-          this.ctx.fill();
-        }
-
-        const ringCount = 3;
-        const ringSpeed = 820;
-        
-        for (let i = 0; i < ringCount; i++) {
-          const delay = i * 0.12;
-          const ringTime = explodeT - delay;
-
-          if (ringTime > 0 && ringTime < 1.0) {
-            const radius = ringTime * ringSpeed;
-            const ringOpacity = Math.max(0, 1 - ringTime / 1.0);
-
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.arc(px - 3, py, radius, 0, Math.PI * 2);
-            this.ctx.strokeStyle = isPlayer ? "rgba(168, 85, 247, " + (ringOpacity * 0.4) + ")" : "rgba(239, 68, 68, " + (ringOpacity * 0.4) + ")";
-            this.ctx.lineWidth = Math.max(1, 10 * (1 - ringTime / 1.0));
-            this.ctx.stroke();
-            this.ctx.restore();
-
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.arc(px + 3, py, radius, 0, Math.PI * 2);
-            this.ctx.strokeStyle = isPlayer ? "rgba(34, 197, 94, " + (ringOpacity * 0.7) + ")" : "rgba(234, 179, 8, " + (ringOpacity * 0.7) + ")";
-            this.ctx.lineWidth = Math.max(1, 6 * (1 - ringTime / 1.0));
-            this.ctx.stroke();
-            this.ctx.restore();
-
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.arc(px, py, radius, 0, Math.PI * 2);
-            this.ctx.strokeStyle = "rgba(255, 255, 255, " + (ringOpacity * 0.95) + ")";
-            this.ctx.lineWidth = Math.max(1, 3 * (1 - ringTime / 1.0));
-            this.ctx.stroke();
-            this.ctx.restore();
-          }
-        }
-
-        const particleCount = 28;
-        const particleSpeed = 620;
-        const particleLife = 1.0;
-        
-        if (explodeT < particleLife) {
-          const partOpacity = Math.max(0, 1 - explodeT / particleLife);
-          this.ctx.save();
-          this.ctx.shadowColor = primaryColor;
-          this.ctx.shadowBlur = 18 * partOpacity;
-
-          for (let i = 0; i < particleCount; i++) {
-            const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
-            const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-            const x = px + Math.cos(angle) * distance;
-            const y = py + Math.sin(angle) * distance;
-
-            this.ctx.fillStyle = primaryColor;
-            this.ctx.globalAlpha = partOpacity * 0.8;
-            this.ctx.fillRect(x - 5, y - 5, 10, 10);
-
-            this.ctx.fillStyle = "#ffffff";
-            this.ctx.globalAlpha = partOpacity;
-            this.ctx.fillRect(x - 2, y - 2, 4, 4);
-          }
-          this.ctx.restore();
-        }
-
-        this.ctx.restore();
-      }
+      CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos);
     }
 
 
@@ -10674,6 +10475,458 @@ export const SFX_PRESETS = {
     },
   },
 };
+
+
+
+● ./src/core/effects/CinematicDeathRenderer.ts
+────────────────────────────────────────────────────
+import { UNITS } from "@/core/Units";
+import { World } from "@/core/World";
+
+const PSEUDO_RANDOM_LUT = Array.from({ length: 128 }, () => Math.random() * 4 - 2);
+
+export class CinematicDeathRenderer {
+  public static render(
+    ctx: CanvasRenderingContext2D,
+    world: World,
+    bossDeathTimer: number,
+    bossDeathPos: { x: number; y: number }
+  ): void {
+    const t = bossDeathTimer;
+    const px = bossDeathPos.x;
+    const py = bossDeathPos.y;
+
+    const isPlayer = !!(world.player && world.player.isDead);
+    const primaryColor = isPlayer ? "hsl(142, 71%, 58%)" : "hsl(350, 80%, 60%)";
+    const secondaryColor = isPlayer ? "hsl(280, 80%, 65%)" : "hsl(45, 100%, 65%)";
+    const shadowColorRGBA = isPlayer ? "rgba(34, 197, 94, 0.9)" : "rgba(239, 68, 68, 0.9)";
+
+    if (t < 1.0) {
+      const progress = t;
+      ctx.save();
+
+      const gridCols = 8;
+      const gridRows = 8;
+      const baseWidth = 60;
+      const baseHeight = 60;
+
+      for (let row = 0; row < gridRows; row++) {
+        const cascadeDir = isPlayer ? -1 : 1;
+        const birthDelay = isPlayer ? (7 - row) * 0.04 : row * 0.04;
+        const activeProgress = Math.max(0, progress - birthDelay) / (1.0 - birthDelay);
+
+        if (activeProgress > 0 && activeProgress < 1.0) {
+          const opacity = 1.0 - activeProgress;
+          const size = (baseWidth / gridCols) * (1.0 - activeProgress * 0.4);
+
+          const lutIdx = (row * 7) % PSEUDO_RANDOM_LUT.length;
+          const offsetVal = PSEUDO_RANDOM_LUT[lutIdx];
+
+          const startX = px - baseWidth / 2 + (row % 2 === 0 ? 0.3 : -0.3) * offsetVal + (row + 0.5) * (baseWidth / gridCols);
+          const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
+
+          const angle = Math.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
+          const thrust = activeProgress * 80;
+          const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
+
+          const curX = startX + Math.cos(angle) * thrust + (Math.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
+          const curY = startY + Math.sin(angle) * thrust + gravityOffset;
+
+          ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
+          ctx.globalAlpha = opacity;
+          ctx.shadowColor = shadowColorRGBA;
+          ctx.shadowBlur = 10 * opacity;
+
+          ctx.save();
+          ctx.translate(curX, curY);
+          ctx.rotate(progress * 4 + row);
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+          ctx.restore();
+        }
+      }
+
+      if (progress >= 0.7) {
+        const pinchProgress = (progress - 0.7) / 0.3;
+        const flareAlpha = Math.sin(pinchProgress * Math.PI);
+
+        ctx.shadowColor = isPlayer ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)";
+        ctx.shadowBlur = 35 * flareAlpha;
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = flareAlpha;
+
+        const hLength = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
+        ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
+
+        const vHeight = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
+        ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
+
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(2, 12 * (1.0 - pinchProgress)), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    const flashT = t - 1.0;
+    if (flashT >= 0 && flashT < 0.25) {
+      const flashOpacity = Math.max(0, 0.85 * (1 - flashT / 0.25));
+      ctx.fillStyle = "rgba(255, 255, 255, " + flashOpacity + ")";
+      ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+    }
+
+    const explodeT = t - 1.0;
+
+    if (explodeT >= 0 && explodeT < 1.2) {
+      const explodeProgress = explodeT / 1.2;
+      const opacity = Math.max(0, 1.0 - explodeProgress);
+
+      ctx.save();
+
+      const rayCount = 14;
+      const maxRayLength = 480;
+      
+      for (let i = 0; i < rayCount; i++) {
+        const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
+        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
+        const rayWidth = 18 * Math.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
+
+        const p1_angle = angle - (rayWidth / currentLength);
+        const p2_angle = angle + (rayWidth / currentLength);
+
+        const x1 = px + Math.cos(p1_angle) * currentLength;
+        const y1 = py + Math.sin(p1_angle) * currentLength;
+        const x2 = px + Math.cos(p2_angle) * currentLength;
+        const y2 = py + Math.sin(p2_angle) * currentLength;
+
+        ctx.fillStyle = isPlayer ? "hsla(142, 100%, 65%, " + (opacity * 0.35) + ")" : "hsla(350, 100%, 65%, " + (opacity * 0.35) + ")";
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 20 * opacity;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255, 255, 255, " + (opacity * 0.75) + ")";
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
+        ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      const ringCount = 3;
+      const ringSpeed = 820;
+      
+      for (let i = 0; i < ringCount; i++) {
+        const delay = i * 0.12;
+        const ringTime = explodeT - delay;
+
+        if (ringTime > 0 && ringTime < 1.0) {
+          const radius = ringTime * ringSpeed;
+          const ringOpacity = Math.max(0, 1 - ringTime / 1.0);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px - 3, py, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = isPlayer ? "rgba(168, 85, 247, " + (ringOpacity * 0.4) + ")" : "rgba(239, 68, 68, " + (ringOpacity * 0.4) + ")";
+          ctx.lineWidth = Math.max(1, 10 * (1 - ringTime / 1.0));
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px + 3, py, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = isPlayer ? "rgba(34, 197, 94, " + (ringOpacity * 0.7) + ")" : "rgba(234, 179, 8, " + (ringOpacity * 0.7) + ")";
+          ctx.lineWidth = Math.max(1, 6 * (1 - ringTime / 1.0));
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(255, 255, 255, " + (ringOpacity * 0.95) + ")";
+          ctx.lineWidth = Math.max(1, 3 * (1 - ringTime / 1.0));
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      const particleCount = 28;
+      const particleSpeed = 620;
+      const particleLife = 1.0;
+      
+      if (explodeT < particleLife) {
+        const partOpacity = Math.max(0, 1 - explodeT / particleLife);
+        ctx.save();
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 18 * partOpacity;
+
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
+          const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
+          const x = px + Math.cos(angle) * distance;
+          const y = py + Math.sin(angle) * distance;
+
+          ctx.fillStyle = primaryColor;
+          ctx.globalAlpha = partOpacity * 0.8;
+          ctx.fillRect(x - 5, y - 5, 10, 10);
+
+          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = partOpacity;
+          ctx.fillRect(x - 2, y - 2, 4, 4);
+        }
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+  }
+}
+
+
+
+● ./src/core/effects/PlayerFxRenderer.ts
+────────────────────────────────────────────────────
+import { UNITS } from "@/core/Units";
+
+interface SegmentBuffer {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  alpha: number;
+}
+
+interface ChargeSegmentBuffer {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  width: number;
+}
+
+const MAX_SEGMENTS = 256;
+
+const healBackBuffer: SegmentBuffer[] = Array.from({ length: MAX_SEGMENTS }, () => ({ x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 }));
+const healFrontBuffer: SegmentBuffer[] = Array.from({ length: MAX_SEGMENTS }, () => ({ x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 }));
+
+const chargeBackBuffer: ChargeSegmentBuffer[] = Array.from({ length: MAX_SEGMENTS }, () => ({ x1: 0, y1: 0, x2: 0, y2: 0, color: "", width: 0 }));
+const chargeFrontBuffer: ChargeSegmentBuffer[] = Array.from({ length: MAX_SEGMENTS }, () => ({ x1: 0, y1: 0, x2: 0, y2: 0, color: "", width: 0 }));
+
+const ORBITS = [
+  { psi: 0.1, phi: 0.38, speed: 0.005 },
+  { psi: Math.PI / 4, phi: 0.52, speed: -0.004 },
+  { psi: -Math.PI / 4, phi: 0.52, speed: 0.003 }
+];
+
+const ACTIVE_RINGS_LVL2 = [
+  { orbitIndex: 0, color: "rgba(234, 179, 8, 0.85)" },
+  { orbitIndex: 1, color: "rgba(134, 212, 51, 0.85)" },
+  { orbitIndex: 2, color: "rgba(34, 197, 94, 0.95)" }
+];
+
+const ACTIVE_RINGS_LVL1 = [
+  { orbitIndex: 0, color: "rgba(234, 179, 8, 0.65)" },
+  { orbitIndex: 2, color: "rgba(34, 197, 94, 0.75)" }
+];
+
+export class PlayerFxRenderer {
+  public static prepareHealSegments(
+    nowTime: number,
+    progress: number,
+    outCounts: { back: number; front: number }
+  ): void {
+    const segmentsCount = 120;
+    const loops = 4.0;
+    const maxAngle = loops * Math.PI * 2;
+    const rotationOffset = nowTime * 0.008;
+    const coilHeight = progress * 84;
+
+    let backIdx = 0;
+    let frontIdx = 0;
+
+    for (let i = 0; i < segmentsCount; i++) {
+      const t1 = i / segmentsCount;
+      const t2 = (i + 1) / segmentsCount;
+
+      const angle1 = t1 * maxAngle + rotationOffset;
+      const angle2 = t2 * maxAngle + rotationOffset;
+
+      const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
+      const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
+
+      const x1 = r1 * Math.cos(angle1);
+      const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
+
+      const x2 = r2 * Math.cos(angle2);
+      const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
+
+      const midAngle = (angle1 + angle2) / 2;
+      const isBehind = Math.sin(midAngle) < 0;
+
+      const segmentAlpha = (1.0 - t1 * 0.25) * progress;
+
+      if (isBehind) {
+        if (backIdx < MAX_SEGMENTS) {
+          const seg = healBackBuffer[backIdx];
+          seg.x1 = x1;
+          seg.y1 = y1;
+          seg.x2 = x2;
+          seg.y2 = y2;
+          seg.alpha = segmentAlpha;
+          backIdx++;
+        }
+      } else {
+        if (frontIdx < MAX_SEGMENTS) {
+          const seg = healFrontBuffer[frontIdx];
+          seg.x1 = x1;
+          seg.y1 = y1;
+          seg.x2 = x2;
+          seg.y2 = y2;
+          seg.alpha = segmentAlpha;
+          frontIdx++;
+        }
+      }
+    }
+
+    outCounts.back = backIdx;
+    outCounts.front = frontIdx;
+  }
+
+  public static renderHealBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number): void {
+    const buffer = isBehind ? healBackBuffer : healFrontBuffer;
+    for (let s = 0; s < count; s++) {
+      const seg = buffer[s];
+      ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
+      ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
+      ctx.stroke();
+    }
+  }
+
+  public static prepareChargeSegments(
+    nowTime: number,
+    chargeTimer: number,
+    playerHeight: number,
+    outCounts: { back: number; front: number }
+  ): void {
+    const chargeProgress = Math.max(0, Math.min(1.0, chargeTimer / UNITS.CHARGE_LVL2_TIME));
+    const isLvl2 = chargeTimer >= UNITS.CHARGE_LVL2_TIME;
+
+    const baseRadius = (playerHeight * 0.35) + chargeProgress * 10;
+    const localCenterX = 0;
+    const localCenterY = -playerHeight / 2;
+
+    const activeRings = isLvl2 ? ACTIVE_RINGS_LVL2 : ACTIVE_RINGS_LVL1;
+
+    let backIdx = 0;
+    let frontIdx = 0;
+
+    for (let s = 0; s < activeRings.length; s++) {
+      const ringConfig = activeRings[s];
+      const orbit = ORBITS[ringConfig.orbitIndex];
+      const segments = 32;
+      const step = (Math.PI * 2) / segments;
+      const rotationSpeed = orbit.speed * nowTime;
+      const ringColor = ringConfig.color;
+
+      const lineWidth = isLvl2 ? (s === 2 ? 2.5 : 1.5) : 1.2;
+
+      for (let i = 0; i < segments; i++) {
+        const theta1 = i * step + rotationSpeed;
+        const theta2 = (i + 1) * step + rotationSpeed;
+
+        const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+        const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+
+        const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
+        const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
+
+        const x0_1 = r1 * Math.cos(theta1);
+        const y0_1 = r1 * Math.sin(theta1);
+        
+        const x1_1 = x0_1 * Math.cos(orbit.psi);
+        const y1_1 = y0_1;
+        const z1_1 = -x0_1 * Math.sin(orbit.psi);
+
+        const x2_1 = x1_1;
+        const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
+        const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
+
+        const x0_2 = r2 * Math.cos(theta2);
+        const y0_2 = r2 * Math.sin(theta2);
+
+        const x1_2 = x0_2 * Math.cos(orbit.psi);
+        const y1_2 = y0_2;
+        const z1_2 = -x0_2 * Math.sin(orbit.psi);
+
+        const x2_2 = x1_2;
+        const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
+        const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
+
+        const p1_x = localCenterX + x2_1;
+        const p1_y = localCenterY + y2_1;
+        const p1_z = z2_1;
+
+        const p2_x = localCenterX + x2_2;
+        const p2_y = localCenterY + y2_2;
+        const p2_z = z2_2;
+
+        const midZ = (p1_z + p2_z) / 2;
+
+        if (midZ < 0) {
+          if (backIdx < MAX_SEGMENTS) {
+            const seg = chargeBackBuffer[backIdx];
+            seg.x1 = p1_x;
+            seg.y1 = p1_y;
+            seg.x2 = p2_x;
+            seg.y2 = p2_y;
+            seg.color = ringColor;
+            seg.width = lineWidth;
+            backIdx++;
+          }
+        } else {
+          if (frontIdx < MAX_SEGMENTS) {
+            const seg = chargeFrontBuffer[frontIdx];
+            seg.x1 = p1_x;
+            seg.y1 = p1_y;
+            seg.x2 = p2_x;
+            seg.y2 = p2_y;
+            seg.color = ringColor;
+            seg.width = lineWidth;
+            frontIdx++;
+          }
+        }
+      }
+    }
+
+    outCounts.back = backIdx;
+    outCounts.front = frontIdx;
+  }
+
+  public static renderChargeBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number): void {
+    const buffer = isBehind ? chargeBackBuffer : chargeFrontBuffer;
+    for (let s = 0; s < count; s++) {
+      const seg = buffer[s];
+      ctx.strokeStyle = seg.color;
+      ctx.lineWidth = seg.width;
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
+      ctx.stroke();
+    }
+  }
+}
 
 
 
@@ -12647,6 +12900,7 @@ export class FlyerAttackState extends MinionState {
 
 ● ./src/entities/Player.ts
 ────────────────────────────────────────────────────
+import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
@@ -13460,158 +13714,17 @@ export class Player extends BaseEntity {
     const feetY = drawY + this.size.height / 2;
 
     const nowTime = performance.now();
-    const progress = this.isHealing 
-      ? Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION))
-      : 0;
-
-    const backSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
-    const frontSegments: { x1: number; y1: number; x2: number; y2: number; alpha: number }[] = [];
+    const healCounts = { back: 0, front: 0 };
+    const chargeCounts = { back: 0, front: 0 };
 
     if (this.isHealing) {
-      const segmentsCount = 120;
-      const loops = 4.0;
-      const maxAngle = loops * Math.PI * 2;
-      const rotationOffset = nowTime * 0.008;
-      const coilHeight = progress * 84;
-
-      for (let i = 0; i < segmentsCount; i++) {
-        const t1 = i / segmentsCount;
-        const t2 = (i + 1) / segmentsCount;
-
-        const angle1 = t1 * maxAngle + rotationOffset;
-        const angle2 = t2 * maxAngle + rotationOffset;
-
-        const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
-        const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
-
-        const x1 = r1 * Math.cos(angle1);
-        const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
-
-        const x2 = r2 * Math.cos(angle2);
-        const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
-
-        const midAngle = (angle1 + angle2) / 2;
-        const isBehind = Math.sin(midAngle) < 0;
-
-        const segmentAlpha = (1.0 - t1 * 0.25) * progress;
-
-        const segment = { x1, y1, x2, y2, alpha: segmentAlpha };
-        if (isBehind) {
-          backSegments.push(segment);
-        } else {
-          frontSegments.push(segment);
-        }
-      }
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
+      PlayerFxRenderer.prepareHealSegments(nowTime, progress, healCounts);
     }
-
-    const chargeBackSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
-    const chargeFrontSegments: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
 
     if (this.isCharging) {
-      const chargeProgress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
-      const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
-
-      const baseRadius = (this.size.height * 0.35) + chargeProgress * 10;
-      const localCenterX = 0;
-      const localCenterY = -this.size.height / 2;
-
-      const orbits = [
-        { psi: 0.1, phi: 0.38, speed: 0.005 },
-        { psi: Math.PI / 4, phi: 0.52, speed: -0.004 },
-        { psi: -Math.PI / 4, phi: 0.52, speed: 0.003 }
-      ];
-
-      const activeRings = isLvl2
-        ? [
-            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.85)" },
-            { orbitIndex: 1, color: "rgba(134, 212, 51, 0.85)" },
-            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.95)" }
-          ]
-        : [
-            { orbitIndex: 0, color: "rgba(234, 179, 8, 0.65)" },
-            { orbitIndex: 2, color: "rgba(34, 197, 94, 0.75)" }
-          ];
-
-      for (let s = 0; s < activeRings.length; s++) {
-        const ringConfig = activeRings[s];
-        const orbit = orbits[ringConfig.orbitIndex];
-        const segments = 32;
-        const step = (Math.PI * 2) / segments;
-        const rotationSpeed = orbit.speed * nowTime;
-        const ringColor = ringConfig.color;
-
-        const lineWidth = isLvl2 ? (s === 2 ? 2.5 : 1.5) : 1.2;
-
-        for (let i = 0; i < segments; i++) {
-          const theta1 = i * step + rotationSpeed;
-          const theta2 = (i + 1) * step + rotationSpeed;
-
-          const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-          const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-
-          const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
-          const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
-
-          const x0_1 = r1 * Math.cos(theta1);
-          const y0_1 = r1 * Math.sin(theta1);
-          
-          const x1_1 = x0_1 * Math.cos(orbit.psi);
-          const y1_1 = y0_1;
-          const z1_1 = -x0_1 * Math.sin(orbit.psi);
-
-          const x2_1 = x1_1;
-          const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
-          const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
-
-          const x0_2 = r2 * Math.cos(theta2);
-          const y0_2 = r2 * Math.sin(theta2);
-
-          const x1_2 = x0_2 * Math.cos(orbit.psi);
-          const y1_2 = y0_2;
-          const z1_2 = -x0_2 * Math.sin(orbit.psi);
-
-          const x2_2 = x1_2;
-          const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
-          const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
-
-          const p1 = { x: localCenterX + x2_1, y: localCenterY + y2_1, z: z2_1 };
-          const p2 = { x: localCenterX + x2_2, y: localCenterY + y2_2, z: z2_2 };
-
-          const midZ = (p1.z + p2.z) / 2;
-          const segment = { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, color: ringColor, width: lineWidth };
-
-          if (midZ < 0) {
-            chargeBackSegments.push(segment);
-          } else {
-            chargeFrontSegments.push(segment);
-          }
-        }
-      }
+      PlayerFxRenderer.prepareChargeSegments(nowTime, this.chargeTimer, this.size.height, chargeCounts);
     }
-
-    const drawCoilSegments = (segments: typeof backSegments) => {
-      for (let s = 0; s < segments.length; s++) {
-        const seg = segments[s];
-        ctx.strokeStyle = `hsla(280, 100%, 75%, ${seg.alpha})`;
-        ctx.shadowColor = `hsla(280, 100%, 75%, ${seg.alpha * 0.95})`;
-        ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
-        ctx.stroke();
-      }
-    };
-
-    const drawChargeSegments = (segments: typeof chargeBackSegments) => {
-      for (let s = 0; s < segments.length; s++) {
-        const seg = segments[s];
-        ctx.strokeStyle = seg.color;
-        ctx.lineWidth = seg.width;
-        ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
-        ctx.stroke();
-      }
-    };
 
     ctx.save();
     ctx.translate(drawX, feetY);
@@ -13622,7 +13735,7 @@ export class Player extends BaseEntity {
       ctx.lineWidth = 3.5;
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCoilSegments(backSegments);
+      PlayerFxRenderer.renderHealBuffer(ctx, true, healCounts.back);
       ctx.restore();
     }
 
@@ -13630,7 +13743,7 @@ export class Player extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawChargeSegments(chargeBackSegments);
+      PlayerFxRenderer.renderChargeBuffer(ctx, true, chargeCounts.back);
       ctx.restore();
     }
 
@@ -13651,6 +13764,7 @@ export class Player extends BaseEntity {
 
     if (this.isHealing) {
       ctx.save();
+      const progress = Math.max(0, Math.min(1.0, (UNITS.HEAL_DURATION - this.healComponent.healTimer) / UNITS.HEAL_DURATION));
       const baseW = this.size.width * (1.15 + progress * 0.75);
       const baseH = this.size.height * (1.1 + progress * 0.55);
 
@@ -13710,7 +13824,7 @@ export class Player extends BaseEntity {
       ctx.lineWidth = 3.5;
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCoilSegments(frontSegments);
+      PlayerFxRenderer.renderHealBuffer(ctx, false, healCounts.front);
       ctx.restore();
 
       const trembleX = (Math.random() * 3 - 1.5) * (0.5 + progress * 3.5);
@@ -13747,7 +13861,7 @@ export class Player extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawChargeSegments(chargeFrontSegments);
+      PlayerFxRenderer.renderChargeBuffer(ctx, false, chargeCounts.front);
       ctx.restore();
 
       if (chargeProgress > 0.5) {
