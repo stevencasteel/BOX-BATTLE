@@ -1,13 +1,14 @@
+import { ReactNode, PointerEvent } from "react";
 import { inputProvider, Action } from "@/core/InputProvider";
 
 interface TouchButtonProps {
   action: Action;
-  label: string;
+  label: ReactNode;
   style?: React.CSSProperties;
 }
 
 export function TouchButton({ action, label, style }: TouchButtonProps) {
-  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (e.pointerType === "touch") {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -15,7 +16,7 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
     inputProvider.triggerTouchStart(action);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerUp = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     inputProvider.triggerTouchEnd(action);
   };

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
+import { Trophy, Skull, RotateCcw, Home } from "lucide-react";
 
 interface GameArenaProps {
   triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
@@ -130,6 +131,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               >
                 {gameResult === "GAMEOVER" ? (
                   <div className="flex-col-center">
+                    <Skull
+                      size={64}
+                      style={{
+                        color: "var(--signal-red)",
+                        filter: "drop-shadow(0 0 10px var(--signal-red-glow))",
+                        marginBottom: "16px",
+                        animation: "rumble-anim 0.08s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -147,6 +157,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </div>
                 ) : (
                   <div className="flex-col-center">
+                    <Trophy
+                      size={64}
+                      style={{
+                        color: "var(--signal-green)",
+                        filter: "drop-shadow(0 0 10px var(--signal-green-glow))",
+                        marginBottom: "16px",
+                        animation: "crt-pulse 1.5s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -189,6 +208,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 0
                         ? {
                             color: "var(--signal-red)",
@@ -201,18 +224,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -232,6 +256,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 1
                         ? {
                             color: "var(--signal-red)",
@@ -244,18 +272,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}

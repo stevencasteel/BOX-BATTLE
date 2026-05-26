@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { eventBroker } from "@/core/eventBroker";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Skull, AlertTriangle } from "lucide-react";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
@@ -42,7 +43,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold" }}>HP</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
+          </span>
           <div className="flex-row" style={{ gap: "3px" }}>
             {[...Array(5)].map((_, i) => (
               <div
@@ -122,7 +125,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 alignItems: "center"
               }}
             >
-              ⚠ {bannerText}
+              <AlertTriangle size={11} style={{ marginRight: "4px", flexShrink: 0 }} /> {bannerText}
             </motion.span>
           ) : (
             <motion.span
@@ -138,7 +141,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </AnimatePresence>
 
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
+          </span>
           <div
             className="neo-pressed"
             style={{
@@ -169,7 +174,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   return (
     <div className="cabinet-status-panel neo-pressed">
       <div className="hud-panel-block" style={{ gap: "4px" }}>
-        <span className="hud-panel-title">PLAYER HP</span>
+        <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+          PLAYER HP
+        </span>
         <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
           {[...Array(5)].map((_, i) => (
             <div
@@ -250,7 +258,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 textTransform: "uppercase"
               }}
             >
-              <span style={{ fontSize: "clamp(15px, 2vmin, 20px)", lineHeight: "1" }}>⚠</span> WARNING: {bannerText}
+              <AlertTriangle size={18} style={{ color: "var(--signal-yellow)", flexShrink: 0, animation: "crt-pulse 1s infinite alternate" }} />
+              <span>WARNING: {bannerText}</span>
             </motion.div>
           ) : isPlayingScreen ? (
             <motion.div
@@ -304,7 +313,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-        <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+        <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
+          BOSS HP
+        </span>
         <div
           className="neo-pressed"
           style={{
