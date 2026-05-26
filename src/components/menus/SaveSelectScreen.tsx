@@ -67,15 +67,23 @@ export function SaveSelectScreen({
                 ▶
               </span>
               <div className="flex-row" style={{ alignItems: "center", gap: "8px" }}>
-                {slot.empty ? (
-                  <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
-                ) : (
-                  <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
-                )}
                 <div className="flex-col" style={{ textAlign: "left" }}>
                   <span
-                    style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "0.12em", textTransform: "uppercase" }}
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
                   >
+                    {slot.empty ? (
+                      <FolderPlus size={18} style={{ color: "#4a5568", flexShrink: 0 }} />
+                    ) : (
+                      <Save size={18} style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+                    )}
                     Slot {i + 1}
                   </span>
                   <span
@@ -109,7 +117,7 @@ export function SaveSelectScreen({
 
       <div
         className="flex-col"
-        style={{ gap: "16px", width: "100%", maxWidth: "420px", marginTop: "16px", paddingBottom: "10px" }}
+        style={{ gap: "16px", width: "100%", maxWidth: "480px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center" }}>
           <MenuButton
@@ -123,7 +131,7 @@ export function SaveSelectScreen({
             showArrow={false}
             className={isCopyMode ? "neo-btn-led-active" : ""}
             indicatorColor={isCopyMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px" }}
+            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
           />
 
           <MenuButton
@@ -137,7 +145,7 @@ export function SaveSelectScreen({
             showArrow={false}
             className={isEraseMode ? "neo-btn-led-active" : ""}
             indicatorColor={isEraseMode ? "yellow" : "green"}
-            style={{ flex: 1, padding: "18px" }}
+            style={{ flex: 1, padding: "18px", justifyContent: "center", whiteSpace: "nowrap" }}
           />
         </div>
 
@@ -146,7 +154,7 @@ export function SaveSelectScreen({
           onFocused={() => setMenuIndex(5)}
           playHoverTick={playHoverTick}
           onBack={onBack}
-          style={{ padding: "18px" }}
+          style={{ padding: "18px", maxWidth: "100%" }}
         />
       </div>
     </MenuContainer>
