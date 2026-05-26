@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{O as i,_ as a,g as o,m as s,v as c,y as l}from"./vendor-react-Dzuep97J.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-CI4_JwIF.js";var m=e(n(),1),h={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,P as a,S as o,w as s,x as c,y as l}from"./vendor-react-TwmHd4oN.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{n as d,r as f,t as p}from"./index-BLHd_0G5.js";var m=e(n(),1),h={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1339,6 +1339,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
+import { Trophy, Skull, RotateCcw, Home } from "lucide-react";
 
 interface GameArenaProps {
   triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
@@ -1466,6 +1467,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               >
                 {gameResult === "GAMEOVER" ? (
                   <div className="flex-col-center">
+                    <Skull
+                      size={64}
+                      style={{
+                        color: "var(--signal-red)",
+                        filter: "drop-shadow(0 0 10px var(--signal-red-glow))",
+                        marginBottom: "16px",
+                        animation: "rumble-anim 0.08s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -1483,6 +1493,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </div>
                 ) : (
                   <div className="flex-col-center">
+                    <Trophy
+                      size={64}
+                      style={{
+                        color: "var(--signal-green)",
+                        filter: "drop-shadow(0 0 10px var(--signal-green-glow))",
+                        marginBottom: "16px",
+                        animation: "crt-pulse 1.5s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -1525,6 +1544,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 0
                         ? {
                             color: "var(--signal-red)",
@@ -1537,18 +1560,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -1568,6 +1592,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 1
                         ? {
                             color: "var(--signal-red)",
@@ -1580,18 +1608,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -1611,6 +1640,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 `,"src/components/HudPanel.tsx":`import { useEffect, useRef, useState } from "react";
 import { eventBroker } from "@/core/eventBroker";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Skull, AlertTriangle } from "lucide-react";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
@@ -1652,7 +1682,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold" }}>HP</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
+          </span>
           <div className="flex-row" style={{ gap: "3px" }}>
             {[...Array(5)].map((_, i) => (
               <div
@@ -1732,7 +1764,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 alignItems: "center"
               }}
             >
-              ⚠ {bannerText}
+              <AlertTriangle size={11} style={{ marginRight: "4px", flexShrink: 0 }} /> {bannerText}
             </motion.span>
           ) : (
             <motion.span
@@ -1748,7 +1780,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </AnimatePresence>
 
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
+          </span>
           <div
             className="neo-pressed"
             style={{
@@ -1779,7 +1813,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   return (
     <div className="cabinet-status-panel neo-pressed">
       <div className="hud-panel-block" style={{ gap: "4px" }}>
-        <span className="hud-panel-title">PLAYER HP</span>
+        <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+          PLAYER HP
+        </span>
         <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
           {[...Array(5)].map((_, i) => (
             <div
@@ -1860,7 +1897,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 textTransform: "uppercase"
               }}
             >
-              <span style={{ fontSize: "clamp(15px, 2vmin, 20px)", lineHeight: "1" }}>⚠</span> WARNING: {bannerText}
+              <AlertTriangle size={18} style={{ color: "var(--signal-yellow)", flexShrink: 0, animation: "crt-pulse 1s infinite alternate" }} />
+              <span>WARNING: {bannerText}</span>
             </motion.div>
           ) : isPlayingScreen ? (
             <motion.div
@@ -1914,7 +1952,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-        <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+        <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
+          BOSS HP
+        </span>
         <div
           className="neo-pressed"
           style={{
@@ -1940,16 +1981,18 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       </div>
     </div>
   );
-}`,"src/components/TouchButton.tsx":`import { inputProvider, Action } from "@/core/InputProvider";
+}
+`,"src/components/TouchButton.tsx":`import { ReactNode, PointerEvent } from "react";
+import { inputProvider, Action } from "@/core/InputProvider";
 
 interface TouchButtonProps {
   action: Action;
-  label: string;
+  label: ReactNode;
   style?: React.CSSProperties;
 }
 
 export function TouchButton({ action, label, style }: TouchButtonProps) {
-  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (e.pointerType === "touch") {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -1957,7 +2000,7 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
     inputProvider.triggerTouchStart(action);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerUp = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     inputProvider.triggerTouchEnd(action);
   };
@@ -1988,6 +2031,7 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
   );
 }
 `,"src/components/TouchOverlay.tsx":`import { TouchButton } from "./TouchButton";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ArrowUpToLine, Swords, Zap } from "lucide-react";
 
 export function TouchOverlay() {
   return (
@@ -2012,12 +2056,12 @@ export function TouchOverlay() {
           height: "100%",
         }}
       >
-        <TouchButton action="MOVE_LEFT" label="◀" style={{ height: "100%", fontSize: "24px" }} />
+        <TouchButton action="MOVE_LEFT" label={<ArrowLeft size={24} />} style={{ height: "100%" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
-          <TouchButton action="MOVE_UP" label="▲" style={{ flex: 1, fontSize: "20px" }} />
-          <TouchButton action="MOVE_DOWN" label="▼" style={{ flex: 1, fontSize: "20px" }} />
+          <TouchButton action="MOVE_UP" label={<ArrowUp size={20} />} style={{ flex: 1 }} />
+          <TouchButton action="MOVE_DOWN" label={<ArrowDown size={20} />} style={{ flex: 1 }} />
         </div>
-        <TouchButton action="MOVE_RIGHT" label="▶" style={{ height: "100%", fontSize: "24px" }} />
+        <TouchButton action="MOVE_RIGHT" label={<ArrowRight size={24} />} style={{ height: "100%" }} />
       </div>
 
       <div
@@ -2031,10 +2075,14 @@ export function TouchOverlay() {
       >
         <TouchButton
           action="DASH"
-          label="DASH"
+          label={
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+              <Zap size={14} />
+              <span>DASH</span>
+            </div>
+          }
           style={{
             flex: 1,
-            fontSize: "14px",
             borderColor: "var(--signal-yellow)",
             color: "var(--signal-yellow)",
           }}
@@ -2042,15 +2090,24 @@ export function TouchOverlay() {
         <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
           <TouchButton
             action="ATTACK"
-            label="ATK"
-            style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+                <Swords size={14} />
+                <span>ATK</span>
+              </div>
+            }
+            style={{ flex: 1, borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
           />
           <TouchButton
             action="JUMP"
-            label="JMP"
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+                <ArrowUpToLine size={14} />
+                <span>JMP</span>
+              </div>
+            }
             style={{
               flex: 1,
-              fontSize: "14px",
               borderColor: "var(--signal-green)",
               color: "var(--signal-green)",
             }}
@@ -12749,4 +12806,4 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
 .led-overflow-wobble {
   animation: led-wobble 0.6s infinite alternate ease-in-out;
 }
-`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let a=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:a,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(l,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(i,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:a,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(l,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(i,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[i,l]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,i):[],[E,i]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:i,setExpandedDirs:l,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!i[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?l(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(a,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length})]})}export{C as SourceViewScreen};
+`};function g({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,m.useEffect)(()=>{let m=m=>{if(e.length===0)return;if(s&&c===`CODE`&&(p(m)||m.code===`ArrowLeft`||m.code===`KeyA`)){m.preventDefault(),f.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(m.code===`ArrowDown`||m.code===`KeyS`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(m.code===`ArrowUp`||m.code===`KeyW`)m.preventDefault(),f.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(m.code===`ArrowRight`||m.code===`KeyD`)m.preventDefault(),f.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(m.code===`ArrowLeft`||m.code===`KeyA`)if(m.preventDefault(),f.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else d(m)?(m.preventDefault(),t<e.length?(f.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(f.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(f.playErrorTick(),o())):p(m)&&(m.preventDefault(),t<e.length?h.isDir&&r[h.path]?(f.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(f.playSelectTick(),n(e.length+2)):t===e.length+2?(f.playErrorTick(),o()):(f.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,m),()=>window.removeEventListener(`keydown`,m)},[e,t,r,o,s,c,n,i,a,l,u])}var _=u();function v(){return(0,_.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,_.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function y({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r}){let i=()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,justifyContent:`space-between`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,textDecoration:`none`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,_.jsx)(v,{})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:i,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,_.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,_.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`},children:(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,_.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,_.jsxs)(`a`,{href:`https://github.com/stevencasteel/BOX-BATTLE`,target:`_blank`,rel:`noopener noreferrer`,className:`neo-btn-large ${n===r?`neo-btn-large-focused`:``}`,style:{flex:1,textDecoration:`none`,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(v,{}),`GITHUB REPO`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`VIEW AND DOWNLOAD CODE ARCHIVE`})]}),n===r&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:i,className:`neo-btn-large ${n===r+1?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(s,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`DOWNLOAD SOURCE`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`SAVE ALL CODE AS SINGLE .TXT FILE`})]}),n===r+1&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]}),(0,_.jsxs)(`button`,{onClick:e,className:`neo-btn-large ${n===r+2?`neo-btn-large-focused`:``}`,style:{flex:1,boxSizing:`border-box`},children:[(0,_.jsx)(`div`,{className:`btn-indicator-light`}),(0,_.jsxs)(`div`,{className:`btn-label-group`,children:[(0,_.jsxs)(`span`,{className:`btn-main-label`,style:{display:`flex`,alignItems:`center`,gap:`8px`},children:[(0,_.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),`BACK TO MENU`]}),(0,_.jsx)(`span`,{className:`btn-sub-label`,children:`EXIT SOURCE CODE VIEW`})]}),n===r+2&&(0,_.jsx)(`span`,{className:`cursor-arrow-large`,children:`▶`})]})]})}function b(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function x(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>x(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>x(e,t,n)),n)}function S(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function C({onBack:e}){let[n]=(0,m.useState)(h),[a,s]=(0,m.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,d]=(0,m.useState)((0,m.useMemo)(()=>Object.keys(h).sort(),[])[0]||``),[p,v]=(0,m.useState)(!1),[C,w]=(0,m.useState)(`TOC`),T=(0,m.useRef)(null),E=(0,m.useMemo)(()=>b(Object.keys(h)),[]),D=(0,m.useMemo)(()=>E?x(E,a):[],[E,a]),[O,k]=(0,m.useState)(0),A=Math.min(O,Math.max(0,D.length-1));return g({visibleNodes:D,activeIndex:O,setActiveIndex:k,expandedDirs:a,setExpandedDirs:s,setSelectedFile:d,onBack:e,isMobile:p,mobileView:C,setMobileView:w,handleDownload:()=>{f.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,m.useEffect)(()=>{if(typeof window<`u`){let e=()=>{v(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,m.useEffect)(()=>{if(A<D.length){let e=T.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[A,D.length]),(0,_.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 0`},children:[(0,_.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,_.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE VIEWER`}),(0,_.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:p?C===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,_.jsxs)(`div`,{className:`source-view-workspace`,children:[(!p||C===`TOC`)&&(0,_.jsx)(`div`,{ref:T,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`24%`,height:p?`100%`:``},children:D.map((e,t)=>{let n=t===A,r=e.isDir&&!!a[e.path],m=!e.isDir&&e.path===u;return(0,_.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{f.playSelectTick(),k(t),e.isDir?s(t=>({...t,[e.path]:!t[e.path]})):(d(e.path),p&&w(`CODE`))},style:{paddingTop:p?`14px`:`6px`,paddingBottom:p?`14px`:`6px`,paddingRight:p?`16px`:`10px`,paddingLeft:`${e.depth*(p?22:16)+(p?16:10)}px`,borderRadius:`6px`,fontSize:p?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:m?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:m?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,_.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,_.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,_.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,_.jsx)(o,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,_.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!p||C===`CODE`)&&(0,_.jsxs)(`div`,{className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:p?`100%`:`76%`,height:p?`100%`:``,display:`flex`,flexDirection:`column`},children:[p&&(0,_.jsx)(`button`,{onClick:()=>{f.playSelectTick(),w(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,_.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,_.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:p?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,_.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,_.jsx)(t,{language:S(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:p?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,_.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,_.jsx)(y,{onBack:e,isMobile:p,activeIndex:O,visibleNodesLength:D.length})]})}export{C as SourceViewScreen};

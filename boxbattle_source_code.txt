@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/26/2026, 12:13:53 AM
+ [SYSTEM] Generated: 5/26/2026, 12:20:09 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2039,6 +2039,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@/core/Engine";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
+import { Trophy, Skull, RotateCcw, Home } from "lucide-react";
 
 interface GameArenaProps {
   triggerDialogue?: (speaker: "player" | "boss", text: string) => void;
@@ -2166,6 +2167,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
               >
                 {gameResult === "GAMEOVER" ? (
                   <div className="flex-col-center">
+                    <Skull
+                      size={64}
+                      style={{
+                        color: "var(--signal-red)",
+                        filter: "drop-shadow(0 0 10px var(--signal-red-glow))",
+                        marginBottom: "16px",
+                        animation: "rumble-anim 0.08s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -2183,6 +2193,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   </div>
                 ) : (
                   <div className="flex-col-center">
+                    <Trophy
+                      size={64}
+                      style={{
+                        color: "var(--signal-green)",
+                        filter: "drop-shadow(0 0 10px var(--signal-green-glow))",
+                        marginBottom: "16px",
+                        animation: "crt-pulse 1.5s infinite alternate",
+                      }}
+                    />
                     <h1
                       style={{
                         fontSize: "2.6rem",
@@ -2225,6 +2244,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 0
                         ? {
                             color: "var(--signal-red)",
@@ -2237,18 +2260,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <RotateCcw size={16} style={{ flexShrink: 0 }} />
                     RETRY
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 0 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2268,6 +2292,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                       padding: "16px 20px",
                       fontSize: "14px",
                       borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
                       ...(gameResult === "GAMEOVER" && menuIndex === 1
                         ? {
                             color: "var(--signal-red)",
@@ -2280,18 +2308,19 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginRight: "6px",
+                        marginRight: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
                     >
                       ▶
                     </span>
+                    <Home size={16} style={{ flexShrink: 0 }} />
                     MENU
                     <span
                       className="cursor-arrow"
                       style={{
-                        marginLeft: "6px",
+                        marginLeft: "2px",
                         visibility: menuIndex === 1 ? "visible" : "hidden",
                         color: gameResult === "GAMEOVER" ? "var(--signal-red)" : undefined,
                       }}
@@ -2316,6 +2345,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 import { useEffect, useRef, useState } from "react";
 import { eventBroker } from "@/core/eventBroker";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Skull, AlertTriangle } from "lucide-react";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
@@ -2357,7 +2387,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold" }}>HP</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
+          </span>
           <div className="flex-row" style={{ gap: "3px" }}>
             {[...Array(5)].map((_, i) => (
               <div
@@ -2437,7 +2469,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 alignItems: "center"
               }}
             >
-              ⚠ {bannerText}
+              <AlertTriangle size={11} style={{ marginRight: "4px", flexShrink: 0 }} /> {bannerText}
             </motion.span>
           ) : (
             <motion.span
@@ -2453,7 +2485,9 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </AnimatePresence>
 
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold" }}>BOSS</span>
+          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
+          </span>
           <div
             className="neo-pressed"
             style={{
@@ -2484,7 +2518,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   return (
     <div className="cabinet-status-panel neo-pressed">
       <div className="hud-panel-block" style={{ gap: "4px" }}>
-        <span className="hud-panel-title">PLAYER HP</span>
+        <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+          PLAYER HP
+        </span>
         <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
           {[...Array(5)].map((_, i) => (
             <div
@@ -2565,7 +2602,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 textTransform: "uppercase"
               }}
             >
-              <span style={{ fontSize: "clamp(15px, 2vmin, 20px)", lineHeight: "1" }}>⚠</span> WARNING: {bannerText}
+              <AlertTriangle size={18} style={{ color: "var(--signal-yellow)", flexShrink: 0, animation: "crt-pulse 1s infinite alternate" }} />
+              <span>WARNING: {bannerText}</span>
             </motion.div>
           ) : isPlayingScreen ? (
             <motion.div
@@ -2619,7 +2657,10 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-        <span className="hud-panel-title hud-panel-title-red">BOSS HP</span>
+        <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
+          BOSS HP
+        </span>
         <div
           className="neo-pressed"
           style={{
@@ -2648,18 +2689,20 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 }
 
 
+
 ● ./src/components/TouchButton.tsx
 ────────────────────────────────────────────────────
+import { ReactNode, PointerEvent } from "react";
 import { inputProvider, Action } from "@/core/InputProvider";
 
 interface TouchButtonProps {
   action: Action;
-  label: string;
+  label: ReactNode;
   style?: React.CSSProperties;
 }
 
 export function TouchButton({ action, label, style }: TouchButtonProps) {
-  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (e.pointerType === "touch") {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -2667,7 +2710,7 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
     inputProvider.triggerTouchStart(action);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handlePointerUp = (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     inputProvider.triggerTouchEnd(action);
   };
@@ -2703,6 +2746,7 @@ export function TouchButton({ action, label, style }: TouchButtonProps) {
 ● ./src/components/TouchOverlay.tsx
 ────────────────────────────────────────────────────
 import { TouchButton } from "./TouchButton";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ArrowUpToLine, Swords, Zap } from "lucide-react";
 
 export function TouchOverlay() {
   return (
@@ -2727,12 +2771,12 @@ export function TouchOverlay() {
           height: "100%",
         }}
       >
-        <TouchButton action="MOVE_LEFT" label="◀" style={{ height: "100%", fontSize: "24px" }} />
+        <TouchButton action="MOVE_LEFT" label={<ArrowLeft size={24} />} style={{ height: "100%" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
-          <TouchButton action="MOVE_UP" label="▲" style={{ flex: 1, fontSize: "20px" }} />
-          <TouchButton action="MOVE_DOWN" label="▼" style={{ flex: 1, fontSize: "20px" }} />
+          <TouchButton action="MOVE_UP" label={<ArrowUp size={20} />} style={{ flex: 1 }} />
+          <TouchButton action="MOVE_DOWN" label={<ArrowDown size={20} />} style={{ flex: 1 }} />
         </div>
-        <TouchButton action="MOVE_RIGHT" label="▶" style={{ height: "100%", fontSize: "24px" }} />
+        <TouchButton action="MOVE_RIGHT" label={<ArrowRight size={24} />} style={{ height: "100%" }} />
       </div>
 
       <div
@@ -2746,10 +2790,14 @@ export function TouchOverlay() {
       >
         <TouchButton
           action="DASH"
-          label="DASH"
+          label={
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+              <Zap size={14} />
+              <span>DASH</span>
+            </div>
+          }
           style={{
             flex: 1,
-            fontSize: "14px",
             borderColor: "var(--signal-yellow)",
             color: "var(--signal-yellow)",
           }}
@@ -2757,15 +2805,24 @@ export function TouchOverlay() {
         <div style={{ display: "flex", gap: "6px", flex: 1.2 }}>
           <TouchButton
             action="ATTACK"
-            label="ATK"
-            style={{ flex: 1, fontSize: "14px", borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+                <Swords size={14} />
+                <span>ATK</span>
+              </div>
+            }
+            style={{ flex: 1, borderColor: "var(--signal-red)", color: "var(--signal-red)" }}
           />
           <TouchButton
             action="JUMP"
-            label="JMP"
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px" }}>
+                <ArrowUpToLine size={14} />
+                <span>JMP</span>
+              </div>
+            }
             style={{
               flex: 1,
-              fontSize: "14px",
               borderColor: "var(--signal-green)",
               color: "var(--signal-green)",
             }}
