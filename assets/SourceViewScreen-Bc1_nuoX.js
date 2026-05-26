@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-Cm2ufLSX.js";var h=e(n(),1),g={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,F as a,S as o,w as s,x as c,y as l}from"./vendor-react-CObnONrw.js";import{r as u}from"./vendor-motion-Cga-I72o.js";import{i as d,n as f,r as p,t as m}from"./index-BES1ySm6.js";var h=e(n(),1),g={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -4751,6 +4751,7 @@ import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
+import { saveManager } from "@/core/SaveManager";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -4840,6 +4841,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("GAMEOVER");
+              saveManager.recordLoss();
             },
           },
           {
@@ -4881,6 +4883,7 @@ export class BattleDirector {
             fired: false,
             action: () => {
               sessionState.setGameResult("VICTORY");
+              saveManager.recordWin();
             },
           },
           {
@@ -6245,13 +6248,17 @@ class SaveManager {
   }
 
   private initializeDefaultStorage() {
-    if (!localStorage.getItem(this.storageKey)) {
-      const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
-        wins: 0,
-        losses: 0,
-        empty: true,
-      }));
-      localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+    try {
+      if (!localStorage.getItem(this.storageKey)) {
+        const defaultSlots: SaveSlotData[] = Array.from({ length: 3 }, () => ({
+          wins: 0,
+          losses: 0,
+          empty: true,
+        }));
+        localStorage.setItem(this.storageKey, JSON.stringify(defaultSlots));
+      }
+    } catch (e) {
+      console.warn("localStorage is blocked or unavailable:", e);
     }
   }
 
@@ -6293,7 +6300,11 @@ class SaveManager {
     const slots = this.getSlots();
     if (index >= 0 && index < slots.length) {
       slots[index] = ConfigurationValidator.validateSaveSlot(data);
-      localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(slots));
+      } catch (e) {
+        console.warn("Could not save to localStorage:", e);
+      }
     }
   }
 
