@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BQgmi-Jd.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BGpSVQSb.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8674,7 +8674,6 @@ export class StaticMapRenderer {
   public static readonly ATAN_TABLE_SIZE = 1024;
   private static readonly atanTable: Float64Array = new Float64Array(TrigLUT.ATAN_TABLE_SIZE);
 
-  private static prngState: number = Date.now();
 
   static {
     for (let i = 0; i < TrigLUT.TABLE_SIZE; i++) {
@@ -8713,19 +8712,40 @@ export class StaticMapRenderer {
     }
   }
 
+
+
+  private static gpPrngState: number = Date.now();
+  private static visPrngState: number = Date.now() + 1;
+
   public static seedRandom(seed: number): void {
-    TrigLUT.prngState = seed | 0;
+    TrigLUT.gpPrngState = seed | 0;
+    TrigLUT.visPrngState = (seed + 1) | 0;
   }
 
   public static random(): number {
-    let t = (TrigLUT.prngState += 0x6d2b79f5);
+    return TrigLUT.randomVisual();
+  }
+
+  public static randomGameplay(): number {
+    let t = (TrigLUT.gpPrngState += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  public static randomVisual(): number {
+    let t = (TrigLUT.visPrngState += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
   public static randomRange(min: number, max: number): number {
-    return min + TrigLUT.random() * (max - min);
+    return min + TrigLUT.randomVisual() * (max - min);
+  }
+
+  public static randomRangeGameplay(min: number, max: number): number {
+    return min + TrigLUT.randomGameplay() * (max - min);
   }
 
   public static fastSqrt(n: number): number {
@@ -12297,7 +12317,8 @@ export class Boss extends BaseEntity {
     super.teardown();
   }
 }
-`,"src/entities/BossStates.ts":`import { IState } from "@/core/StateMachine";
+`,"src/entities/BossStates.ts":`import { TrigLUT } from "@/core/TrigLUT";
+import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
@@ -12423,7 +12444,7 @@ export class BossAttackState extends BossState {
     this.owner.velocity.x = 0;
 
     if (phase === 1) {
-      if (Math.random() < 0.6) {
+      if (TrigLUT.randomGameplay() < 0.6) {
         this.attackType = "SINGLE_SHOT";
         this.durationTimer = 0.5;
         this.owner.fireSingleShotAtPlayer();
@@ -12431,7 +12452,7 @@ export class BossAttackState extends BossState {
         this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else if (phase === 2) {
-      if (Math.random() < 0.5) {
+      if (TrigLUT.randomGameplay() < 0.5) {
         this.attackType = "VOLLEY";
         this.volleyCount = 3;
         this.volleyTimer = 0;
@@ -12440,7 +12461,7 @@ export class BossAttackState extends BossState {
         this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else {
-      const r = Math.random();
+      const r = TrigLUT.randomGameplay();
       if (r < 0.33) {
         this.attackType = "VOLLEY";
         this.volleyCount = 5;
