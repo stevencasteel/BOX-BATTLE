@@ -31,8 +31,7 @@ export class BaseEntity implements IEntity, ISpringVisuals {
   public recoilTimer?: number;
   public physics?: { isGrounded: boolean; gravity?: number };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private components = new Map<new (...args: any[]) => IEntityComponent, IEntityComponent>();
+  private components = new Map<string, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -50,13 +49,15 @@ export class BaseEntity implements IEntity, ISpringVisuals {
     dependencies?: Record<string, unknown>
   ): T {
     component.setup(this, dependencies);
-    this.components.set(componentClass, component);
+    const key = (componentClass as unknown as { componentId?: string }).componentId || componentClass.name;
+    this.components.set(key, component);
     return component;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null {
-    const component = this.components.get(componentClass);
+    const key = (componentClass as unknown as { componentId?: string }).componentId || componentClass.name;
+    const component = this.components.get(key);
     return (component as T) || null;
   }
 
