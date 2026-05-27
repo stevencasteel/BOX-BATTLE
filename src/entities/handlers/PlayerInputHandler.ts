@@ -181,7 +181,7 @@ export class PlayerInputHandler {
       this.performJump();
     } else if (this.player.wallCoyoteTimer > 0) {
       this.player.velocity.y = -this.player.jumpForce;
-      this.player.velocity.x = this.player.lastWallNormal * 1650;
+      this.player.velocity.x = this.player.lastWallNormal * UNITS.PLAYER_WALL_JUMP_X_VELOCITY;
       this.player.coyoteTimer = 0;
       this.player.wallCoyoteTimer = 0;
       this.player.jumpBufferTimer = 0;

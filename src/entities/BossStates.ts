@@ -238,7 +238,7 @@ export class BossLungeState extends BossState {
 
     if (hitWall && physics) {
       // Rebound backward and squash elastically on wall collision
-      this.owner.velocity.x = -this.owner.facingDirection * 350;
+      this.owner.velocity.x = -this.owner.facingDirection * UNITS.BOSS_WALL_REBOUND_VELOCITY;
       setVec(this.owner.visualScale, 0.7, 1.3);
       setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 28;

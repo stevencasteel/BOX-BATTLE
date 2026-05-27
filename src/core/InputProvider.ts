@@ -1,6 +1,5 @@
-import { settingsManager } from "@/core/SettingsManager";
-
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
+export type KeyMap = Record<Action, string[]>;
 
 export interface IInputDevice {
   update(): Record<Action, boolean>;
@@ -19,9 +18,22 @@ export class KeyboardInputDevice implements IInputDevice {
     DASH: false,
   };
   private pauseJustPressed = false;
+  private keyMap: KeyMap;
 
-  constructor() {
-    // Listeners added lazily via activate()
+  constructor(keyMap?: KeyMap) {
+    this.keyMap = keyMap ?? {
+      MOVE_LEFT: ["ArrowLeft", "KeyA"],
+      MOVE_RIGHT: ["ArrowRight", "KeyD"],
+      MOVE_UP: ["ArrowUp", "KeyW"],
+      MOVE_DOWN: ["ArrowDown", "KeyS"],
+      JUMP: ["Space", "KeyX"],
+      ATTACK: ["KeyC"],
+      DASH: ["KeyZ"],
+    };
+  }
+
+  public setKeyMap(keyMap: KeyMap) {
+    this.keyMap = keyMap;
   }
 
   public activate() {
@@ -41,9 +53,8 @@ export class KeyboardInputDevice implements IInputDevice {
 
 
   private getActionFromCode(code: string): Action | null {
-    const keyMap = settingsManager.getKeyMap();
-    for (const action in keyMap) {
-      if (keyMap[action as Action]?.includes(code)) {
+    for (const action in this.keyMap) {
+      if (this.keyMap[action as Action]?.includes(code)) {
         return action as Action;
       }
     }
@@ -179,8 +190,8 @@ class InputProvider {
   private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
   private active = true;
 
-  constructor() {
-    this.keyboardDevice = new KeyboardInputDevice();
+  constructor(keyMap?: KeyMap) {
+    this.keyboardDevice = new KeyboardInputDevice(keyMap);
     this.devices.push(this.keyboardDevice);
     this.devices.push(new GamepadInputDevice());
     this.keyboardDevice.activate();
@@ -201,6 +212,10 @@ class InputProvider {
 
   public isActive(): boolean {
     return this.active;
+  }
+
+  public setKeyMap(keyMap: KeyMap) {
+    this.keyboardDevice.setKeyMap(keyMap);
   }
 
   private handleBlur = () => {

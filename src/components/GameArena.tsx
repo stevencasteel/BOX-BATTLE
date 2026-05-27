@@ -9,6 +9,7 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
 import { saveManager } from "@/core/SaveManager";
+import { settingsManager } from "@/core/SettingsManager";
 import { Trophy, Skull, RotateCcw, Home, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,6 +45,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const renderer = new WorldRenderer(ctx);
     const engine = new Engine(world, renderer);
     engineRef.current = engine;
+    inputProvider.setKeyMap(settingsManager.getKeyMap());
     engine.start();
 
     useSessionStore.getState().setGameResult("PLAYING");

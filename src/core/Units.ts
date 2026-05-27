@@ -68,6 +68,12 @@ export const UNITS = {
   MELEE_VERTICAL_OFFSET: 35,
   MELEE_SWEEP_INNER_RADIUS: 25,
 
+  // Player wall jump horizontal impulse
+  PLAYER_WALL_JUMP_X_VELOCITY: 1650,
+
+  // Boss wall collision rebound velocity
+  BOSS_WALL_REBOUND_VELOCITY: 350,
+
   // Downward attack (pogo) hitbox dimensions
   POGO_HITBOX_WIDTH: 90,
   POGO_HITBOX_HEIGHT: 44.5,

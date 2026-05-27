@@ -11,6 +11,11 @@ export type DamagePayload = {
   intensity: number;
 };
 
+const scratchPayload: DamagePayload = {
+  amount: 0, currentHealth: 0, maxHealth: 0,
+  sourceX: 0, sourceY: 0, intensity: 0,
+};
+
 export interface HealthComponentOptions {
   maxHealth?: number;
   invincibilityDuration?: number;
@@ -69,7 +74,13 @@ export class HealthComponent implements IEntityComponent {
     this.hitFlashTimer = this.hitFlashDuration;
 
     if (this.onDamaged) {
-      this.onDamaged({ amount, currentHealth: this.currentHealth, maxHealth: this.maxHealth, sourceX, sourceY, intensity });
+      scratchPayload.amount = amount;
+      scratchPayload.currentHealth = this.currentHealth;
+      scratchPayload.maxHealth = this.maxHealth;
+      scratchPayload.sourceX = sourceX;
+      scratchPayload.sourceY = sourceY;
+      scratchPayload.intensity = intensity;
+      this.onDamaged(scratchPayload);
     }
 
     if (this.currentHealth <= 0) {
