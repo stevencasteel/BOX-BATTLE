@@ -44,6 +44,10 @@ export type GameEventMap = {
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
   PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
+  STATE_PROJECTED: { playerHP: number; bossHP: number; healingCharges: number; determination: number };
+  RECORD_LOSS: void;
+  RECORD_WIN: void;
+  SESSION_RESET: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;

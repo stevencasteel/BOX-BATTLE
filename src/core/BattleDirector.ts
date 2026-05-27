@@ -2,9 +2,7 @@ import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
-import { saveManager } from "@/core/SaveManager";
 import { CinematicSystem } from "@/core/CinematicSystem";
 
 export class BattleDirector {
@@ -70,8 +68,6 @@ export class BattleDirector {
       }
     }
 
-    const sessionState = useSessionStore.getState();
-
     if (player.isDead && !this.cinematic.isActive()) {
       this.cinematic.startSequence(
         player.position,
@@ -82,8 +78,8 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              sessionState.setGameResult("GAMEOVER");
-              saveManager.recordLoss();
+              this.events.publish("GAME_OVER", undefined);
+              this.events.publish("RECORD_LOSS", undefined);
             },
           },
           {
@@ -120,8 +116,8 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              sessionState.setGameResult("VICTORY");
-              saveManager.recordWin();
+              this.events.publish("VICTORY", undefined);
+              this.events.publish("RECORD_WIN", undefined);
             },
           },
           {

@@ -5,7 +5,6 @@ import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
-import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
@@ -52,7 +51,7 @@ export class Engine {
     this.world = world;
     this.renderer = renderer;
     this.levelConfig = levelConfig;
-    this.stateProjection = new StateProjectionSystem();
+    this.stateProjection = new StateProjectionSystem(this.world.events);
     this.minionCollisionSystem = new MinionCollisionSystem();
     this.entityResetService = new EntityResetService();
 
@@ -88,9 +87,6 @@ export class Engine {
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
     Camera.reset();
-
-    const sessionState = useSessionStore.getState();
-    sessionState.setGameResult("PLAYING");
 
     this.stateProjection.project(this.player, this.boss);
 
@@ -154,8 +150,7 @@ export class Engine {
     this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
     this.stateProjection.reset();
 
-    const sessionState = useSessionStore.getState();
-    sessionState.setGameResult("PLAYING");
+    this.world.events.publish("SESSION_RESET", undefined);
 
     this.stateProjection.project(this.player, this.boss);
     this.world.events.publish("CLEAR_DIALOGUES", undefined);

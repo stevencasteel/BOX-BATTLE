@@ -46,6 +46,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     engineRef.current = engine;
     engine.start();
 
+    useSessionStore.getState().setGameResult("PLAYING");
+
     const vignette = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
 
     const updateVignette = (hp: number) => {
@@ -77,10 +79,45 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const initialHP = useGameplayStore.getState().playerHP;
     updateVignette(initialHP);
 
+    const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
+      useGameplayStore.setState({
+        playerHP: payload.playerHP,
+        bossHP: payload.bossHP,
+        healingCharges: payload.healingCharges,
+        determination: payload.determination,
+      });
+    });
+
+    const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {
+      useSessionStore.getState().setGameResult("GAMEOVER");
+    });
+
+    const unsubVictory = eventBroker.subscribe("VICTORY", () => {
+      useSessionStore.getState().setGameResult("VICTORY");
+    });
+
+    const unsubRecordLoss = eventBroker.subscribe("RECORD_LOSS", () => {
+      saveManager.recordLoss();
+    });
+
+    const unsubRecordWin = eventBroker.subscribe("RECORD_WIN", () => {
+      saveManager.recordWin();
+    });
+
+    const unsubSessionReset = eventBroker.subscribe("SESSION_RESET", () => {
+      useSessionStore.getState().setGameResult("PLAYING");
+    });
+
     return () => {
       unsubHurt();
       unsubHealed();
       unsubSession();
+      unsubStateProjected();
+      unsubGameOver();
+      unsubVictory();
+      unsubRecordLoss();
+      unsubRecordWin();
+      unsubSessionReset();
       engine.cleanup();
       engineRef.current = null;
     };

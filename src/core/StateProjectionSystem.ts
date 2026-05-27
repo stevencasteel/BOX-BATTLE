@@ -1,8 +1,8 @@
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { useGameplayStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
+import type { IEventBus } from "@/core/Interfaces";
 
 export class StateProjectionSystem {
   private cachedPlayerHP: number = -1;
@@ -10,6 +10,11 @@ export class StateProjectionSystem {
   private cachedHealingCharges: number = -1;
   private cachedDetermination: number = -1;
   private crisisTimer: number = 0;
+  private events: IEventBus;
+
+  constructor(events: IEventBus) {
+    this.events = events;
+  }
 
   public getCrisisTimer(): number {
     return this.crisisTimer;
@@ -53,7 +58,7 @@ export class StateProjectionSystem {
       this.cachedHealingCharges = nextHealingCharges;
       this.cachedDetermination = nextDetermination;
 
-      useGameplayStore.setState({
+      this.events.publish("STATE_PROJECTED", {
         playerHP: nextPlayerHP,
         bossHP: nextBossHP,
         healingCharges: nextHealingCharges,
