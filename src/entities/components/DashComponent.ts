@@ -32,10 +32,15 @@ export class DashComponent implements IEntityComponent {
       this.dashCooldown -= dt;
     }
 
-    for (const ghost of this.ghosts) {
-      ghost.opacity -= dt * 5.0;
+    for (let i = this.ghosts.length - 1; i >= 0; i--) {
+      const g = this.ghosts[i];
+      g.opacity -= dt * 5.0;
+      if (g.opacity <= 0) {
+        const last = this.ghosts[this.ghosts.length - 1];
+        this.ghosts[i] = last;
+        this.ghosts.pop();
+      }
     }
-    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
 
     if (this.isDashing) {
       this.dashTimer -= dt;

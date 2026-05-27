@@ -1,6 +1,7 @@
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Minion } from "./Minion";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 export abstract class MinionState implements IState {
   protected owner: Minion;
@@ -17,11 +18,11 @@ export abstract class MinionState implements IState {
 export class TurretPatrolState extends MinionState {
   public enter(): void {
     this.owner.attackState = "PATROL";
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     const player = this.owner.world.player;
     const playerValid = player && !player.isDead;
 
@@ -42,11 +43,11 @@ export class TurretTelegraphState extends MinionState {
   public enter(): void {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.5;
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
       const player = this.owner.world.player;
       if (player && !player.isDead) {
@@ -63,7 +64,7 @@ export class TurretTelegraphState extends MinionState {
 export class LancerPatrolState extends MinionState {
   public enter(): void {
     this.owner.attackState = "PATROL";
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(_dt: number): void {
@@ -90,8 +91,8 @@ export class LancerTelegraphState extends MinionState {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.4;
     this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 1.18, y: 0.82 };
-    this.owner.targetVisualScale = { x: 1.1, y: 0.9 };
+    setVec(this.owner.visualScale, 1.18, 0.82);
+    setVec(this.owner.targetVisualScale, 1.1, 0.9);
   }
 
   public update(_dt: number): void {
@@ -109,8 +110,8 @@ export class LancerAttackState extends MinionState {
     this.owner.attackState = "ATTACK";
     this.owner.stateTimer = 0.2;
     this.owner.velocity.x = this.owner.facingDirection * 400;
-    this.owner.visualScale = { x: 1.26, y: 0.74 };
-    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
+    setVec(this.owner.visualScale, 1.26, 0.74);
+    setVec(this.owner.targetVisualScale, 1.15, 0.85);
   }
 
   public update(_dt: number): void {
@@ -131,8 +132,8 @@ export class LancerCooldownState extends MinionState {
     this.owner.attackState = "COOLDOWN";
     this.owner.stateTimer = 1.2;
     this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 0.85, y: 1.15 };
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.visualScale, 0.85, 1.15);
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(_dt: number): void {
@@ -197,11 +198,11 @@ export class FlyerTelegraphState extends MinionState {
   public enter(): void {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.6;
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
       this.owner.stateMachine.changeState(new FlyerAttackState(this.owner));
     }

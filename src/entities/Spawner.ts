@@ -20,7 +20,12 @@ export class Spawner {
   public update(dt: number) {
     if (this.activeMinion) {
       if (this.activeMinion.isDead) {
-        this.world.minions = this.world.minions.filter((m) => m !== this.activeMinion);
+        const idx = this.world.minions.indexOf(this.activeMinion);
+        if (idx !== -1) {
+          const last = this.world.minions[this.world.minions.length - 1];
+          this.world.minions[idx] = last;
+          this.world.minions.pop();
+        }
         this.activeMinion = null;
         this.respawnTimer = this.respawnDelay;
       }
@@ -42,7 +47,12 @@ export class Spawner {
   public cleanup() {
     if (this.activeMinion) {
       this.activeMinion.teardown();
-      this.world.minions = this.world.minions.filter((m) => m !== this.activeMinion);
+      const idx = this.world.minions.indexOf(this.activeMinion);
+      if (idx !== -1) {
+        const last = this.world.minions[this.world.minions.length - 1];
+        this.world.minions[idx] = last;
+        this.world.minions.pop();
+      }
       this.activeMinion = null;
     }
   }

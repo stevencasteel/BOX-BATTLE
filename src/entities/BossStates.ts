@@ -3,6 +3,7 @@ import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { eventBroker } from "@/core/eventBroker";
+import { setVec } from "@/core/VecUtils";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -36,7 +37,7 @@ export class BossCooldownState extends BossState {
     } else {
       this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
     }
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(dt: number): void {
@@ -54,7 +55,7 @@ export class BossPatrolState extends BossState {
   private duration: number = 2.0;
 
   public enter(): void {
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
     this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
@@ -188,8 +189,8 @@ export class BossTelegraphState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
-    this.owner.visualScale = { x: 1.25, y: 0.75 };
-    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
+    setVec(this.owner.visualScale, 1.25, 0.75);
+    setVec(this.owner.targetVisualScale, 1.15, 0.85);
     eventBroker.publish("BOSS_TELEGRAPH", undefined);
   }
 
@@ -214,8 +215,8 @@ export class BossLungeState extends BossState {
 
   public enter(): void {
     this.duration = 0.5;
-    this.owner.visualScale = { x: 1.35, y: 0.65 };
-    this.owner.targetVisualScale = { x: 1.2, y: 0.8 };
+    setVec(this.owner.visualScale, 1.35, 0.65);
+    setVec(this.owner.targetVisualScale, 1.2, 0.8);
     eventBroker.publish("BOSS_LUNGED", undefined);
   }
 
@@ -239,8 +240,8 @@ export class BossLungeState extends BossState {
     if (hitWall && physics) {
       // Rebound backward and squash elastically on wall collision
       this.owner.velocity.x = -this.owner.facingDirection * 350;
-      this.owner.visualScale = { x: 0.7, y: 1.3 };
-      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.owner.visualScale, 0.7, 1.3);
+      setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 28;
 
       const impactSide = physics.isOnWallLeft ? -1 : 1;
@@ -256,8 +257,8 @@ export class BossLungeState extends BossState {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
     } else {
       this.owner.velocity.x = 0;
-      this.owner.visualScale = { x: 0.8, y: 1.2 };
-      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.owner.visualScale, 0.8, 1.2);
+      setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 15;
     }
   }

@@ -19,6 +19,7 @@ import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 import { UNITS } from "@/core/Units";
+import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -83,12 +84,12 @@ export class Engine {
     this.world.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
-    this.player.position = { ...this.levelConfig.playerStart };
-    this.player.previousPosition = { ...this.levelConfig.playerStart };
+    setVec(this.player.position, this.levelConfig.playerStart.x, this.levelConfig.playerStart.y);
+    setVec(this.player.previousPosition, this.levelConfig.playerStart.x, this.levelConfig.playerStart.y);
 
     this.boss = new Boss("boss-01", this.world);
-    this.boss.position = { ...this.levelConfig.bossStart };
-    this.boss.previousPosition = { ...this.levelConfig.bossStart };
+    setVec(this.boss.position, this.levelConfig.bossStart.x, this.levelConfig.bossStart.y);
+    setVec(this.boss.previousPosition, this.levelConfig.bossStart.x, this.levelConfig.bossStart.y);
 
     this.world.player = this.player;
     this.world.boss = this.boss;
@@ -181,9 +182,9 @@ export class Engine {
 
   private resetEntity(entity: Player | Boss, startPos: { x: number; y: number }, facing: number) {
     entity.isDead = false;
-    entity.position = { ...startPos };
-    entity.previousPosition = { ...startPos };
-    entity.velocity = { x: 0, y: 0 };
+    setVec(entity.position, startPos.x, startPos.y);
+    setVec(entity.previousPosition, startPos.x, startPos.y);
+    zeroVec(entity.velocity);
     entity.facingDirection = facing;
 
     if (entity instanceof Player) {
@@ -285,19 +286,19 @@ export class Engine {
   }
 
   private cachePreIntegrationPositions() {
-    this.player.previousPosition = { ...this.player.position };
-    this.boss.previousPosition = { ...this.boss.position };
+    copyVec(this.player.previousPosition, this.player.position);
+    copyVec(this.boss.previousPosition, this.boss.position);
     for (const minion of this.world.minions) {
-      (minion as BaseEntity).previousPosition = { ...minion.position };
+      copyVec((minion as BaseEntity).previousPosition, minion.position);
     }
     for (const proj of this.pool.getActive()) {
-      proj.previousPosition = { ...proj.position };
+      copyVec(proj.previousPosition, proj.position);
     }
   }
 
   private handleCinematicUpdate(dt: number) {
-    this.player.velocity = { x: 0, y: 0 };
-    this.boss.velocity = { x: 0, y: 0 };
+    zeroVec(this.player.velocity);
+    zeroVec(this.boss.velocity);
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {

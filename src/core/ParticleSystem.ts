@@ -1,6 +1,7 @@
 import { Particle } from "./Interfaces";
 import { ObjectPool, IPoolable } from "./ObjectPool";
 import { eventBroker } from "./eventBroker";
+import { TrigLUT } from "./TrigLUT";
 
 export class PoolableParticle implements Particle, IPoolable {
   public x = 0;
@@ -76,8 +77,8 @@ export class ParticleSystem {
             : angle + (Math.random() * 0.9 - 0.45);
           const pSpeed = radial ? 100 + Math.random() * 300 : 160 + Math.random() * 280;
 
-          const vx = Math.cos(pAngle) * pSpeed;
-          const vy = Math.sin(pAngle) * pSpeed;
+          const vx = TrigLUT.cos(pAngle) * pSpeed;
+          const vy = TrigLUT.sin(pAngle) * pSpeed;
           const pColor = color || "hsl(142, 71%, 58%)";
           const size = 2.5 + Math.random() * 3.5;
           const life = 0.22;
@@ -143,7 +144,7 @@ export class ParticleSystem {
         p.vy *= Math.pow(p.drag, dt * 60);
       }
       if (p.turbulence > 0) {
-        const wave = Math.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
+        const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
         p.x += wave * dt;
       }
       p.x += p.vx * dt;

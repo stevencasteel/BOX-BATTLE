@@ -9,6 +9,7 @@ import {
   FlyerPatrolState
 } from "./MinionStates";
 import { eventBroker } from "@/core/eventBroker";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
@@ -55,9 +56,9 @@ export class Minion extends BaseEntity {
     this.position = { ...startPos };
     this.previousPosition = { ...startPos };
 
-    this.visualScale = { x: 0.1, y: 0.1 };
-    this.targetVisualScale = { x: 1.0, y: 1.0 };
-    this.scaleVelocity = { x: 15.0, y: 15.0 };
+    setVec(this.visualScale, 0.1, 0.1);
+    setVec(this.targetVisualScale, 1.0, 1.0);
+    setVec(this.scaleVelocity, 15.0, 15.0);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.stateMachine = new StateMachine();
@@ -88,7 +89,7 @@ export class Minion extends BaseEntity {
       this.physics.gravity = 0;
 
       this.pointA = { ...startPos };
-      this.pointB = { x: startPos.x, y: startPos.y - 180 };
+      setVec(this.pointB, startPos.x, startPos.y - 180);
       this.squashPivot = "center";
       this.stateMachine.changeState(new FlyerPatrolState(this));
     }
@@ -105,7 +106,7 @@ export class Minion extends BaseEntity {
     eventBroker.publish("MINION_DISSOLVING", undefined);
     this.isDying = true;
     this.dissolveTimer = 0.5;
-    this.velocity = { x: 0, y: 0 };
+    zeroVec(this.velocity);
 
     const mColor =
       this.minionType === "LANCER"
@@ -135,7 +136,7 @@ export class Minion extends BaseEntity {
 
     if (this.isSpawning) {
       this.spawnTimer -= dt;
-      this.velocity = { x: 0, y: 0 };
+      zeroVec(this.velocity);
 
       const mColor =
         this.minionType === "LANCER"
@@ -164,7 +165,7 @@ export class Minion extends BaseEntity {
 
     if (this.isDying) {
       this.dissolveTimer -= dt;
-      this.velocity = { x: 0, y: 0 };
+      zeroVec(this.velocity);
 
       const mColor =
         this.minionType === "LANCER"
@@ -311,8 +312,8 @@ export class Minion extends BaseEntity {
             this.velocity.y = -550;
             this.physics.isGrounded = false;
           }
-          this.visualScale = { x: 0.5, y: 1.5 };
-          this.scaleVelocity = { x: 10.0, y: -15.0 };
+          setVec(this.visualScale, 0.5, 1.5);
+          setVec(this.scaleVelocity, 10.0, -15.0);
         }
         break;
       }
@@ -502,8 +503,8 @@ export class Minion extends BaseEntity {
     this.velocity.y = Math.min(this.velocity.y, -340 * intensity);
     this.physics.isGrounded = false;
 
-    this.visualScale = { x: 1.0 - 0.2 * intensity, y: 1.0 + 0.4 * intensity };
-    this.scaleVelocity = { x: 10.0 * intensity, y: -20.0 * intensity };
+    setVec(this.visualScale, 1.0 - 0.2 * intensity, 1.0 + 0.4 * intensity);
+    setVec(this.scaleVelocity, 10.0 * intensity, -20.0 * intensity);
 
     const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
     this.applyAngularImpulse(rotImpulse);

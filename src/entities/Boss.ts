@@ -5,6 +5,7 @@ import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -39,8 +40,8 @@ export class Boss extends BaseEntity {
     this.size = { width: 60, height: 60 };
     this.squashPivot = "feet";
 
-    this.position = { x: 0, y: 0 };
-    this.previousPosition = { x: 0, y: 0 };
+    zeroVec(this.position);
+    zeroVec(this.previousPosition);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -218,8 +219,8 @@ export class Boss extends BaseEntity {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
           // Springy, elastic visual stretch launcher
-          this.visualScale = { x: 0.5, y: 1.5 };
-          this.scaleVelocity = { x: 10.0, y: -15.0 };
+          setVec(this.visualScale, 0.5, 1.5);
+          setVec(this.scaleVelocity, 10.0, -15.0);
         }
         break;
       }
@@ -278,8 +279,8 @@ export class Boss extends BaseEntity {
     this.physics.isGrounded = false;
 
     // Stretch vertically to visually sell the launch momentum
-    this.visualScale = { x: 1.0 - 0.15 * intensity, y: 1.0 + 0.3 * intensity };
-    this.scaleVelocity = { x: 8.0 * intensity, y: -16.0 * intensity };
+    setVec(this.visualScale, 1.0 - 0.15 * intensity, 1.0 + 0.3 * intensity);
+    setVec(this.scaleVelocity, 8.0 * intensity, -16.0 * intensity);
 
     const rotImpulse = -Math.sign(dirX) * 12.0 * intensity;
     this.applyAngularImpulse(rotImpulse);

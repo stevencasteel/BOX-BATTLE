@@ -1,4 +1,5 @@
 import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 
 interface SegmentBuffer {
   x1: number;
@@ -64,17 +65,17 @@ export class PlayerFxRenderer {
       const angle1 = t1 * maxAngle + rotationOffset;
       const angle2 = t2 * maxAngle + rotationOffset;
 
-      const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
-      const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
+      const r1 = (42 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
+      const r2 = (42 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
 
-      const x1 = r1 * Math.cos(angle1);
-      const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
+      const x1 = r1 * TrigLUT.cos(angle1);
+      const y1 = -t1 * coilHeight + r1 * TrigLUT.sin(angle1) * 0.28;
 
-      const x2 = r2 * Math.cos(angle2);
-      const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
+      const x2 = r2 * TrigLUT.cos(angle2);
+      const y2 = -t2 * coilHeight + r2 * TrigLUT.sin(angle2) * 0.28;
 
       const midAngle = (angle1 + angle2) / 2;
-      const isBehind = Math.sin(midAngle) < 0;
+      const isBehind = TrigLUT.sin(midAngle) < 0;
 
       const segmentAlpha = (1.0 - t1 * 0.25) * progress;
 
@@ -172,33 +173,33 @@ export class PlayerFxRenderer {
         const theta1 = i * step + rotationSpeed;
         const theta2 = (i + 1) * step + rotationSpeed;
 
-        const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-        const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+        const noise1 = TrigLUT.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+        const noise2 = TrigLUT.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
 
         const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
         const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
 
-        const x0_1 = r1 * Math.cos(theta1);
-        const y0_1 = r1 * Math.sin(theta1);
+        const x0_1 = r1 * TrigLUT.cos(theta1);
+        const y0_1 = r1 * TrigLUT.sin(theta1);
         
-        const x1_1 = x0_1 * Math.cos(orbit.psi);
+        const x1_1 = x0_1 * TrigLUT.cos(orbit.psi);
         const y1_1 = y0_1;
-        const z1_1 = -x0_1 * Math.sin(orbit.psi);
+        const z1_1 = -x0_1 * TrigLUT.sin(orbit.psi);
 
         const x2_1 = x1_1;
-        const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
-        const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
+        const y2_1 = y1_1 * TrigLUT.cos(orbit.phi) - z1_1 * TrigLUT.sin(orbit.phi);
+        const z2_1 = y1_1 * TrigLUT.sin(orbit.phi) + z1_1 * TrigLUT.cos(orbit.phi);
 
-        const x0_2 = r2 * Math.cos(theta2);
-        const y0_2 = r2 * Math.sin(theta2);
+        const x0_2 = r2 * TrigLUT.cos(theta2);
+        const y0_2 = r2 * TrigLUT.sin(theta2);
 
-        const x1_2 = x0_2 * Math.cos(orbit.psi);
+        const x1_2 = x0_2 * TrigLUT.cos(orbit.psi);
         const y1_2 = y0_2;
-        const z1_2 = -x0_2 * Math.sin(orbit.psi);
+        const z1_2 = -x0_2 * TrigLUT.sin(orbit.psi);
 
         const x2_2 = x1_2;
-        const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
-        const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
+        const y2_2 = y1_2 * TrigLUT.cos(orbit.phi) - z1_2 * TrigLUT.sin(orbit.phi);
+        const z2_2 = y1_2 * TrigLUT.sin(orbit.phi) + z1_2 * TrigLUT.cos(orbit.phi);
 
         const p1_x = localCenterX + x2_1;
         const p1_y = localCenterY + y2_1;

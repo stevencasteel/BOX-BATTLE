@@ -4,6 +4,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 const TRAIL_RING_SIZE = 16;
 
@@ -37,9 +38,9 @@ export class Projectile extends BaseEntity implements IPoolable {
     world: IWorld,
     customColor?: string
   ) {
-    this.position = { x, y };
-    this.previousPosition = { x, y };
-    this.velocity = { x: dirX * speed, y: dirY * speed };
+    setVec(this.position, x, y);
+    setVec(this.previousPosition, x, y);
+    setVec(this.velocity, dirX * speed, dirY * speed);
 
     this.ownerId = ownerId;
     this.damage = damage;
@@ -56,7 +57,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public deactivate() {
     this.isActive = false;
     this.isDead = true;
-    this.velocity = { x: 0, y: 0 };
+    zeroVec(this.velocity);
     this.trailCount = 0;
   }
 

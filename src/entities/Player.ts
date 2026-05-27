@@ -10,6 +10,7 @@ import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 const AURA_COLORS = [
   'hsla(280, 90%, 25%, 0.35)',
@@ -64,8 +65,8 @@ export class Player extends BaseEntity {
     this.size = { width: 40, height: 80 };
     this.squashPivot = "center";
 
-    this.position = { x: 0, y: 0 };
-    this.previousPosition = { x: 0, y: 0 };
+    zeroVec(this.position);
+    zeroVec(this.previousPosition);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -191,14 +192,14 @@ export class Player extends BaseEntity {
         shape: "spark",
       });
 
-      this.visualScale = { x: 0.90, y: 1.10 };
-      this.scaleVelocity = { x: 6.0, y: -12.0 };
+      setVec(this.visualScale, 0.90, 1.10);
+      setVec(this.scaleVelocity, 6.0, -12.0);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.35 });
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.10, y: 0.90 };
-      this.scaleVelocity = { x: -10.0, y: 10.0 };
+      setVec(this.visualScale, 1.10, 0.90);
+      setVec(this.scaleVelocity, -10.0, 10.0);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
     });
 
@@ -229,8 +230,8 @@ export class Player extends BaseEntity {
 
       const sqX = isLvl2 ? 0.90 : 0.96;
       const sqY = isLvl2 ? 1.10 : 1.04;
-      this.visualScale = { x: sqX, y: sqY };
-      this.scaleVelocity = { x: (isLvl2 ? 16 : 8), y: (isLvl2 ? -16 : -8) };
+      setVec(this.visualScale, sqX, sqY);
+      setVec(this.scaleVelocity, (isLvl2 ? 16 : 8), (isLvl2 ? -16 : -8));
 
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
@@ -279,7 +280,7 @@ export class Player extends BaseEntity {
     }
 
     if (!this.isCharging) {
-      this.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.targetVisualScale, 1.0, 1.0);
       if (!this.physics.isGrounded) {
         this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
       } else {
@@ -350,7 +351,7 @@ export class Player extends BaseEntity {
       }
     }
 
-    this.targetVisualScale = { x: targetScaleX, y: targetScaleY };
+    setVec(this.targetVisualScale, targetScaleX, targetScaleY);
   }
 
   private updateAirTime(dt: number) {
@@ -362,8 +363,8 @@ export class Player extends BaseEntity {
         const speedFactor = Math.max(0, (this.maxFallSpeed - 120) / 680);
         const factor = Math.min(1.0, 0.3 * speedFactor + 0.7 * speedFactor * speedFactor);
         if (factor > 0.01) {
-          this.visualScale = { x: 1.0 + 0.28 * factor, y: 1.0 - 0.28 * factor };
-          this.scaleVelocity = { x: 10 * factor, y: -18 * factor };
+          setVec(this.visualScale, 1.0 + 0.28 * factor, 1.0 - 0.28 * factor);
+          setVec(this.scaleVelocity, 10 * factor, -18 * factor);
           this.velocity.x *= (1.0 - 0.8 * factor);
           eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
           eventBroker.publish("PLAYER_LANDED", undefined);
@@ -404,7 +405,7 @@ export class Player extends BaseEntity {
   private handleWallCling(currentOnWall: boolean) {
     if (!currentOnWall || this.wasOnWall || this.physics.isGrounded) return;
 
-    this.visualScale = { x: 0.76, y: 1.24 };
+    setVec(this.visualScale, 0.76, 1.24);
 
     const impactSide = this.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.position.x + impactSide * (this.size.width / 2);
@@ -493,7 +494,7 @@ export class Player extends BaseEntity {
     const normY = dirY / len;
 
     this.dashComponent.triggerDash(normX, normY);
-    this.visualScale = { x: 1.25, y: 0.75 };
+    setVec(this.visualScale, 1.25, 0.75);
   }
 
   private handleJump(dt: number) {
@@ -530,7 +531,7 @@ export class Player extends BaseEntity {
       this.coyoteTimer = 0;
       this.wallCoyoteTimer = 0;
       this.jumpBufferTimer = 0;
-      this.visualScale = { x: 0.82, y: 1.18 };
+      setVec(this.visualScale, 0.82, 1.18);
       this.dashComponent.resetDashCharge();
 
           const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
@@ -540,10 +541,10 @@ export class Player extends BaseEntity {
           this.velocity.y = -this.jumpForce;
           this.hasDoubleJump = false;
           this.jumpBufferTimer = 0;
-          this.visualScale = { x: 0.82, y: 1.18 };
+          setVec(this.visualScale, 0.82, 1.18);
 
           this.doubleJumpDiskTimer = 0.22;
-          this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
+          setVec(this.doubleJumpDiskPos, this.position.x, this.position.y + this.size.height / 2);
 
           eventBroker.publish("PLAYER_JUMPED", undefined);
         }
@@ -553,7 +554,7 @@ export class Player extends BaseEntity {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
-        this.visualScale = { x: 0.82, y: 1.18 };
+        setVec(this.visualScale, 0.82, 1.18);
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
         eventBroker.publish("PLAYER_JUMPED", undefined);
       }
@@ -628,8 +629,8 @@ export class Player extends BaseEntity {
             if (damaged && !this.isDead) {
               this.velocity.y = -550;
               this.physics.isGrounded = false;
-              this.visualScale = { x: 0.5, y: 1.5 };
-              this.scaleVelocity = { x: 10.0, y: -15.0 };
+              setVec(this.visualScale, 0.5, 1.5);
+              setVec(this.scaleVelocity, 10.0, -15.0);
             }
             break;
           }
