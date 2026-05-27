@@ -1,5 +1,53 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 
+export type GameEventMap = {
+  PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
+  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
+  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
+  PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
+  PLAYER_JUMPED: void;
+  PLAYER_DASHED: { direction: number };
+  PLAYER_POGOED: void;
+  PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
+  PLAYER_PROJECTILE_FIRED: { level: 1 | 2; dirX: number; dirY: number };
+  HEALING_CHARGES_CHANGED: { charges: number };
+  DETERMINATION_CHANGED: { determination: number };
+  DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
+  CAMERA_SHAKE: { amplitude: number; duration: number };
+  HIT_STOP: { duration: number };
+  BOSS_DEFEATED: { x: number; y: number };
+  GAME_OVER: void;
+  VICTORY: void;
+  CLEAR_DIALOGUES: void;
+  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line" };
+  SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
+  SPAWN_BLAST: { x: number; y: number; color: string };
+  PLAYER_DROPPED: void;
+  PLAYER_LANDED: void;
+  HEAL_START: void;
+  HEAL_CANCEL: void;
+  HEAL_UPDATE: { timer: number };
+  HEAL_COMPLETE: void;
+  PLAYER_SPIKED: { x: number };
+  BOSS_PHASE_SHIFT: void;
+  MINION_SPAWNING: void;
+  MINION_DISSOLVING: void;
+  PLAYER_DASH_RECHARGED: void;
+  BOSS_SWIPED: void;
+  BOSS_TELEGRAPH: void;
+  BOSS_LUNGED: void;
+  CHARGE_START: void;
+  CHARGE_UPDATE: { timer: number };
+  CHARGE_STOP: void;
+  CHARGE_MAXED: void;
+  CHARGE_CANCEL: void;
+  REQUEST_RETRY: void;
+  REQUEST_MENU: void;
+  PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
+};
+
+export type EventCallback<T> = (payload: T) => void;
+
 export enum EntityStatus {
   SPAWNING = "SPAWNING",
   ACTIVE = "ACTIVE",
@@ -163,8 +211,8 @@ export interface IDamageRecorder {
 }
 
 export interface IEventBus {
-  subscribe(event: string, callback: (payload: any) => void): () => void;
-  publish(event: string, payload: unknown): void;
+  subscribe<K extends string>(event: K, callback: (payload: K extends keyof GameEventMap ? GameEventMap[K] : unknown) => void): () => void;
+  publish<K extends string>(event: K, payload: K extends keyof GameEventMap ? GameEventMap[K] : unknown): void;
   publishSpark(x: number, y: number, angle: number, color?: string, radial?: boolean, count?: number, shape?: "spark" | "line", turbulence?: number): void;
   publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void;
   publishBlast(x: number, y: number, color: string): void;

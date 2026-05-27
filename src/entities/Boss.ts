@@ -212,43 +212,6 @@ export class Boss extends BaseEntity {
     }
   }
 
-  public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
-    if (this.isDead) return;
-
-    const alphaVal = alpha !== undefined ? alpha : 1.0;
-    const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
-    const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
-
-    const activeState = this.activeStateName;
-
-    ctx.save();
-    if (this.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else if (activeState === "TELEGRAPH") {
-      ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
-      ctx.shadowBlur = 20;
-    } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)";
-      if (this.currentPhase === 3) {
-        ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
-        ctx.shadowBlur = 25;
-      }
-    }
-
-    const vWidth = this.size.width * this.visualScale.x;
-    const vHeight = this.size.height * this.visualScale.y;
-    const feetY = drawY + this.size.height / 2;
-
-    // Apply feet rotation centered transform matrix
-    ctx.translate(drawX, feetY);
-    ctx.rotate(this.rotation);
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
-
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  }
-
   public handleHurtReaction(sourceX: number, sourceY: number, intensity: number) {
     if (this.isDead) return;
 

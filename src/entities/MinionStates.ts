@@ -1,12 +1,12 @@
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
-import { Minion } from "./Minion";
+import { BaseMinion } from "./BaseMinion";
 import { setVec, zeroVec } from "@/core/VecUtils";
 
 export abstract class MinionState implements IState {
-  protected owner: Minion;
+  protected owner: BaseMinion;
 
-  constructor(owner: Minion) {
+  constructor(owner: BaseMinion) {
     this.owner = owner;
   }
 
@@ -146,7 +146,7 @@ export class LancerCooldownState extends MinionState {
   public exit(): void {}
 }
 
-function minionPatrolMovement(minion: Minion, dt: number) {
+function minionPatrolMovement(minion: BaseMinion, dt: number) {
   const targetSpeed = minion.facingDirection * minion.patrolSpeed;
   const rate = targetSpeed !== 0 ? UNITS.MINION_ACCEL : UNITS.MINION_DECEL;
   minion.velocity.x += (targetSpeed - minion.velocity.x) * rate * dt;

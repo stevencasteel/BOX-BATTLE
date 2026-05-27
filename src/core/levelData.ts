@@ -1,5 +1,5 @@
 import { Rectangle } from "@/core/Interfaces";
-import { MinionType } from "@/entities/Minion";
+import { MinionType } from "@/entities/BaseMinion";
 
 export interface SpawnerConfig {
   type: MinionType;

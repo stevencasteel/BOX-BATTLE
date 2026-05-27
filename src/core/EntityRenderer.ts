@@ -1,9 +1,13 @@
 import { Player } from "@/entities/Player";
 import { Projectile } from "@/entities/Projectile";
+import { Boss } from "@/entities/Boss";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 import { World } from "./World";
+import { MinionVisuals } from "./visuals/MinionVisuals";
+import { BossVisuals } from "./visuals/BossVisuals";
+import { BaseMinion } from "@/entities/BaseMinion";
 
 export class EntityRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -46,7 +50,7 @@ export class EntityRenderer {
 
   public renderEntities(world: World, projectilePool: ObjectPool<Projectile>, alpha: number): void {
     if (world.boss) {
-      (world.boss as BaseEntity).draw(this.ctx, alpha);
+      BossVisuals.draw(this.ctx, world.boss as Boss, alpha);
     }
 
     if (world.player) {
@@ -58,7 +62,7 @@ export class EntityRenderer {
     }
 
     for (const minion of world.minions) {
-      (minion as BaseEntity).draw(this.ctx, alpha);
+      MinionVisuals.draw(this.ctx, minion as BaseMinion, alpha);
     }
 
     const activeProjectiles = projectilePool.getActive();

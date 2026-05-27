@@ -1,10 +1,15 @@
 import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld, EntityStatus } from "@/core/Interfaces";
+import { IWorld } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import {
+  IProjectileStrategy,
+  playerProjectileStrategy,
+  bossProjectileStrategy,
+} from "./ProjectileStrategy";
 
 const TRAIL_RING_SIZE = 16;
 
@@ -14,6 +19,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public damage = 1;
   public customColor: string | null = null;
 
+  private strategy!: IProjectileStrategy;
   private lifespan = 0;
 
   private trailRing: { x: number; y: number }[] = [];
@@ -48,6 +54,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.world = world;
     this.customColor = customColor || null;
 
+    this.strategy = ownerId === "player" ? playerProjectileStrategy : bossProjectileStrategy;
+
     this.isActive = true;
     this.isDead = false;
     this.trailHead = 0;
@@ -79,17 +87,11 @@ export class Projectile extends BaseEntity implements IPoolable {
     if (this.trailCount < TRAIL_RING_SIZE) this.trailCount++;
     if (this.trailCount > maxTrailLen) this.trailCount = maxTrailLen;
 
-    const isLvl2 = this.damage >= 3;
-    const sparkChance = isLvl2 ? 0.35 : 0.08;
-    if (this.ownerId === "player" && TrigLUT.random() < sparkChance) {
-      const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-      this.world.events.publishSpark(this.position.x, this.position.y, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
-    }
+    this.strategy.updateSparks(this.world.events, this.position.x, this.position.y, this.velocity.x, this.velocity.y, this.damage);
 
     const dx = this.velocity.x * dt;
     const dy = this.velocity.y * dt;
     const maxStepSize = UNITS.CCD_STEP_LIMIT_PROJECTILE;
-
     const steps = Math.max(1, Math.ceil(TrigLUT.fastSqrt(dx * dx + dy * dy) / maxStepSize));
     const substepX = dx / steps;
     const substepY = dy / steps;
@@ -183,7 +185,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   }
 
   private checkProjectileClashes(): boolean {
-    if (this.ownerId !== "player") return false;
+    if (!this.strategy.shouldCheckClashes()) return false;
 
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
@@ -215,22 +217,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   }
 
   private checkEntityCollisions(): boolean {
-    const targets = [];
-
-    if (this.ownerId === "boss") {
-      if (this.world.player && !this.world.player.isDead) {
-        targets.push(this.world.player);
-      }
-    } else {
-      if (this.world.boss && !this.world.boss.isDead) {
-        targets.push(this.world.boss);
-      }
-      for (const minion of this.world.minions) {
-        if (minion && minion.status === EntityStatus.ACTIVE) {
-          targets.push(minion);
-        }
-      }
-    }
+    const targets = this.strategy.getTargets(this.world);
 
     const pW = this.size.width / 2;
     const pH = this.size.height / 2;
@@ -248,7 +235,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       if (isColliding) {
         const targetHealth = target.getComponent(HealthComponent);
         if (targetHealth) {
-          const projIntensity = this.ownerId === "player" ? (this.damage >= 3 ? 1.6 : 0.6) : 1.0;
+          const projIntensity = this.strategy.getProjIntensity(this.damage);
           targetHealth.takeDamage(this.damage, this.position.x, this.position.y, projIntensity);
           return true;
         }
@@ -258,14 +245,13 @@ export class Projectile extends BaseEntity implements IPoolable {
   }
 
   private releaseEffects() {
-    const isPlayer = this.ownerId === "player";
-    const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
+    const blastColor = this.strategy.getBlastColor(this.damage, this.customColor);
     const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI;
 
     this.world.events.publishBlast(this.position.x, this.position.y, blastColor);
 
-    const sparkCount = isPlayer ? (this.damage >= 3 ? 18 : 4) : 8;
-    const turbulence = isPlayer && this.damage >= 3 ? 20 : 5;
+    const sparkCount = this.strategy.getSparkCount(this.damage);
+    const turbulence = this.strategy.getSparkTurbulence(this.damage);
     this.world.events.publishSpark(this.position.x, this.position.y, angle, blastColor, false, sparkCount, "line", turbulence);
   }
 
@@ -280,108 +266,21 @@ export class Projectile extends BaseEntity implements IPoolable {
       ctx.save();
       const oldestIdx = this.trailCount < TRAIL_RING_SIZE ? 0 : this.trailHead;
       const oldest = this.trailRing[oldestIdx];
-      const trailLen = this.trailCount;
 
-      if (this.ownerId === "player") {
-        const isLvl2 = this.damage >= 3;
+      this.strategy.drawTrail(ctx, {
+        drawX,
+        drawY,
+        oldestX: oldest.x,
+        oldestY: oldest.y,
+        trail: this.trailRing,
+        trailHead: this.trailHead,
+        trailCount: this.trailCount,
+        trailRingSize: TRAIL_RING_SIZE,
+        damage: this.damage,
+        customColor: this.customColor,
+        projWidth: this.size.width,
+      });
 
-        if (isLvl2) {
-          const outerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-          outerGrad.addColorStop(0.0, "rgba(234, 179, 8, 0.45)");
-          outerGrad.addColorStop(0.4, "rgba(34, 197, 94, 0.35)");
-          outerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
-
-          ctx.strokeStyle = outerGrad;
-          ctx.lineWidth = this.size.width * 1.5;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.moveTo(drawX, drawY);
-          for (let j = 0; j < trailLen; j++) {
-            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
-          }
-          ctx.stroke();
-
-          const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-          innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
-          innerGrad.addColorStop(0.4, "rgba(234, 179, 8, 0.6)");
-          innerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
-
-          ctx.strokeStyle = innerGrad;
-          ctx.lineWidth = this.size.width * 0.45;
-          ctx.shadowBlur = 0;
-          ctx.beginPath();
-          ctx.moveTo(drawX, drawY);
-          for (let j = 0; j < trailLen; j++) {
-            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
-          }
-          ctx.stroke();
-        } else {
-          const mainColor = "rgba(34, 197, 94, ";
-          const outerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-          outerGrad.addColorStop(0.0, mainColor + "0.35)");
-          outerGrad.addColorStop(1.0, mainColor + "0.0)");
-          ctx.strokeStyle = outerGrad;
-          ctx.lineWidth = this.size.width * 1.5;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-          ctx.shadowBlur = 12;
-          ctx.beginPath();
-          ctx.moveTo(drawX, drawY);
-          for (let j = 0; j < trailLen; j++) {
-            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
-          }
-          ctx.stroke();
-
-          const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-          innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
-          innerGrad.addColorStop(1.0, mainColor + "0.0)");
-          ctx.strokeStyle = innerGrad;
-          ctx.lineWidth = this.size.width * 0.45;
-          ctx.shadowBlur = 0;
-          ctx.beginPath();
-          ctx.moveTo(drawX, drawY);
-          for (let j = 0; j < trailLen; j++) {
-            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
-          }
-          ctx.stroke();
-        }
-      } else {
-        const trailColor = this.customColor || "hsl(350, 80%, 60%)";
-          const alphaColor0 = trailColor.startsWith("hsl") 
-            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.45)") 
-            : "rgba(239, 68, 68, 0.45)";
-          const alphaColor1 = trailColor.startsWith("hsl") 
-            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)") 
-            : "rgba(239, 68, 68, 0.0)";
-          const shadowCol = trailColor.startsWith("hsl") 
-            ? trailColor.replace("hsl", "hsla").replace(")", ", 0.5)") 
-            : "rgba(239, 68, 68, 0.5)";
-
-          const grad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
-          grad.addColorStop(0.0, alphaColor0);
-          grad.addColorStop(1.0, alphaColor1);
-          ctx.strokeStyle = grad;
-          ctx.shadowColor = shadowCol;
-        ctx.lineWidth = this.size.width;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.moveTo(drawX, drawY);
-        for (let j = 0; j < trailLen; j++) {
-          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-          ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
-        }
-        ctx.stroke();
-      }
       ctx.restore();
     }
 
@@ -397,66 +296,13 @@ export class Projectile extends BaseEntity implements IPoolable {
     ctx.rotate(angle);
     ctx.scale(stretchFactor, squashFactor);
 
-    if (this.ownerId === "player") {
-      const isLvl2 = this.damage >= 3;
-      const radius = this.size.width / 2;
+    this.strategy.drawBody(ctx, {
+      width: this.size.width,
+      height: this.size.height,
+      damage: this.damage,
+      customColor: this.customColor,
+    });
 
-      if (isLvl2) {
-        ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
-        ctx.shadowBlur = 24;
-
-        const radialGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-        radialGrad.addColorStop(0.0, "hsl(45, 100%, 65%)");
-        radialGrad.addColorStop(0.65, "hsl(45, 100%, 65%)");
-        radialGrad.addColorStop(1.0, "hsl(142, 71%, 58%)");
-
-        ctx.fillStyle = radialGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radius, radius * 0.75, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radius * 0.45, radius * 0.35, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.85, -Math.PI / 4, Math.PI / 4);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.85, Math.PI * 0.75, Math.PI * 1.25);
-        ctx.stroke();
-      } else {
-        ctx.shadowColor = "rgba(34, 197, 94, 0.75)";
-        ctx.shadowBlur = 14;
-
-        ctx.fillStyle = "hsl(142, 71%, 58%)";
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.55, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else {
-      const bodyColor = this.customColor || "hsl(350, 80%, 60%)";
-          const shadowCol = bodyColor.startsWith("hsl") 
-            ? bodyColor.replace("hsl", "hsla").replace(")", ", 0.6)") 
-            : "rgba(239, 68, 68, 0.6)";
-
-          ctx.fillStyle = bodyColor;
-          ctx.shadowColor = shadowCol;
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(0, 0, this.size.width / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
 }

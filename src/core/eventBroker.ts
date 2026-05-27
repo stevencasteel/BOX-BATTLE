@@ -1,54 +1,7 @@
-import { IEventBus, Rectangle } from "./Interfaces";
-export type GameEventMap = {
-  PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
-  BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
-  MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
-  PLAYER_HEALED: { amount: number; currentHealth: number; maxHealth: number };
-  PLAYER_JUMPED: void;
-  PLAYER_DASHED: { direction: number };
-  PLAYER_POGOED: void;
-  PLAYER_ATTACKED: { direction: "side" | "up" | "down" };
-  PLAYER_PROJECTILE_FIRED: { level: 1 | 2; dirX: number; dirY: number };
-  HEALING_CHARGES_CHANGED: { charges: number };
-  DETERMINATION_CHANGED: { determination: number };
-  DIALOGUE_TRIGGERED: { speaker: "player" | "boss"; text: string };
-  CAMERA_SHAKE: { amplitude: number; duration: number };
-  HIT_STOP: { duration: number };
-  BOSS_DEFEATED: { x: number; y: number };
-  GAME_OVER: void;
-  VICTORY: void;
-  CLEAR_DIALOGUES: void;
-  SPAWN_SPARKS: { x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line" };
-  SPAWN_DUST: { x: number; y: number; direction?: "horizontal" | "vertical" };
-  SPAWN_BLAST: { x: number; y: number; color: string };
-  PLAYER_DROPPED: void;
-  PLAYER_LANDED: void;
-  HEAL_START: void;
-  HEAL_CANCEL: void;
-  HEAL_UPDATE: { timer: number };
-  HEAL_COMPLETE: void;
-  PLAYER_SPIKED: { x: number };
-  BOSS_PHASE_SHIFT: void;
-  MINION_SPAWNING: void;
-  MINION_DISSOLVING: void;
-  PLAYER_DASH_RECHARGED: void;
-  BOSS_SWIPED: void;
-  BOSS_TELEGRAPH: void;
-  BOSS_LUNGED: void;
-  CHARGE_START: void;
-  CHARGE_UPDATE: { timer: number };
-  CHARGE_STOP: void;
-  CHARGE_MAXED: void;
-  CHARGE_CANCEL: void;
-  REQUEST_RETRY: void;
-  REQUEST_MENU: void;
-  PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
-};
-
-export type EventCallback<T> = (payload: T) => void;
+import { IEventBus, GameEventMap } from "./Interfaces";
 
 class EventBroker implements IEventBus {
-  private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
+  private listeners: Record<string, Set<(payload: unknown) => void>> = {};
 
   private static sparkPayload: {
     x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line";
@@ -58,23 +11,18 @@ class EventBroker implements IEventBus {
 
   private static blastPayload: { x: number; y: number; color: string } = { x: 0, y: 0, color: "" };
 
-  public subscribe(event: string, callback: (payload: any) => void): () => void;
-  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void;
-  public subscribe(event: string, callback: (payload: any) => void): () => void {
-    if (!this.listeners[event as keyof GameEventMap]) {
-      this.listeners[event as keyof GameEventMap] = new Set();
+  public subscribe<K extends string>(event: K, callback: (payload: K extends keyof GameEventMap ? GameEventMap[K] : unknown) => void): () => void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = new Set();
     }
-    const set = this.listeners[event as keyof GameEventMap]!;
-    set.add(callback);
+    this.listeners[event]!.add(callback as (payload: unknown) => void);
     return () => {
-      this.listeners[event as keyof GameEventMap]?.delete(callback);
+      this.listeners[event]?.delete(callback as (payload: unknown) => void);
     };
   }
 
-  public publish(event: string, payload: unknown): void;
-  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void;
-  public publish(event: string, payload: unknown): void {
-    const set = this.listeners[event as keyof GameEventMap];
+  public publish<K extends string>(event: K, payload: K extends keyof GameEventMap ? GameEventMap[K] : unknown): void {
+    const set = this.listeners[event];
     if (set) {
       set.forEach((cb) => cb(payload));
     }

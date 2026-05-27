@@ -1,4 +1,7 @@
-import { Minion, MinionType } from "./Minion";
+import { BaseMinion, MinionType } from "./BaseMinion";
+import { TurretMinion } from "./TurretMinion";
+import { LancerMinion } from "./LancerMinion";
+import { FlyerMinion } from "./FlyerMinion";
 import { IWorld } from "@/core/Interfaces";
 
 export class Spawner {
@@ -6,7 +9,7 @@ export class Spawner {
   public spawnType: MinionType;
   public world: IWorld;
 
-  private activeMinion: Minion | null = null;
+  private activeMinion: BaseMinion | null = null;
   private respawnTimer: number = 0;
   private readonly respawnDelay: number = 5.0;
 
@@ -39,7 +42,18 @@ export class Spawner {
 
   private spawnMinion() {
     const minionId = `minion-${this.spawnType}-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-    const minion = new Minion(minionId, this.spawnType, this.position, this.world);
+    let minion: BaseMinion;
+    switch (this.spawnType) {
+      case "TURRET":
+        minion = new TurretMinion(minionId, this.position, this.world);
+        break;
+      case "LANCER":
+        minion = new LancerMinion(minionId, this.position, this.world);
+        break;
+      case "FLYER":
+        minion = new FlyerMinion(minionId, this.position, this.world);
+        break;
+    }
     this.activeMinion = minion;
     this.world.minions.push(minion);
   }
