@@ -1,6 +1,9 @@
 import "./GameArena.css";
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
+import { World } from "@/core/World";
+import { WorldRenderer } from "@/core/WorldRenderer";
+import { defaultLevelConfig } from "@/core/levelData";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
@@ -33,7 +36,12 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new Engine(canvas);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not construct 2D context.");
+
+    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms);
+    const renderer = new WorldRenderer(ctx);
+    const engine = new Engine(world, renderer);
     engineRef.current = engine;
     engine.start();
 

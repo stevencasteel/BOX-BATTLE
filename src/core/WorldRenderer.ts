@@ -95,6 +95,10 @@ export class WorldRenderer {
     this.staticCtx = staticCtx;
   }
 
+  public getCanvas(): HTMLCanvasElement {
+    return this.ctx.canvas;
+  }
+
   private buildStaticCache(
     solids: Rectangle[],
     hazards: Rectangle[]

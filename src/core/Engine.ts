@@ -22,12 +22,11 @@ import { UNITS } from "@/core/Units";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
-  private ctx: CanvasRenderingContext2D;
-  private renderer!: WorldRenderer;
+  private renderer: WorldRenderer;
 
   private loop!: GameLoop;
   private systems!: SimulationSystems;
-  private world!: World;
+  private world: World;
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
 
@@ -54,12 +53,9 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(canvas: HTMLCanvasElement, levelConfig: LevelConfig = defaultLevelConfig) {
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Could not construct 2D context.");
-    }
-    this.ctx = context;
+  constructor(world: World, renderer: WorldRenderer, levelConfig: LevelConfig = defaultLevelConfig) {
+    this.world = world;
+    this.renderer = renderer;
     this.levelConfig = levelConfig;
 
     this.solids = this.levelConfig.solids;
@@ -76,9 +72,6 @@ export class Engine {
       () => this.boss.position.x,
       (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
     );
-
-    this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
-    this.renderer = new WorldRenderer(this.ctx);
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
@@ -139,7 +132,7 @@ export class Engine {
     Camera.reset();
     this.pool.clear();
 
-    const overlay = this.ctx.canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+    const overlay = this.renderer.getCanvas().parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
     if (overlay) {
       overlay.classList.remove("vignette-pulse");
     }
