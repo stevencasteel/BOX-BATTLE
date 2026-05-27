@@ -506,6 +506,7 @@ export class Player extends BaseEntity {
       this.velocity.y = 180;
       this.physics.isGrounded = false;
       this.jumpBufferTimer = 0;
+      eventBroker.publish("PLAYER_DROPPED", undefined);
     } else if (
       this.inputReceiver.isPressed("MOVE_DOWN") &&
       this.physics.isGrounded &&

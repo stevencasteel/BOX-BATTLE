@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { eventBroker } from "@/core/eventBroker";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Skull, AlertTriangle } from "lucide-react";
+import { useTutorialStore } from "@/store/useTutorialStore";
+import { settingsManager } from "@/core/SettingsManager";
+import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
+import { Action } from "@/core/InputProvider";
+import { soundSynth } from "@/core/SoundSynth";
+import { inputProvider } from "@/core/InputProvider";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
@@ -11,6 +17,11 @@ interface HudPanelProps {
 export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   const [bannerText, setBannerText] = useState<string | null>(null);
   const phaseRef = useRef(1);
+
+  const { tutorialStep, calibratedKeys, setTutorialStep, calibrateKey, resetTutorial } = useTutorialStore();
+
+  const retryCount = useSessionStore((state) => state.retryCount);
+  const currentScreen = useSessionStore((state) => state.currentScreen);
 
   useEffect(() => {
     const unsubPhase = eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
@@ -25,6 +36,128 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       unsubPhase();
     };
   }, []);
+
+  useEffect(() => {
+    if (currentScreen === "PLAYING" && !isTouchDevice) {
+      resetTutorial();
+    }
+  }, [currentScreen, retryCount, isTouchDevice, resetTutorial]);
+
+  useEffect(() => {
+    if (isTouchDevice && tutorialStep < 5) {
+      setTutorialStep(5);
+    }
+  }, [isTouchDevice, tutorialStep, setTutorialStep]);
+
+  useEffect(() => {
+    if (!isPlayingScreen || isTouchDevice || tutorialStep !== 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const keyMap = settingsManager.getKeyMap();
+      for (const act of Object.keys(keyMap) as Action[]) {
+        if (keyMap[act]?.includes(e.code) || keyMap[act]?.includes(e.key)) {
+          if (!calibratedKeys[act]) {
+            calibrateKey(act);
+            soundSynth.playSelectTick();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isPlayingScreen, isTouchDevice, tutorialStep, calibratedKeys, calibrateKey]);
+
+  useEffect(() => {
+    if (!isPlayingScreen || isTouchDevice || tutorialStep !== 0) return;
+
+    const allCalibrated = Object.values(calibratedKeys).every((v) => v);
+    if (allCalibrated) {
+      soundSynth.playHealComplete();
+      setTutorialStep(1);
+    }
+  }, [isPlayingScreen, isTouchDevice, tutorialStep, calibratedKeys, setTutorialStep]);
+
+  useEffect(() => {
+    if (!isPlayingScreen || isTouchDevice) return;
+
+    const unsubs: (() => void)[] = [];
+
+    unsubs.push(
+      eventBroker.subscribe("PLAYER_DASHED", () => {
+        if (tutorialStep === 1 && inputProvider.isPressed("MOVE_UP")) {
+          soundSynth.playHealComplete();
+          setTutorialStep(2);
+        }
+      })
+    );
+
+    unsubs.push(
+      eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
+        if (tutorialStep === 2 && level === 2) {
+          soundSynth.playHealComplete();
+          setTutorialStep(3);
+        }
+      })
+    );
+
+    unsubs.push(
+      eventBroker.subscribe("PLAYER_DROPPED", () => {
+        if (tutorialStep === 3) {
+          soundSynth.playHealComplete();
+          setTutorialStep(4);
+        }
+      })
+    );
+
+    unsubs.push(
+      eventBroker.subscribe("PLAYER_HEALED", () => {
+        if (tutorialStep === 4) {
+          soundSynth.playHealComplete();
+          setTutorialStep(5);
+        }
+      })
+    );
+
+    return () => {
+      unsubs.forEach((unsub) => unsub());
+    };
+  }, [isPlayingScreen, isTouchDevice, tutorialStep, setTutorialStep]);
+
+  useEffect(() => {
+    if (isPlayingScreen && !isTouchDevice && tutorialStep === 4) {
+      const state = useGameplayStore.getState();
+      if (state.healingCharges === 0) {
+        state.setHealingCharges(3);
+      }
+    }
+  }, [isPlayingScreen, isTouchDevice, tutorialStep]);
+
+  const getActionKeyDisplay = (action: Action): string => {
+    const keys = settingsManager.getKeyMap()[action] || [];
+    const rawKey = keys[0] || "";
+    
+    if (action === "JUMP") return "X";
+    if (rawKey === "Space") return "X";
+    if (rawKey === "ArrowLeft") return "◄";
+    if (rawKey === "ArrowRight") return "►";
+    if (rawKey === "ArrowUp") return "▲";
+    if (rawKey === "ArrowDown") return "▼";
+    if (rawKey === "Period") return ".";
+    if (rawKey === "Comma") return ",";
+    if (rawKey === "Slash") return "/";
+    if (rawKey === "KeyA") return "A";
+    if (rawKey === "KeyW") return "W";
+    if (rawKey === "KeyS") return "S";
+    if (rawKey === "KeyD") return "D";
+    if (rawKey === "KeyZ") return "Z";
+    if (rawKey === "KeyX") return "X";
+    if (rawKey === "KeyC") return "C";
+    
+    return rawKey.replace(/^Key/, "").toUpperCase();
+  };
 
   if (isTouchDevice) {
     return (
@@ -175,12 +308,12 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className="cabinet-status-panel neo-pressed">
-      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px" }}>
+      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
         <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
           PLAYER HP
         </span>
-        <div className="flex-row" style={{ gap: "6px", alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center" }}>
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
@@ -188,13 +321,15 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
               className="led-dot led-green"
               style={{
                 border: "1px solid rgba(0,0,0,0.5)",
+                width: "100%",
+                height: "1.3vmin",
               }}
             />
           ))}
         </div>
 
-        <div className="flex-row" style={{ gap: "12px", marginTop: "6px", alignItems: "center" }}>
-          <div className="flex-row" style={{ gap: "4px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
+          <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
@@ -202,30 +337,33 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
                 className="led-dot"
                 style={{
                   border: "1px solid rgba(0,0,0,0.5)",
-                  width: "6px",
-                  height: "6px",
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "25%",
                 }}
               />
             ))}
           </div>
           <div
             id="hud-d-det-container"
-            className="neo-pressed"
+            className={`neo-pressed ${isPlayingScreen && tutorialStep === 4 ? "det-pulse-highlight" : ""}`}
             style={{
-              width: "54px",
-              height: "6px",
-              borderRadius: "3px",
+              gridColumn: "span 3",
+              width: "100%",
+              height: "10px",
+              borderRadius: "2.5px",
               padding: "1px",
               boxSizing: "border-box",
               overflow: "hidden",
               background: "#07080b",
+              transition: "border-color 0.3s ease, box-shadow 0.3s ease"
             }}
           >
             <div
               id="hud-d-det-bar"
               style={{
                 height: "100%",
-                borderRadius: "2px",
+                borderRadius: "1.5px",
                 width: "0%",
                 transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
                 background: "hsl(280, 80%, 65%)",
@@ -233,10 +371,34 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
               }}
             />
           </div>
+          {isPlayingScreen && tutorialStep === 4 && (
+            <div
+              style={{
+                position: "absolute",
+                left: "calc(6.5vmin + 36px)",
+                display: "flex",
+                alignItems: "center",
+                pointerEvents: "none",
+                animation: "crt-pulse 1.2s infinite alternate",
+                whiteSpace: "nowrap"
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "8px",
+                  color: "hsl(280, 100%, 75%)",
+                  fontWeight: "bold",
+                  letterSpacing: "0.05em"
+                }}
+              >
+                ◄ STRIKE ENEMIES TO CHARGE
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center", minWidth: "280px", position: "relative" }}>
+      <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center", minWidth: "350px", position: "relative" }}>
         <AnimatePresence mode="wait">
           {isPlayingScreen && bannerText ? (
             <motion.div
@@ -263,6 +425,107 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
             >
               <AlertTriangle size={18} style={{ color: "var(--signal-yellow)", flexShrink: 0, animation: "crt-pulse 1s infinite alternate" }} />
               <span>WARNING: {bannerText}</span>
+            </motion.div>
+          ) : isPlayingScreen && tutorialStep < 5 ? (
+            <motion.div
+              key={`tutorial-step-${tutorialStep}`}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "6px",
+                border: "1px solid rgba(255, 255, 255, 0.03)",
+                background: "rgba(7, 8, 11, 0.85)",
+                padding: "8px 22px",
+                borderRadius: "8px",
+                boxShadow: "inset 0 1px 1px rgba(255, 255, 255, 0.01), 0 4px 12px rgba(0, 0, 0, 0.75)",
+                minWidth: "320px",
+                justifyContent: "center"
+              }}
+            >
+              {tutorialStep === 0 && (
+                <>
+                  <span style={{ fontSize: "10px", color: "var(--signal-yellow)", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    CALIBRATE CABINET MATRIX
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      {(["DASH", "JUMP", "ATTACK"] as Action[]).map((act) => (
+                        <div key={act} className={`keycap-box ${calibratedKeys[act] ? "keycap-used" : ""}`}>
+                          {getActionKeyDisplay(act)}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.15)" }} />
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      {(["MOVE_LEFT", "MOVE_UP", "MOVE_DOWN", "MOVE_RIGHT"] as Action[]).map((act) => (
+                        <div key={act} className={`keycap-box ${calibratedKeys[act] ? "keycap-used" : ""}`}>
+                          {getActionKeyDisplay(act)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {tutorialStep === 1 && (
+                <>
+                  <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    COMBO 1/4: UP DASH
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#e2e8f0" }}>
+                    <span>HOLD</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("MOVE_UP")}</div>
+                    <span>+ PRESS</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("DASH")}</div>
+                  </div>
+                </>
+              )}
+
+              {tutorialStep === 2 && (
+                <>
+                  <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    COMBO 2/4: CHARGE SHOT
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#e2e8f0" }}>
+                    <span>HOLD</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("ATTACK")}</div>
+                    <span>TO CHARGE, THEN RELEASE</span>
+                  </div>
+                </>
+              )}
+
+              {tutorialStep === 3 && (
+                <>
+                  <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    COMBO 3/4: ONE-WAY PLATFORM DROP
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#e2e8f0" }}>
+                    <span>ON ONE-WAY PLATFORM, HOLD</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("MOVE_DOWN")}</div>
+                    <span>+ PRESS</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("JUMP")}</div>
+                  </div>
+                </>
+              )}
+
+              {tutorialStep === 4 && (
+                <>
+                  <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    COMBO 4/4: DETERMINATION HEAL
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#e2e8f0" }}>
+                    <span>ON SOLID PLATFORM, HOLD</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("MOVE_DOWN")}</div>
+                    <span>+ PRESS</span>
+                    <div className="keycap-box keycap-used">{getActionKeyDisplay("JUMP")}</div>
+                  </div>
+                </>
+              )}
             </motion.div>
           ) : isPlayingScreen ? (
             <motion.div
