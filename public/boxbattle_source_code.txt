@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 2:59:18 PM
+ [SYSTEM] Generated: 5/27/2026, 3:24:49 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2667,12 +2667,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     updateVignette(initialHP);
 
     const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
-      useGameplayStore.setState({
-        playerHP: payload.playerHP,
-        bossHP: payload.bossHP,
-        healingCharges: payload.healingCharges,
-        determination: payload.determination,
-      });
+      const store = useGameplayStore.getState();
+      store.setPlayerHP(payload.playerHP);
+      store.setBossHP(payload.bossHP);
+      store.setHealingCharges(payload.healingCharges);
+      store.setDetermination(payload.determination);
     });
 
     const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {
@@ -8410,12 +8409,12 @@ export class ParticleRenderer {
       const sparkColor = p.startColor && p.endColor ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
       ctx.fillStyle = getHslaColor(sparkColor, pct);
       ctx.globalAlpha = 1.0;
-      ctx.beginPath();
       for (let j = 0; j < bucket.length; j++) {
         const sp = bucket[j];
+        ctx.beginPath();
         ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
       }
-      ctx.fill();
     }
 
     for (const [color, bucket] of dustBuckets) {

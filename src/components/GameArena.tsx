@@ -82,12 +82,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     updateVignette(initialHP);
 
     const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
-      useGameplayStore.setState({
-        playerHP: payload.playerHP,
-        bossHP: payload.bossHP,
-        healingCharges: payload.healingCharges,
-        determination: payload.determination,
-      });
+      const store = useGameplayStore.getState();
+      store.setPlayerHP(payload.playerHP);
+      store.setBossHP(payload.bossHP);
+      store.setHealingCharges(payload.healingCharges);
+      store.setDetermination(payload.determination);
     });
 
     const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {
