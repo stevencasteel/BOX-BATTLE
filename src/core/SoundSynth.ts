@@ -17,9 +17,48 @@ class SoundSynth {
 
   constructor() {
     this.ctxManager = new AudioContextManager();
-    this.sfx = new SFXManager(this.ctxManager, eventBroker, () => useGameplayStore.getState().comboCounter);
+    this.sfx = new SFXManager(
+      this.ctxManager,
+      eventBroker,
+      () => useGameplayStore.getState().comboCounter,
+      () => this.getPlayerXFn?.(),
+      () => this.getBossXFn?.(),
+      (id) => this.getMinionXFn?.(id)
+    );
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
+
+    this.setupDroneEventSubscriptions();
+  }
+
+  private setupDroneEventSubscriptions() {
+    eventBroker.subscribe("HEAL_UPDATE", ({ timer }: { timer: number }) => {
+      this.drones.updateHealTimer(timer);
+    });
+
+    eventBroker.subscribe("HEAL_START", () => {
+      this.drones.playHealStart(this.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_CANCEL", () => {
+      this.drones.stopHealDrone();
+    });
+
+    eventBroker.subscribe("HEAL_COMPLETE", () => {
+      this.drones.playHealComplete();
+    });
+
+    eventBroker.subscribe("CHARGE_START", () => {
+      this.drones.playChargeStart(this.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }: { timer: number }) => {
+      this.drones.updateChargeTimer(timer);
+    });
+
+    eventBroker.subscribe("CHARGE_STOP", () => {
+      this.drones.stopChargeDrone();
+    });
   }
 
   public registerCoordinateProviders(

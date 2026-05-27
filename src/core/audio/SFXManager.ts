@@ -11,10 +11,10 @@ export class SFXManager {
   private bossSFX: BossSFX;
   private interfaceSFX: InterfaceSFX;
 
-  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number, getPlayerX: () => number | undefined, getBossX: () => number | undefined, getMinionX: (id: string) => number | undefined) {
     this.helper = new SFXHelper(ctxManager);
-    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter);
-    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter);
+    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter, getPlayerX);
+    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter, getBossX, getMinionX);
     this.interfaceSFX = new InterfaceSFX(ctxManager, this.helper);
   }
 

@@ -3,7 +3,6 @@ import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
-import { soundSynth } from "@/core/SoundSynth";
 import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
@@ -12,6 +11,7 @@ export class PlayerSFX {
   private helper: SFXHelper;
   private eventBus: IEventBus;
   private getComboCounter: () => number;
+  private getPlayerX: () => number | undefined;
   private playerPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
 
@@ -36,10 +36,11 @@ export class PlayerSFX {
   private slashFilterPuff!: Tone.Filter;
   private slashEnvPuff!: Tone.AmplitudeEnvelope;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number, getPlayerX: () => number | undefined) {
     this.helper = helper;
     this.eventBus = eventBus;
     this.getComboCounter = getComboCounter;
+    this.getPlayerX = getPlayerX;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -116,68 +117,43 @@ export class PlayerSFX {
 
   private setupSubscriptions() {
     this.eventBus.subscribe("PLAYER_HURT", () => {
-      this.playHurt(soundSynth.getPlayerX());
+      this.playHurt(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_JUMPED", () => {
-      this.playJump(soundSynth.getPlayerX());
+      this.playJump(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_DASHED", () => {
-      this.playDash(soundSynth.getPlayerX());
+      this.playDash(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_POGOED", () => {
-      this.playPogo(soundSynth.getPlayerX());
+      this.playPogo(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_ATTACKED", ({ direction }) => {
-      this.playSlash(direction, soundSynth.getPlayerX());
+      this.playSlash(direction, this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
       if (level === 2) {
-        this.playFireballLvl2(soundSynth.getPlayerX());
+        this.playFireballLvl2(this.getPlayerX());
       } else {
-        this.playFireballLvl1(soundSynth.getPlayerX());
+        this.playFireballLvl1(this.getPlayerX());
       }
     });
 
     this.eventBus.subscribe("PLAYER_LANDED", () => {
-      this.playLanding(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("HEAL_UPDATE", ({ timer }) => {
-      soundSynth.updateHealTimer(timer);
-    });
-
-    this.eventBus.subscribe("HEAL_START", () => {
-      soundSynth.playHealStart(soundSynth.getPlayerX());
+      this.playLanding(this.getPlayerX());
     });
 
     this.eventBus.subscribe("HEAL_CANCEL", () => {
-      this.playHealCancel(soundSynth.getPlayerX());
-      soundSynth.stopHealDrone();
-    });
-
-    this.eventBus.subscribe("HEAL_COMPLETE", () => {
-      soundSynth.playHealComplete();
+      this.playHealCancel(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_DASH_RECHARGED", () => {
-      this.playDashRecharge(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("CHARGE_START", () => {
-      soundSynth.playChargeStart(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("CHARGE_UPDATE", ({ timer }) => {
-      soundSynth.updateChargeTimer(timer);
-    });
-
-    this.eventBus.subscribe("CHARGE_STOP", () => {
-      soundSynth.stopChargeDrone();
+      this.playDashRecharge(this.getPlayerX());
     });
   }
 

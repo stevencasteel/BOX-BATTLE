@@ -116,14 +116,23 @@ export interface IPhysicsWorld {
   ): Rectangle[];
 }
 
-export interface IWorld {
-  player: IEntity | null;
-  boss: IEntity | null;
-  minions: IEntity[];
-  physicsWorld: IPhysicsWorld;
-  events: IEventBus;
-  audio: IAudioManager;
-  input: IInputProvider;
+export interface IEventPublisher {
+  publish(event: string, payload: unknown): void;
+  publishSpark(
+    x: number,
+    y: number,
+    angle: number,
+    color?: string,
+    radial?: boolean,
+    count?: number,
+    shape?: "spark" | "line",
+    turbulence?: number
+  ): void;
+  publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void;
+  publishBlast(x: number, y: number, color: string): void;
+}
+
+export interface IEntityFactory {
   getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
@@ -137,6 +146,16 @@ export interface IWorld {
     lifespan: number,
     customColor?: string
   ): IProjectile;
+}
+
+export interface IWorld extends IEntityFactory {
+  player: IEntity | null;
+  boss: IEntity | null;
+  minions: IEntity[];
+  physicsWorld: IPhysicsWorld;
+  events: IEventBus;
+  audio: IAudioManager;
+  input: IInputProvider;
 }
 
 export interface IDamageRecorder {

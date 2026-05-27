@@ -64,10 +64,6 @@ export class PlayerCombatHandler {
   public checkHazardContact() {
     if (this.player.health.isInvincible() || this.player.isDead) return;
 
-    if (this.player.healComponent.isHealing) {
-      this.player.healComponent.cancelHealing();
-    }
-
     const hit = HazardSystem.checkContact(this.player, this.player.world.physicsWorld);
     if (hit && !this.player.isDead) {
       this.player.physics.isGrounded = false;

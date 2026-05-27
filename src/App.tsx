@@ -5,7 +5,7 @@ import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
-import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
+import { useGameplayStore, useSessionStore, SCREEN_DEPTHS } from "@/store/useGameStore";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { screenConfigs, MenuContext } from "@/core/screenRoutes";
 
@@ -96,6 +96,23 @@ export default function App() {
       audio, handleVolumeChange, resetSettings,
     };
   });
+
+  const prevScreenRef = useRef(currentScreen);
+  useEffect(() => {
+    const prev = prevScreenRef.current;
+    if (prev !== currentScreen) {
+      if (soundSynth.initialized) {
+        const currentDepth = SCREEN_DEPTHS[prev] ?? 0;
+        const targetDepth = SCREEN_DEPTHS[currentScreen] ?? 0;
+        if (targetDepth < currentDepth) {
+          soundSynth.playMenuBack();
+        } else {
+          soundSynth.playMenuConfirm();
+        }
+      }
+      prevScreenRef.current = currentScreen;
+    }
+  }, [currentScreen]);
 
   useEffect(() => {
     if (!isPlayingScreen) {

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { soundSynth } from "@/core/SoundSynth";
 import { UNITS } from "@/core/Units";
 
 export type ScreenState =
@@ -13,7 +12,7 @@ export type ScreenState =
   | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 
-const SCREEN_DEPTHS: Record<ScreenState, number> = {
+export const SCREEN_DEPTHS: Record<ScreenState, number> = {
   TITLE: 0,
   SAVE_SELECT: 1,
   OPTIONS: 1,
@@ -45,17 +44,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   navTo: (screen) => {
     const current = get().currentScreen;
     if (current === screen && screen !== "PLAYING") return;
-
-    if (soundSynth.initialized) {
-      const currentDepth = SCREEN_DEPTHS[current] ?? 0;
-      const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
-
-      if (targetDepth < currentDepth) {
-        soundSynth.playMenuBack();
-      } else {
-        soundSynth.playMenuConfirm();
-      }
-    }
 
     const needsTransition = screen === "PLAYING" || current === "PLAYING";
 

@@ -3,7 +3,6 @@ import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
-import { soundSynth } from "@/core/SoundSynth";
 import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
@@ -12,6 +11,8 @@ export class BossSFX {
   private helper: SFXHelper;
   private eventBus: IEventBus;
   private getComboCounter: () => number;
+  private getBossX: () => number | undefined;
+  private getMinionX: (id: string) => number | undefined;
   private bossPanner!: Tone.Panner;
   private impactPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
@@ -28,10 +29,12 @@ export class BossSFX {
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number, getBossX: () => number | undefined, getMinionX: (id: string) => number | undefined) {
     this.helper = helper;
     this.eventBus = eventBus;
     this.getComboCounter = getComboCounter;
+    this.getBossX = getBossX;
+    this.getMinionX = getMinionX;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -65,14 +68,14 @@ export class BossSFX {
 
   private setupSubscriptions() {
     this.eventBus.subscribe("BOSS_HURT", ({ currentHealth }) => {
-      this.playHitConfirm(soundSynth.getBossX(), "boss-01");
+      this.playHitConfirm(this.getBossX(), "boss-01");
       if (currentHealth <= 0) {
-        this.playBossExplosion(soundSynth.getBossX());
+        this.playBossExplosion(this.getBossX());
       }
     });
 
     this.eventBus.subscribe("MINION_HURT", ({ id, currentHealth }) => {
-      const mX = soundSynth.getMinionX(id);
+      const mX = this.getMinionX(id);
       this.playHitConfirm(mX, id);
       if (currentHealth <= 0) {
         this.playMinionDeconstruct(mX);
@@ -84,7 +87,7 @@ export class BossSFX {
     });
 
     this.eventBus.subscribe("BOSS_PHASE_SHIFT", () => {
-      this.playBossPhaseShift(soundSynth.getBossX());
+      this.playBossPhaseShift(this.getBossX());
     });
 
     this.eventBus.subscribe("MINION_SPAWNING", () => {
@@ -96,15 +99,15 @@ export class BossSFX {
     });
 
     this.eventBus.subscribe("BOSS_SWIPED", () => {
-      this.playBossSwipe(soundSynth.getBossX());
+      this.playBossSwipe(this.getBossX());
     });
 
     this.eventBus.subscribe("BOSS_TELEGRAPH", () => {
-      this.playBossTelegraph(soundSynth.getBossX());
+      this.playBossTelegraph(this.getBossX());
     });
 
     this.eventBus.subscribe("BOSS_LUNGED", () => {
-      this.playBossLunge(soundSynth.getBossX());
+      this.playBossLunge(this.getBossX());
     });
   }
 
