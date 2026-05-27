@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Cz4hga8H.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Qod08j4C.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6004,7 +6004,6 @@ export class BattleDirector {
   ) {
     this.cinematicActive = true;
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
-    soundSynth.clearAllSlides();
     soundSynth.stopChargeDrone();
     soundSynth.stopHealDrone();
     initialExplosion();
@@ -6149,6 +6148,7 @@ import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 import { UNITS } from "@/core/Units";
+import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
   private ctx: CanvasRenderingContext2D;
@@ -6213,12 +6213,12 @@ export class Engine {
     this.world.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
-    this.player.position = { ...this.levelConfig.playerStart };
-    this.player.previousPosition = { ...this.levelConfig.playerStart };
+    setVec(this.player.position, this.levelConfig.playerStart.x, this.levelConfig.playerStart.y);
+    setVec(this.player.previousPosition, this.levelConfig.playerStart.x, this.levelConfig.playerStart.y);
 
     this.boss = new Boss("boss-01", this.world);
-    this.boss.position = { ...this.levelConfig.bossStart };
-    this.boss.previousPosition = { ...this.levelConfig.bossStart };
+    setVec(this.boss.position, this.levelConfig.bossStart.x, this.levelConfig.bossStart.y);
+    setVec(this.boss.previousPosition, this.levelConfig.bossStart.x, this.levelConfig.bossStart.y);
 
     this.world.player = this.player;
     this.world.boss = this.boss;
@@ -6311,9 +6311,9 @@ export class Engine {
 
   private resetEntity(entity: Player | Boss, startPos: { x: number; y: number }, facing: number) {
     entity.isDead = false;
-    entity.position = { ...startPos };
-    entity.previousPosition = { ...startPos };
-    entity.velocity = { x: 0, y: 0 };
+    setVec(entity.position, startPos.x, startPos.y);
+    setVec(entity.previousPosition, startPos.x, startPos.y);
+    zeroVec(entity.velocity);
     entity.facingDirection = facing;
 
     if (entity instanceof Player) {
@@ -6415,19 +6415,19 @@ export class Engine {
   }
 
   private cachePreIntegrationPositions() {
-    this.player.previousPosition = { ...this.player.position };
-    this.boss.previousPosition = { ...this.boss.position };
+    copyVec(this.player.previousPosition, this.player.position);
+    copyVec(this.boss.previousPosition, this.boss.position);
     for (const minion of this.world.minions) {
-      (minion as BaseEntity).previousPosition = { ...minion.position };
+      copyVec((minion as BaseEntity).previousPosition, minion.position);
     }
     for (const proj of this.pool.getActive()) {
-      proj.previousPosition = { ...proj.position };
+      copyVec(proj.previousPosition, proj.position);
     }
   }
 
   private handleCinematicUpdate(dt: number) {
-    this.player.velocity = { x: 0, y: 0 };
-    this.boss.velocity = { x: 0, y: 0 };
+    zeroVec(this.player.velocity);
+    zeroVec(this.boss.velocity);
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
@@ -6476,7 +6476,6 @@ export class Engine {
     if (inputProvider.isPauseJustPressed()) {
       this.isPaused = true;
       soundSynth.playErrorTick();
-      soundSynth.clearAllSlides();
       inputProvider.postUpdate();
       return;
     }
@@ -7165,6 +7164,7 @@ export class ObjectPool<T extends IPoolable> {
 `,"src/core/ParticleSystem.ts":`import { Particle } from "./Interfaces";
 import { ObjectPool, IPoolable } from "./ObjectPool";
 import { eventBroker } from "./eventBroker";
+import { TrigLUT } from "./TrigLUT";
 
 export class PoolableParticle implements Particle, IPoolable {
   public x = 0;
@@ -7240,8 +7240,8 @@ export class ParticleSystem {
             : angle + (Math.random() * 0.9 - 0.45);
           const pSpeed = radial ? 100 + Math.random() * 300 : 160 + Math.random() * 280;
 
-          const vx = Math.cos(pAngle) * pSpeed;
-          const vy = Math.sin(pAngle) * pSpeed;
+          const vx = TrigLUT.cos(pAngle) * pSpeed;
+          const vy = TrigLUT.sin(pAngle) * pSpeed;
           const pColor = color || "hsl(142, 71%, 58%)";
           const size = 2.5 + Math.random() * 3.5;
           const life = 0.22;
@@ -7307,7 +7307,7 @@ export class ParticleSystem {
         p.vy *= Math.pow(p.drag, dt * 60);
       }
       if (p.turbulence > 0) {
-        const wave = Math.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
+        const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
         p.x += wave * dt;
       }
       p.x += p.vx * dt;
@@ -8003,10 +8003,6 @@ class SoundSynth {
     this.music.stopMusic();
   }
 
-  public clearAllSlides(): void {
-    // Deprecated
-  }
-
   public playHealStart(x?: number): void {
     this.drones.playHealStart(x);
   }
@@ -8068,6 +8064,30 @@ export class StateMachine {
 
   public getCurrentState(): IState | null {
     return this.currentState;
+  }
+}
+`,"src/core/TrigLUT.ts":`export class TrigLUT {
+  private static readonly TABLE_SIZE = 2048;
+  private static readonly INV_TABLE_SIZE = TrigLUT.TABLE_SIZE / (Math.PI * 2);
+  private static readonly sinTable: Float64Array = new Float64Array(TrigLUT.TABLE_SIZE);
+  private static readonly cosTable: Float64Array = new Float64Array(TrigLUT.TABLE_SIZE);
+
+  static {
+    for (let i = 0; i < TrigLUT.TABLE_SIZE; i++) {
+      const angle = (i / TrigLUT.TABLE_SIZE) * Math.PI * 2;
+      TrigLUT.sinTable[i] = Math.sin(angle);
+      TrigLUT.cosTable[i] = Math.cos(angle);
+    }
+  }
+
+  public static sin(radians: number): number {
+    const idx = Math.round(radians * TrigLUT.INV_TABLE_SIZE) & (TrigLUT.TABLE_SIZE - 1);
+    return TrigLUT.sinTable[idx];
+  }
+
+  public static cos(radians: number): number {
+    const idx = Math.round(radians * TrigLUT.INV_TABLE_SIZE) & (TrigLUT.TABLE_SIZE - 1);
+    return TrigLUT.cosTable[idx];
   }
 }
 `,"src/core/Units.ts":`export const UNITS = {
@@ -8146,6 +8166,29 @@ export class StateMachine {
   POGO_HITBOX_Y_OFFSET: 40,
   POGO_HITBOX_X_OFFSET: -45,
 } as const;
+`,"src/core/VecUtils.ts":`import { Vector2D } from "./Interfaces";
+
+export function setVec(v: Vector2D, x: number, y: number): Vector2D {
+  v.x = x;
+  v.y = y;
+  return v;
+}
+
+export function copyVec(dest: Vector2D, src: Vector2D): Vector2D {
+  dest.x = src.x;
+  dest.y = src.y;
+  return dest;
+}
+
+export function zeroVec(v: Vector2D): Vector2D {
+  v.x = 0;
+  v.y = 0;
+  return v;
+}
+
+export function cloneVec(src: Vector2D): Vector2D {
+  return { x: src.x, y: src.y };
+}
 `,"src/core/World.ts":`import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
@@ -8267,6 +8310,10 @@ function getHslaColor(colorStr: string, alpha: number): string {
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private cachedMeleeGradient: CanvasGradient;
+  private staticCanvas: HTMLCanvasElement;
+  private staticCtx: CanvasRenderingContext2D;
+  private spikePath: Path2D | null = null;
+  private staticCacheBuilt = false;
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -8285,6 +8332,46 @@ export class WorldRenderer {
     this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
     this.ctx.fillStyle = this.cachedMeleeGradient;
     this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+    this.staticCanvas = document.createElement("canvas");
+    this.staticCanvas.width = UNITS.WORLD_SIZE;
+    this.staticCanvas.height = UNITS.WORLD_SIZE;
+    const staticCtx = this.staticCanvas.getContext("2d");
+    if (!staticCtx) throw new Error("Could not create static canvas context");
+    this.staticCtx = staticCtx;
+  }
+
+  private buildStaticCache(
+    solids: Rectangle[],
+    hazards: Rectangle[]
+  ) {
+    if (this.staticCacheBuilt) return;
+    const sctx = this.staticCtx;
+
+    sctx.fillStyle = "#0c0d11";
+    sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+
+    sctx.fillStyle = "#1e1e24";
+    for (const solid of solids) {
+      sctx.fillRect(solid.x, solid.y, solid.width, solid.height);
+      sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      sctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    }
+
+    if (hazards.length > 0) {
+      this.spikePath = new Path2D();
+      for (const hazard of hazards) {
+        const spikeWidth = 25;
+        const spikeCount = Math.floor(hazard.width / spikeWidth);
+        for (let i = 0; i < spikeCount; i++) {
+          this.spikePath.moveTo(hazard.x + i * spikeWidth, 1200);
+          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+        }
+      }
+    }
+
+    this.staticCacheBuilt = true;
   }
 
   private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player, alpha: number) {
@@ -8396,17 +8483,16 @@ export class WorldRenderer {
     springPlatforms: { rect: Rectangle; offsetY: number }[],
     alpha: number
   ) {
-    this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+    this.buildStaticCache(solids, hazards);
 
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);
 
-    this.ctx.fillStyle = "#1e1e24";
-    for (const solid of solids) {
-      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    this.ctx.drawImage(this.staticCanvas, 0, 0);
+
+    if (this.spikePath) {
+      this.ctx.fillStyle = "hsl(350, 80%, 60%)";
+      this.ctx.fill(this.spikePath);
     }
 
     this.ctx.fillStyle = "#2c3e50";
@@ -8421,19 +8507,6 @@ export class WorldRenderer {
       this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
       this.ctx.restore();
     }
-
-    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
-    this.ctx.beginPath();
-    for (const hazard of hazards) {
-      const spikeWidth = 25;
-      const spikeCount = Math.floor(hazard.width / spikeWidth);
-      for (let i = 0; i < spikeCount; i++) {
-        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-      }
-    }
-    this.ctx.fill();
 
     if (world.boss) {
       world.boss.draw(this.ctx, alpha);
@@ -8699,6 +8772,7 @@ export class DroneManager {
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
   private isHeartbeatRunning: boolean = false;
+  private healImpactSynth!: Tone.MembraneSynth;
 
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
@@ -8746,6 +8820,11 @@ export class DroneManager {
       this.heartbeatSynth.triggerAttackRelease("A0", "8n", time);
       this.heartbeatSynth.triggerAttackRelease("G0", "8n", time + 0.18);
     }, "1.1s");
+
+    this.healImpactSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
+      oscillator: { type: "sawtooth" }
+    }).connect(this.ctxManager.sfxGain);
   }
 
   public playHealStart(x?: number) {
@@ -8831,15 +8910,7 @@ export class DroneManager {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
     });
 
-    const impactSynth = new Tone.MembraneSynth({
-      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
-      oscillator: { type: "sawtooth" }
-    }).connect(this.ctxManager.sfxGain);
-
-    impactSynth.triggerAttackRelease("C1", "2n", now);
-    setTimeout(() => {
-      impactSynth.dispose();
-    }, 2000);
+    this.healImpactSynth.triggerAttackRelease("C1", "2n", now);
   }
 
   public playChargeStart(x?: number) {
@@ -9820,7 +9891,7 @@ export class SFXHelper {
   }
 
   private checkThrottle(key: string, limitMs: number): boolean {
-    const now = performance.now();
+    const now = Tone.now() * 1000;
     const last = this.lastTriggerTimes[key] || 0;
     if (now - last < limitMs) {
       return false;
@@ -10211,6 +10282,7 @@ export class CinematicDeathRenderer {
   }
 }
 `,"src/core/effects/PlayerFxRenderer.ts":`import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 
 interface SegmentBuffer {
   x1: number;
@@ -10276,17 +10348,17 @@ export class PlayerFxRenderer {
       const angle1 = t1 * maxAngle + rotationOffset;
       const angle2 = t2 * maxAngle + rotationOffset;
 
-      const r1 = (42 * (1 - t1 * 0.3)) + Math.sin(nowTime * 0.03 + t1 * 8) * 2;
-      const r2 = (42 * (1 - t2 * 0.3)) + Math.sin(nowTime * 0.03 + t2 * 8) * 2;
+      const r1 = (42 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
+      const r2 = (42 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
 
-      const x1 = r1 * Math.cos(angle1);
-      const y1 = -t1 * coilHeight + r1 * Math.sin(angle1) * 0.28;
+      const x1 = r1 * TrigLUT.cos(angle1);
+      const y1 = -t1 * coilHeight + r1 * TrigLUT.sin(angle1) * 0.28;
 
-      const x2 = r2 * Math.cos(angle2);
-      const y2 = -t2 * coilHeight + r2 * Math.sin(angle2) * 0.28;
+      const x2 = r2 * TrigLUT.cos(angle2);
+      const y2 = -t2 * coilHeight + r2 * TrigLUT.sin(angle2) * 0.28;
 
       const midAngle = (angle1 + angle2) / 2;
-      const isBehind = Math.sin(midAngle) < 0;
+      const isBehind = TrigLUT.sin(midAngle) < 0;
 
       const segmentAlpha = (1.0 - t1 * 0.25) * progress;
 
@@ -10384,33 +10456,33 @@ export class PlayerFxRenderer {
         const theta1 = i * step + rotationSpeed;
         const theta2 = (i + 1) * step + rotationSpeed;
 
-        const noise1 = Math.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
-        const noise2 = Math.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+        const noise1 = TrigLUT.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
+        const noise2 = TrigLUT.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
 
         const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
         const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
 
-        const x0_1 = r1 * Math.cos(theta1);
-        const y0_1 = r1 * Math.sin(theta1);
+        const x0_1 = r1 * TrigLUT.cos(theta1);
+        const y0_1 = r1 * TrigLUT.sin(theta1);
         
-        const x1_1 = x0_1 * Math.cos(orbit.psi);
+        const x1_1 = x0_1 * TrigLUT.cos(orbit.psi);
         const y1_1 = y0_1;
-        const z1_1 = -x0_1 * Math.sin(orbit.psi);
+        const z1_1 = -x0_1 * TrigLUT.sin(orbit.psi);
 
         const x2_1 = x1_1;
-        const y2_1 = y1_1 * Math.cos(orbit.phi) - z1_1 * Math.sin(orbit.phi);
-        const z2_1 = y1_1 * Math.sin(orbit.phi) + z1_1 * Math.cos(orbit.phi);
+        const y2_1 = y1_1 * TrigLUT.cos(orbit.phi) - z1_1 * TrigLUT.sin(orbit.phi);
+        const z2_1 = y1_1 * TrigLUT.sin(orbit.phi) + z1_1 * TrigLUT.cos(orbit.phi);
 
-        const x0_2 = r2 * Math.cos(theta2);
-        const y0_2 = r2 * Math.sin(theta2);
+        const x0_2 = r2 * TrigLUT.cos(theta2);
+        const y0_2 = r2 * TrigLUT.sin(theta2);
 
-        const x1_2 = x0_2 * Math.cos(orbit.psi);
+        const x1_2 = x0_2 * TrigLUT.cos(orbit.psi);
         const y1_2 = y0_2;
-        const z1_2 = -x0_2 * Math.sin(orbit.psi);
+        const z1_2 = -x0_2 * TrigLUT.sin(orbit.psi);
 
         const x2_2 = x1_2;
-        const y2_2 = y1_2 * Math.cos(orbit.phi) - z1_2 * Math.sin(orbit.phi);
-        const z2_2 = y1_2 * Math.sin(orbit.phi) + z1_2 * Math.cos(orbit.phi);
+        const y2_2 = y1_2 * TrigLUT.cos(orbit.phi) - z1_2 * TrigLUT.sin(orbit.phi);
+        const z2_2 = y1_2 * TrigLUT.sin(orbit.phi) + z1_2 * TrigLUT.cos(orbit.phi);
 
         const p1_x = localCenterX + x2_1;
         const p1_y = localCenterY + y2_1;
@@ -10959,9 +11031,11 @@ export class BaseEntity implements IEntity {
 
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
+  public recoilTimer?: number;
+  public physics?: { isGrounded: boolean; gravity?: number };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private components = new Map<any, IEntityComponent>();
+  private components = new Map<new (...args: any[]) => IEntityComponent, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -10976,8 +11050,7 @@ export class BaseEntity implements IEntity {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dependencies?: Record<string, any>
+    dependencies?: Record<string, unknown>
   ): T {
     component.setup(this, dependencies);
     this.components.set(componentClass, component);
@@ -11077,6 +11150,7 @@ import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -11090,7 +11164,7 @@ import {
 export class Boss extends BaseEntity {
   private unsubHurt!: () => void;
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public stateMachine: StateMachine;
   public cooldownState!: BossCooldownState;
   public patrolState!: BossPatrolState;
@@ -11111,8 +11185,8 @@ export class Boss extends BaseEntity {
     this.size = { width: 60, height: 60 };
     this.squashPivot = "feet";
 
-    this.position = { x: 0, y: 0 };
-    this.previousPosition = { x: 0, y: 0 };
+    zeroVec(this.position);
+    zeroVec(this.previousPosition);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -11290,8 +11364,8 @@ export class Boss extends BaseEntity {
           this.velocity.y = -550;
           this.physics.isGrounded = false;
           // Springy, elastic visual stretch launcher
-          this.visualScale = { x: 0.5, y: 1.5 };
-          this.scaleVelocity = { x: 10.0, y: -15.0 };
+          setVec(this.visualScale, 0.5, 1.5);
+          setVec(this.scaleVelocity, 10.0, -15.0);
         }
         break;
       }
@@ -11350,8 +11424,8 @@ export class Boss extends BaseEntity {
     this.physics.isGrounded = false;
 
     // Stretch vertically to visually sell the launch momentum
-    this.visualScale = { x: 1.0 - 0.15 * intensity, y: 1.0 + 0.3 * intensity };
-    this.scaleVelocity = { x: 8.0 * intensity, y: -16.0 * intensity };
+    setVec(this.visualScale, 1.0 - 0.15 * intensity, 1.0 + 0.3 * intensity);
+    setVec(this.scaleVelocity, 8.0 * intensity, -16.0 * intensity);
 
     const rotImpulse = -Math.sign(dirX) * 12.0 * intensity;
     this.applyAngularImpulse(rotImpulse);
@@ -11369,6 +11443,7 @@ import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { eventBroker } from "@/core/eventBroker";
+import { setVec } from "@/core/VecUtils";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -11402,7 +11477,7 @@ export class BossCooldownState extends BossState {
     } else {
       this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
     }
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(dt: number): void {
@@ -11420,7 +11495,7 @@ export class BossPatrolState extends BossState {
   private duration: number = 2.0;
 
   public enter(): void {
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
     this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
   }
 
@@ -11554,8 +11629,8 @@ export class BossTelegraphState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
-    this.owner.visualScale = { x: 1.25, y: 0.75 };
-    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
+    setVec(this.owner.visualScale, 1.25, 0.75);
+    setVec(this.owner.targetVisualScale, 1.15, 0.85);
     eventBroker.publish("BOSS_TELEGRAPH", undefined);
   }
 
@@ -11580,8 +11655,8 @@ export class BossLungeState extends BossState {
 
   public enter(): void {
     this.duration = 0.5;
-    this.owner.visualScale = { x: 1.35, y: 0.65 };
-    this.owner.targetVisualScale = { x: 1.2, y: 0.8 };
+    setVec(this.owner.visualScale, 1.35, 0.65);
+    setVec(this.owner.targetVisualScale, 1.2, 0.8);
     eventBroker.publish("BOSS_LUNGED", undefined);
   }
 
@@ -11605,8 +11680,8 @@ export class BossLungeState extends BossState {
     if (hitWall && physics) {
       // Rebound backward and squash elastically on wall collision
       this.owner.velocity.x = -this.owner.facingDirection * 350;
-      this.owner.visualScale = { x: 0.7, y: 1.3 };
-      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.owner.visualScale, 0.7, 1.3);
+      setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 28;
 
       const impactSide = physics.isOnWallLeft ? -1 : 1;
@@ -11622,8 +11697,8 @@ export class BossLungeState extends BossState {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
     } else {
       this.owner.velocity.x = 0;
-      this.owner.visualScale = { x: 0.8, y: 1.2 };
-      this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.owner.visualScale, 0.8, 1.2);
+      setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 15;
     }
   }
@@ -11641,8 +11716,7 @@ export class BossDeadState extends BossState {
 `,"src/entities/EntityComponent.ts":`import { BaseEntity } from "./BaseEntity";
 
 export interface IEntityComponent {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setup(owner: BaseEntity, dependencies?: Record<string, any>): void;
+  setup(owner: BaseEntity, dependencies?: Record<string, unknown>): void;
   update?(dt: number): void;
   teardown?(): void;
 }
@@ -11657,8 +11731,13 @@ import {
   FlyerPatrolState
 } from "./MinionStates";
 import { eventBroker } from "@/core/eventBroker";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
+
+interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
+const backCageScratch: CageSegment[] = [];
+const frontCageScratch: CageSegment[] = [];
 
 export class Minion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -11671,7 +11750,7 @@ export class Minion extends BaseEntity {
 
   public minionType: MinionType;
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public stateMachine: StateMachine;
 
   public patrolSpeed: number = 100;
@@ -11699,9 +11778,9 @@ export class Minion extends BaseEntity {
     this.position = { ...startPos };
     this.previousPosition = { ...startPos };
 
-    this.visualScale = { x: 0.1, y: 0.1 };
-    this.targetVisualScale = { x: 1.0, y: 1.0 };
-    this.scaleVelocity = { x: 15.0, y: 15.0 };
+    setVec(this.visualScale, 0.1, 0.1);
+    setVec(this.targetVisualScale, 1.0, 1.0);
+    setVec(this.scaleVelocity, 15.0, 15.0);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.stateMachine = new StateMachine();
@@ -11732,7 +11811,7 @@ export class Minion extends BaseEntity {
       this.physics.gravity = 0;
 
       this.pointA = { ...startPos };
-      this.pointB = { x: startPos.x, y: startPos.y - 180 };
+      setVec(this.pointB, startPos.x, startPos.y - 180);
       this.squashPivot = "center";
       this.stateMachine.changeState(new FlyerPatrolState(this));
     }
@@ -11749,7 +11828,7 @@ export class Minion extends BaseEntity {
     eventBroker.publish("MINION_DISSOLVING", undefined);
     this.isDying = true;
     this.dissolveTimer = 0.5;
-    this.velocity = { x: 0, y: 0 };
+    zeroVec(this.velocity);
 
     const mColor =
       this.minionType === "LANCER"
@@ -11779,7 +11858,7 @@ export class Minion extends BaseEntity {
 
     if (this.isSpawning) {
       this.spawnTimer -= dt;
-      this.velocity = { x: 0, y: 0 };
+      zeroVec(this.velocity);
 
       const mColor =
         this.minionType === "LANCER"
@@ -11808,7 +11887,7 @@ export class Minion extends BaseEntity {
 
     if (this.isDying) {
       this.dissolveTimer -= dt;
-      this.velocity = { x: 0, y: 0 };
+      zeroVec(this.velocity);
 
       const mColor =
         this.minionType === "LANCER"
@@ -11955,8 +12034,8 @@ export class Minion extends BaseEntity {
             this.velocity.y = -550;
             this.physics.isGrounded = false;
           }
-          this.visualScale = { x: 0.5, y: 1.5 };
-          this.scaleVelocity = { x: 10.0, y: -15.0 };
+          setVec(this.visualScale, 0.5, 1.5);
+          setVec(this.scaleVelocity, 10.0, -15.0);
         }
         break;
       }
@@ -11971,8 +12050,8 @@ export class Minion extends BaseEntity {
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     const nowTime = performance.now();
-    const backCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
-    const frontCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+    backCageScratch.length = 0;
+    frontCageScratch.length = 0;
 
     const totalSpawnTime = 1.2;
     const elapsedTime = totalSpawnTime - this.spawnTimer;
@@ -12031,9 +12110,9 @@ export class Minion extends BaseEntity {
 
           const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
           if (isBehind) {
-            backCage.push(segment);
+            backCageScratch.push(segment);
           } else {
-            frontCage.push(segment);
+            frontCageScratch.push(segment);
           }
         }
       }
@@ -12048,9 +12127,9 @@ export class Minion extends BaseEntity {
         const isBehind = Math.sin(theta) < 0;
         const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
         if (isBehind) {
-          backCage.push(segment);
+          backCageScratch.push(segment);
         } else {
-          frontCage.push(segment);
+          frontCageScratch.push(segment);
         }
       }
     }
@@ -12059,7 +12138,7 @@ export class Minion extends BaseEntity {
     ctx.translate(drawX, feetY);
     ctx.rotate(this.rotation);
 
-    const drawCageSegments = (segments: typeof backCage) => {
+    const drawCageSegments = (segments: CageSegment[]) => {
       for (let s = 0; s < segments.length; s++) {
         const seg = segments[s];
         ctx.strokeStyle = seg.color;
@@ -12075,7 +12154,7 @@ export class Minion extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCageSegments(backCage);
+      drawCageSegments(backCageScratch);
       ctx.restore();
     }
 
@@ -12126,7 +12205,7 @@ export class Minion extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCageSegments(frontCage);
+      drawCageSegments(frontCageScratch);
       ctx.restore();
     }
 
@@ -12146,8 +12225,8 @@ export class Minion extends BaseEntity {
     this.velocity.y = Math.min(this.velocity.y, -340 * intensity);
     this.physics.isGrounded = false;
 
-    this.visualScale = { x: 1.0 - 0.2 * intensity, y: 1.0 + 0.4 * intensity };
-    this.scaleVelocity = { x: 10.0 * intensity, y: -20.0 * intensity };
+    setVec(this.visualScale, 1.0 - 0.2 * intensity, 1.0 + 0.4 * intensity);
+    setVec(this.scaleVelocity, 10.0 * intensity, -20.0 * intensity);
 
     const rotImpulse = -Math.sign(dirX) * 18.0 * intensity;
     this.applyAngularImpulse(rotImpulse);
@@ -12162,11 +12241,10 @@ export class Minion extends BaseEntity {
     super.teardown();
   }
 }
-`,"src/entities/MinionBehaviors.ts":`// Deprecated. Minion state updates are polymorphically handled inside MinionStates.ts.
-export {};
 `,"src/entities/MinionStates.ts":`import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Minion } from "./Minion";
+import { setVec, zeroVec } from "@/core/VecUtils";
 
 export abstract class MinionState implements IState {
   protected owner: Minion;
@@ -12183,19 +12261,19 @@ export abstract class MinionState implements IState {
 export class TurretPatrolState extends MinionState {
   public enter(): void {
     this.owner.attackState = "PATROL";
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     const player = this.owner.world.player;
     const playerValid = player && !player.isDead;
 
     if (playerValid) {
       const dx = player.position.x - this.owner.position.x;
       const dy = player.position.y - this.owner.position.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 400 && this.owner.shootTimer <= 0) {
+      const distSq = dx * dx + dy * dy;
+      if (distSq < 160000 && this.owner.shootTimer <= 0) {
         this.owner.stateMachine.changeState(new TurretTelegraphState(this.owner));
       }
     }
@@ -12208,11 +12286,11 @@ export class TurretTelegraphState extends MinionState {
   public enter(): void {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.5;
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
       const player = this.owner.world.player;
       if (player && !player.isDead) {
@@ -12229,7 +12307,7 @@ export class TurretTelegraphState extends MinionState {
 export class LancerPatrolState extends MinionState {
   public enter(): void {
     this.owner.attackState = "PATROL";
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(_dt: number): void {
@@ -12256,8 +12334,8 @@ export class LancerTelegraphState extends MinionState {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.4;
     this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 1.18, y: 0.82 };
-    this.owner.targetVisualScale = { x: 1.1, y: 0.9 };
+    setVec(this.owner.visualScale, 1.18, 0.82);
+    setVec(this.owner.targetVisualScale, 1.1, 0.9);
   }
 
   public update(_dt: number): void {
@@ -12275,8 +12353,8 @@ export class LancerAttackState extends MinionState {
     this.owner.attackState = "ATTACK";
     this.owner.stateTimer = 0.2;
     this.owner.velocity.x = this.owner.facingDirection * 400;
-    this.owner.visualScale = { x: 1.26, y: 0.74 };
-    this.owner.targetVisualScale = { x: 1.15, y: 0.85 };
+    setVec(this.owner.visualScale, 1.26, 0.74);
+    setVec(this.owner.targetVisualScale, 1.15, 0.85);
   }
 
   public update(_dt: number): void {
@@ -12297,8 +12375,8 @@ export class LancerCooldownState extends MinionState {
     this.owner.attackState = "COOLDOWN";
     this.owner.stateTimer = 1.2;
     this.owner.velocity.x = 0;
-    this.owner.visualScale = { x: 0.85, y: 1.15 };
-    this.owner.targetVisualScale = { x: 1.0, y: 1.0 };
+    setVec(this.owner.visualScale, 0.85, 1.15);
+    setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
 
   public update(_dt: number): void {
@@ -12331,11 +12409,12 @@ export class FlyerPatrolState extends MinionState {
     const targetPos = this.owner.flyerTarget === "A" ? this.owner.pointA : this.owner.pointB;
     const dx = targetPos.x - this.owner.position.x;
     const dy = targetPos.y - this.owner.position.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
 
-    if (dist < 5) {
+    if (distSq < 25) {
       this.owner.flyerTarget = this.owner.flyerTarget === "A" ? "B" : "A";
     } else {
+      const dist = Math.sqrt(distSq);
       const targetVelX = (dx / dist) * this.owner.patrolSpeed;
       const targetVelY = (dy / dist) * this.owner.patrolSpeed;
       this.owner.velocity.x += (targetVelX - this.owner.velocity.x) * UNITS.MINION_ACCEL * _dt;
@@ -12348,8 +12427,8 @@ export class FlyerPatrolState extends MinionState {
     if (playerValid) {
       const dxP = player.position.x - this.owner.position.x;
       const dyP = player.position.y - this.owner.position.y;
-      const playerDist = Math.sqrt(dxP * dxP + dyP * dyP);
-      if (playerDist < 480 && this.owner.shootTimer <= 0 && this.owner.volleyCount === 0) {
+      const playerDistSq = dxP * dxP + dyP * dyP;
+      if (playerDistSq < 230400 && this.owner.shootTimer <= 0 && this.owner.volleyCount === 0) {
         this.owner.stateMachine.changeState(new FlyerTelegraphState(this.owner));
       }
     }
@@ -12362,11 +12441,11 @@ export class FlyerTelegraphState extends MinionState {
   public enter(): void {
     this.owner.attackState = "TELEGRAPH";
     this.owner.stateTimer = 0.6;
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity = { x: 0, y: 0 };
+    zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
       this.owner.stateMachine.changeState(new FlyerAttackState(this.owner));
     }
@@ -12416,10 +12495,18 @@ import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
+
+const AURA_COLORS = [
+  'hsla(280, 90%, 25%, 0.35)',
+  'hsla(285, 95%, 45%, 0.55)',
+  'hsla(290, 100%, 75%, 0.8)',
+  'hsla(0, 0%, 100%, 0.95)'
+];
 
 export class Player extends BaseEntity {
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
   public dashComponent!: DashComponent;
   public meleeComponent!: MeleeComponent;
@@ -12463,8 +12550,8 @@ export class Player extends BaseEntity {
     this.size = { width: 40, height: 80 };
     this.squashPivot = "center";
 
-    this.position = { x: 0, y: 0 };
-    this.previousPosition = { x: 0, y: 0 };
+    zeroVec(this.position);
+    zeroVec(this.previousPosition);
 
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -12590,14 +12677,14 @@ export class Player extends BaseEntity {
         shape: "spark",
       });
 
-      this.visualScale = { x: 0.90, y: 1.10 };
-      this.scaleVelocity = { x: 6.0, y: -12.0 };
+      setVec(this.visualScale, 0.90, 1.10);
+      setVec(this.scaleVelocity, 6.0, -12.0);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.35 });
     });
 
     this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
-      this.visualScale = { x: 1.10, y: 0.90 };
-      this.scaleVelocity = { x: -10.0, y: 10.0 };
+      setVec(this.visualScale, 1.10, 0.90);
+      setVec(this.scaleVelocity, -10.0, 10.0);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
     });
 
@@ -12628,8 +12715,8 @@ export class Player extends BaseEntity {
 
       const sqX = isLvl2 ? 0.90 : 0.96;
       const sqY = isLvl2 ? 1.10 : 1.04;
-      this.visualScale = { x: sqX, y: sqY };
-      this.scaleVelocity = { x: (isLvl2 ? 16 : 8), y: (isLvl2 ? -16 : -8) };
+      setVec(this.visualScale, sqX, sqY);
+      setVec(this.scaleVelocity, (isLvl2 ? 16 : 8), (isLvl2 ? -16 : -8));
 
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
@@ -12678,7 +12765,7 @@ export class Player extends BaseEntity {
     }
 
     if (!this.isCharging) {
-      this.targetVisualScale = { x: 1.0, y: 1.0 };
+      setVec(this.targetVisualScale, 1.0, 1.0);
       if (!this.physics.isGrounded) {
         this.targetRotation = Math.sign(this.velocity.x) * Math.min(0.08, (Math.abs(this.velocity.x) / 1000) * 0.08);
       } else {
@@ -12749,7 +12836,7 @@ export class Player extends BaseEntity {
       }
     }
 
-    this.targetVisualScale = { x: targetScaleX, y: targetScaleY };
+    setVec(this.targetVisualScale, targetScaleX, targetScaleY);
   }
 
   private updateAirTime(dt: number) {
@@ -12761,8 +12848,8 @@ export class Player extends BaseEntity {
         const speedFactor = Math.max(0, (this.maxFallSpeed - 120) / 680);
         const factor = Math.min(1.0, 0.3 * speedFactor + 0.7 * speedFactor * speedFactor);
         if (factor > 0.01) {
-          this.visualScale = { x: 1.0 + 0.28 * factor, y: 1.0 - 0.28 * factor };
-          this.scaleVelocity = { x: 10 * factor, y: -18 * factor };
+          setVec(this.visualScale, 1.0 + 0.28 * factor, 1.0 - 0.28 * factor);
+          setVec(this.scaleVelocity, 10 * factor, -18 * factor);
           this.velocity.x *= (1.0 - 0.8 * factor);
           eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
           eventBroker.publish("PLAYER_LANDED", undefined);
@@ -12803,7 +12890,7 @@ export class Player extends BaseEntity {
   private handleWallCling(currentOnWall: boolean) {
     if (!currentOnWall || this.wasOnWall || this.physics.isGrounded) return;
 
-    this.visualScale = { x: 0.76, y: 1.24 };
+    setVec(this.visualScale, 0.76, 1.24);
 
     const impactSide = this.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.position.x + impactSide * (this.size.width / 2);
@@ -12892,7 +12979,7 @@ export class Player extends BaseEntity {
     const normY = dirY / len;
 
     this.dashComponent.triggerDash(normX, normY);
-    this.visualScale = { x: 1.25, y: 0.75 };
+    setVec(this.visualScale, 1.25, 0.75);
   }
 
   private handleJump(dt: number) {
@@ -12929,7 +13016,7 @@ export class Player extends BaseEntity {
       this.coyoteTimer = 0;
       this.wallCoyoteTimer = 0;
       this.jumpBufferTimer = 0;
-      this.visualScale = { x: 0.82, y: 1.18 };
+      setVec(this.visualScale, 0.82, 1.18);
       this.dashComponent.resetDashCharge();
 
           const wallX = this.position.x - this.lastWallNormal * (this.size.width / 2);
@@ -12939,10 +13026,10 @@ export class Player extends BaseEntity {
           this.velocity.y = -this.jumpForce;
           this.hasDoubleJump = false;
           this.jumpBufferTimer = 0;
-          this.visualScale = { x: 0.82, y: 1.18 };
+          setVec(this.visualScale, 0.82, 1.18);
 
           this.doubleJumpDiskTimer = 0.22;
-          this.doubleJumpDiskPos = { x: this.position.x, y: this.position.y + this.size.height / 2 };
+          setVec(this.doubleJumpDiskPos, this.position.x, this.position.y + this.size.height / 2);
 
           eventBroker.publish("PLAYER_JUMPED", undefined);
         }
@@ -12952,7 +13039,7 @@ export class Player extends BaseEntity {
         this.velocity.y = -this.jumpForce;
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
-        this.visualScale = { x: 0.82, y: 1.18 };
+        setVec(this.visualScale, 0.82, 1.18);
         eventBroker.publish("SPAWN_DUST", { x: this.position.x, y: this.position.y + this.size.height / 2 });
         eventBroker.publish("PLAYER_JUMPED", undefined);
       }
@@ -13027,8 +13114,8 @@ export class Player extends BaseEntity {
             if (damaged && !this.isDead) {
               this.velocity.y = -550;
               this.physics.isGrounded = false;
-              this.visualScale = { x: 0.5, y: 1.5 };
-              this.scaleVelocity = { x: 10.0, y: -15.0 };
+              setVec(this.visualScale, 0.5, 1.5);
+              setVec(this.scaleVelocity, 10.0, -15.0);
             }
             break;
           }
@@ -13128,16 +13215,9 @@ export class Player extends BaseEntity {
           const baseW = this.size.width * (1.15 + progress * 0.75);
           const baseH = this.size.height * (1.1 + progress * 0.55);
 
-          const auraColors = [
-            'hsla(280, 90%, 25%, 0.35)',
-            'hsla(285, 95%, 45%, 0.55)',
-            'hsla(290, 100%, 75%, 0.8)',
-            'hsla(0, 0%, 100%, 0.95)'
-          ];
-
           ctx.globalCompositeOperation = "lighter";
 
-          auraColors.forEach((color, layerIdx) => {
+          AURA_COLORS.forEach((color, layerIdx) => {
             ctx.fillStyle = color;
             ctx.beginPath();
 
@@ -13267,6 +13347,9 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { setVec, zeroVec } from "@/core/VecUtils";
+
+const TRAIL_RING_SIZE = 16;
 
 export class Projectile extends BaseEntity implements IPoolable {
   public isActive = false;
@@ -13276,11 +13359,14 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   private lifespan = 0;
 
-  private trail: { x: number; y: number }[] = [];
+  private trailRing: { x: number; y: number }[] = [];
+  private trailHead = 0;
+  private trailCount = 0;
 
   constructor() {
     super("projectile", null as unknown as IWorld);
     this.size = { width: 14, height: 14 };
+    this.trailRing = Array.from({ length: TRAIL_RING_SIZE }, () => ({ x: 0, y: 0 }));
   }
 
   public activate(
@@ -13295,9 +13381,9 @@ export class Projectile extends BaseEntity implements IPoolable {
     world: IWorld,
     customColor?: string
   ) {
-    this.position = { x, y };
-    this.previousPosition = { x, y };
-    this.velocity = { x: dirX * speed, y: dirY * speed };
+    setVec(this.position, x, y);
+    setVec(this.previousPosition, x, y);
+    setVec(this.velocity, dirX * speed, dirY * speed);
 
     this.ownerId = ownerId;
     this.damage = damage;
@@ -13307,14 +13393,15 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     this.isActive = true;
     this.isDead = false;
-    this.trail = [];
+    this.trailHead = 0;
+    this.trailCount = 0;
   }
 
   public deactivate() {
     this.isActive = false;
     this.isDead = true;
-    this.velocity = { x: 0, y: 0 };
-    this.trail = [];
+    zeroVec(this.velocity);
+    this.trailCount = 0;
   }
 
   public update(dt: number): boolean {
@@ -13328,11 +13415,12 @@ export class Projectile extends BaseEntity implements IPoolable {
       return true;
     }
 
-    this.trail.push({ x: this.position.x, y: this.position.y });
+    this.trailRing[this.trailHead].x = this.position.x;
+    this.trailRing[this.trailHead].y = this.position.y;
+    this.trailHead = (this.trailHead + 1) % TRAIL_RING_SIZE;
     const maxTrailLen = this.damage >= 3 ? 8 : 3;
-    if (this.trail.length > maxTrailLen) {
-      this.trail.shift();
-    }
+    if (this.trailCount < TRAIL_RING_SIZE) this.trailCount++;
+    if (this.trailCount > maxTrailLen) this.trailCount = maxTrailLen;
 
     const isLvl2 = this.damage >= 3;
     const sparkChance = isLvl2 ? 0.35 : 0.08;
@@ -13549,9 +13637,21 @@ export class Projectile extends BaseEntity implements IPoolable {
     const drawX = this.previousPosition.x + (this.position.x - this.previousPosition.x) * alphaVal;
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
-    if (this.trail.length > 1) {
+    if (this.trailCount > 1) {
       ctx.save();
-      const oldest = this.trail[0];
+      const oldestIdx = this.trailCount < TRAIL_RING_SIZE ? 0 : this.trailHead;
+      const oldest = this.trailRing[oldestIdx];
+      const iterateTrail = (moveFirst: boolean, cb: (pt: { x: number; y: number }) => void) => {
+        for (let j = 0; j < this.trailCount; j++) {
+          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+          const pt = this.trailRing[idx];
+          if (j === 0 && moveFirst) {
+            cb(pt);
+          } else {
+            cb(pt);
+          }
+        }
+      };
 
       if (this.ownerId === "player") {
         const isLvl2 = this.damage >= 3;
@@ -13570,9 +13670,7 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 20;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          for (let i = this.trail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.trail[i].x, this.trail[i].y);
-          }
+          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -13585,9 +13683,7 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          for (let i = this.trail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.trail[i].x, this.trail[i].y);
-          }
+          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
           ctx.stroke();
         } else {
           const mainColor = "rgba(34, 197, 94, ";
@@ -13602,9 +13698,7 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 12;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          for (let i = this.trail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.trail[i].x, this.trail[i].y);
-          }
+          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -13615,9 +13709,7 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          for (let i = this.trail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.trail[i].x, this.trail[i].y);
-          }
+          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
           ctx.stroke();
         }
       } else {
@@ -13643,9 +13735,7 @@ export class Projectile extends BaseEntity implements IPoolable {
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.moveTo(drawX, drawY);
-        for (let i = this.trail.length - 1; i >= 0; i--) {
-          ctx.lineTo(this.trail[i].x, this.trail[i].y);
-        }
+        iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
         ctx.stroke();
       }
       ctx.restore();
@@ -13748,7 +13838,12 @@ export class Spawner {
   public update(dt: number) {
     if (this.activeMinion) {
       if (this.activeMinion.isDead) {
-        this.world.minions = this.world.minions.filter((m) => m !== this.activeMinion);
+        const idx = this.world.minions.indexOf(this.activeMinion);
+        if (idx !== -1) {
+          const last = this.world.minions[this.world.minions.length - 1];
+          this.world.minions[idx] = last;
+          this.world.minions.pop();
+        }
         this.activeMinion = null;
         this.respawnTimer = this.respawnDelay;
       }
@@ -13770,7 +13865,12 @@ export class Spawner {
   public cleanup() {
     if (this.activeMinion) {
       this.activeMinion.teardown();
-      this.world.minions = this.world.minions.filter((m) => m !== this.activeMinion);
+      const idx = this.world.minions.indexOf(this.activeMinion);
+      if (idx !== -1) {
+        const last = this.world.minions[this.world.minions.length - 1];
+        this.world.minions[idx] = last;
+        this.world.minions.pop();
+      }
       this.activeMinion = null;
     }
   }
@@ -13809,10 +13909,15 @@ export class DashComponent implements IEntityComponent {
       this.dashCooldown -= dt;
     }
 
-    for (const ghost of this.ghosts) {
-      ghost.opacity -= dt * 5.0;
+    for (let i = this.ghosts.length - 1; i >= 0; i--) {
+      const g = this.ghosts[i];
+      g.opacity -= dt * 5.0;
+      if (g.opacity <= 0) {
+        const last = this.ghosts[this.ghosts.length - 1];
+        this.ghosts[i] = last;
+        this.ghosts.pop();
+      }
     }
-    this.ghosts = this.ghosts.filter((g) => g.opacity > 0);
 
     if (this.isDashing) {
       this.dashTimer -= dt;
@@ -13842,8 +13947,8 @@ export class DashComponent implements IEntityComponent {
         this.isDashing = false;
         if (this.dashDirectionX !== 0) {
           this.owner.velocity.x = this.dashDirectionX * this.dashSpeed * 0.65;
-          if ('recoilTimer' in this.owner) {
-            (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.18;
+          if (this.owner.recoilTimer !== undefined) {
+            this.owner.recoilTimer = 0.18;
           }
         }
         if (this.dashDirectionY !== 0) {
@@ -13876,6 +13981,8 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
+const chargeUpdatePayload = { timer: 0 };
+
 export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
@@ -13898,7 +14005,8 @@ export class FireballComponent implements IEntityComponent {
       }
 
       if (this.hasPublishedChargeStart) {
-        eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
+        chargeUpdatePayload.timer = this.chargeTimer;
+        eventBroker.publish("CHARGE_UPDATE", chargeUpdatePayload);
       }
 
       if (this.chargeTimer >= UNITS.CHARGE_LVL2_TIME && !this.hasPoppedLvl2) {
@@ -14045,6 +14153,8 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
+const healUpdatePayload = { timer: 0 };
+
 export class HealComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
@@ -14061,7 +14171,8 @@ export class HealComponent implements IEntityComponent {
     if (this.isHealing) {
       this.owner.velocity.x = 0;
       this.healTimer -= dt;
-      eventBroker.publish("HEAL_UPDATE", { timer: this.healTimer });
+      healUpdatePayload.timer = this.healTimer;
+      eventBroker.publish("HEAL_UPDATE", healUpdatePayload);
 
       const progress = Math.max(0, Math.min(1.0, (this.healDuration - this.healTimer) / this.healDuration));
       const nowTime = performance.now();
@@ -14388,9 +14499,10 @@ export class MeleeComponent implements IEntityComponent {
         const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
         const centerReachY = this.owner.position.y;
 
-        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
+        distanceToTarget = this.calculateDistSq(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.width / 2;
+        const reachLimit = this.meleeRangeLimit + target.size.width / 2;
+        const withinReach = distanceToTarget <= reachLimit * reachLimit;
         const withinDirection =
           (facing > 0 && target.position.x >= centerReachX - 25) ||
           (facing < 0 && target.position.x <= centerReachX + 25);
@@ -14402,9 +14514,10 @@ export class MeleeComponent implements IEntityComponent {
         const centerReachX = this.owner.position.x;
         const centerReachY = this.owner.position.y - this.verticalReachOffset;
 
-        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
+        distanceToTarget = this.calculateDistSq(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.height / 2;
+        const reachVertLimit = this.meleeRangeLimit + target.size.height / 2;
+        const withinReach = distanceToTarget <= reachVertLimit * reachVertLimit;
         const withinDirection = target.position.y <= centerReachY + 25;
 
         if (withinReach && withinDirection) {
@@ -14415,7 +14528,7 @@ export class MeleeComponent implements IEntityComponent {
       if (isWithinSwingArc) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
+          const isCloseRange = distanceToTarget <= this.closeRangeThreshold * this.closeRangeThreshold;
           const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
           const registeredDamage = health.takeDamage(
@@ -14431,14 +14544,13 @@ export class MeleeComponent implements IEntityComponent {
             const recoilForce = isCloseRange ? 200 : 90;
             this.owner.velocity.x = -facing * recoilForce;
             if (this.owner.getComponent(HealthComponent)?.owner.world.physicsWorld) {
-              const withPhysics = this.owner as unknown as { physics?: { isGrounded: boolean } };
-              const isGrounded = this.owner.velocity.y === 0 || withPhysics.physics?.isGrounded;
+              const isGrounded = this.owner.velocity.y === 0 || this.owner.physics?.isGrounded;
               if (!isGrounded) {
                 this.owner.velocity.y = Math.min(this.owner.velocity.y, -120);
               }
             }
-            if ('recoilTimer' in this.owner) {
-              (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.15;
+            if (this.owner.recoilTimer !== undefined) {
+              this.owner.recoilTimer = 0.15;
             }
 
             if (isCloseRange) {
@@ -14468,9 +14580,10 @@ export class MeleeComponent implements IEntityComponent {
         if (this.attackDirection === "side") {
           const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
           const centerReachY = this.owner.position.y;
-          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
+          const distSq = this.calculateDistSq(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + proj.size.width / 2;
+          const projReachLimit = this.meleeRangeLimit + proj.size.width / 2;
+          const withinReach = distSq <= projReachLimit * projReachLimit;
           const withinDirection =
             (facing > 0 && proj.position.x >= centerReachX - 25) ||
             (facing < 0 && proj.position.x <= centerReachX + 25);
@@ -14481,9 +14594,10 @@ export class MeleeComponent implements IEntityComponent {
         } else if (this.attackDirection === "up") {
           const centerReachX = this.owner.position.x;
           const centerReachY = this.owner.position.y - this.verticalReachOffset;
-          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
+          const distSqUp = this.calculateDistSq(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + proj.size.height / 2;
+          const projReachLimitUp = this.meleeRangeLimit + proj.size.height / 2;
+          const withinReach = distSqUp <= projReachLimitUp * projReachLimitUp;
           const withinDirection = proj.position.y <= centerReachY + 25;
 
           if (withinReach && withinDirection) {
@@ -14609,10 +14723,10 @@ export class MeleeComponent implements IEntityComponent {
     return this.targetsScratchpad;
   }
 
-  private calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+  private calculateDistSq(x1: number, y1: number, x2: number, y2: number): number {
     const dx = x1 - x2;
     const dy = y1 - y2;
-    return Math.sqrt(dx * dx + dy * dy);
+    return dx * dx + dy * dy;
   }
 }
 `,"src/entities/components/PhysicsComponent.ts":`import { IEntityComponent } from "@/entities/EntityComponent";
