@@ -1,3 +1,4 @@
+import { TrigLUT } from "@/core/TrigLUT";
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
@@ -124,7 +125,7 @@ export class BossAttackState extends BossState {
     this.owner.velocity.x = 0;
 
     if (phase === 1) {
-      if (Math.random() < 0.6) {
+      if (TrigLUT.randomGameplay() < 0.6) {
         this.attackType = "SINGLE_SHOT";
         this.durationTimer = 0.5;
         this.owner.fireSingleShotAtPlayer();
@@ -132,7 +133,7 @@ export class BossAttackState extends BossState {
         this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else if (phase === 2) {
-      if (Math.random() < 0.5) {
+      if (TrigLUT.randomGameplay() < 0.5) {
         this.attackType = "VOLLEY";
         this.volleyCount = 3;
         this.volleyTimer = 0;
@@ -141,7 +142,7 @@ export class BossAttackState extends BossState {
         this.owner.stateMachine.changeState(this.owner.telegraphState);
       }
     } else {
-      const r = Math.random();
+      const r = TrigLUT.randomGameplay();
       if (r < 0.33) {
         this.attackType = "VOLLEY";
         this.volleyCount = 5;

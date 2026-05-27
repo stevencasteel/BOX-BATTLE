@@ -7,7 +7,6 @@ export class TrigLUT {
   public static readonly ATAN_TABLE_SIZE = 1024;
   private static readonly atanTable: Float64Array = new Float64Array(TrigLUT.ATAN_TABLE_SIZE);
 
-  private static prngState: number = Date.now();
 
   static {
     for (let i = 0; i < TrigLUT.TABLE_SIZE; i++) {
@@ -46,19 +45,40 @@ export class TrigLUT {
     }
   }
 
+
+
+  private static gpPrngState: number = Date.now();
+  private static visPrngState: number = Date.now() + 1;
+
   public static seedRandom(seed: number): void {
-    TrigLUT.prngState = seed | 0;
+    TrigLUT.gpPrngState = seed | 0;
+    TrigLUT.visPrngState = (seed + 1) | 0;
   }
 
   public static random(): number {
-    let t = (TrigLUT.prngState += 0x6d2b79f5);
+    return TrigLUT.randomVisual();
+  }
+
+  public static randomGameplay(): number {
+    let t = (TrigLUT.gpPrngState += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  public static randomVisual(): number {
+    let t = (TrigLUT.visPrngState += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
   public static randomRange(min: number, max: number): number {
-    return min + TrigLUT.random() * (max - min);
+    return min + TrigLUT.randomVisual() * (max - min);
+  }
+
+  public static randomRangeGameplay(min: number, max: number): number {
+    return min + TrigLUT.randomGameplay() * (max - min);
   }
 
   public static fastSqrt(n: number): number {
