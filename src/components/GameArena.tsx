@@ -38,9 +38,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     engine.start();
 
     const updateVignette = (hp: number) => {
+      const isGameOver = useSessionStore.getState().gameResult !== "PLAYING";
       const overlay = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
       if (overlay) {
-        if (hp === 1) {
+        if (hp === 1 && !isGameOver) {
           overlay.classList.add("vignette-pulse");
         } else {
           overlay.classList.remove("vignette-pulse");
@@ -55,12 +56,21 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       updateVignette(currentHealth);
     });
 
+    const unsubSession = useSessionStore.subscribe((state) => {
+      if (state.gameResult !== "PLAYING") {
+        updateVignette(0);
+      } else {
+        updateVignette(useGameplayStore.getState().playerHP);
+      }
+    });
+
     const initialHP = useGameplayStore.getState().playerHP;
     updateVignette(initialHP);
 
     return () => {
       unsubHurt();
       unsubHealed();
+      unsubSession();
       engine.cleanup();
       engineRef.current = null;
     };

@@ -1,32 +1,39 @@
 import { useEffect } from "react";
-import { useGameplayStore } from "@/store/useGameStore";
+import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { soundSynth } from "@/core/SoundSynth";
 import { UNITS } from "@/core/Units";
 
-// Keep track of player health changes across update ticks
 export function useHudSubscription() {
   useEffect(() => {
     let lastHP = -1;
     let lastHealCharges = -1;
     let lastDet = -1;
     let lastBHP = -1;
+    let lastResult = "PLAYING";
 
-    const unsub = useGameplayStore.subscribe((state) => {
-      const { playerHP, bossHP, healingCharges, determination } = state;
+    const updateHUD = () => {
+      const { playerHP, bossHP, healingCharges, determination } = useGameplayStore.getState();
+      const { gameResult } = useSessionStore.getState();
 
-      // 1. Player HP updates
-      if (playerHP !== lastHP) {
-        const tookDamage = playerHP < lastHP && lastHP !== -1;
-        const healed = playerHP > lastHP && lastHP !== -1;
+      const isGameOver = gameResult !== "PLAYING";
+
+      const activeHP = isGameOver ? 0 : playerHP;
+      const activeHealCharges = isGameOver ? 0 : healingCharges;
+      const activeDet = isGameOver ? 0 : determination;
+      const activeBHP = isGameOver ? 0 : bossHP;
+
+      if (activeHP !== lastHP || isGameOver !== (lastResult !== "PLAYING")) {
+        const tookDamage = activeHP < lastHP && lastHP !== -1 && !isGameOver;
+        const healed = activeHP > lastHP && lastHP !== -1 && !isGameOver;
 
         if (soundSynth.initialized) {
-          soundSynth.setLowHPStatus(playerHP === 1);
+          soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
         }
 
         const groupD = document.getElementById("hud-d-hp-group");
         const groupM = document.getElementById("hud-m-hp-group");
         
-        if (playerHP === 1) {
+        if (activeHP === 1 && !isGameOver) {
           groupD?.classList.add("hud-stress-shiver");
           groupM?.classList.add("hud-stress-shiver");
         } else {
@@ -35,7 +42,7 @@ export function useHudSubscription() {
         }
 
         for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
-          const isLit = i < playerHP;
+          const isLit = i < activeHP;
           const dotD = document.getElementById("hud-d-php-" + i);
           const dotM = document.getElementById("hud-m-php-" + i);
 
@@ -44,12 +51,10 @@ export function useHudSubscription() {
             if (isLit) {
               dotD.classList.add("led-green");
               if (tookDamage) {
-                // Subtle spring-shudder only on the remaining lit health squares
                 dotD.classList.remove("led-spring-impact");
                 void dotD.offsetWidth;
                 dotD.classList.add("led-spring-impact");
               } else if (healed) {
-                // Elastic recovery pop on the newly healed squares
                 dotD.classList.remove("led-elastic-spring");
                 void dotD.offsetWidth;
                 dotD.classList.add("led-elastic-spring");
@@ -89,15 +94,14 @@ export function useHudSubscription() {
             }
           }
         }
-        lastHP = playerHP;
+        lastHP = activeHP;
       }
 
-      // 2. Healing Charges updates
-      if (healingCharges !== lastHealCharges) {
-        const gainedCharge = healingCharges > lastHealCharges && lastHealCharges !== -1;
+      if (activeHealCharges !== lastHealCharges) {
+        const gainedCharge = activeHealCharges > lastHealCharges && lastHealCharges !== -1;
 
         for (let i = 0; i < 3; i++) {
-          const isLit = i < healingCharges;
+          const isLit = i < activeHealCharges;
           const dotD = document.getElementById("hud-d-heal-" + i);
           const dotM = document.getElementById("hud-m-heal-" + i);
           if (dotD) {
@@ -114,7 +118,7 @@ export function useHudSubscription() {
               dotD.classList.remove("led-elastic-spring");
             }
 
-            if (healingCharges === 3) {
+            if (activeHealCharges === 3) {
               dotD.classList.add("led-overflow-wobble");
             } else {
               dotD.classList.remove("led-overflow-wobble");
@@ -134,44 +138,58 @@ export function useHudSubscription() {
               dotM.classList.remove("led-elastic-spring");
             }
 
-            if (healingCharges === 3) {
+            if (activeHealCharges === 3) {
               dotM.classList.add("led-overflow-wobble");
             } else {
               dotM.classList.remove("led-overflow-wobble");
             }
           }
         }
-        lastHealCharges = healingCharges;
+        lastHealCharges = activeHealCharges;
       }
 
-      // 3. Determination updates
-      if (determination !== lastDet) {
+      if (activeDet !== lastDet) {
         const detD = document.getElementById("hud-d-det-bar");
         const detM = document.getElementById("hud-m-det-bar");
-        const detWidth = (determination / 5) * 100 + "%";
+        const detWidth = (activeDet / 5) * 100 + "%";
         if (detD) detD.style.width = detWidth;
         if (detM) detM.style.width = detWidth;
-        lastDet = determination;
+        lastDet = activeDet;
       }
 
-      // 4. Boss HP updates
-      if (bossHP !== lastBHP) {
+      if (activeBHP !== lastBHP) {
         const bossD = document.getElementById("hud-d-boss-bar");
         const bossM = document.getElementById("hud-m-boss-bar");
-        const bossWidth = (bossHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+        const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
         if (bossD) {
           bossD.style.width = bossWidth;
-          if (bossHP > 0) bossD.classList.add("led-red");
+          if (activeBHP > 0) bossD.classList.add("led-red");
           else bossD.classList.remove("led-red");
         }
         if (bossM) {
           bossM.style.width = bossWidth;
-          if (bossHP > 0) bossM.classList.add("led-red");
+          if (activeBHP > 0) bossM.classList.add("led-red");
           else bossM.classList.remove("led-red");
         }
-        lastBHP = bossHP;
+        lastBHP = activeBHP;
       }
+
+      lastResult = gameResult;
+    };
+
+    const unsubGameplay = useGameplayStore.subscribe(() => {
+      updateHUD();
     });
-    return unsub;
+
+    const unsubSession = useSessionStore.subscribe(() => {
+      updateHUD();
+    });
+
+    updateHUD();
+
+    return () => {
+      unsubGameplay();
+      unsubSession();
+    };
   }, []);
 }
