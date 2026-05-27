@@ -1,6 +1,5 @@
 import { Player } from "@/entities/Player";
-import { UNITS } from "@/core/Units";
-import { setVec } from "@/core/VecUtils";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 
 export class PlayerCombatHandler {
   private player: Player;
@@ -65,31 +64,13 @@ export class PlayerCombatHandler {
   public checkHazardContact() {
     if (this.player.health.isInvincible() || this.player.isDead) return;
 
-    const halfW = this.player.size.width / 2;
-    const halfH = this.player.size.height / 2;
+    if (this.player.healComponent.isHealing) {
+      this.player.healComponent.cancelHealing();
+    }
 
-    for (const hazard of this.player.world.physicsWorld.hazards) {
-      const isHit =
-        this.player.position.x + halfW > hazard.x &&
-        this.player.position.x - halfW < hazard.x + hazard.width &&
-        this.player.position.y + halfH > hazard.y &&
-        this.player.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.player.velocity.y >= 0) {
-        if (this.player.healComponent.isHealing) {
-          this.player.healComponent.cancelHealing();
-        }
-
-        this.player.world.events.publish("PLAYER_SPIKED", { x: this.player.position.x });
-        const damaged = this.player.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
-        if (damaged && !this.player.isDead) {
-          this.player.velocity.y = -550;
-          this.player.physics.isGrounded = false;
-          setVec(this.player.visualScale, 0.5, 1.5);
-          setVec(this.player.scaleVelocity, 10.0, -15.0);
-        }
-        break;
-      }
+    const hit = HazardSystem.checkContact(this.player, this.player.world.physicsWorld);
+    if (hit && !this.player.isDead) {
+      this.player.physics.isGrounded = false;
     }
   }
 }

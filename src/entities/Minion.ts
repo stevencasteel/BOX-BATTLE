@@ -1,6 +1,6 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import {
@@ -8,6 +8,7 @@ import {
   LancerPatrolState,
   FlyerPatrolState
 } from "./MinionStates";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
 
@@ -68,6 +69,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 5,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.physics.gravity = 0;
       this.squashPivot = "feet";
@@ -77,6 +81,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 6,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.squashPivot = "feet";
       this.stateMachine.changeState(new LancerPatrolState(this));
@@ -85,6 +92,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 3,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.physics.gravity = 0;
 
@@ -279,28 +289,10 @@ export class Minion extends BaseEntity {
   private checkHazardContact() {
     if (this.health.isInvincible() || this.isDead || this.isSpawning || this.isDying) return;
 
-    const halfW = this.size.width / 2;
-    const halfH = this.size.height / 2;
-
-    for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit =
-        this.position.x + halfW > hazard.x &&
-        this.position.x - halfW < hazard.x + hazard.width &&
-        this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.velocity.y >= 0) {
-        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
-        const damaged = this.health.takeDamage(1);
-        if (damaged && !this.isDead) {
-          if (this.minionType !== "TURRET" && !this.isDying) {
-            this.velocity.y = -550;
-            this.physics.isGrounded = false;
-          }
-          setVec(this.visualScale, 0.5, 1.5);
-          setVec(this.scaleVelocity, 10.0, -15.0);
-        }
-        break;
+    const hit = HazardSystem.checkContact(this, this.world.physicsWorld);
+    if (hit && !this.isDead) {
+      if (this.minionType !== "TURRET" && !this.isDying) {
+        this.physics.isGrounded = false;
       }
     }
   }

@@ -2,14 +2,16 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
-import { eventBroker } from "@/core/eventBroker";
+import { SynthFactory } from "./SynthFactory";
 import { soundSynth } from "@/core/SoundSynth";
-import { useGameplayStore } from "@/store/useGameStore";
+import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class BossSFX {
   private helper: SFXHelper;
+  private eventBus: IEventBus;
+  private getComboCounter: () => number;
   private bossPanner!: Tone.Panner;
   private impactPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
@@ -26,8 +28,10 @@ export class BossSFX {
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = helper;
+    this.eventBus = eventBus;
+    this.getComboCounter = getComboCounter;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -43,17 +47,8 @@ export class BossSFX {
 
     const presets = SFX_PRESETS.boss;
 
-    this.jumpSynth = new Tone.Synth({
-      oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.015, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
-      volume: -5
-    }).connect(this.bossPanner);
-
-    this.hurtSynth = new Tone.Synth({
-      oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.015, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
-      volume: -5
-    }).connect(this.hurtPanner);
+    this.jumpSynth = SynthFactory.createPannedSynth(presets.telegraph.oscillatorType, presets.telegraph.decay, this.bossPanner, -5, 0.015);
+    this.hurtSynth = SynthFactory.createPannedSynth(presets.lunge.oscillatorType, presets.lunge.decay, this.hurtPanner, -5, 0.015);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
@@ -63,34 +58,20 @@ export class BossSFX {
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
-    this.spikeSynth = new Tone.Synth({
-      oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
-      volume: -5
-    }).connect(this.impactPanner);
-
-    this.teleportSynth = new Tone.Synth({
-      oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.02, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
-      volume: -5
-    }).connect(this.bossPanner);
-
-    this.dialogueSynthPlayer = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.012, decay: 0.05, sustain: 0, release: 0.05 },
-      volume: -6
-    }).connect(this.impactPanner);
+    this.spikeSynth = SynthFactory.createPannedSynth(presets.spike_strike.oscillatorType, presets.spike_strike.decay, this.impactPanner);
+    this.teleportSynth = SynthFactory.createPannedSynth(presets.minion_spawn.oscillatorType, presets.minion_spawn.decay, this.bossPanner, -5, 0.02);
+    this.dialogueSynthPlayer = SynthFactory.createPannedSynth("sine", 0.05, this.impactPanner, -6);
   }
 
   private setupSubscriptions() {
-    eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+    this.eventBus.subscribe("BOSS_HURT", ({ currentHealth }) => {
       this.playHitConfirm(soundSynth.getBossX(), "boss-01");
       if (currentHealth <= 0) {
         this.playBossExplosion(soundSynth.getBossX());
       }
     });
 
-    eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+    this.eventBus.subscribe("MINION_HURT", ({ id, currentHealth }) => {
       const mX = soundSynth.getMinionX(id);
       this.playHitConfirm(mX, id);
       if (currentHealth <= 0) {
@@ -98,31 +79,31 @@ export class BossSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_SPIKED", ({ x }) => {
+    this.eventBus.subscribe("PLAYER_SPIKED", ({ x }) => {
       this.playSpikeStrike(x);
     });
 
-    eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+    this.eventBus.subscribe("BOSS_PHASE_SHIFT", () => {
       this.playBossPhaseShift(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("MINION_SPAWNING", () => {
+    this.eventBus.subscribe("MINION_SPAWNING", () => {
       this.playMinionSpawning();
     });
 
-    eventBroker.subscribe("MINION_DISSOLVING", () => {
+    this.eventBus.subscribe("MINION_DISSOLVING", () => {
       this.playMinionDeconstruct();
     });
 
-    eventBroker.subscribe("BOSS_SWIPED", () => {
+    this.eventBus.subscribe("BOSS_SWIPED", () => {
       this.playBossSwipe(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("BOSS_TELEGRAPH", () => {
+    this.eventBus.subscribe("BOSS_TELEGRAPH", () => {
       this.playBossTelegraph(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("BOSS_LUNGED", () => {
+    this.eventBus.subscribe("BOSS_LUNGED", () => {
       this.playBossLunge(soundSynth.getBossX());
     });
   }
@@ -226,7 +207,7 @@ export class BossSFX {
     this.entityComboMap.set(targetId, combo);
 
     const preset = SFX_PRESETS.boss.hit_confirm;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;

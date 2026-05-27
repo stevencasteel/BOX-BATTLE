@@ -2,9 +2,19 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { EntityStatus } from "@/core/Interfaces";
 
+export type DamagePayload = {
+  amount: number;
+  currentHealth: number;
+  maxHealth: number;
+  sourceX: number;
+  sourceY: number;
+  intensity: number;
+};
+
 export interface HealthComponentOptions {
   maxHealth?: number;
   invincibilityDuration?: number;
+  onDamaged?: (payload: DamagePayload) => void;
 }
 
 export class HealthComponent implements IEntityComponent {
@@ -18,6 +28,8 @@ export class HealthComponent implements IEntityComponent {
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
+  private onDamaged: ((payload: DamagePayload) => void) | null = null;
+
   public setup(owner: BaseEntity, dependencies?: HealthComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
@@ -27,6 +39,9 @@ export class HealthComponent implements IEntityComponent {
       }
       if (dependencies.invincibilityDuration !== undefined) {
         this.invincibilityDuration = dependencies.invincibilityDuration;
+      }
+      if (dependencies.onDamaged !== undefined) {
+        this.onDamaged = dependencies.onDamaged;
       }
     }
   }
@@ -53,31 +68,8 @@ export class HealthComponent implements IEntityComponent {
     this.invincibilityTimer = this.invincibilityDuration;
     this.hitFlashTimer = this.hitFlashDuration;
 
-    if (this.owner.id === "player-01") {
-      this.owner.world.events.publish("PLAYER_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-      });
-    } else if (this.owner.id === "boss-01") {
-      this.owner.world.events.publish("BOSS_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-        sourceX,
-        sourceY,
-        intensity,
-      });
-    } else if (this.owner.id.startsWith("minion-")) {
-      this.owner.world.events.publish("MINION_HURT", {
-        id: this.owner.id,
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-        sourceX,
-        sourceY,
-        intensity,
-      });
+    if (this.onDamaged) {
+      this.onDamaged({ amount, currentHealth: this.currentHealth, maxHealth: this.maxHealth, sourceX, sourceY, intensity });
     }
 
     if (this.currentHealth <= 0) {

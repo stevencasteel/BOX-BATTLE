@@ -1,10 +1,11 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
@@ -47,6 +48,9 @@ export class Boss extends BaseEntity {
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: UNITS.BOSS_MAX_HP,
       invincibilityDuration: 0.25,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("BOSS_HURT", { amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
     });
 
     this.cooldownState = new BossCooldownState(this);
@@ -202,28 +206,9 @@ export class Boss extends BaseEntity {
   private checkHazardContact() {
     if (this.health.isInvincible() || this.isDead) return;
 
-    const halfW = this.size.width / 2;
-    const halfH = this.size.height / 2;
-
-    for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit =
-        this.position.x + halfW > hazard.x &&
-        this.position.x - halfW < hazard.x + hazard.width &&
-        this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.velocity.y >= 0) {
-        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
-        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
-        if (damaged && !this.isDead) {
-          this.velocity.y = -550;
-          this.physics.isGrounded = false;
-          // Springy, elastic visual stretch launcher
-          setVec(this.visualScale, 0.5, 1.5);
-          setVec(this.scaleVelocity, 10.0, -15.0);
-        }
-        break;
-      }
+    const hit = HazardSystem.checkContact(this, this.world.physicsWorld);
+    if (hit && !this.isDead) {
+      this.physics.isGrounded = false;
     }
   }
 

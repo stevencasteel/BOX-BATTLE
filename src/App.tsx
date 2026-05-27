@@ -38,6 +38,7 @@ export default function App() {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
+  const gameResult = useSessionStore((state) => state.gameResult);
   const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const retryCount = useSessionStore((state) => state.retryCount);
@@ -180,7 +181,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [currentScreen, rebindTarget]);
+  }, [currentScreen, rebindTarget, gameResult]);
 
   if (bootStage === BootStage.NONE) {
     return (

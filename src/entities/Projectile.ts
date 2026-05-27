@@ -280,17 +280,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       ctx.save();
       const oldestIdx = this.trailCount < TRAIL_RING_SIZE ? 0 : this.trailHead;
       const oldest = this.trailRing[oldestIdx];
-      const iterateTrail = (moveFirst: boolean, cb: (pt: { x: number; y: number }) => void) => {
-        for (let j = 0; j < this.trailCount; j++) {
-          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-          const pt = this.trailRing[idx];
-          if (j === 0 && moveFirst) {
-            cb(pt);
-          } else {
-            cb(pt);
-          }
-        }
-      };
+      const trailLen = this.trailCount;
 
       if (this.ownerId === "player") {
         const isLvl2 = this.damage >= 3;
@@ -309,7 +299,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 20;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -322,7 +315,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
         } else {
           const mainColor = "rgba(34, 197, 94, ";
@@ -337,7 +333,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 12;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -348,7 +347,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
         }
       } else {
@@ -374,7 +376,10 @@ export class Projectile extends BaseEntity implements IPoolable {
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.moveTo(drawX, drawY);
-        iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+        for (let j = 0; j < trailLen; j++) {
+          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+          ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+        }
         ctx.stroke();
       }
       ctx.restore();

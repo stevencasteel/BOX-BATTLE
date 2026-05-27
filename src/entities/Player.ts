@@ -1,6 +1,6 @@
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
 import { DashComponent } from "@/entities/components/DashComponent";
 import { MeleeComponent } from "@/entities/components/MeleeComponent";
@@ -72,6 +72,9 @@ export class Player extends BaseEntity {
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: UNITS.PLAYER_MAX_HP,
       invincibilityDuration: 1.5,
+      onDamaged: ({ amount, currentHealth, maxHealth }: DamagePayload) => {
+        this.world.events.publish("PLAYER_HURT", { amount, currentHealth, maxHealth });
+      },
     });
 
     this.inputReceiver = this.addComponent(InputReceiverComponent, new InputReceiverComponent());

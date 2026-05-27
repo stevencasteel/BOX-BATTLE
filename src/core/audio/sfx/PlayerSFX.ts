@@ -2,14 +2,16 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
-import { eventBroker } from "@/core/eventBroker";
+import { SynthFactory } from "./SynthFactory";
 import { soundSynth } from "@/core/SoundSynth";
-import { useGameplayStore } from "@/store/useGameStore";
+import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class PlayerSFX {
   private helper: SFXHelper;
+  private eventBus: IEventBus;
+  private getComboCounter: () => number;
   private playerPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
 
@@ -34,8 +36,10 @@ export class PlayerSFX {
   private slashFilterPuff!: Tone.Filter;
   private slashEnvPuff!: Tone.AmplitudeEnvelope;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = helper;
+    this.eventBus = eventBus;
+    this.getComboCounter = getComboCounter;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -50,23 +54,9 @@ export class PlayerSFX {
 
     const presets = SFX_PRESETS.player;
 
-    this.jumpSynth = new Tone.Synth({
-      oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
-      volume: -5
-    }).connect(this.playerPanner);
-
-    this.slashSynth = new Tone.Synth({
-      oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
-      volume: -5
-    }).connect(this.playerPanner);
-
-    this.pogoSynth = new Tone.Synth({
-      oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
-      volume: -5
-    }).connect(this.playerPanner);
+    this.jumpSynth = SynthFactory.createPannedSynth(presets.jump.oscillatorType, presets.jump.decay, this.playerPanner);
+    this.slashSynth = SynthFactory.createPannedSynth(presets.fireball_lvl1.oscillatorType, presets.fireball_lvl1.decay, this.playerPanner);
+    this.pogoSynth = SynthFactory.createPannedSynth(presets.pogo.oscillatorType, presets.pogo.decay, this.playerPanner);
 
     this.dashNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
@@ -79,11 +69,7 @@ export class PlayerSFX {
     this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
-    this.hurtSynth = new Tone.Synth({
-      oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
-      volume: -5
-    }).connect(this.hurtPanner);
+    this.hurtSynth = SynthFactory.createPannedSynth(presets.hurt.oscillatorType, presets.hurt.decay, this.hurtPanner);
 
     this.landingNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.landingFilter = new Tone.Filter({
@@ -129,27 +115,27 @@ export class PlayerSFX {
   }
 
   private setupSubscriptions() {
-    eventBroker.subscribe("PLAYER_HURT", () => {
+    this.eventBus.subscribe("PLAYER_HURT", () => {
       this.playHurt(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_JUMPED", () => {
+    this.eventBus.subscribe("PLAYER_JUMPED", () => {
       this.playJump(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_DASHED", () => {
+    this.eventBus.subscribe("PLAYER_DASHED", () => {
       this.playDash(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_POGOED", () => {
+    this.eventBus.subscribe("PLAYER_POGOED", () => {
       this.playPogo(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
+    this.eventBus.subscribe("PLAYER_ATTACKED", ({ direction }) => {
       this.playSlash(direction, soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
+    this.eventBus.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
       if (level === 2) {
         this.playFireballLvl2(soundSynth.getPlayerX());
       } else {
@@ -157,40 +143,40 @@ export class PlayerSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_LANDED", () => {
+    this.eventBus.subscribe("PLAYER_LANDED", () => {
       this.playLanding(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("HEAL_UPDATE", ({ timer }) => {
+    this.eventBus.subscribe("HEAL_UPDATE", ({ timer }) => {
       soundSynth.updateHealTimer(timer);
     });
 
-    eventBroker.subscribe("HEAL_START", () => {
+    this.eventBus.subscribe("HEAL_START", () => {
       soundSynth.playHealStart(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("HEAL_CANCEL", () => {
+    this.eventBus.subscribe("HEAL_CANCEL", () => {
       this.playHealCancel(soundSynth.getPlayerX());
       soundSynth.stopHealDrone();
     });
 
-    eventBroker.subscribe("HEAL_COMPLETE", () => {
+    this.eventBus.subscribe("HEAL_COMPLETE", () => {
       soundSynth.playHealComplete();
     });
 
-    eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
+    this.eventBus.subscribe("PLAYER_DASH_RECHARGED", () => {
       this.playDashRecharge(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("CHARGE_START", () => {
+    this.eventBus.subscribe("CHARGE_START", () => {
       soundSynth.playChargeStart(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+    this.eventBus.subscribe("CHARGE_UPDATE", ({ timer }) => {
       soundSynth.updateChargeTimer(timer);
     });
 
-    eventBroker.subscribe("CHARGE_STOP", () => {
+    this.eventBus.subscribe("CHARGE_STOP", () => {
       soundSynth.stopChargeDrone();
     });
   }
@@ -231,7 +217,7 @@ export class PlayerSFX {
 
   public playFireballLvl1(x?: number) {
     const preset = SFX_PRESETS.player.fireball_lvl1;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
@@ -288,7 +274,7 @@ export class PlayerSFX {
 
   public playPogo(x?: number) {
     const preset = SFX_PRESETS.player.pogo;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;

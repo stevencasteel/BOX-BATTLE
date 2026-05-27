@@ -1,7 +1,7 @@
 import { IEntityComponent } from "./EntityComponent";
-import { IEntity, IWorld, Vector2D, EntityStatus } from "@/core/Interfaces";
+import { IEntity, IWorld, Vector2D, EntityStatus, ISpringVisuals } from "@/core/Interfaces";
 
-export class BaseEntity implements IEntity {
+export class BaseEntity implements IEntity, ISpringVisuals {
   public position: Vector2D = { x: 0, y: 0 };
   public previousPosition: Vector2D = { x: 0, y: 0 };
   public velocity: Vector2D = { x: 0, y: 0 };

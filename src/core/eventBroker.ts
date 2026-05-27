@@ -1,4 +1,4 @@
-import { IEventBus } from "./Interfaces";
+import { IEventBus, Rectangle } from "./Interfaces";
 export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };

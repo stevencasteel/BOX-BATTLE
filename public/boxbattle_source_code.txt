@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 12:57:11 PM
+ [SYSTEM] Generated: 5/27/2026, 1:25:01 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -70,7 +70,8 @@
 │   │   │   │   ├── BossSFX.ts
 │   │   │   │   ├── InterfaceSFX.ts
 │   │   │   │   ├── PlayerSFX.ts
-│   │   │   │   └── SFXHelper.ts
+│   │   │   │   ├── SFXHelper.ts
+│   │   │   │   └── SynthFactory.ts
 │   │   │   ├── AudioContextManager.ts
 │   │   │   ├── DroneManager.ts
 │   │   │   ├── MusicSequencer.ts
@@ -79,6 +80,10 @@
 │   │   ├── effects/
 │   │   │   ├── CinematicDeathRenderer.ts
 │   │   │   └── PlayerFxRenderer.ts
+│   │   ├── systems/
+│   │   │   ├── EntityResetService.ts
+│   │   │   ├── HazardSystem.ts
+│   │   │   └── MinionCollisionSystem.ts
 │   │   ├── BattleDirector.ts
 │   │   ├── Camera.ts
 │   │   ├── CinematicSystem.ts
@@ -1659,6 +1664,7 @@ export default function App() {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
+  const gameResult = useSessionStore((state) => state.gameResult);
   const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
   const retryCount = useSessionStore((state) => state.retryCount);
@@ -1801,7 +1807,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [currentScreen, rebindTarget]);
+  }, [currentScreen, rebindTarget, gameResult]);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -7064,7 +7070,6 @@ export class CinematicSystem {
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
@@ -7072,13 +7077,15 @@ import { Spawner } from "@/entities/Spawner";
 import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { Rectangle, EntityStatus } from "@/core/Interfaces";
+import { Rectangle } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 import { StateProjectionSystem } from "@/core/StateProjectionSystem";
+import { MinionCollisionSystem } from "@/core/systems/MinionCollisionSystem";
+import { EntityResetService } from "@/core/systems/EntityResetService";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
@@ -7090,6 +7097,8 @@ export class Engine {
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
   private stateProjection: StateProjectionSystem;
+  private minionCollisionSystem: MinionCollisionSystem;
+  private entityResetService: EntityResetService;
 
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
@@ -7113,6 +7122,8 @@ export class Engine {
     this.renderer = renderer;
     this.levelConfig = levelConfig;
     this.stateProjection = new StateProjectionSystem();
+    this.minionCollisionSystem = new MinionCollisionSystem();
+    this.entityResetService = new EntityResetService();
 
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
@@ -7199,8 +7210,8 @@ export class Engine {
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
-    this.resetEntity(this.player, this.levelConfig.playerStart, 1);
-    this.resetEntity(this.boss, this.levelConfig.bossStart, -1);
+    this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
+    this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;
     this.boss.patrolSpeed = 200;
     this.boss.lungeSpeed = 1200;
@@ -7222,46 +7233,6 @@ export class Engine {
     requestAnimationFrame(() => {
       this.start();
     });
-  }
-
-  private resetEntity(entity: Player | Boss, startPos: { x: number; y: number }, facing: number) {
-    entity.isDead = false;
-    setVec(entity.position, startPos.x, startPos.y);
-    setVec(entity.previousPosition, startPos.x, startPos.y);
-    zeroVec(entity.velocity);
-    entity.facingDirection = facing;
-
-    if (entity instanceof Player) {
-      entity.hasDoubleJump = true;
-      entity.determinationCounter = 0;
-      entity.healingCharges = 0;
-      entity.hurtTimer = 0;
-      entity.recoilTimer = 0;
-      entity.visualScale = { x: 1, y: 1 };
-
-      entity.dashComponent.isDashing = false;
-      entity.dashComponent.dashTimer = 0;
-      entity.dashComponent.dashCooldown = 0;
-      entity.dashComponent.canDash = true;
-      entity.dashComponent.ghosts = [];
-
-      entity.meleeComponent.attackCooldownTimer = 0;
-      entity.meleeComponent.attackActiveTimer = 0;
-      entity.meleeComponent.attackActive = false;
-      entity.meleeComponent.attackDirection = null;
-      entity.meleeComponent.hasHitEnemyThisSwing = false;
-
-      entity.fireballComponent.isCharging = false;
-      entity.fireballComponent.chargeTimer = 0;
-
-      entity.healComponent.isHealing = false;
-      entity.healComponent.healTimer = 0;
-    }
-
-    const health = entity.getComponent(HealthComponent);
-    if (health) {
-      health.reset();
-    }
   }
 
   private update(dt: number) {
@@ -7316,38 +7287,6 @@ export class Engine {
     this.stateProjection.project(this.player, this.boss);
   }
 
-  private handleMinionCollisions() {
-    for (let i = this.world.minions.length - 1; i >= 0; i--) {
-      const minion = this.world.minions[i];
-      minion.update(this.fixedTimeStep);
-
-      if (this.player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
-
-      const pW = this.player.size.width / 2;
-      const pH = this.player.size.height / 2;
-      const mW = minion.size.width / 2;
-      const mH = minion.size.height / 2;
-
-      const isColliding =
-        this.player.position.x + pW > minion.position.x - mW &&
-        this.player.position.x - pW < minion.position.x + mW &&
-        this.player.position.y + pH > minion.position.y - mH &&
-        this.player.position.y - pH < minion.position.y + mH;
-
-      if (isColliding) {
-        const playerHealth = this.player.getComponent(HealthComponent);
-        if (playerHealth) {
-          const damaged = playerHealth.takeDamage(1);
-          if (damaged) {
-            const knockbackDir = Math.sign(this.player.position.x - minion.position.x);
-            this.player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-            this.player.velocity.y = -350;
-          }
-        }
-      }
-    }
-  }
-
   private fixedUpdate(dt: number) {
     this.world.input.update();
     if (this.world.input.isPauseJustPressed()) {
@@ -7389,7 +7328,7 @@ export class Engine {
       spawner.update(dt);
     }
 
-    this.handleMinionCollisions();
+    this.minionCollisionSystem.update(this.world.minions, this.player, dt);
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
@@ -7446,31 +7385,35 @@ export class Engine {
 ────────────────────────────────────────────────────
 import { Player } from "@/entities/Player";
 import { Projectile } from "@/entities/Projectile";
+import { BaseEntity } from "@/entities/BaseEntity";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 import { World } from "./World";
 
 export class EntityRenderer {
   private ctx: CanvasRenderingContext2D;
-  private cachedMeleeGradient: CanvasGradient;
+  private meleeSideCanvas: HTMLCanvasElement;
   private attackGradCanvas: HTMLCanvasElement;
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
 
-    this.cachedMeleeGradient = ctx.createRadialGradient(
-      0,
-      0,
-      UNITS.MELEE_SWEEP_INNER_RADIUS,
-      0,
-      0,
-      UNITS.MELEE_MAX_REACH
-    );
-    this.cachedMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-    this.cachedMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
-    this.cachedMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
-    this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
-    this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    const meleeReach = UNITS.MELEE_MAX_REACH;
+    const meleeInner = UNITS.MELEE_SWEEP_INNER_RADIUS;
+    const meleeCanvasSize = meleeReach * 2 + 20;
+    this.meleeSideCanvas = document.createElement("canvas");
+    this.meleeSideCanvas.width = meleeCanvasSize;
+    this.meleeSideCanvas.height = meleeCanvasSize;
+    const meleeCtx = this.meleeSideCanvas.getContext("2d")!;
+    const centerM = meleeCanvasSize / 2;
+    const sideGrad = meleeCtx.createRadialGradient(centerM, centerM, meleeInner, centerM, centerM, meleeReach);
+    sideGrad.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+    sideGrad.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+    sideGrad.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+    sideGrad.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    sideGrad.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    meleeCtx.fillStyle = sideGrad;
+    meleeCtx.fillRect(0, 0, meleeCanvasSize, meleeCanvasSize);
 
     this.attackGradCanvas = document.createElement("canvas");
     this.attackGradCanvas.width = 128;
@@ -7488,11 +7431,11 @@ export class EntityRenderer {
 
   public renderEntities(world: World, projectilePool: ObjectPool<Projectile>, alpha: number): void {
     if (world.boss) {
-      world.boss.draw(this.ctx, alpha);
+      (world.boss as BaseEntity).draw(this.ctx, alpha);
     }
 
     if (world.player) {
-      world.player.draw(this.ctx, alpha);
+      (world.player as BaseEntity).draw(this.ctx, alpha);
       const player = world.player as Player;
       if (player.attackActive) {
         this.drawPlayerAttackVisual(player, alpha);
@@ -7500,7 +7443,7 @@ export class EntityRenderer {
     }
 
     for (const minion of world.minions) {
-      minion.draw(this.ctx, alpha);
+      (minion as BaseEntity).draw(this.ctx, alpha);
     }
 
     const activeProjectiles = projectilePool.getActive();
@@ -7532,30 +7475,18 @@ export class EntityRenderer {
 
       this.ctx.save();
       this.ctx.translate(cx, cy);
-
-      const dynamicMeleeGradient = this.ctx.createRadialGradient(
-        0,
-        0,
-        UNITS.MELEE_SWEEP_INNER_RADIUS,
-        0,
-        0,
-        UNITS.MELEE_MAX_REACH
-      );
-      dynamicMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      dynamicMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
-      dynamicMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
-      dynamicMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
-      dynamicMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
       this.ctx.globalAlpha = opacity;
-      this.ctx.fillStyle = dynamicMeleeGradient;
+
       const startA = facing > 0 ? baseStart : Math.PI - baseStart;
       const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       this.ctx.beginPath();
       this.ctx.arc(0, 0, UNITS.MELEE_MAX_REACH, startA, endA, facing < 0);
       this.ctx.arc(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, endA, startA, facing > 0);
       this.ctx.closePath();
-      this.ctx.fill();
+      this.ctx.clip();
+
+      const cs = this.meleeSideCanvas.width;
+      this.ctx.drawImage(this.meleeSideCanvas, -cs / 2, -cs / 2, cs, cs);
       this.ctx.restore();
     } else if (player.attackDirection === "up") {
       const cx = drawX;
@@ -8080,8 +8011,7 @@ export interface ITransform {
   size: { width: number; height: number };
 }
 
-export interface IRenderable {
-  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
+export interface ISpringVisuals {
   visualScale: Vector2D;
   targetVisualScale: Vector2D;
   scaleVelocity: Vector2D;
@@ -8091,13 +8021,17 @@ export interface IRenderable {
   squashPivot: "center" | "feet";
 }
 
+export interface IRenderable {
+  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
+}
+
 export interface IAbilityUser {
   hasDoubleJump?: boolean;
   healingCharges?: number;
   facingDirection?: number;
 }
 
-export interface IEntity extends ITransform, IRenderable {
+export interface IEntity extends ITransform {
   id: string;
   isDead: boolean;
   status: EntityStatus;
@@ -9125,6 +9059,8 @@ import { AudioContextManager } from "./audio/AudioContextManager";
 import { SFXManager } from "./audio/SFXManager";
 import { MusicSequencer } from "./audio/MusicSequencer";
 import { DroneManager } from "./audio/DroneManager";
+import { eventBroker } from "@/core/eventBroker";
+import { useGameplayStore } from "@/store/useGameStore";
 
 class SoundSynth {
   private ctxManager: AudioContextManager;
@@ -9138,7 +9074,7 @@ class SoundSynth {
 
   constructor() {
     this.ctxManager = new AudioContextManager();
-    this.sfx = new SFXManager(this.ctxManager);
+    this.sfx = new SFXManager(this.ctxManager, eventBroker, () => useGameplayStore.getState().comboCounter);
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
   }
@@ -10409,6 +10345,7 @@ import { SFXHelper } from "./sfx/SFXHelper";
 import { PlayerSFX } from "./sfx/PlayerSFX";
 import { BossSFX } from "./sfx/BossSFX";
 import { InterfaceSFX } from "./sfx/InterfaceSFX";
+import { IEventBus } from "@/core/Interfaces";
 
 export class SFXManager {
   private helper: SFXHelper;
@@ -10416,10 +10353,10 @@ export class SFXManager {
   private bossSFX: BossSFX;
   private interfaceSFX: InterfaceSFX;
 
-  constructor(ctxManager: AudioContextManager) {
+  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = new SFXHelper(ctxManager);
-    this.playerSFX = new PlayerSFX(ctxManager, this.helper);
-    this.bossSFX = new BossSFX(ctxManager, this.helper);
+    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter);
+    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter);
     this.interfaceSFX = new InterfaceSFX(ctxManager, this.helper);
   }
 
@@ -10508,14 +10445,16 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
-import { eventBroker } from "@/core/eventBroker";
+import { SynthFactory } from "./SynthFactory";
 import { soundSynth } from "@/core/SoundSynth";
-import { useGameplayStore } from "@/store/useGameStore";
+import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class BossSFX {
   private helper: SFXHelper;
+  private eventBus: IEventBus;
+  private getComboCounter: () => number;
   private bossPanner!: Tone.Panner;
   private impactPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
@@ -10532,8 +10471,10 @@ export class BossSFX {
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = helper;
+    this.eventBus = eventBus;
+    this.getComboCounter = getComboCounter;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -10549,17 +10490,8 @@ export class BossSFX {
 
     const presets = SFX_PRESETS.boss;
 
-    this.jumpSynth = new Tone.Synth({
-      oscillator: { type: presets.telegraph.oscillatorType },
-      envelope: { attack: 0.015, decay: presets.telegraph.decay, sustain: 0, release: presets.telegraph.decay },
-      volume: -5
-    }).connect(this.bossPanner);
-
-    this.hurtSynth = new Tone.Synth({
-      oscillator: { type: presets.lunge.oscillatorType },
-      envelope: { attack: 0.015, decay: presets.lunge.decay, sustain: 0, release: presets.lunge.decay },
-      volume: -5
-    }).connect(this.hurtPanner);
+    this.jumpSynth = SynthFactory.createPannedSynth(presets.telegraph.oscillatorType, presets.telegraph.decay, this.bossPanner, -5, 0.015);
+    this.hurtSynth = SynthFactory.createPannedSynth(presets.lunge.oscillatorType, presets.lunge.decay, this.hurtPanner, -5, 0.015);
 
     this.hitSynth = new Tone.MetalSynth({
       envelope: { attack: 0.001, decay: 0.08, release: 0.08 },
@@ -10569,34 +10501,20 @@ export class BossSFX {
     }).connect(this.impactPanner);
     this.hitSynth.frequency.value = 440;
 
-    this.spikeSynth = new Tone.Synth({
-      oscillator: { type: presets.spike_strike.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.spike_strike.decay, sustain: 0, release: presets.spike_strike.decay },
-      volume: -5
-    }).connect(this.impactPanner);
-
-    this.teleportSynth = new Tone.Synth({
-      oscillator: { type: presets.minion_spawn.oscillatorType },
-      envelope: { attack: 0.02, decay: presets.minion_spawn.decay, sustain: 0, release: presets.minion_spawn.decay },
-      volume: -5
-    }).connect(this.bossPanner);
-
-    this.dialogueSynthPlayer = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.012, decay: 0.05, sustain: 0, release: 0.05 },
-      volume: -6
-    }).connect(this.impactPanner);
+    this.spikeSynth = SynthFactory.createPannedSynth(presets.spike_strike.oscillatorType, presets.spike_strike.decay, this.impactPanner);
+    this.teleportSynth = SynthFactory.createPannedSynth(presets.minion_spawn.oscillatorType, presets.minion_spawn.decay, this.bossPanner, -5, 0.02);
+    this.dialogueSynthPlayer = SynthFactory.createPannedSynth("sine", 0.05, this.impactPanner, -6);
   }
 
   private setupSubscriptions() {
-    eventBroker.subscribe("BOSS_HURT", ({ currentHealth }) => {
+    this.eventBus.subscribe("BOSS_HURT", ({ currentHealth }) => {
       this.playHitConfirm(soundSynth.getBossX(), "boss-01");
       if (currentHealth <= 0) {
         this.playBossExplosion(soundSynth.getBossX());
       }
     });
 
-    eventBroker.subscribe("MINION_HURT", ({ id, currentHealth }) => {
+    this.eventBus.subscribe("MINION_HURT", ({ id, currentHealth }) => {
       const mX = soundSynth.getMinionX(id);
       this.playHitConfirm(mX, id);
       if (currentHealth <= 0) {
@@ -10604,31 +10522,31 @@ export class BossSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_SPIKED", ({ x }) => {
+    this.eventBus.subscribe("PLAYER_SPIKED", ({ x }) => {
       this.playSpikeStrike(x);
     });
 
-    eventBroker.subscribe("BOSS_PHASE_SHIFT", () => {
+    this.eventBus.subscribe("BOSS_PHASE_SHIFT", () => {
       this.playBossPhaseShift(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("MINION_SPAWNING", () => {
+    this.eventBus.subscribe("MINION_SPAWNING", () => {
       this.playMinionSpawning();
     });
 
-    eventBroker.subscribe("MINION_DISSOLVING", () => {
+    this.eventBus.subscribe("MINION_DISSOLVING", () => {
       this.playMinionDeconstruct();
     });
 
-    eventBroker.subscribe("BOSS_SWIPED", () => {
+    this.eventBus.subscribe("BOSS_SWIPED", () => {
       this.playBossSwipe(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("BOSS_TELEGRAPH", () => {
+    this.eventBus.subscribe("BOSS_TELEGRAPH", () => {
       this.playBossTelegraph(soundSynth.getBossX());
     });
 
-    eventBroker.subscribe("BOSS_LUNGED", () => {
+    this.eventBus.subscribe("BOSS_LUNGED", () => {
       this.playBossLunge(soundSynth.getBossX());
     });
   }
@@ -10732,7 +10650,7 @@ export class BossSFX {
     this.entityComboMap.set(targetId, combo);
 
     const preset = SFX_PRESETS.boss.hit_confirm;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
@@ -10755,6 +10673,7 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { SynthFactory } from "./SynthFactory";
 
 export class InterfaceSFX {
   private helper: SFXHelper;
@@ -10788,11 +10707,7 @@ export class InterfaceSFX {
       volume: -7
     }).connect(this.bossDialoguePanner);
 
-    this.menuSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.015, decay: 0.12, sustain: 0, release: 0.12 },
-      volume: -6
-    }).connect(this.playerDialoguePanner);
+    this.menuSynth = SynthFactory.createPannedSynth("sine", 0.12, this.playerDialoguePanner, -6, 0.015);
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
     this.dialogueSynthBoss.maxPolyphony = 16;
@@ -10854,14 +10769,16 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
-import { eventBroker } from "@/core/eventBroker";
+import { SynthFactory } from "./SynthFactory";
 import { soundSynth } from "@/core/SoundSynth";
-import { useGameplayStore } from "@/store/useGameStore";
+import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 
 export class PlayerSFX {
   private helper: SFXHelper;
+  private eventBus: IEventBus;
+  private getComboCounter: () => number;
   private playerPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
 
@@ -10886,8 +10803,10 @@ export class PlayerSFX {
   private slashFilterPuff!: Tone.Filter;
   private slashEnvPuff!: Tone.AmplitudeEnvelope;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = helper;
+    this.eventBus = eventBus;
+    this.getComboCounter = getComboCounter;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -10902,23 +10821,9 @@ export class PlayerSFX {
 
     const presets = SFX_PRESETS.player;
 
-    this.jumpSynth = new Tone.Synth({
-      oscillator: { type: presets.jump.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.jump.decay, sustain: 0, release: presets.jump.decay },
-      volume: -5
-    }).connect(this.playerPanner);
-
-    this.slashSynth = new Tone.Synth({
-      oscillator: { type: presets.fireball_lvl1.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.fireball_lvl1.decay, sustain: 0, release: presets.fireball_lvl1.decay },
-      volume: -5
-    }).connect(this.playerPanner);
-
-    this.pogoSynth = new Tone.Synth({
-      oscillator: { type: presets.pogo.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.pogo.decay, sustain: 0, release: presets.pogo.decay },
-      volume: -5
-    }).connect(this.playerPanner);
+    this.jumpSynth = SynthFactory.createPannedSynth(presets.jump.oscillatorType, presets.jump.decay, this.playerPanner);
+    this.slashSynth = SynthFactory.createPannedSynth(presets.fireball_lvl1.oscillatorType, presets.fireball_lvl1.decay, this.playerPanner);
+    this.pogoSynth = SynthFactory.createPannedSynth(presets.pogo.oscillatorType, presets.pogo.decay, this.playerPanner);
 
     this.dashNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.dashFilter = new Tone.Filter({ frequency: presets.dash.noiseFreq, type: "bandpass", Q: presets.dash.noiseQ });
@@ -10931,11 +10836,7 @@ export class PlayerSFX {
     this.dashNoise.chain(this.dashFilter, this.dashEnv, this.playerPanner);
     this.dashNoise.start();
 
-    this.hurtSynth = new Tone.Synth({
-      oscillator: { type: presets.hurt.oscillatorType },
-      envelope: { attack: 0.012, decay: presets.hurt.decay, sustain: 0, release: presets.hurt.decay },
-      volume: -5
-    }).connect(this.hurtPanner);
+    this.hurtSynth = SynthFactory.createPannedSynth(presets.hurt.oscillatorType, presets.hurt.decay, this.hurtPanner);
 
     this.landingNoise = new Tone.Noise({ type: "white", volume: -7 });
     this.landingFilter = new Tone.Filter({
@@ -10981,27 +10882,27 @@ export class PlayerSFX {
   }
 
   private setupSubscriptions() {
-    eventBroker.subscribe("PLAYER_HURT", () => {
+    this.eventBus.subscribe("PLAYER_HURT", () => {
       this.playHurt(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_JUMPED", () => {
+    this.eventBus.subscribe("PLAYER_JUMPED", () => {
       this.playJump(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_DASHED", () => {
+    this.eventBus.subscribe("PLAYER_DASHED", () => {
       this.playDash(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_POGOED", () => {
+    this.eventBus.subscribe("PLAYER_POGOED", () => {
       this.playPogo(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_ATTACKED", ({ direction }) => {
+    this.eventBus.subscribe("PLAYER_ATTACKED", ({ direction }) => {
       this.playSlash(direction, soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
+    this.eventBus.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
       if (level === 2) {
         this.playFireballLvl2(soundSynth.getPlayerX());
       } else {
@@ -11009,40 +10910,40 @@ export class PlayerSFX {
       }
     });
 
-    eventBroker.subscribe("PLAYER_LANDED", () => {
+    this.eventBus.subscribe("PLAYER_LANDED", () => {
       this.playLanding(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("HEAL_UPDATE", ({ timer }) => {
+    this.eventBus.subscribe("HEAL_UPDATE", ({ timer }) => {
       soundSynth.updateHealTimer(timer);
     });
 
-    eventBroker.subscribe("HEAL_START", () => {
+    this.eventBus.subscribe("HEAL_START", () => {
       soundSynth.playHealStart(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("HEAL_CANCEL", () => {
+    this.eventBus.subscribe("HEAL_CANCEL", () => {
       this.playHealCancel(soundSynth.getPlayerX());
       soundSynth.stopHealDrone();
     });
 
-    eventBroker.subscribe("HEAL_COMPLETE", () => {
+    this.eventBus.subscribe("HEAL_COMPLETE", () => {
       soundSynth.playHealComplete();
     });
 
-    eventBroker.subscribe("PLAYER_DASH_RECHARGED", () => {
+    this.eventBus.subscribe("PLAYER_DASH_RECHARGED", () => {
       this.playDashRecharge(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("CHARGE_START", () => {
+    this.eventBus.subscribe("CHARGE_START", () => {
       soundSynth.playChargeStart(soundSynth.getPlayerX());
     });
 
-    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+    this.eventBus.subscribe("CHARGE_UPDATE", ({ timer }) => {
       soundSynth.updateChargeTimer(timer);
     });
 
-    eventBroker.subscribe("CHARGE_STOP", () => {
+    this.eventBus.subscribe("CHARGE_STOP", () => {
       soundSynth.stopChargeDrone();
     });
   }
@@ -11083,7 +10984,7 @@ export class PlayerSFX {
 
   public playFireballLvl1(x?: number) {
     const preset = SFX_PRESETS.player.fireball_lvl1;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
@@ -11140,7 +11041,7 @@ export class PlayerSFX {
 
   public playPogo(x?: number) {
     const preset = SFX_PRESETS.player.pogo;
-    const comboCounter = useGameplayStore.getState().comboCounter;
+    const comboCounter = this.getComboCounter();
     const scaleIndex = comboCounter % DORIAN_RATIOS.length;
     const octaveMultiplier = Math.pow(2, Math.floor(comboCounter / DORIAN_RATIOS.length));
     const ratio = DORIAN_RATIOS[scaleIndex] * octaveMultiplier;
@@ -11204,6 +11105,32 @@ export class SFXHelper {
     }
     this.lastTriggerTimes[key] = now;
     return true;
+  }
+}
+
+
+
+● ./src/core/audio/sfx/SynthFactory.ts
+────────────────────────────────────────────────────
+import * as Tone from "tone";
+
+export class SynthFactory {
+  public static createSynth(oscillatorType: string, decay: number, volume: number = -5, attack: number = 0.012): Tone.Synth {
+    return new Tone.Synth({
+      oscillator: { type: oscillatorType as any },
+      envelope: { attack, decay, sustain: 0, release: decay },
+      volume,
+    });
+  }
+
+  public static createPannedSynth(
+    oscillatorType: string,
+    decay: number,
+    panner: Tone.Panner,
+    volume: number = -5,
+    attack: number = 0.012
+  ): Tone.Synth {
+    return SynthFactory.createSynth(oscillatorType, decay, volume, attack).connect(panner);
   }
 }
 
@@ -11882,7 +11809,7 @@ export class PlayerFxRenderer {
 
 ● ./src/core/eventBroker.ts
 ────────────────────────────────────────────────────
-import { IEventBus } from "./Interfaces";
+import { IEventBus, Rectangle } from "./Interfaces";
 export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -12391,12 +12318,155 @@ export const screenConfigs: Record<string, ScreenConfig> = {
 
 
 
+● ./src/core/systems/EntityResetService.ts
+────────────────────────────────────────────────────
+import { Player } from "@/entities/Player";
+import { Boss } from "@/entities/Boss";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { setVec, zeroVec } from "@/core/VecUtils";
+
+type Vector2 = { x: number; y: number };
+
+export class EntityResetService {
+  public resetPlayer(player: Player, startPos: Vector2, facing: number): void {
+    player.isDead = false;
+    setVec(player.position, startPos.x, startPos.y);
+    setVec(player.previousPosition, startPos.x, startPos.y);
+    zeroVec(player.velocity);
+    player.facingDirection = facing;
+
+    player.hasDoubleJump = true;
+    player.determinationCounter = 0;
+    player.healingCharges = 0;
+    player.hurtTimer = 0;
+    player.recoilTimer = 0;
+    player.visualScale = { x: 1, y: 1 };
+
+    player.dashComponent.isDashing = false;
+    player.dashComponent.dashTimer = 0;
+    player.dashComponent.dashCooldown = 0;
+    player.dashComponent.canDash = true;
+    player.dashComponent.ghosts = [];
+
+    player.meleeComponent.attackCooldownTimer = 0;
+    player.meleeComponent.attackActiveTimer = 0;
+    player.meleeComponent.attackActive = false;
+    player.meleeComponent.attackDirection = null;
+    player.meleeComponent.hasHitEnemyThisSwing = false;
+
+    player.fireballComponent.isCharging = false;
+    player.fireballComponent.chargeTimer = 0;
+
+    player.healComponent.isHealing = false;
+    player.healComponent.healTimer = 0;
+
+    const health = player.getComponent(HealthComponent);
+    if (health) health.reset();
+  }
+
+  public resetBoss(boss: Boss, startPos: Vector2, facing: number): void {
+    boss.isDead = false;
+    setVec(boss.position, startPos.x, startPos.y);
+    setVec(boss.previousPosition, startPos.x, startPos.y);
+    zeroVec(boss.velocity);
+    boss.facingDirection = facing;
+
+    const health = boss.getComponent(HealthComponent);
+    if (health) health.reset();
+  }
+}
+
+
+
+● ./src/core/systems/HazardSystem.ts
+────────────────────────────────────────────────────
+import { BaseEntity } from "@/entities/BaseEntity";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { IPhysicsWorld } from "@/core/Interfaces";
+import { UNITS } from "@/core/Units";
+import { setVec } from "@/core/VecUtils";
+
+export class HazardSystem {
+  public static checkContact(entity: BaseEntity, physicsWorld: IPhysicsWorld, damage: number = UNITS.HAZARD_SPIKE_DAMAGE): boolean {
+    const health = entity.getComponent(HealthComponent);
+    if (!health || health.isInvincible() || entity.isDead) return false;
+
+    const halfW = entity.size.width / 2;
+    const halfH = entity.size.height / 2;
+
+    for (const hazard of physicsWorld.hazards) {
+      const isHit =
+        entity.position.x + halfW > hazard.x &&
+        entity.position.x - halfW < hazard.x + hazard.width &&
+        entity.position.y + halfH > hazard.y &&
+        entity.position.y - halfH < hazard.y + hazard.height;
+
+      if (isHit && entity.velocity.y >= 0) {
+        entity.world.events.publish("PLAYER_SPIKED", { x: entity.position.x });
+        const damaged = health.takeDamage(damage);
+        if (damaged && !entity.isDead) {
+          entity.velocity.y = -550;
+          setVec(entity.visualScale, 0.5, 1.5);
+          setVec(entity.scaleVelocity, 10.0, -15.0);
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
+
+
+● ./src/core/systems/MinionCollisionSystem.ts
+────────────────────────────────────────────────────
+import { Player } from "@/entities/Player";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+import { EntityStatus, IWorld } from "@/core/Interfaces";
+
+export class MinionCollisionSystem {
+  public update(minions: IWorld["minions"], player: Player, dt: number): void {
+    for (let i = minions.length - 1; i >= 0; i--) {
+      const minion = minions[i];
+      minion.update(dt);
+
+      if (player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
+
+      const pW = player.size.width / 2;
+      const pH = player.size.height / 2;
+      const mW = minion.size.width / 2;
+      const mH = minion.size.height / 2;
+
+      const isColliding =
+        player.position.x + pW > minion.position.x - mW &&
+        player.position.x - pW < minion.position.x + mW &&
+        player.position.y + pH > minion.position.y - mH &&
+        player.position.y - pH < minion.position.y + mH;
+
+      if (isColliding) {
+        const playerHealth = player.getComponent(HealthComponent);
+        if (playerHealth) {
+          const damaged = playerHealth.takeDamage(1);
+          if (damaged) {
+            const knockbackDir = Math.sign(player.position.x - minion.position.x);
+            player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+            player.velocity.y = -350;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
 ● ./src/entities/BaseEntity.ts
 ────────────────────────────────────────────────────
 import { IEntityComponent } from "./EntityComponent";
-import { IEntity, IWorld, Vector2D, EntityStatus } from "@/core/Interfaces";
+import { IEntity, IWorld, Vector2D, EntityStatus, ISpringVisuals } from "@/core/Interfaces";
 
-export class BaseEntity implements IEntity {
+export class BaseEntity implements IEntity, ISpringVisuals {
   public position: Vector2D = { x: 0, y: 0 };
   public previousPosition: Vector2D = { x: 0, y: 0 };
   public velocity: Vector2D = { x: 0, y: 0 };
@@ -12542,11 +12612,12 @@ export class BaseEntity implements IEntity {
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
@@ -12589,6 +12660,9 @@ export class Boss extends BaseEntity {
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: UNITS.BOSS_MAX_HP,
       invincibilityDuration: 0.25,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("BOSS_HURT", { amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
     });
 
     this.cooldownState = new BossCooldownState(this);
@@ -12744,28 +12818,9 @@ export class Boss extends BaseEntity {
   private checkHazardContact() {
     if (this.health.isInvincible() || this.isDead) return;
 
-    const halfW = this.size.width / 2;
-    const halfH = this.size.height / 2;
-
-    for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit =
-        this.position.x + halfW > hazard.x &&
-        this.position.x - halfW < hazard.x + hazard.width &&
-        this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.velocity.y >= 0) {
-        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
-        const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
-        if (damaged && !this.isDead) {
-          this.velocity.y = -550;
-          this.physics.isGrounded = false;
-          // Springy, elastic visual stretch launcher
-          setVec(this.visualScale, 0.5, 1.5);
-          setVec(this.scaleVelocity, 10.0, -15.0);
-        }
-        break;
-      }
+    const hit = HazardSystem.checkContact(this, this.world.physicsWorld);
+    if (hit && !this.isDead) {
+      this.physics.isGrounded = false;
     }
   }
 
@@ -13126,7 +13181,7 @@ export interface IEntityComponent {
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import {
@@ -13134,6 +13189,7 @@ import {
   LancerPatrolState,
   FlyerPatrolState
 } from "./MinionStates";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
 
@@ -13194,6 +13250,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 5,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.physics.gravity = 0;
       this.squashPivot = "feet";
@@ -13203,6 +13262,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 6,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.squashPivot = "feet";
       this.stateMachine.changeState(new LancerPatrolState(this));
@@ -13211,6 +13273,9 @@ export class Minion extends BaseEntity {
       this.health = this.addComponent(HealthComponent, new HealthComponent(), {
         maxHealth: 3,
         invincibilityDuration: 0.15,
+        onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+          this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+        },
       });
       this.physics.gravity = 0;
 
@@ -13405,28 +13470,10 @@ export class Minion extends BaseEntity {
   private checkHazardContact() {
     if (this.health.isInvincible() || this.isDead || this.isSpawning || this.isDying) return;
 
-    const halfW = this.size.width / 2;
-    const halfH = this.size.height / 2;
-
-    for (const hazard of this.world.physicsWorld.hazards) {
-      const isHit =
-        this.position.x + halfW > hazard.x &&
-        this.position.x - halfW < hazard.x + hazard.width &&
-        this.position.y + halfH > hazard.y &&
-        this.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.velocity.y >= 0) {
-        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
-        const damaged = this.health.takeDamage(1);
-        if (damaged && !this.isDead) {
-          if (this.minionType !== "TURRET" && !this.isDying) {
-            this.velocity.y = -550;
-            this.physics.isGrounded = false;
-          }
-          setVec(this.visualScale, 0.5, 1.5);
-          setVec(this.scaleVelocity, 10.0, -15.0);
-        }
-        break;
+    const hit = HazardSystem.checkContact(this, this.world.physicsWorld);
+    if (hit && !this.isDead) {
+      if (this.minionType !== "TURRET" && !this.isDying) {
+        this.physics.isGrounded = false;
       }
     }
   }
@@ -13885,7 +13932,7 @@ export class FlyerAttackState extends MinionState {
 ────────────────────────────────────────────────────
 import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { HealthComponent } from "@/entities/components/HealthComponent";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { InputReceiverComponent } from "@/entities/components/InputReceiverComponent";
 import { DashComponent } from "@/entities/components/DashComponent";
 import { MeleeComponent } from "@/entities/components/MeleeComponent";
@@ -13957,6 +14004,9 @@ export class Player extends BaseEntity {
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: UNITS.PLAYER_MAX_HP,
       invincibilityDuration: 1.5,
+      onDamaged: ({ amount, currentHealth, maxHealth }: DamagePayload) => {
+        this.world.events.publish("PLAYER_HURT", { amount, currentHealth, maxHealth });
+      },
     });
 
     this.inputReceiver = this.addComponent(InputReceiverComponent, new InputReceiverComponent());
@@ -14462,17 +14512,7 @@ export class Projectile extends BaseEntity implements IPoolable {
       ctx.save();
       const oldestIdx = this.trailCount < TRAIL_RING_SIZE ? 0 : this.trailHead;
       const oldest = this.trailRing[oldestIdx];
-      const iterateTrail = (moveFirst: boolean, cb: (pt: { x: number; y: number }) => void) => {
-        for (let j = 0; j < this.trailCount; j++) {
-          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
-          const pt = this.trailRing[idx];
-          if (j === 0 && moveFirst) {
-            cb(pt);
-          } else {
-            cb(pt);
-          }
-        }
-      };
+      const trailLen = this.trailCount;
 
       if (this.ownerId === "player") {
         const isLvl2 = this.damage >= 3;
@@ -14491,7 +14531,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 20;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -14504,7 +14547,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
         } else {
           const mainColor = "rgba(34, 197, 94, ";
@@ -14519,7 +14565,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 12;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
 
           const innerGrad = ctx.createLinearGradient(drawX, drawY, oldest.x, oldest.y);
@@ -14530,7 +14579,10 @@ export class Projectile extends BaseEntity implements IPoolable {
           ctx.shadowBlur = 0;
           ctx.beginPath();
           ctx.moveTo(drawX, drawY);
-          iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+          for (let j = 0; j < trailLen; j++) {
+            const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+            ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+          }
           ctx.stroke();
         }
       } else {
@@ -14556,7 +14608,10 @@ export class Projectile extends BaseEntity implements IPoolable {
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.moveTo(drawX, drawY);
-        iterateTrail(false, (pt) => ctx.lineTo(pt.x, pt.y));
+        for (let j = 0; j < trailLen; j++) {
+          const idx = (this.trailHead - 1 - j + TRAIL_RING_SIZE) % TRAIL_RING_SIZE;
+          ctx.lineTo(this.trailRing[idx].x, this.trailRing[idx].y);
+        }
         ctx.stroke();
       }
       ctx.restore();
@@ -15076,9 +15131,19 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { EntityStatus } from "@/core/Interfaces";
 
+export type DamagePayload = {
+  amount: number;
+  currentHealth: number;
+  maxHealth: number;
+  sourceX: number;
+  sourceY: number;
+  intensity: number;
+};
+
 export interface HealthComponentOptions {
   maxHealth?: number;
   invincibilityDuration?: number;
+  onDamaged?: (payload: DamagePayload) => void;
 }
 
 export class HealthComponent implements IEntityComponent {
@@ -15092,6 +15157,8 @@ export class HealthComponent implements IEntityComponent {
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
+  private onDamaged: ((payload: DamagePayload) => void) | null = null;
+
   public setup(owner: BaseEntity, dependencies?: HealthComponentOptions): void {
     this.owner = owner;
     if (dependencies) {
@@ -15101,6 +15168,9 @@ export class HealthComponent implements IEntityComponent {
       }
       if (dependencies.invincibilityDuration !== undefined) {
         this.invincibilityDuration = dependencies.invincibilityDuration;
+      }
+      if (dependencies.onDamaged !== undefined) {
+        this.onDamaged = dependencies.onDamaged;
       }
     }
   }
@@ -15127,31 +15197,8 @@ export class HealthComponent implements IEntityComponent {
     this.invincibilityTimer = this.invincibilityDuration;
     this.hitFlashTimer = this.hitFlashDuration;
 
-    if (this.owner.id === "player-01") {
-      this.owner.world.events.publish("PLAYER_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-      });
-    } else if (this.owner.id === "boss-01") {
-      this.owner.world.events.publish("BOSS_HURT", {
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-        sourceX,
-        sourceY,
-        intensity,
-      });
-    } else if (this.owner.id.startsWith("minion-")) {
-      this.owner.world.events.publish("MINION_HURT", {
-        id: this.owner.id,
-        amount,
-        currentHealth: this.currentHealth,
-        maxHealth: this.maxHealth,
-        sourceX,
-        sourceY,
-        intensity,
-      });
+    if (this.onDamaged) {
+      this.onDamaged({ amount, currentHealth: this.currentHealth, maxHealth: this.maxHealth, sourceX, sourceY, intensity });
     }
 
     if (this.currentHealth <= 0) {
@@ -15783,8 +15830,7 @@ export class PhysicsComponent implements IEntityComponent {
 ● ./src/entities/handlers/PlayerCombatHandler.ts
 ────────────────────────────────────────────────────
 import { Player } from "@/entities/Player";
-import { UNITS } from "@/core/Units";
-import { setVec } from "@/core/VecUtils";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 
 export class PlayerCombatHandler {
   private player: Player;
@@ -15849,31 +15895,13 @@ export class PlayerCombatHandler {
   public checkHazardContact() {
     if (this.player.health.isInvincible() || this.player.isDead) return;
 
-    const halfW = this.player.size.width / 2;
-    const halfH = this.player.size.height / 2;
+    if (this.player.healComponent.isHealing) {
+      this.player.healComponent.cancelHealing();
+    }
 
-    for (const hazard of this.player.world.physicsWorld.hazards) {
-      const isHit =
-        this.player.position.x + halfW > hazard.x &&
-        this.player.position.x - halfW < hazard.x + hazard.width &&
-        this.player.position.y + halfH > hazard.y &&
-        this.player.position.y - halfH < hazard.y + hazard.height;
-
-      if (isHit && this.player.velocity.y >= 0) {
-        if (this.player.healComponent.isHealing) {
-          this.player.healComponent.cancelHealing();
-        }
-
-        this.player.world.events.publish("PLAYER_SPIKED", { x: this.player.position.x });
-        const damaged = this.player.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
-        if (damaged && !this.player.isDead) {
-          this.player.velocity.y = -550;
-          this.player.physics.isGrounded = false;
-          setVec(this.player.visualScale, 0.5, 1.5);
-          setVec(this.player.scaleVelocity, 10.0, -15.0);
-        }
-        break;
-      }
+    const hit = HazardSystem.checkContact(this.player, this.player.world.physicsWorld);
+    if (hit && !this.player.isDead) {
+      this.player.physics.isGrounded = false;
     }
   }
 }

@@ -1,30 +1,34 @@
 import { Player } from "@/entities/Player";
 import { Projectile } from "@/entities/Projectile";
+import { BaseEntity } from "@/entities/BaseEntity";
 import { ObjectPool } from "./ObjectPool";
 import { UNITS } from "@/core/Units";
 import { World } from "./World";
 
 export class EntityRenderer {
   private ctx: CanvasRenderingContext2D;
-  private cachedMeleeGradient: CanvasGradient;
+  private meleeSideCanvas: HTMLCanvasElement;
   private attackGradCanvas: HTMLCanvasElement;
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
 
-    this.cachedMeleeGradient = ctx.createRadialGradient(
-      0,
-      0,
-      UNITS.MELEE_SWEEP_INNER_RADIUS,
-      0,
-      0,
-      UNITS.MELEE_MAX_REACH
-    );
-    this.cachedMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-    this.cachedMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
-    this.cachedMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
-    this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
-    this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    const meleeReach = UNITS.MELEE_MAX_REACH;
+    const meleeInner = UNITS.MELEE_SWEEP_INNER_RADIUS;
+    const meleeCanvasSize = meleeReach * 2 + 20;
+    this.meleeSideCanvas = document.createElement("canvas");
+    this.meleeSideCanvas.width = meleeCanvasSize;
+    this.meleeSideCanvas.height = meleeCanvasSize;
+    const meleeCtx = this.meleeSideCanvas.getContext("2d")!;
+    const centerM = meleeCanvasSize / 2;
+    const sideGrad = meleeCtx.createRadialGradient(centerM, centerM, meleeInner, centerM, centerM, meleeReach);
+    sideGrad.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+    sideGrad.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+    sideGrad.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+    sideGrad.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    sideGrad.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    meleeCtx.fillStyle = sideGrad;
+    meleeCtx.fillRect(0, 0, meleeCanvasSize, meleeCanvasSize);
 
     this.attackGradCanvas = document.createElement("canvas");
     this.attackGradCanvas.width = 128;
@@ -42,11 +46,11 @@ export class EntityRenderer {
 
   public renderEntities(world: World, projectilePool: ObjectPool<Projectile>, alpha: number): void {
     if (world.boss) {
-      world.boss.draw(this.ctx, alpha);
+      (world.boss as BaseEntity).draw(this.ctx, alpha);
     }
 
     if (world.player) {
-      world.player.draw(this.ctx, alpha);
+      (world.player as BaseEntity).draw(this.ctx, alpha);
       const player = world.player as Player;
       if (player.attackActive) {
         this.drawPlayerAttackVisual(player, alpha);
@@ -54,7 +58,7 @@ export class EntityRenderer {
     }
 
     for (const minion of world.minions) {
-      minion.draw(this.ctx, alpha);
+      (minion as BaseEntity).draw(this.ctx, alpha);
     }
 
     const activeProjectiles = projectilePool.getActive();
@@ -86,30 +90,18 @@ export class EntityRenderer {
 
       this.ctx.save();
       this.ctx.translate(cx, cy);
-
-      const dynamicMeleeGradient = this.ctx.createRadialGradient(
-        0,
-        0,
-        UNITS.MELEE_SWEEP_INNER_RADIUS,
-        0,
-        0,
-        UNITS.MELEE_MAX_REACH
-      );
-      dynamicMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      dynamicMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
-      dynamicMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
-      dynamicMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
-      dynamicMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
       this.ctx.globalAlpha = opacity;
-      this.ctx.fillStyle = dynamicMeleeGradient;
+
       const startA = facing > 0 ? baseStart : Math.PI - baseStart;
       const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       this.ctx.beginPath();
       this.ctx.arc(0, 0, UNITS.MELEE_MAX_REACH, startA, endA, facing < 0);
       this.ctx.arc(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, endA, startA, facing > 0);
       this.ctx.closePath();
-      this.ctx.fill();
+      this.ctx.clip();
+
+      const cs = this.meleeSideCanvas.width;
+      this.ctx.drawImage(this.meleeSideCanvas, -cs / 2, -cs / 2, cs, cs);
       this.ctx.restore();
     } else if (player.attackDirection === "up") {
       const cx = drawX;

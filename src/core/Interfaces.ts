@@ -41,8 +41,7 @@ export interface ITransform {
   size: { width: number; height: number };
 }
 
-export interface IRenderable {
-  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
+export interface ISpringVisuals {
   visualScale: Vector2D;
   targetVisualScale: Vector2D;
   scaleVelocity: Vector2D;
@@ -52,13 +51,17 @@ export interface IRenderable {
   squashPivot: "center" | "feet";
 }
 
+export interface IRenderable {
+  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
+}
+
 export interface IAbilityUser {
   hasDoubleJump?: boolean;
   healingCharges?: number;
   facingDirection?: number;
 }
 
-export interface IEntity extends ITransform, IRenderable {
+export interface IEntity extends ITransform {
   id: string;
   isDead: boolean;
   status: EntityStatus;

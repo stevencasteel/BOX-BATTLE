@@ -3,6 +3,7 @@ import { SFXHelper } from "./sfx/SFXHelper";
 import { PlayerSFX } from "./sfx/PlayerSFX";
 import { BossSFX } from "./sfx/BossSFX";
 import { InterfaceSFX } from "./sfx/InterfaceSFX";
+import { IEventBus } from "@/core/Interfaces";
 
 export class SFXManager {
   private helper: SFXHelper;
@@ -10,10 +11,10 @@ export class SFXManager {
   private bossSFX: BossSFX;
   private interfaceSFX: InterfaceSFX;
 
-  constructor(ctxManager: AudioContextManager) {
+  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number) {
     this.helper = new SFXHelper(ctxManager);
-    this.playerSFX = new PlayerSFX(ctxManager, this.helper);
-    this.bossSFX = new BossSFX(ctxManager, this.helper);
+    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter);
+    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter);
     this.interfaceSFX = new InterfaceSFX(ctxManager, this.helper);
   }
 

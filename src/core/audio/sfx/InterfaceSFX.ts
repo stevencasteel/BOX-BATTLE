@@ -2,6 +2,7 @@ import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
+import { SynthFactory } from "./SynthFactory";
 
 export class InterfaceSFX {
   private helper: SFXHelper;
@@ -35,11 +36,7 @@ export class InterfaceSFX {
       volume: -7
     }).connect(this.bossDialoguePanner);
 
-    this.menuSynth = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.015, decay: 0.12, sustain: 0, release: 0.12 },
-      volume: -6
-    }).connect(this.playerDialoguePanner);
+    this.menuSynth = SynthFactory.createPannedSynth("sine", 0.12, this.playerDialoguePanner, -6, 0.015);
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
     this.dialogueSynthBoss.maxPolyphony = 16;

@@ -1,7 +1,6 @@
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
@@ -9,13 +8,15 @@ import { Spawner } from "@/entities/Spawner";
 import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { Rectangle, EntityStatus } from "@/core/Interfaces";
+import { Rectangle } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
 import { StateProjectionSystem } from "@/core/StateProjectionSystem";
+import { MinionCollisionSystem } from "@/core/systems/MinionCollisionSystem";
+import { EntityResetService } from "@/core/systems/EntityResetService";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
@@ -27,6 +28,8 @@ export class Engine {
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
   private stateProjection: StateProjectionSystem;
+  private minionCollisionSystem: MinionCollisionSystem;
+  private entityResetService: EntityResetService;
 
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
@@ -50,6 +53,8 @@ export class Engine {
     this.renderer = renderer;
     this.levelConfig = levelConfig;
     this.stateProjection = new StateProjectionSystem();
+    this.minionCollisionSystem = new MinionCollisionSystem();
+    this.entityResetService = new EntityResetService();
 
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
@@ -136,8 +141,8 @@ export class Engine {
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
-    this.resetEntity(this.player, this.levelConfig.playerStart, 1);
-    this.resetEntity(this.boss, this.levelConfig.bossStart, -1);
+    this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
+    this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;
     this.boss.patrolSpeed = 200;
     this.boss.lungeSpeed = 1200;
@@ -159,46 +164,6 @@ export class Engine {
     requestAnimationFrame(() => {
       this.start();
     });
-  }
-
-  private resetEntity(entity: Player | Boss, startPos: { x: number; y: number }, facing: number) {
-    entity.isDead = false;
-    setVec(entity.position, startPos.x, startPos.y);
-    setVec(entity.previousPosition, startPos.x, startPos.y);
-    zeroVec(entity.velocity);
-    entity.facingDirection = facing;
-
-    if (entity instanceof Player) {
-      entity.hasDoubleJump = true;
-      entity.determinationCounter = 0;
-      entity.healingCharges = 0;
-      entity.hurtTimer = 0;
-      entity.recoilTimer = 0;
-      entity.visualScale = { x: 1, y: 1 };
-
-      entity.dashComponent.isDashing = false;
-      entity.dashComponent.dashTimer = 0;
-      entity.dashComponent.dashCooldown = 0;
-      entity.dashComponent.canDash = true;
-      entity.dashComponent.ghosts = [];
-
-      entity.meleeComponent.attackCooldownTimer = 0;
-      entity.meleeComponent.attackActiveTimer = 0;
-      entity.meleeComponent.attackActive = false;
-      entity.meleeComponent.attackDirection = null;
-      entity.meleeComponent.hasHitEnemyThisSwing = false;
-
-      entity.fireballComponent.isCharging = false;
-      entity.fireballComponent.chargeTimer = 0;
-
-      entity.healComponent.isHealing = false;
-      entity.healComponent.healTimer = 0;
-    }
-
-    const health = entity.getComponent(HealthComponent);
-    if (health) {
-      health.reset();
-    }
   }
 
   private update(dt: number) {
@@ -253,38 +218,6 @@ export class Engine {
     this.stateProjection.project(this.player, this.boss);
   }
 
-  private handleMinionCollisions() {
-    for (let i = this.world.minions.length - 1; i >= 0; i--) {
-      const minion = this.world.minions[i];
-      minion.update(this.fixedTimeStep);
-
-      if (this.player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
-
-      const pW = this.player.size.width / 2;
-      const pH = this.player.size.height / 2;
-      const mW = minion.size.width / 2;
-      const mH = minion.size.height / 2;
-
-      const isColliding =
-        this.player.position.x + pW > minion.position.x - mW &&
-        this.player.position.x - pW < minion.position.x + mW &&
-        this.player.position.y + pH > minion.position.y - mH &&
-        this.player.position.y - pH < minion.position.y + mH;
-
-      if (isColliding) {
-        const playerHealth = this.player.getComponent(HealthComponent);
-        if (playerHealth) {
-          const damaged = playerHealth.takeDamage(1);
-          if (damaged) {
-            const knockbackDir = Math.sign(this.player.position.x - minion.position.x);
-            this.player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-            this.player.velocity.y = -350;
-          }
-        }
-      }
-    }
-  }
-
   private fixedUpdate(dt: number) {
     this.world.input.update();
     if (this.world.input.isPauseJustPressed()) {
@@ -326,7 +259,7 @@ export class Engine {
       spawner.update(dt);
     }
 
-    this.handleMinionCollisions();
+    this.minionCollisionSystem.update(this.world.minions, this.player, dt);
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {

@@ -2,6 +2,8 @@ import { AudioContextManager } from "./audio/AudioContextManager";
 import { SFXManager } from "./audio/SFXManager";
 import { MusicSequencer } from "./audio/MusicSequencer";
 import { DroneManager } from "./audio/DroneManager";
+import { eventBroker } from "@/core/eventBroker";
+import { useGameplayStore } from "@/store/useGameStore";
 
 class SoundSynth {
   private ctxManager: AudioContextManager;
@@ -15,7 +17,7 @@ class SoundSynth {
 
   constructor() {
     this.ctxManager = new AudioContextManager();
-    this.sfx = new SFXManager(this.ctxManager);
+    this.sfx = new SFXManager(this.ctxManager, eventBroker, () => useGameplayStore.getState().comboCounter);
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
   }
