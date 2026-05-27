@@ -11,8 +11,6 @@ export class PhysicsWorld implements IPhysicsWorld {
   private platformGrid: Map<number, Rectangle[]> = new Map();
   private hazardGrid: Map<number, Rectangle[]> = new Map();
 
-  private reuseSet = new Set<Rectangle>();
-  private reuseResult: Rectangle[] = [];
 
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = solids;
@@ -48,7 +46,8 @@ export class PhysicsWorld implements IPhysicsWorld {
     y: number,
     width: number,
     height: number,
-    type: "solid" | "platform" | "hazard"
+    type: "solid" | "platform" | "hazard",
+    outResult?: Rectangle[]
   ): Rectangle[] {
     const grid = type === "solid" ? this.solidGrid : type === "platform" ? this.platformGrid : this.hazardGrid;
     const fallback = type === "solid" ? this.solids : type === "platform" ? this.onewayPlatforms : this.hazards;
@@ -65,29 +64,41 @@ export class PhysicsWorld implements IPhysicsWorld {
     const startY = Math.floor(top / PhysicsWorld.CELL_SIZE);
     const endY = Math.floor(bottom / PhysicsWorld.CELL_SIZE);
 
-    this.reuseSet.clear();
-    this.reuseResult.length = 0;
+    const result = outResult !== undefined ? outResult : [];
+    result.length = 0;
 
-    for (let cx = startX; cx <= endX; cx++) {
-      for (let cy = startY; cy <= endY; cy++) {
-        const key = (cy << 16) | cx;
-        const cellCandidates = grid.get(key);
-        if (cellCandidates) {
-          for (const candidate of cellCandidates) {
-            if (!this.reuseSet.has(candidate)) {
-              this.reuseSet.add(candidate);
-              this.reuseResult.push(candidate);
+    if (startX === endX && startY === endY) {
+      const key = (startY << 16) | startX;
+      const cellCandidates = grid.get(key);
+      if (cellCandidates) {
+        for (let i = 0; i < cellCandidates.length; i++) {
+          result.push(cellCandidates[i]);
+        }
+      }
+    } else {
+      const seen = new Set<Rectangle>();
+      for (let cx = startX; cx <= endX; cx++) {
+        for (let cy = startY; cy <= endY; cy++) {
+          const key = (cy << 16) | cx;
+          const cellCandidates = grid.get(key);
+          if (cellCandidates) {
+            for (let i = 0; i < cellCandidates.length; i++) {
+              const candidate = cellCandidates[i];
+              if (!seen.has(candidate)) {
+                seen.add(candidate);
+                result.push(candidate);
+              }
             }
           }
         }
       }
     }
 
-    if (this.reuseResult.length === 0) {
+    if (result.length === 0) {
       return fallback;
     }
 
-    return this.reuseResult;
+    return result;
   }
 
   public isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean {

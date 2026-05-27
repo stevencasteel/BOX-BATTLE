@@ -1,7 +1,7 @@
 import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
@@ -25,6 +25,8 @@ export class Projectile extends BaseEntity implements IPoolable {
   private trailRing: { x: number; y: number }[] = [];
   private trailHead = 0;
   private trailCount = 0;
+
+  private overlapScratch: Rectangle[] = [];
 
   constructor() {
     super("projectile", null as unknown as IWorld);
@@ -135,7 +137,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y,
       this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -165,7 +168,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y,
       this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "platform"
+      "platform",
+      this.overlapScratch
     );
 
     for (const platform of platformCandidates) {

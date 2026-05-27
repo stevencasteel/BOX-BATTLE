@@ -16,6 +16,9 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
+  // Scratch arrays to prevent GC allocations while maintaining re-entrant safety
+  private overlapScratch: Rectangle[] = [];
+
   private readonly maxStepSize: number = UNITS.CCD_STEP_LIMIT_DEFAULT;
   private readonly cornerNudgeThreshold: number = UNITS.CORNER_NUDGE_MAX_OVERLAP;
   private readonly groundDetectionOffset: number = UNITS.GROUND_DETECTION_OFFSET;
@@ -87,7 +90,8 @@ export class PhysicsComponent implements IEntityComponent {
       this.owner.position.y,
       this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -117,7 +121,8 @@ export class PhysicsComponent implements IEntityComponent {
       this.owner.position.y,
       this.owner.size.width + UNITS.BROAD_PHASE_PADDING_LARGE,
       this.owner.size.height + UNITS.BROAD_PHASE_PADDING_LARGE,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -160,7 +165,8 @@ export class PhysicsComponent implements IEntityComponent {
         this.owner.position.y,
         this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
         this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        "platform"
+        "platform",
+        this.overlapScratch
       );
 
       for (const platform of platformCandidates) {
@@ -193,7 +199,8 @@ export class PhysicsComponent implements IEntityComponent {
         testPosY,
         this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
         this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        "solid"
+        "solid",
+        this.overlapScratch
       );
       for (const solid of solidCandidates) {
         if (this.isOverlapping(this.owner.position.x, testPosY, solid)) {
@@ -208,7 +215,8 @@ export class PhysicsComponent implements IEntityComponent {
           testPosY,
           this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
           this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-          "platform"
+          "platform",
+          this.overlapScratch
         );
         for (const platform of platformCandidates) {
           if (this.isOverlapping(this.owner.position.x, testPosY, platform)) {

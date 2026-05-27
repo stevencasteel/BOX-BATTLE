@@ -164,7 +164,8 @@ export interface IPhysicsWorld {
     y: number,
     width: number,
     height: number,
-    type: "solid" | "platform" | "hazard"
+    type: "solid" | "platform" | "hazard",
+    outResult?: Rectangle[]
   ): Rectangle[];
 }
 
