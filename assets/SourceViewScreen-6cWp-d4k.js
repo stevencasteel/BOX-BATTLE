@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Qod08j4C.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BCJMuJ4P.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8900,17 +8900,22 @@ export class DroneManager {
     }
   }
 
+  private lastHealImpactTime: number = 0;
+
   public playHealComplete() {
     this.stopHealDrone();
     if (!this.ctxManager.initialized) return;
 
     const now = Tone.now();
+    const impactTime = Math.max(now, this.lastHealImpactTime + 0.001);
+    this.lastHealImpactTime = impactTime;
+
     const chimeNotes = ["C5", "Eb5", "G5", "C6", "Eb6"];
     chimeNotes.forEach((note, idx) => {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
     });
 
-    this.healImpactSynth.triggerAttackRelease("C1", "2n", now);
+    this.healImpactSynth.triggerAttackRelease("C1", "2n", impactTime);
   }
 
   public playChargeStart(x?: number) {
