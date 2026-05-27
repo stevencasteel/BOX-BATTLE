@@ -4,6 +4,7 @@ import { Engine } from "@/core/Engine";
 import { World } from "@/core/World";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { defaultLevelConfig } from "@/core/levelData";
+import { inputProvider } from "@/core/InputProvider";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
@@ -83,6 +84,24 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       engine.cleanup();
       engineRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+
+    const unsub = useSessionStore.subscribe((state) => {
+      if (!engineRef.current) return;
+      const isPlaying = state.currentScreen === "PLAYING";
+      engineRef.current.isPaused = !isPlaying;
+      inputProvider.setActive(isPlaying);
+    });
+
+    const isPlaying = useSessionStore.getState().currentScreen === "PLAYING";
+    engine.isPaused = !isPlaying;
+    inputProvider.setActive(isPlaying);
+
+    return () => unsub();
   }, []);
 
   const tickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

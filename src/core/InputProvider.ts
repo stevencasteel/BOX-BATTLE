@@ -21,11 +21,24 @@ export class KeyboardInputDevice implements IInputDevice {
   private pauseJustPressed = false;
 
   constructor() {
+    // Listeners added lazily via activate()
+  }
+
+  public activate() {
     if (typeof window !== "undefined") {
       window.addEventListener("keydown", this.handleKeyDown);
       window.addEventListener("keyup", this.handleKeyUp);
     }
   }
+
+  public deactivate() {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("keydown", this.handleKeyDown);
+      window.removeEventListener("keyup", this.handleKeyUp);
+    }
+  }
+
+
 
   private getActionFromCode(code: string): Action | null {
     const keyMap = settingsManager.getKeyMap();
@@ -164,15 +177,30 @@ class InputProvider {
   };
 
   private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
+  private active = true;
 
   constructor() {
     this.keyboardDevice = new KeyboardInputDevice();
     this.devices.push(this.keyboardDevice);
     this.devices.push(new GamepadInputDevice());
+    this.keyboardDevice.activate();
 
     if (typeof window !== "undefined") {
       window.addEventListener("blur", this.handleBlur);
     }
+  }
+
+  public setActive(v: boolean) {
+    this.active = v;
+    if (v) {
+      this.keyboardDevice.activate();
+    } else {
+      this.keyboardDevice.deactivate();
+    }
+  }
+
+  public isActive(): boolean {
+    return this.active;
   }
 
   private handleBlur = () => {
