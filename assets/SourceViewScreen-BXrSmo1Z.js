@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DZtQ9weg.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CxUQSVWX.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1871,6 +1871,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 `,"src/components/GameArena.tsx":`import "./GameArena.css";
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
+import { World } from "@/core/World";
+import { WorldRenderer } from "@/core/WorldRenderer";
+import { defaultLevelConfig } from "@/core/levelData";
 import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
@@ -1903,7 +1906,12 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new Engine(canvas);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not construct 2D context.");
+
+    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms);
+    const renderer = new WorldRenderer(ctx);
+    const engine = new Engine(world, renderer);
     engineRef.current = engine;
     engine.start();
 
@@ -6151,12 +6159,11 @@ import { UNITS } from "@/core/Units";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
-  private ctx: CanvasRenderingContext2D;
-  private renderer!: WorldRenderer;
+  private renderer: WorldRenderer;
 
   private loop!: GameLoop;
   private systems!: SimulationSystems;
-  private world!: World;
+  private world: World;
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
 
@@ -6183,12 +6190,9 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(canvas: HTMLCanvasElement, levelConfig: LevelConfig = defaultLevelConfig) {
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Could not construct 2D context.");
-    }
-    this.ctx = context;
+  constructor(world: World, renderer: WorldRenderer, levelConfig: LevelConfig = defaultLevelConfig) {
+    this.world = world;
+    this.renderer = renderer;
     this.levelConfig = levelConfig;
 
     this.solids = this.levelConfig.solids;
@@ -6205,9 +6209,6 @@ export class Engine {
       () => this.boss.position.x,
       (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
     );
-
-    this.world = new World(this.solids, this.hazards, this.onewayPlatforms);
-    this.renderer = new WorldRenderer(this.ctx);
 
     this.pool = new ObjectPool(() => new Projectile(), 60);
     this.world.projectilePool = this.pool;
@@ -6268,7 +6269,7 @@ export class Engine {
     Camera.reset();
     this.pool.clear();
 
-    const overlay = this.ctx.canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+    const overlay = this.renderer.getCanvas().parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
     if (overlay) {
       overlay.classList.remove("vignette-pulse");
     }
@@ -8339,6 +8340,10 @@ export class WorldRenderer {
     const staticCtx = this.staticCanvas.getContext("2d");
     if (!staticCtx) throw new Error("Could not create static canvas context");
     this.staticCtx = staticCtx;
+  }
+
+  public getCanvas(): HTMLCanvasElement {
+    return this.ctx.canvas;
   }
 
   private buildStaticCache(
