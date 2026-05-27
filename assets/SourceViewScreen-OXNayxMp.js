@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CwbD6gWV.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DSrPh9iR.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11727,8 +11727,7 @@ export class BaseEntity implements IEntity, ISpringVisuals {
   public recoilTimer?: number;
   public physics?: { isGrounded: boolean; gravity?: number };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private components = new Map<new (...args: any[]) => IEntityComponent, IEntityComponent>();
+  private components = new Map<string, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -11746,13 +11745,15 @@ export class BaseEntity implements IEntity, ISpringVisuals {
     dependencies?: Record<string, unknown>
   ): T {
     component.setup(this, dependencies);
-    this.components.set(componentClass, component);
+    const key = (componentClass as unknown as { componentId?: string }).componentId || componentClass.name;
+    this.components.set(key, component);
     return component;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null {
-    const component = this.components.get(componentClass);
+    const key = (componentClass as unknown as { componentId?: string }).componentId || componentClass.name;
+    const component = this.components.get(key);
     return (component as T) || null;
   }
 
