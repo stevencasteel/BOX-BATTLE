@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 12:03:38 AM
+ [SYSTEM] Generated: 5/27/2026, 12:06:10 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3163,7 +3163,6 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
     const keys = settingsManager.getKeyMap()[action] || [];
     const rawKey = keys[0] || "";
     
-    if (action === "JUMP") return "X";
     if (rawKey === "Space") return "X";
     if (rawKey === "ArrowLeft") return "◄";
     if (rawKey === "ArrowRight") return "►";
