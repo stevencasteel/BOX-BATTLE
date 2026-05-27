@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 11:25:20 AM
+ [SYSTEM] Generated: 5/27/2026, 11:30:16 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -9866,17 +9866,22 @@ export class DroneManager {
     }
   }
 
+  private lastHealImpactTime: number = 0;
+
   public playHealComplete() {
     this.stopHealDrone();
     if (!this.ctxManager.initialized) return;
 
     const now = Tone.now();
+    const impactTime = Math.max(now, this.lastHealImpactTime + 0.001);
+    this.lastHealImpactTime = impactTime;
+
     const chimeNotes = ["C5", "Eb5", "G5", "C6", "Eb6"];
     chimeNotes.forEach((note, idx) => {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
     });
 
-    this.healImpactSynth.triggerAttackRelease("C1", "2n", now);
+    this.healImpactSynth.triggerAttackRelease("C1", "2n", impactTime);
   }
 
   public playChargeStart(x?: number) {
