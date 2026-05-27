@@ -27,6 +27,8 @@ export class DroneManager {
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
   private isHeartbeatRunning: boolean = false;
+  private lastHealProgress: number = -1;
+  private lastChargeProgress: number = -1;
   private healImpactSynth!: Tone.MembraneSynth;
 
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
@@ -92,6 +94,7 @@ export class DroneManager {
 
     const now = Tone.now();
     this.healRatchetThreshold = 0;
+    this.lastHealProgress = 0;
     this.healOsc.frequency.setValueAtTime(110, now);
     this.healOscSub.frequency.setValueAtTime(55, now);
     this.healFilter.frequency.setValueAtTime(220, now);
@@ -106,26 +109,27 @@ export class DroneManager {
     if (!this.ctxManager.initialized || !this.isHealDroneRunning) return;
     const now = Tone.now();
 
-    // Play a mechanical pull-string winding click
     const elapsed = 2.0 - timer;
     if (elapsed > this.healRatchetThreshold) {
-      const progress = Math.max(0, Math.min(1.0, elapsed / 2.0));
-      const pitch = 220 + progress * 380; // Heavier woody mechanical click
+      const progressVal = Math.max(0, Math.min(1.0, elapsed / 2.0));
+      const pitch = 220 + progressVal * 380;
       this.ratchetSynth.triggerAttackRelease(pitch, "32n", now);
 
-      const interval = 0.18 - progress * 0.145; // Speed up click intervals as tension builds
+      const interval = 0.18 - progressVal * 0.145;
       this.healRatchetThreshold = elapsed + interval;
     }
     
-    // Strict clamp progress to normal range [0, 1]
     const progress = Math.max(0, Math.min(1.0, (2.0 - timer) / 2.0));
+    if (Math.abs(progress - this.lastHealProgress) < 0.04) {
+      return;
+    }
+    this.lastHealProgress = progress;
 
     const baseFreq = 110 + progress * 220;
     const subFreq = 55 + progress * 55;
     const filterFreq = 220 + Math.pow(progress, 1.5) * 1400;
     const lfoFreq = 12.0 + progress * 16.0;
     
-    // Scale LFO amplitude safely and clamp to [0, 1] normal range
     const lfoAmp = Math.max(0, Math.min(1.0, 0.42 + progress * 0.45));
 
     this.healOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
@@ -134,7 +138,6 @@ export class DroneManager {
     this.healLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
     this.healLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
     
-    // Clamp output gain value to [0, 1] normal range
     const gainVal = Math.max(0, Math.min(1.0, 0.35 + progress * 0.25));
     this.healGain.gain.setTargetAtTime(gainVal, now, 0.05);
   }
@@ -146,6 +149,7 @@ export class DroneManager {
     this.healGain.gain.setValueAtTime(this.healGain.gain.value, now);
     this.healGain.gain.rampTo(0, 0.12);
     this.isHealDroneRunning = false;
+    this.lastHealProgress = -1;
 
     // Fast mechanical zip-back / unwind ratchet sound on release
     for (let i = 0; i < 8; i++) {
@@ -183,6 +187,7 @@ export class DroneManager {
 
     const now = Tone.now();
     this.chargeRatchetThreshold = 0;
+    this.lastChargeProgress = 0;
 
     this.chargeOsc.frequency.setValueAtTime(220, now);
     this.chargeFilter.frequency.setValueAtTime(450, now);
@@ -197,24 +202,25 @@ export class DroneManager {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     const now = Tone.now();
 
-    // Play a rapid mechanical pull-string winding click
     if (timer > this.chargeRatchetThreshold) {
-      const progress = Math.max(0, Math.min(1.0, timer / 1.12));
-      const pitch = 380 + progress * 520; // High tension spring clicks
+      const progressVal = Math.max(0, Math.min(1.0, timer / 1.12));
+      const pitch = 380 + progressVal * 520;
       this.ratchetSynth.triggerAttackRelease(pitch, "32n", now);
 
-      const interval = 0.14 - progress * 0.105; // Speed up click intervals as tension builds
+      const interval = 0.14 - progressVal * 0.105;
       this.chargeRatchetThreshold = timer + interval;
     }
 
-    // Clamp progress safely to [0, 1] relative to the Level 2 max timer
     const progress = Math.max(0, Math.min(1.0, timer / 1.12));
+    if (Math.abs(progress - this.lastChargeProgress) < 0.04) {
+      return;
+    }
+    this.lastChargeProgress = progress;
 
     const baseFreq = 220 + progress * 440;
     const filterFreq = 450 + progress * 1200;
     const lfoFreq = 5.5 + progress * 16.0;
     
-    // Clamp LFO amplitude strictly to NormalRange [0, 1] to prevent crashes
     const lfoAmp = Math.max(0, Math.min(1.0, 0.3 + progress * 0.7));
 
     this.chargeOsc.frequency.setTargetAtTime(baseFreq, now, 0.05);
@@ -222,7 +228,6 @@ export class DroneManager {
     this.chargeLfo.frequency.setTargetAtTime(lfoFreq, now, 0.05);
     this.chargeLfo.amplitude.setTargetAtTime(lfoAmp, now, 0.05);
     
-    // Clamp output gain value to NormalRange [0, 1]
     const gainVal = Math.max(0, Math.min(1.0, 0.18 + progress * 0.32));
     this.chargeGain.gain.setTargetAtTime(gainVal, now, 0.05);
   }
@@ -231,6 +236,7 @@ export class DroneManager {
     if (!this.ctxManager.initialized || !this.isChargeDroneRunning) return;
     this.chargeGain.gain.rampTo(0, 0.08);
     this.isChargeDroneRunning = false;
+    this.lastChargeProgress = -1;
     
     // Fast mechanical zip-back / unwind ratchet sound on release
     const now = Tone.now();
