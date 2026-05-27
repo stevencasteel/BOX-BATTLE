@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 8:05:16 PM
+ [SYSTEM] Generated: 5/27/2026, 8:27:09 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2665,12 +2665,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     updateVignette(initialHP);
 
     const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
-      useGameplayStore.setState({
-        playerHP: payload.playerHP,
-        bossHP: payload.bossHP,
-        healingCharges: payload.healingCharges,
-        determination: payload.determination,
-      });
+      const store = useGameplayStore.getState();
+      store.setPlayerHP(payload.playerHP);
+      store.setBossHP(payload.bossHP);
+      store.setHealingCharges(payload.healingCharges);
+      store.setDetermination(payload.determination);
     });
 
     const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {

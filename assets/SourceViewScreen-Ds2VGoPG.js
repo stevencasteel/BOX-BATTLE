@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-B4iJ-jPk.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Dkc9OMlZ.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1889,12 +1889,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     updateVignette(initialHP);
 
     const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
-      useGameplayStore.setState({
-        playerHP: payload.playerHP,
-        bossHP: payload.bossHP,
-        healingCharges: payload.healingCharges,
-        determination: payload.determination,
-      });
+      const store = useGameplayStore.getState();
+      store.setPlayerHP(payload.playerHP);
+      store.setBossHP(payload.bossHP);
+      store.setHealingCharges(payload.healingCharges);
+      store.setDetermination(payload.determination);
     });
 
     const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {
