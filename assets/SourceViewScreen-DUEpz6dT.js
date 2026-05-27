@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C17aBVGO.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Cz4hga8H.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -916,7 +916,6 @@ export default function App() {
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
-  const gameResult = useSessionStore((state) => state.gameResult);
   const retryCount = useSessionStore((state) => state.retryCount);
 
   const navTo = useSessionStore((state) => state.navTo);
@@ -959,6 +958,20 @@ export default function App() {
     soundSynth.playSelectTick();
   };
 
+  const menuCtxRef = useRef({
+    navTo, setMenuIndex, reloadSaveSlots, resetGameSession,
+    handleSlotAction, toggleCopyMode, toggleEraseMode, resetActions,
+    audio, handleVolumeChange, resetSettings,
+  });
+
+  useEffect(() => {
+    menuCtxRef.current = {
+      navTo, setMenuIndex, reloadSaveSlots, resetGameSession,
+      handleSlotAction, toggleCopyMode, toggleEraseMode, resetActions,
+      audio, handleVolumeChange, resetSettings,
+    };
+  });
+
   useEffect(() => {
     if (!isPlayingScreen) {
       resetDialogues();
@@ -966,33 +979,36 @@ export default function App() {
   }, [isPlayingScreen, resetDialogues]);
 
   useEffect(() => {
-    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
+    const cs = useSessionStore.getState();
+    if ((cs.currentScreen === "PLAYING" && cs.gameResult === "PLAYING") || cs.currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
       return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
-      const config = screenConfigs[currentScreen];
+      const state = useSessionStore.getState();
+      const ctx = menuCtxRef.current;
+      const config = screenConfigs[state.currentScreen];
       if (!config) return;
 
       const context: MenuContext = {
-        navTo,
-        menuIndex,
-        setMenuIndex,
-        reloadSaveSlots,
-        resetGameSession,
-        handleSlotAction,
-        toggleCopyMode,
-        toggleEraseMode,
-        resetActions,
-        audio,
-        handleVolumeChange,
-        resetSettings,
+        navTo: ctx.navTo,
+        menuIndex: state.menuIndex,
+        setMenuIndex: ctx.setMenuIndex,
+        reloadSaveSlots: ctx.reloadSaveSlots,
+        resetGameSession: ctx.resetGameSession,
+        handleSlotAction: ctx.handleSlotAction,
+        toggleCopyMode: ctx.toggleCopyMode,
+        toggleEraseMode: ctx.toggleEraseMode,
+        resetActions: ctx.resetActions,
+        audio: ctx.audio,
+        handleVolumeChange: ctx.handleVolumeChange,
+        resetSettings: ctx.resetSettings,
         setRebindTarget,
-        gameResult,
+        gameResult: state.gameResult,
       };
 
       const maxIndex = config.getMaxIndex(context);
-      const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
-      const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
+      const isHorizontalEndScreen = state.currentScreen === "PLAYING" && state.gameResult !== "PLAYING";
+      const isSoundSliderZone = state.currentScreen === "SOUND" && state.menuIndex < 3;
 
       const isMoveForward =
         e.key === "ArrowDown" ||
@@ -1009,11 +1025,11 @@ export default function App() {
       if (isMoveForward) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((menuIndex + 1) % (maxIndex + 1));
+        ctx.setMenuIndex((state.menuIndex + 1) % (maxIndex + 1));
       } else if (isMoveBackward) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
+        ctx.setMenuIndex((state.menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (isConfirmKey(e)) {
         e.preventDefault();
         config.onSelect(context);
@@ -1040,28 +1056,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [
-    currentScreen,
-    menuIndex,
-    audio,
-    isCopyMode,
-    isEraseMode,
-    copySourceIndex,
-    slots,
-    rebindTarget,
-    gameResult,
-    isPlayingScreen,
-    navTo,
-    setMenuIndex,
-    reloadSaveSlots,
-    resetGameSession,
-    handleSlotAction,
-    toggleCopyMode,
-    toggleEraseMode,
-    resetActions,
-    handleVolumeChange,
-    resetSettings,
-  ]);
+  }, [currentScreen, rebindTarget]);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -1912,14 +1907,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     engineRef.current = engine;
     engine.start();
 
+    const vignette = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+
     const updateVignette = (hp: number) => {
       const isGameOver = useSessionStore.getState().gameResult !== "PLAYING";
-      const overlay = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
-      if (overlay) {
+      if (vignette) {
         if (hp === 1 && !isGameOver) {
-          overlay.classList.add("vignette-pulse");
+          vignette.classList.add("vignette-pulse");
         } else {
-          overlay.classList.remove("vignette-pulse");
+          vignette.classList.remove("vignette-pulse");
         }
       }
     };
@@ -2307,7 +2303,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
         soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
       }
 
-      const nextCls = [...animationClasses];
+      const nextCls = Array<string>(UNITS.PLAYER_MAX_HP).fill("");
       for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
         if (tookDamage && i === activeHP) {
           nextCls[i] = "led-shaking-die";
@@ -2315,8 +2311,6 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
           nextCls[i] = "led-elastic-spring";
         } else if (tookDamage && i < activeHP) {
           nextCls[i] = "led-spring-impact";
-        } else {
-          nextCls[i] = "";
         }
       }
       setAnimationClasses(nextCls);
@@ -2327,7 +2321,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [activeHP, isGameOver, animationClasses]);
+  }, [activeHP, isGameOver]);
 
   const lowHpStress = activeHP === 1 && !isGameOver;
 
@@ -2412,7 +2406,7 @@ function HealingAndDetermination({
     const prev = prevChargesRef.current;
     if (activeHealCharges !== prev) {
       const gained = activeHealCharges > prev && prev !== -1;
-      const nextCls = [...chargeAnims];
+      const nextCls = Array<string>(3).fill("");
       for (let i = 0; i < 3; i++) {
         if (gained && i === activeHealCharges - 1) {
           nextCls[i] = "led-elastic-spring";
@@ -2425,7 +2419,7 @@ function HealingAndDetermination({
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [activeHealCharges, chargeAnims]);
+  }, [activeHealCharges]);
 
   const isOverflow = activeHealCharges === 3;
   const detWidth = (activeDet / 5) * 100 + "%";
