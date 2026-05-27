@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 7:55:03 PM
+ [SYSTEM] Generated: 5/27/2026, 8:05:16 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -149,6 +149,7 @@
 │   │   ├── useEngineSubscriptions.ts
 │   │   ├── useFirstGesture.ts
 │   │   ├── useGameDialogue.ts
+│   │   ├── useMenuKeyboardNavigation.ts
 │   │   ├── useMusicLifecycle.ts
 │   │   ├── useRebindCapture.ts
 │   │   ├── useSaveSlots.ts
@@ -1632,13 +1633,12 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
-import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
 import { useGameplayStore, useSessionStore, SCREEN_DEPTHS } from "@/store/useGameStore";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
-import { screenConfigs, MenuContext } from "@/core/screenRoutes";
+import { useMenuKeyboardNavigation } from "@/hooks/useMenuKeyboardNavigation";
 
 import { TitleScreen } from "@/components/menus/TitleScreen";
 import { SaveSelectScreen } from "@/components/menus/SaveSelectScreen";
@@ -1751,85 +1751,7 @@ export default function App() {
     }
   }, [isPlayingScreen, resetDialogues]);
 
-  useEffect(() => {
-    const cs = useSessionStore.getState();
-    if ((cs.currentScreen === "PLAYING" && cs.gameResult === "PLAYING") || cs.currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
-      return;
-
-    const handleMenuNavigation = (e: KeyboardEvent) => {
-      const state = useSessionStore.getState();
-      const ctx = menuCtxRef.current;
-      const config = screenConfigs[state.currentScreen];
-      if (!config) return;
-
-      const context: MenuContext = {
-        navTo: ctx.navTo,
-        menuIndex: state.menuIndex,
-        setMenuIndex: ctx.setMenuIndex,
-        reloadSaveSlots: ctx.reloadSaveSlots,
-        resetGameSession: ctx.resetGameSession,
-        handleSlotAction: ctx.handleSlotAction,
-        toggleCopyMode: ctx.toggleCopyMode,
-        toggleEraseMode: ctx.toggleEraseMode,
-        resetActions: ctx.resetActions,
-        audio: ctx.audio,
-        handleVolumeChange: ctx.handleVolumeChange,
-        resetSettings: ctx.resetSettings,
-        setRebindTarget,
-        gameResult: state.gameResult,
-      };
-
-      const maxIndex = config.getMaxIndex(context);
-      const isHorizontalEndScreen = state.currentScreen === "PLAYING" && state.gameResult !== "PLAYING";
-      const isSoundSliderZone = state.currentScreen === "SOUND" && state.menuIndex < 3;
-
-      const isMoveForward =
-        e.key === "ArrowDown" ||
-        e.code === "KeyS" ||
-        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD"));
-
-      const isMoveBackward =
-        e.key === "ArrowUp" ||
-        e.code === "KeyW" ||
-        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA")) ||
-        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA"));
-
-      if (isMoveForward) {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        ctx.setMenuIndex((state.menuIndex + 1) % (maxIndex + 1));
-      } else if (isMoveBackward) {
-        e.preventDefault();
-        soundSynth.playSelectTick();
-        ctx.setMenuIndex((state.menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
-      } else if (isConfirmKey(e)) {
-        e.preventDefault();
-        config.onSelect(context);
-      } else if (isBackKey(e)) {
-        e.preventDefault();
-        if (config.onBack) {
-          config.onBack(context);
-        }
-      }
-
-      if (
-        isSoundSliderZone &&
-        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD")
-      ) {
-        if (config.onHorizontal) {
-          e.preventDefault();
-          const direction = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : -1;
-          config.onHorizontal(direction, context);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleMenuNavigation);
-    return () => {
-      window.removeEventListener("keydown", handleMenuNavigation);
-    };
-  }, [currentScreen, rebindTarget, gameResult]);
+  useMenuKeyboardNavigation(menuCtxRef, setRebindTarget, currentScreen, gameResult, rebindTarget);
 
   if (bootStage === BootStage.NONE) {
     return (
@@ -2670,6 +2592,7 @@ import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
 import { eventBroker } from "@/core/eventBroker";
 import { soundSynth } from "@/core/SoundSynth";
 import { saveManager } from "@/core/SaveManager";
+import { settingsManager } from "@/core/SettingsManager";
 import { Trophy, Skull, RotateCcw, Home, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -2705,6 +2628,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const renderer = new WorldRenderer(ctx);
     const engine = new Engine(world, renderer);
     engineRef.current = engine;
+    inputProvider.setKeyMap(settingsManager.getKeyMap());
     engine.start();
 
     useSessionStore.getState().setGameResult("PLAYING");
@@ -7658,9 +7582,8 @@ export default GameLoop;
 
 ● ./src/core/InputProvider.ts
 ────────────────────────────────────────────────────
-import { settingsManager } from "@/core/SettingsManager";
-
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
+export type KeyMap = Record<Action, string[]>;
 
 export interface IInputDevice {
   update(): Record<Action, boolean>;
@@ -7679,9 +7602,22 @@ export class KeyboardInputDevice implements IInputDevice {
     DASH: false,
   };
   private pauseJustPressed = false;
+  private keyMap: KeyMap;
 
-  constructor() {
-    // Listeners added lazily via activate()
+  constructor(keyMap?: KeyMap) {
+    this.keyMap = keyMap ?? {
+      MOVE_LEFT: ["ArrowLeft", "KeyA"],
+      MOVE_RIGHT: ["ArrowRight", "KeyD"],
+      MOVE_UP: ["ArrowUp", "KeyW"],
+      MOVE_DOWN: ["ArrowDown", "KeyS"],
+      JUMP: ["Space", "KeyX"],
+      ATTACK: ["KeyC"],
+      DASH: ["KeyZ"],
+    };
+  }
+
+  public setKeyMap(keyMap: KeyMap) {
+    this.keyMap = keyMap;
   }
 
   public activate() {
@@ -7701,9 +7637,8 @@ export class KeyboardInputDevice implements IInputDevice {
 
 
   private getActionFromCode(code: string): Action | null {
-    const keyMap = settingsManager.getKeyMap();
-    for (const action in keyMap) {
-      if (keyMap[action as Action]?.includes(code)) {
+    for (const action in this.keyMap) {
+      if (this.keyMap[action as Action]?.includes(code)) {
         return action as Action;
       }
     }
@@ -7839,8 +7774,8 @@ class InputProvider {
   private hasVibrationSupport = typeof navigator !== "undefined" && !!navigator.vibrate;
   private active = true;
 
-  constructor() {
-    this.keyboardDevice = new KeyboardInputDevice();
+  constructor(keyMap?: KeyMap) {
+    this.keyboardDevice = new KeyboardInputDevice(keyMap);
     this.devices.push(this.keyboardDevice);
     this.devices.push(new GamepadInputDevice());
     this.keyboardDevice.activate();
@@ -7861,6 +7796,10 @@ class InputProvider {
 
   public isActive(): boolean {
     return this.active;
+  }
+
+  public setKeyMap(keyMap: KeyMap) {
+    this.keyboardDevice.setKeyMap(keyMap);
   }
 
   private handleBlur = () => {
@@ -8425,59 +8364,112 @@ export class ParticleRenderer {
   }
 
   public renderParticles(particles: readonly Particle[]): void {
-    this.ctx.save();
-    for (const p of particles) {
+    const ctx = this.ctx;
+    const len = particles.length;
+    if (len === 0) return;
+
+    ctx.save();
+
+    const sparkBuckets = new Map<string, Particle[]>();
+    const dustBuckets = new Map<string, Particle[]>();
+    const lines: Particle[] = [];
+    const rings: Particle[] = [];
+
+    for (let i = 0; i < len; i++) {
+      const p = particles[i];
       const pct = p.life / p.maxLife;
 
       if (p.shape === "spark") {
         const sparkColor = p.startColor && p.endColor ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
-        this.ctx.fillStyle = getHslaColor(sparkColor, pct);
-        this.ctx.globalAlpha = 1.0;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        this.ctx.fill();
-      } else if (p.shape === "dust") {
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
-      } else if (p.shape === "line") {
-        const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
-        let ux = 1;
-        let uy = 0;
-        if (speed > 0) {
-          ux = p.vx / speed;
-          uy = p.vy / speed;
+        const colorKey = p.startColor && p.endColor ? sparkColor : `${p.color}_${Math.round(pct * 20)}`;
+        let bucket = sparkBuckets.get(colorKey);
+        if (!bucket) {
+          bucket = [];
+          sparkBuckets.set(colorKey, bucket);
         }
-        const x1 = p.x - ux * p.size * 8;
-        const y1 = p.y - uy * p.size * 8;
-        const x2 = p.x + ux * p.size * 6;
-        const y2 = p.y + uy * p.size * 6;
-
-        const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
-        lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
-        lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
-        lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
-
-        this.ctx.strokeStyle = lineGrad;
-        this.ctx.lineWidth = p.size;
-        this.ctx.lineCap = "round";
-        this.ctx.globalAlpha = 1.0;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x1, y1);
-        this.ctx.lineTo(x2, y2);
-        this.ctx.stroke();
+        bucket.push(p);
+      } else if (p.shape === "dust") {
+        let bucket = dustBuckets.get(p.color);
+        if (!bucket) {
+          bucket = [];
+          dustBuckets.set(p.color, bucket);
+        }
+        bucket.push(p);
+      } else if (p.shape === "line") {
+        lines.push(p);
       } else if (p.shape === "ring") {
-        const radius = p.size + (1.0 - pct) * 44;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = p.color;
-        this.ctx.globalAlpha = pct;
-        this.ctx.lineWidth = 2.5;
-        this.ctx.stroke();
+        rings.push(p);
       }
     }
-    this.ctx.restore();
+
+    for (const [, bucket] of sparkBuckets) {
+      const p = bucket[0];
+      const pct = p.life / p.maxLife;
+      const sparkColor = p.startColor && p.endColor ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
+      ctx.fillStyle = getHslaColor(sparkColor, pct);
+      ctx.globalAlpha = 1.0;
+      for (let j = 0; j < bucket.length; j++) {
+        const sp = bucket[j];
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (const [color, bucket] of dustBuckets) {
+      ctx.fillStyle = color;
+      for (let j = 0; j < bucket.length; j++) {
+        const dp = bucket[j];
+        const pct = dp.life / dp.maxLife;
+        ctx.globalAlpha = pct;
+        ctx.fillRect(dp.x - dp.size / 2, dp.y - dp.size / 2, dp.size, dp.size * 0.7);
+      }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const p = lines[i];
+      const pct = p.life / p.maxLife;
+      const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
+      let ux = 1;
+      let uy = 0;
+      if (speed > 0) {
+        ux = p.vx / speed;
+        uy = p.vy / speed;
+      }
+      const x1 = p.x - ux * p.size * 8;
+      const y1 = p.y - uy * p.size * 8;
+      const x2 = p.x + ux * p.size * 6;
+      const y2 = p.y + uy * p.size * 6;
+
+      const lineGrad = ctx.createLinearGradient(x1, y1, x2, y2);
+      lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+      lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+      lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+      lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
+
+      ctx.strokeStyle = lineGrad;
+      ctx.lineWidth = p.size;
+      ctx.lineCap = "round";
+      ctx.globalAlpha = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    for (let i = 0; i < rings.length; i++) {
+      const p = rings[i];
+      const pct = p.life / p.maxLife;
+      const radius = p.size + (1.0 - pct) * 44;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = p.color;
+      ctx.globalAlpha = pct;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 }
 
@@ -9792,6 +9784,12 @@ export const UNITS = {
   MELEE_SIDE_OFFSET: 35,
   MELEE_VERTICAL_OFFSET: 35,
   MELEE_SWEEP_INNER_RADIUS: 25,
+
+  // Player wall jump horizontal impulse
+  PLAYER_WALL_JUMP_X_VELOCITY: 1650,
+
+  // Boss wall collision rebound velocity
+  BOSS_WALL_REBOUND_VELOCITY: 350,
 
   // Downward attack (pogo) hitbox dimensions
   POGO_HITBOX_WIDTH: 90,
@@ -13659,7 +13657,7 @@ export class BossLungeState extends BossState {
 
     if (hitWall && physics) {
       // Rebound backward and squash elastically on wall collision
-      this.owner.velocity.x = -this.owner.facingDirection * 350;
+      this.owner.velocity.x = -this.owner.facingDirection * UNITS.BOSS_WALL_REBOUND_VELOCITY;
       setVec(this.owner.visualScale, 0.7, 1.3);
       setVec(this.owner.targetVisualScale, 1.0, 1.0);
       this.owner.rotationVelocity = -this.owner.facingDirection * 28;
@@ -15443,6 +15441,11 @@ export type DamagePayload = {
   intensity: number;
 };
 
+const scratchPayload: DamagePayload = {
+  amount: 0, currentHealth: 0, maxHealth: 0,
+  sourceX: 0, sourceY: 0, intensity: 0,
+};
+
 export interface HealthComponentOptions {
   maxHealth?: number;
   invincibilityDuration?: number;
@@ -15501,7 +15504,13 @@ export class HealthComponent implements IEntityComponent {
     this.hitFlashTimer = this.hitFlashDuration;
 
     if (this.onDamaged) {
-      this.onDamaged({ amount, currentHealth: this.currentHealth, maxHealth: this.maxHealth, sourceX, sourceY, intensity });
+      scratchPayload.amount = amount;
+      scratchPayload.currentHealth = this.currentHealth;
+      scratchPayload.maxHealth = this.maxHealth;
+      scratchPayload.sourceX = sourceX;
+      scratchPayload.sourceY = sourceY;
+      scratchPayload.intensity = intensity;
+      this.onDamaged(scratchPayload);
     }
 
     if (this.currentHealth <= 0) {
@@ -16392,7 +16401,7 @@ export class PlayerInputHandler {
       this.performJump();
     } else if (this.player.wallCoyoteTimer > 0) {
       this.player.velocity.y = -this.player.jumpForce;
-      this.player.velocity.x = this.player.lastWallNormal * 1650;
+      this.player.velocity.x = this.player.lastWallNormal * UNITS.PLAYER_WALL_JUMP_X_VELOCITY;
       this.player.coyoteTimer = 0;
       this.player.wallCoyoteTimer = 0;
       this.player.jumpBufferTimer = 0;
@@ -17022,6 +17031,121 @@ export function useGameDialogue() {
     triggerDialogue,
     resetDialogues,
   };
+}
+
+
+
+● ./src/hooks/useMenuKeyboardNavigation.ts
+────────────────────────────────────────────────────
+import { useEffect } from "react";
+import type { Action } from "@/core/InputProvider";
+import { soundSynth } from "@/core/SoundSynth";
+import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
+import { useSessionStore } from "@/store/useGameStore";
+import type { ScreenState } from "@/store/useGameStore";
+import { screenConfigs, MenuContext } from "@/core/screenRoutes";
+import type { AudioSettings } from "@/core/SettingsManager";
+
+interface MenuCtxValues {
+  navTo: (screen: ScreenState) => void;
+  setMenuIndex: (index: number) => void;
+  reloadSaveSlots: () => void;
+  resetGameSession: () => void;
+  handleSlotAction: (index: number, onPlay: () => void) => void;
+  toggleCopyMode: () => void;
+  toggleEraseMode: () => void;
+  resetActions: () => void;
+  audio: AudioSettings;
+  handleVolumeChange: (field: keyof AudioSettings, value: number | boolean) => void;
+  resetSettings: () => void;
+}
+
+export function useMenuKeyboardNavigation(
+  menuCtxRef: React.MutableRefObject<MenuCtxValues>,
+  setRebindTarget: (target: { action: Action; index: number } | null) => void,
+  currentScreen: string,
+  gameResult: string,
+  rebindTarget: { action: Action; index: number } | null,
+) {
+  useEffect(() => {
+    const cs = useSessionStore.getState();
+    if ((cs.currentScreen === "PLAYING" && cs.gameResult === "PLAYING") || cs.currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
+      return;
+
+    const handleMenuNavigation = (e: KeyboardEvent) => {
+      const state = useSessionStore.getState();
+      const ctx = menuCtxRef.current;
+      const config = screenConfigs[state.currentScreen];
+      if (!config) return;
+
+      const context: MenuContext = {
+        navTo: ctx.navTo,
+        menuIndex: state.menuIndex,
+        setMenuIndex: ctx.setMenuIndex,
+        reloadSaveSlots: ctx.reloadSaveSlots,
+        resetGameSession: ctx.resetGameSession,
+        handleSlotAction: ctx.handleSlotAction,
+        toggleCopyMode: ctx.toggleCopyMode,
+        toggleEraseMode: ctx.toggleEraseMode,
+        resetActions: ctx.resetActions,
+        audio: ctx.audio,
+        handleVolumeChange: ctx.handleVolumeChange,
+        resetSettings: ctx.resetSettings,
+        setRebindTarget,
+        gameResult: state.gameResult,
+      };
+
+      const maxIndex = config.getMaxIndex(context);
+      const isHorizontalEndScreen = state.currentScreen === "PLAYING" && state.gameResult !== "PLAYING";
+      const isSoundSliderZone = state.currentScreen === "SOUND" && state.menuIndex < 3;
+
+      const isMoveForward =
+        e.key === "ArrowDown" ||
+        e.code === "KeyS" ||
+        (isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowRight" || e.code === "KeyD"));
+
+      const isMoveBackward =
+        e.key === "ArrowUp" ||
+        e.code === "KeyW" ||
+        (isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA")) ||
+        (!isSoundSliderZone && !isHorizontalEndScreen && (e.key === "ArrowLeft" || e.code === "KeyA"));
+
+      if (isMoveForward) {
+        e.preventDefault();
+        soundSynth.playSelectTick();
+        ctx.setMenuIndex((state.menuIndex + 1) % (maxIndex + 1));
+      } else if (isMoveBackward) {
+        e.preventDefault();
+        soundSynth.playSelectTick();
+        ctx.setMenuIndex((state.menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
+      } else if (isConfirmKey(e)) {
+        e.preventDefault();
+        config.onSelect(context);
+      } else if (isBackKey(e)) {
+        e.preventDefault();
+        if (config.onBack) {
+          config.onBack(context);
+        }
+      }
+
+      if (
+        isSoundSliderZone &&
+        (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.code === "KeyA" || e.code === "KeyD")
+      ) {
+        if (config.onHorizontal) {
+          e.preventDefault();
+          const direction = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : -1;
+          config.onHorizontal(direction, context);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleMenuNavigation);
+    return () => {
+      window.removeEventListener("keydown", handleMenuNavigation);
+    };
+  }, [currentScreen, rebindTarget, gameResult, menuCtxRef, setRebindTarget]);
 }
 
 
