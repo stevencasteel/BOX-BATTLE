@@ -139,7 +139,6 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
     const keys = settingsManager.getKeyMap()[action] || [];
     const rawKey = keys[0] || "";
     
-    if (action === "JUMP") return "X";
     if (rawKey === "Space") return "X";
     if (rawKey === "ArrowLeft") return "◄";
     if (rawKey === "ArrowRight") return "►";
