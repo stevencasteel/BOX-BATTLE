@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
 export interface GhostFrame {
@@ -56,14 +57,14 @@ export class DashComponent implements IEntityComponent {
         });
         this.ghostSpawnTimer = 0.025;
 
-        // Spawn high speed trailing wind resistance lines matching trajectory angle
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
-          y: this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
-          angle: Math.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (Math.random() * 0.4 - 0.2),
-          color: "rgba(255, 255, 255, 0.22)",
-          count: 2,
-        });
+        eventBroker.publishSpark(
+          this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
+          this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
+          TrigLUT.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2),
+          "rgba(255, 255, 255, 0.22)",
+          false,
+          2
+        );
       }
 
       if (this.dashTimer <= 0) {

@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
 const chargeUpdatePayload = { timer: 0 };
@@ -40,53 +41,35 @@ export class FireballComponent implements IEntityComponent {
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
       const nowTime = performance.now();
 
-      const pulse = Math.sin(nowTime * 0.045) * 0.03 * progress;
-      const shiverX = (Math.random() * 0.012 - 0.006) * progress;
-      const shiverY = (Math.random() * 0.012 - 0.006) * progress;
+      const pulse = TrigLUT.sin(nowTime * 0.045) * 0.03 * progress;
+      const shiverX = (TrigLUT.random() * 0.012 - 0.006) * progress;
+      const shiverY = (TrigLUT.random() * 0.012 - 0.006) * progress;
 
-      this.owner.targetVisualScale = { 
-        x: 1.0 - pulse + shiverX, 
-        y: 1.0 + pulse + shiverY 
-      };
-      this.owner.rotation = Math.sin(nowTime * 0.09) * 0.02 * progress;
+      this.owner.targetVisualScale.x = 1.0 - pulse + shiverX;
+      this.owner.targetVisualScale.y = 1.0 + pulse + shiverY;
+      this.owner.rotation = TrigLUT.sin(nowTime * 0.09) * 0.02 * progress;
 
-      if (Math.random() < 0.3 + progress * 0.5) {
-        const angle = Math.random() * Math.PI * 2;
+      if (TrigLUT.random() < 0.3 + progress * 0.5) {
+        const angle = TrigLUT.random() * Math.PI * 2;
         const radius = 80 - progress * 50;
-        const startX = this.owner.position.x + Math.cos(angle) * radius;
-        const startY = this.owner.position.y - 12 + Math.sin(angle) * radius;
+        const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
+        const startY = this.owner.position.y - 12 + TrigLUT.sin(angle) * radius;
 
         const targetX = this.owner.position.x;
         const targetY = this.owner.position.y - 12;
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: Math.atan2(vy, vx),
-          color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-          count: 1,
-          shape: "line",
-          turbulence: 20
-        });
+        eventBroker.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
-      if (isLvl2 && Math.random() < 0.12) {
-        const angle = Math.random() * Math.PI * 2;
+      if (isLvl2 && TrigLUT.random() < 0.12) {
+        const angle = TrigLUT.random() * Math.PI * 2;
         const radius = 60;
-        const startX = this.owner.position.x + Math.cos(angle) * radius;
-        const startY = this.owner.position.y - 12 + Math.sin(angle) * radius;
+        const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
+        const startY = this.owner.position.y - 12 + TrigLUT.sin(angle) * radius;
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: angle + Math.PI,
-          color: "hsl(190, 100%, 85%)",
-          count: 3,
-          shape: "line",
-          turbulence: 45
-        });
+        eventBroker.publishSpark(startX, startY, angle + Math.PI, "hsl(190, 100%, 85%)", false, 3, "line", 45);
         eventBroker.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
       }
     }
@@ -139,7 +122,7 @@ export class FireballComponent implements IEntityComponent {
       finalDirX = facingDirection;
     }
 
-    const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
+    const mag = TrigLUT.fastSqrt(finalDirX * finalDirX + finalDirY * finalDirY);
     const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
 
     const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;

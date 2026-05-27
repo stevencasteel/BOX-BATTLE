@@ -73,14 +73,14 @@ export class ParticleSystem {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
-            ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
-            : angle + (Math.random() * 0.9 - 0.45);
-          const pSpeed = radial ? 100 + Math.random() * 300 : 160 + Math.random() * 280;
+            ? (i / sparkCount) * Math.PI * 2 + (TrigLUT.random() * 0.4 - 0.2)
+            : angle + (TrigLUT.random() * 0.9 - 0.45);
+          const pSpeed = radial ? 100 + TrigLUT.random() * 300 : 160 + TrigLUT.random() * 280;
 
           const vx = TrigLUT.cos(pAngle) * pSpeed;
           const vy = TrigLUT.sin(pAngle) * pSpeed;
           const pColor = color || "hsl(142, 71%, 58%)";
-          const size = 2.5 + Math.random() * 3.5;
+          const size = 2.5 + TrigLUT.random() * 3.5;
           const life = 0.22;
 
           const drag = 0.94;
@@ -107,14 +107,14 @@ export class ParticleSystem {
           const dir = i % 2 === 0 ? 1 : -1;
           
           const pSpeedX = isVertical
-            ? -dir * (4 + Math.random() * 10)
-            : dir * (125 + Math.random() * 160);
+            ? -dir * (4 + TrigLUT.random() * 10)
+            : dir * (125 + TrigLUT.random() * 160);
 
           const pSpeedY = isVertical
-            ? dir * (125 + Math.random() * 160)
-            : -4 - Math.random() * 10;
+            ? dir * (125 + TrigLUT.random() * 160)
+            : -4 - TrigLUT.random() * 10;
 
-          const size = 3.5 + Math.random() * 3.5;
+          const size = 3.5 + TrigLUT.random() * 3.5;
           const life = 0.35;
           const drag = 0.88;
 

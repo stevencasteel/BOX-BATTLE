@@ -48,8 +48,15 @@ export type GameEventMap = {
 export type EventCallback<T> = (payload: T) => void;
 
 class EventBroker {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
+
+  private static sparkPayload: {
+    x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line";
+  } = { x: 0, y: 0, angle: 0 };
+
+  private static dustPayload: { x: number; y: number; direction?: "horizontal" | "vertical" } = { x: 0, y: 0 };
+
+  private static blastPayload: { x: number; y: number; color: string } = { x: 0, y: 0, color: "" };
 
   public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
     if (!this.listeners[event]) {
@@ -67,6 +74,35 @@ class EventBroker {
     if (set) {
       set.forEach((cb) => cb(payload));
     }
+  }
+
+  public publishSpark(x: number, y: number, angle: number, color?: string, radial?: boolean, count?: number, shape?: "spark" | "line", turbulence?: number): void {
+    const p = EventBroker.sparkPayload;
+    p.x = x;
+    p.y = y;
+    p.angle = angle;
+    p.color = color;
+    p.radial = radial;
+    p.count = count;
+    p.shape = shape;
+    p.turbulence = turbulence;
+    this.publish("SPAWN_SPARKS", p as GameEventMap["SPAWN_SPARKS"]);
+  }
+
+  public publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void {
+    const p = EventBroker.dustPayload;
+    p.x = x;
+    p.y = y;
+    p.direction = direction;
+    this.publish("SPAWN_DUST", p as GameEventMap["SPAWN_DUST"]);
+  }
+
+  public publishBlast(x: number, y: number, color: string): void {
+    const p = EventBroker.blastPayload;
+    p.x = x;
+    p.y = y;
+    p.color = color;
+    this.publish("SPAWN_BLAST", p as GameEventMap["SPAWN_BLAST"]);
   }
 
   public clear(): void {

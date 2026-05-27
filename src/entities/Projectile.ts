@@ -4,6 +4,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
 
 const TRAIL_RING_SIZE = 16;
@@ -81,16 +82,9 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     const isLvl2 = this.damage >= 3;
     const sparkChance = isLvl2 ? 0.35 : 0.08;
-    if (this.ownerId === "player" && Math.random() < sparkChance) {
-      const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI + (Math.random() * 0.4 - 0.2);
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: angle,
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-        count: 1,
-        shape: "line",
-      });
+    if (this.ownerId === "player" && TrigLUT.random() < sparkChance) {
+      const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
+      eventBroker.publishSpark(this.position.x, this.position.y, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
     }
 
     const dx = this.velocity.x * dt;
@@ -267,24 +261,13 @@ export class Projectile extends BaseEntity implements IPoolable {
   private releaseEffects() {
     const isPlayer = this.ownerId === "player";
     const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
-    const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
+    const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI;
 
-    eventBroker.publish("SPAWN_BLAST", {
-      x: this.position.x,
-      y: this.position.y,
-      color: blastColor,
-    });
+    eventBroker.publishBlast(this.position.x, this.position.y, blastColor);
 
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x,
-      y: this.position.y,
-      angle: angle,
-      color: blastColor,
-      radial: false,
-      count: isPlayer ? (this.damage >= 3 ? 18 : 4) : 8,
-      shape: "line",
-      turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
-    });
+    const sparkCount = isPlayer ? (this.damage >= 3 ? 18 : 4) : 8;
+    const turbulence = isPlayer && this.damage >= 3 ? 20 : 5;
+    eventBroker.publishSpark(this.position.x, this.position.y, angle, blastColor, false, sparkCount, "line", turbulence);
   }
 
   public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
@@ -398,8 +381,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       ctx.restore();
     }
 
-    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    const angle = Math.atan2(this.velocity.y, this.velocity.x);
+    const speed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x);
 
     const maxStretchSpeed = 1000;
     const stretchFactor = Math.min(1.5, 1.0 + (speed / maxStretchSpeed) * 0.5);

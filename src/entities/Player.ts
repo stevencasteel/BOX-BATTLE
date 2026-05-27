@@ -10,6 +10,7 @@ import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 import { PlayerInputHandler } from "@/entities/handlers/PlayerInputHandler";
 import { PlayerCombatHandler } from "@/entities/handlers/PlayerCombatHandler";
 import { PlayerVisuals } from "@/entities/handlers/PlayerVisuals";
@@ -126,26 +127,12 @@ export class Player extends BaseEntity {
     });
 
     this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(280, 80%, 65%)",
-        radial: true,
-        count: 18,
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(280, 80%, 65%)", true, 18);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
     this.unsubChargeCancel = eventBroker.subscribe("CHARGE_CANCEL", () => {
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y - 12,
-        angle: 0,
-        color: "hsl(142, 71%, 58%)",
-        radial: true,
-        count: 14,
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y - 12, 0, "hsl(142, 71%, 58%)", true, 14);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 2, duration: 0.1 });
     });
 
@@ -163,38 +150,13 @@ export class Player extends BaseEntity {
         });
       }
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: this.position.x,
-        y: this.position.y,
-        color: "hsl(280, 100%, 75%)",
-      });
+      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(280, 100%, 75%)");
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: this.position.x,
-        y: this.position.y,
-        color: "hsl(142, 71%, 58%)",
-      });
+      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(142, 71%, 58%)");
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(285, 100%, 80%)",
-        radial: true,
-        count: 32,
-        shape: "line",
-        turbulence: 30
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(285, 100%, 80%)", true, 32, "line", 30);
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(142, 100%, 80%)",
-        radial: true,
-        count: 20,
-        shape: "spark",
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(142, 100%, 80%)", true, 20, "spark");
 
       setVec(this.visualScale, 0.90, 1.10);
       setVec(this.scaleVelocity, 6.0, -12.0);
@@ -240,21 +202,9 @@ export class Player extends BaseEntity {
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: muzzleX,
-        y: muzzleY,
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"
-      });
+      eventBroker.publishBlast(muzzleX, muzzleY, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)");
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: muzzleX,
-        y: muzzleY,
-        angle: Math.atan2(dirY, dirX),
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-        radial: false,
-        count: isLvl2 ? 16 : 8,
-        shape: "line"
-      });
+      eventBroker.publishSpark(muzzleX, muzzleY, TrigLUT.atan2(dirY, dirX), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, isLvl2 ? 16 : 8, "line");
     });
   }
 

@@ -1,5 +1,6 @@
 import { Player } from "@/entities/Player";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 import { setVec } from "@/core/VecUtils";
 
@@ -30,16 +31,10 @@ export class PlayerInputHandler {
         targetScaleX = 0.85;
         targetScaleY = 1.15;
 
-        if (Math.random() < 0.35) {
-          const contactX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2) + (Math.random() * 8 - 4);
+        if (TrigLUT.random() < 0.35) {
+          const contactX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2) + (TrigLUT.random() * 8 - 4);
           const contactY = this.player.position.y + (this.player.size.height / 2);
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: contactX,
-            y: contactY,
-            angle: this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15,
-            color: "hsl(45, 100%, 65%)",
-            count: 1,
-          });
+          eventBroker.publishSpark(contactX, contactY, this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15, "hsl(45, 100%, 65%)", false, 1);
         }
       }
     }
@@ -59,7 +54,7 @@ export class PlayerInputHandler {
           setVec(this.player.visualScale, 1.0 + 0.28 * factor, 1.0 - 0.28 * factor);
           setVec(this.player.scaleVelocity, 10 * factor, -18 * factor);
           this.player.velocity.x *= (1.0 - 0.8 * factor);
-          eventBroker.publish("SPAWN_DUST", { x: this.player.position.x, y: this.player.position.y + this.player.size.height / 2 });
+          eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
           eventBroker.publish("PLAYER_LANDED", undefined);
         }
       }
@@ -76,14 +71,8 @@ export class PlayerInputHandler {
     const impactSide = this.player.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.player.position.x + impactSide * (this.player.size.width / 2);
 
-    eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.player.position.y, direction: "vertical" });
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: wallX,
-      y: this.player.position.y,
-      angle: impactSide > 0 ? Math.PI : 0,
-      color: "rgba(255, 255, 255, 0.55)",
-      count: 6,
-    });
+    eventBroker.publishDust(wallX, this.player.position.y, "vertical");
+    eventBroker.publishSpark(wallX, this.player.position.y, impactSide > 0 ? Math.PI : 0, "rgba(255, 255, 255, 0.55)", false, 6);
   }
 
   public updateCoyoteAndWallTimers(dt: number) {
@@ -201,7 +190,7 @@ export class PlayerInputHandler {
       this.player.dashComponent.resetDashCharge();
 
       const wallX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2);
-      eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.player.position.y, direction: "vertical" });
+      eventBroker.publishDust(wallX, this.player.position.y, "vertical");
       eventBroker.publish("PLAYER_JUMPED", undefined);
     } else if (this.player.hasDoubleJump) {
       this.player.velocity.y = -this.player.jumpForce;
@@ -221,7 +210,7 @@ export class PlayerInputHandler {
     this.player.coyoteTimer = 0;
     this.player.jumpBufferTimer = 0;
     setVec(this.player.visualScale, 0.82, 1.18);
-    eventBroker.publish("SPAWN_DUST", { x: this.player.position.x, y: this.player.position.y + this.player.size.height / 2 });
+    eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
     eventBroker.publish("PLAYER_JUMPED", undefined);
   }
 

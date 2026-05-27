@@ -10,6 +10,7 @@ import {
 } from "./MinionStates";
 import { eventBroker } from "@/core/eventBroker";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
@@ -115,20 +116,9 @@ export class Minion extends BaseEntity {
           ? "hsl(200, 80%, 65%)"
           : "hsl(215, 20%, 65%)";
 
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x,
-      y: this.position.y,
-      angle: 0,
-      color: mColor,
-      radial: true,
-      count: 24,
-    });
+    eventBroker.publishSpark(this.position.x, this.position.y, 0, mColor, true, 24);
 
-    eventBroker.publish("SPAWN_BLAST", {
-      x: this.position.x,
-      y: this.position.y,
-      color: mColor,
-    });
+    eventBroker.publishBlast(this.position.x, this.position.y, mColor);
   }
 
   public update(dt: number) {
@@ -145,15 +135,15 @@ export class Minion extends BaseEntity {
             ? "hsl(200, 80%, 65%)"
             : "hsl(215, 20%, 65%)";
 
-      if (Math.random() < 0.5) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 40 + Math.random() * 30;
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x + Math.cos(angle) * dist,
-          y: this.position.y + Math.sin(angle) * dist,
-          angle: angle + Math.PI,
-          color: mColor,
-        });
+      if (TrigLUT.random() < 0.5) {
+        const angle = TrigLUT.random() * Math.PI * 2;
+        const dist = 40 + TrigLUT.random() * 30;
+        eventBroker.publishSpark(
+          this.position.x + TrigLUT.cos(angle) * dist,
+          this.position.y + TrigLUT.sin(angle) * dist,
+          angle + Math.PI,
+          mColor
+        );
       }
 
       if (this.spawnTimer <= 0) {
@@ -174,13 +164,13 @@ export class Minion extends BaseEntity {
             ? "hsl(200, 80%, 65%)"
             : "hsl(215, 20%, 65%)";
 
-      if (Math.random() < 0.6) {
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
-          y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
-          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2),
-          color: mColor,
-        });
+      if (TrigLUT.random() < 0.6) {
+        eventBroker.publishSpark(
+          this.position.x + (TrigLUT.random() * this.size.width - this.size.width / 2),
+          this.position.y + (TrigLUT.random() * this.size.height - this.size.height / 2),
+          -Math.PI / 2 + (TrigLUT.random() * 0.4 - 0.2),
+          mColor
+        );
       }
 
       if (this.dissolveTimer <= 0) {
@@ -221,35 +211,31 @@ export class Minion extends BaseEntity {
       if (this.minionType === "FLYER") {
         this.exhaustTimer = isTelegraph ? 0.04 : 0.08;
         const sparkColor = isTelegraph ? "hsl(45, 100%, 60%)" : "hsl(200, 80%, 65%)";
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x,
-          y: this.position.y + this.size.height / 2,
-          angle: Math.PI / 2,
-          color: sparkColor,
-          count: isTelegraph ? 6 : 2
-        });
+        eventBroker.publishSpark(this.position.x, this.position.y + this.size.height / 2, Math.PI / 2, sparkColor, false, isTelegraph ? 6 : 2);
       } else if (this.minionType === "LANCER") {
         if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
           this.exhaustTimer = isTelegraph ? 0.05 : 0.15;
           const scrapeColor = isTelegraph ? "hsl(45, 100%, 60%)" : "rgba(255, 255, 255, 0.4)";
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: this.position.x - this.facingDirection * (this.size.width / 2),
-            y: this.position.y + this.size.height / 2,
-            angle: Math.atan2(0.5, -this.facingDirection) + (Math.random() * 0.3 - 0.15),
-            color: scrapeColor,
-            count: isTelegraph ? 3 : 1
-          });
+          eventBroker.publishSpark(
+            this.position.x - this.facingDirection * (this.size.width / 2),
+            this.position.y + this.size.height / 2,
+            TrigLUT.atan2(0.5, -this.facingDirection) + (TrigLUT.random() * 0.3 - 0.15),
+            scrapeColor,
+            false,
+            isTelegraph ? 3 : 1
+          );
         }
       } else if (this.minionType === "TURRET") {
         if (isTelegraph) {
           this.exhaustTimer = 0.06;
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: this.position.x + (Math.random() * 16 - 8),
-            y: this.position.y - this.size.height / 2,
-            angle: -Math.PI / 2 + (Math.random() * 0.2 - 0.1),
-            color: "hsl(0, 100%, 65%)",
-            count: 2
-          });
+          eventBroker.publishSpark(
+            this.position.x + (TrigLUT.random() * 16 - 8),
+            this.position.y - this.size.height / 2,
+            -Math.PI / 2 + (TrigLUT.random() * 0.2 - 0.1),
+            "hsl(0, 100%, 65%)",
+            false,
+            2
+          );
         }
       }
     }
@@ -343,7 +329,7 @@ export class Minion extends BaseEntity {
       const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
       const accordionScale = 1.0 - Math.pow(1.0 - firstHalfProgress, 3) * Math.cos(firstHalfProgress * 3.5 * Math.PI);
       
-      const staticFlicker = Math.random() < 0.04 ? 0.45 : 1.0;
+      const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
 
       const mColor =
@@ -377,14 +363,14 @@ export class Minion extends BaseEntity {
           const theta1 = i * step + ringRotation;
           const theta2 = (i + 1) * step + ringRotation;
 
-          const x1 = R * Math.cos(theta1);
-          const y1 = -h + R * Math.sin(theta1) * 0.28;
+          const x1 = R * TrigLUT.cos(theta1);
+          const y1 = -h + R * TrigLUT.sin(theta1) * 0.28;
 
-          const x2 = R * Math.cos(theta2);
-          const y2 = -h + R * Math.sin(theta2) * 0.28;
+          const x2 = R * TrigLUT.cos(theta2);
+          const y2 = -h + R * TrigLUT.sin(theta2) * 0.28;
 
           const midAngle = (theta1 + theta2) / 2;
-          const isBehind = Math.sin(midAngle) < 0;
+          const isBehind = TrigLUT.sin(midAngle) < 0;
 
           const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
           if (isBehind) {
@@ -398,11 +384,11 @@ export class Minion extends BaseEntity {
       const strutAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
       for (const angle of strutAngles) {
         const theta = angle + rotation;
-        const x = R * Math.cos(theta);
-        const yBottom = -hBottom + R * Math.sin(theta) * 0.28;
-        const yTop = -hTop + R * Math.sin(theta) * 0.28;
+        const x = R * TrigLUT.cos(theta);
+        const yBottom = -hBottom + R * TrigLUT.sin(theta) * 0.28;
+        const yTop = -hTop + R * TrigLUT.sin(theta) * 0.28;
 
-        const isBehind = Math.sin(theta) < 0;
+        const isBehind = TrigLUT.sin(theta) < 0;
         const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
         if (isBehind) {
           backCageScratch.push(segment);

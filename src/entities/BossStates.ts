@@ -246,14 +246,7 @@ export class BossLungeState extends BossState {
 
       const impactSide = physics.isOnWallLeft ? -1 : 1;
       const wallX = this.owner.position.x + impactSide * (this.owner.size.width / 2);
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: wallX,
-        y: this.owner.position.y,
-        angle: impactSide > 0 ? Math.PI : 0,
-        color: "hsl(350, 80%, 60%)",
-        radial: true,
-        count: 15,
-      });
+      eventBroker.publishSpark(wallX, this.owner.position.y, impactSide > 0 ? Math.PI : 0, "hsl(350, 80%, 60%)", true, 15);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
     } else {
       this.owner.velocity.x = 0;

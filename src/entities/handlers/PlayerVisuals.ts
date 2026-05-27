@@ -11,6 +11,28 @@ const AURA_COLORS = [
   'hsla(0, 0%, 100%, 0.95)'
 ];
 
+const chargeGradCache = document.createElement("canvas");
+chargeGradCache.width = 64;
+chargeGradCache.height = 64;
+const chargeGradCtx = chargeGradCache.getContext("2d")!;
+const chargeGrad = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+chargeGrad.addColorStop(0.0, '#ffffff');
+chargeGrad.addColorStop(0.3, 'hsl(142, 100%, 80%)');
+chargeGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
+chargeGradCtx.fillStyle = chargeGrad;
+chargeGradCtx.fillRect(0, 0, 64, 64);
+
+const chargeGradLvl2 = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+chargeGradLvl2.addColorStop(0.0, '#ffffff');
+chargeGradLvl2.addColorStop(0.3, 'hsl(45, 100%, 75%)');
+chargeGradLvl2.addColorStop(1.0, 'rgba(255,255,255,0)');
+const chargeGradLvl2Canvas = document.createElement("canvas");
+chargeGradLvl2Canvas.width = 64;
+chargeGradLvl2Canvas.height = 64;
+const chargeGradLvl2Ctx = chargeGradLvl2Canvas.getContext("2d")!;
+chargeGradLvl2Ctx.fillStyle = chargeGradLvl2;
+chargeGradLvl2Ctx.fillRect(0, 0, 64, 64);
+
 export class PlayerVisuals {
   private player: Player;
 
@@ -182,18 +204,8 @@ export class PlayerVisuals {
       ctx.globalCompositeOperation = "lighter";
 
       const coreRadius = (8 + chargeProgress * 14);
-      const coreGrad = ctx.createRadialGradient(
-        localCenterX, localCenterY, 0,
-        localCenterX, localCenterY, coreRadius
-      );
-      coreGrad.addColorStop(0.0, '#ffffff');
-      coreGrad.addColorStop(0.3, isLvl2 ? 'hsl(45, 100%, 75%)' : 'hsl(142, 100%, 80%)');
-      coreGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
-
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
-      ctx.fill();
+      const gradCanvas = isLvl2 ? chargeGradLvl2Canvas : chargeGradCache;
+      ctx.drawImage(gradCanvas, localCenterX - coreRadius, localCenterY - coreRadius, coreRadius * 2, coreRadius * 2);
 
       ctx.save();
       ctx.lineCap = "round";
@@ -206,8 +218,8 @@ export class PlayerVisuals {
         ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
 
         for (let d = 0; d < dischargeCount; d++) {
-          if (Math.random() < 0.35) {
-            const startAngle = Math.random() * Math.PI * 2;
+          if (TrigLUT.random() < 0.35) {
+            const startAngle = TrigLUT.random() * Math.PI * 2;
             const rMax = (this.player.size.height * 0.35) + 20 * chargeProgress;
 
             ctx.beginPath();
@@ -218,7 +230,7 @@ export class PlayerVisuals {
             const steps = 3;
             for (let s = 1; s <= steps; s++) {
               const t = s / steps;
-              const nextAngle = startAngle + (Math.random() * 0.6 - 0.3);
+              const nextAngle = startAngle + (TrigLUT.random() * 0.6 - 0.3);
               const nextRadius = rMax * (1.0 - t);
               const targetX = localCenterX + TrigLUT.cos(nextAngle) * nextRadius;
               const targetY = localCenterY + TrigLUT.sin(nextAngle) * nextRadius;

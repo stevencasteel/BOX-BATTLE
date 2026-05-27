@@ -1,7 +1,8 @@
 import { UNITS } from "@/core/Units";
 import { World } from "@/core/World";
+import { TrigLUT } from "@/core/TrigLUT";
 
-const PSEUDO_RANDOM_LUT = Array.from({ length: 128 }, () => Math.random() * 4 - 2);
+const PSEUDO_RANDOM_LUT = Array.from({ length: 128 }, () => TrigLUT.random() * 4 - 2);
 
 export class CinematicDeathRenderer {
   public static render(
@@ -45,12 +46,12 @@ export class CinematicDeathRenderer {
           const startX = px - baseWidth / 2 + (row % 2 === 0 ? 0.3 : -0.3) * offsetVal + (row + 0.5) * (baseWidth / gridCols);
           const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
 
-          const angle = Math.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
+          const angle = TrigLUT.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
           const thrust = activeProgress * 80;
           const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
 
-          const curX = startX + Math.cos(angle) * thrust + (Math.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
-          const curY = startY + Math.sin(angle) * thrust + gravityOffset;
+          const curX = startX + TrigLUT.cos(angle) * thrust + (TrigLUT.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
+          const curY = startY + TrigLUT.sin(angle) * thrust + gravityOffset;
 
           ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
           ctx.globalAlpha = opacity;
@@ -70,11 +71,11 @@ export class CinematicDeathRenderer {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = flareAlpha;
 
-        const hLength = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const hLength = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
         const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
         ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
 
-        const vHeight = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const vHeight = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
         const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
         ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
 
@@ -109,16 +110,16 @@ export class CinematicDeathRenderer {
       ctx.beginPath();
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
-        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
-        const rayWidth = 18 * Math.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
+        const currentLength = maxRayLength * TrigLUT.sin(explodeProgress * Math.PI * 0.5);
+        const rayWidth = 18 * TrigLUT.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
 
         const p1_angle = angle - (rayWidth / currentLength);
         const p2_angle = angle + (rayWidth / currentLength);
 
-        const x1 = px + Math.cos(p1_angle) * currentLength;
-        const y1 = py + Math.sin(p1_angle) * currentLength;
-        const x2 = px + Math.cos(p2_angle) * currentLength;
-        const y2 = py + Math.sin(p2_angle) * currentLength;
+        const x1 = px + TrigLUT.cos(p1_angle) * currentLength;
+        const y1 = py + TrigLUT.sin(p1_angle) * currentLength;
+        const x2 = px + TrigLUT.cos(p2_angle) * currentLength;
+        const y2 = py + TrigLUT.sin(p2_angle) * currentLength;
 
         ctx.moveTo(px, py);
         ctx.lineTo(x1, y1);
@@ -132,10 +133,10 @@ export class CinematicDeathRenderer {
       ctx.beginPath();
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
-        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
+        const currentLength = maxRayLength * TrigLUT.sin(explodeProgress * Math.PI * 0.5);
         ctx.moveTo(px, py);
-        ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
-        ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
+        ctx.lineTo(px + TrigLUT.cos(angle) * currentLength * 0.8, py + TrigLUT.sin(angle) * currentLength * 0.8);
+        ctx.lineTo(px + TrigLUT.cos(angle + 0.01) * currentLength * 0.8, py + TrigLUT.sin(angle + 0.01) * currentLength * 0.8);
         ctx.closePath();
       }
       ctx.fill();
@@ -186,8 +187,8 @@ export class CinematicDeathRenderer {
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
+          const x = px + TrigLUT.cos(angle) * distance;
+          const y = py + TrigLUT.sin(angle) * distance;
           ctx.fillRect(x - 5, y - 5, 10, 10);
         }
 
@@ -196,8 +197,8 @@ export class CinematicDeathRenderer {
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
+          const x = px + TrigLUT.cos(angle) * distance;
+          const y = py + TrigLUT.sin(angle) * distance;
           ctx.fillRect(x - 2, y - 2, 4, 4);
         }
       }

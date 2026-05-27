@@ -69,6 +69,9 @@ export class WorldRenderer {
   private spikePath: Path2D | null = null;
   private staticCacheBuilt = false;
 
+  private attackGradCanvas: HTMLCanvasElement;
+  private particleLineGradCanvas: HTMLCanvasElement;
+
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
 
@@ -93,6 +96,31 @@ export class WorldRenderer {
     const staticCtx = this.staticCanvas.getContext("2d");
     if (!staticCtx) throw new Error("Could not create static canvas context");
     this.staticCtx = staticCtx;
+
+    this.attackGradCanvas = document.createElement("canvas");
+    this.attackGradCanvas.width = 128;
+    this.attackGradCanvas.height = 128;
+    const attackCtx = this.attackGradCanvas.getContext("2d")!;
+    const attackGrad = attackCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    attackGrad.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+    attackGrad.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+    attackGrad.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+    attackGrad.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    attackGrad.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    attackCtx.fillStyle = attackGrad;
+    attackCtx.fillRect(0, 0, 128, 128);
+
+    this.particleLineGradCanvas = document.createElement("canvas");
+    this.particleLineGradCanvas.width = 64;
+    this.particleLineGradCanvas.height = 1;
+    const lineCtx = this.particleLineGradCanvas.getContext("2d")!;
+    const lineGrad = lineCtx.createLinearGradient(0, 0, 64, 0);
+    lineGrad.addColorStop(0.0, "rgba(255,255,255,0)");
+    lineGrad.addColorStop(0.2, "rgba(255,255,255,0.15)");
+    lineGrad.addColorStop(0.85, "rgba(255,255,255,0.95)");
+    lineGrad.addColorStop(1.0, "rgba(255,255,255,0.3)");
+    lineCtx.fillStyle = lineGrad;
+    lineCtx.fillRect(0, 0, 64, 1);
   }
 
   public getCanvas(): HTMLCanvasElement {
@@ -158,24 +186,11 @@ export class WorldRenderer {
       ctx.translate(cx, cy);
       ctx.globalAlpha = opacity;
       ctx.fillStyle = this.cachedMeleeGradient;
-
+      const startA = facing > 0 ? baseStart : Math.PI - baseStart;
+      const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       ctx.beginPath();
-      ctx.arc(
-        0,
-        0,
-        UNITS.MELEE_MAX_REACH,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing < 0
-      );
-      ctx.arc(
-        0,
-        0,
-        UNITS.MELEE_SWEEP_INNER_RADIUS,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0
-      );
+      ctx.arc(0, 0, UNITS.MELEE_MAX_REACH, startA, endA, facing < 0);
+      ctx.arc(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, endA, startA, facing > 0);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
@@ -187,20 +202,16 @@ export class WorldRenderer {
       const currentInnerRadius = 15 + progress * 15;
 
       ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-
+      ctx.globalAlpha = opacity;
+      ctx.translate(cx, cy);
+      const gradScale = currentRadius / 64;
+      ctx.scale(gradScale, gradScale);
       ctx.beginPath();
-      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
-      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.arc(0, 0, 64, -Math.PI, 0);
+      ctx.arc(0, 0, currentInnerRadius / gradScale, 0, -Math.PI, true);
       ctx.closePath();
-      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(this.attackGradCanvas, -64, -64, 128, 128);
       ctx.restore();
     } else if (player.attackDirection === "down") {
       const cx = drawX;
@@ -210,20 +221,16 @@ export class WorldRenderer {
       const currentInnerRadius = 15 + progress * 15;
 
       ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-
+      ctx.globalAlpha = opacity;
+      ctx.translate(cx, cy);
+      const gradScale2 = currentRadius / 64;
+      ctx.scale(gradScale2, gradScale2);
       ctx.beginPath();
-      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
-      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.arc(0, 0, 64, 0, Math.PI);
+      ctx.arc(0, 0, currentInnerRadius / gradScale2, Math.PI, 0, true);
       ctx.closePath();
-      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(this.attackGradCanvas, -64, -64, 128, 128);
       ctx.restore();
     }
   }
