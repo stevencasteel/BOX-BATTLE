@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CzD5SzmP.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BvAD951B.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6438,7 +6438,9 @@ export class Engine {
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      activeProjectiles[i].update(dt);
+      if (activeProjectiles[i].update(dt)) {
+        this.pool.releaseAt(i);
+      }
     }
     inputProvider.postUpdate();
     this.projectState();
@@ -6522,11 +6524,11 @@ export class Engine {
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      activeProjectiles[i].update(dt);
+      if (activeProjectiles[i].update(dt)) {
+        this.pool.releaseAt(i);
+      }
     }
-
     inputProvider.postUpdate();
-
     this.projectState();
   }
 
@@ -7138,9 +7140,7 @@ export class ObjectPool<T extends IPoolable> {
   public release(instance: T) {
     const index = this.activePool.indexOf(instance);
     if (index !== -1) {
-      this.activePool.splice(index, 1);
-      instance.deactivate();
-      this.inactivePool.push(instance);
+      this.releaseAt(index);
     }
   }
 
@@ -7341,9 +7341,12 @@ export class PhysicsWorld implements IPhysicsWorld {
   public onewayPlatforms: Rectangle[] = [];
 
   private static readonly CELL_SIZE = UNITS.SPATIAL_GRID_CELL_SIZE;
-  private solidGrid: Map<string, Rectangle[]> = new Map();
-  private platformGrid: Map<string, Rectangle[]> = new Map();
-  private hazardGrid: Map<string, Rectangle[]> = new Map();
+  private solidGrid: Map<number, Rectangle[]> = new Map();
+  private platformGrid: Map<number, Rectangle[]> = new Map();
+  private hazardGrid: Map<number, Rectangle[]> = new Map();
+
+  private reuseSet = new Set<Rectangle>();
+  private reuseResult: Rectangle[] = [];
 
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = solids;
@@ -7355,7 +7358,7 @@ export class PhysicsWorld implements IPhysicsWorld {
     this.indexGeometry(this.hazards, this.hazardGrid);
   }
 
-  private indexGeometry(rects: Rectangle[], grid: Map<string, Rectangle[]>) {
+  private indexGeometry(rects: Rectangle[], grid: Map<number, Rectangle[]>) {
     for (const rect of rects) {
       const startX = Math.floor(rect.x / PhysicsWorld.CELL_SIZE);
       const endX = Math.floor((rect.x + rect.width) / PhysicsWorld.CELL_SIZE);
@@ -7364,7 +7367,7 @@ export class PhysicsWorld implements IPhysicsWorld {
 
       for (let cx = startX; cx <= endX; cx++) {
         for (let cy = startY; cy <= endY; cy++) {
-          const key = \`\${cx},\${cy}\`;
+          const key = (cy << 16) | cx;
           if (!grid.has(key)) {
             grid.set(key, []);
           }
@@ -7396,25 +7399,29 @@ export class PhysicsWorld implements IPhysicsWorld {
     const startY = Math.floor(top / PhysicsWorld.CELL_SIZE);
     const endY = Math.floor(bottom / PhysicsWorld.CELL_SIZE);
 
-    const resultSet = new Set<Rectangle>();
+    this.reuseSet.clear();
+    this.reuseResult.length = 0;
 
     for (let cx = startX; cx <= endX; cx++) {
       for (let cy = startY; cy <= endY; cy++) {
-        const key = \`\${cx},\${cy}\`;
+        const key = (cy << 16) | cx;
         const cellCandidates = grid.get(key);
         if (cellCandidates) {
           for (const candidate of cellCandidates) {
-            resultSet.add(candidate);
+            if (!this.reuseSet.has(candidate)) {
+              this.reuseSet.add(candidate);
+              this.reuseResult.push(candidate);
+            }
           }
         }
       }
     }
 
-    if (resultSet.size === 0) {
+    if (this.reuseResult.length === 0) {
       return fallback;
     }
 
-    return Array.from(resultSet);
+    return this.reuseResult;
   }
 
   public isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean {
@@ -8196,7 +8203,6 @@ export class World implements IWorld {
       damage,
       speed,
       lifespan,
-      (p: Projectile) => this.releaseProjectile(p),
       this,
       customColor
     );
@@ -8462,16 +8468,12 @@ export class WorldRenderer {
         for (const p of particles) {
           const pct = p.life / p.maxLife;
 
-          if (p.shape === 'spark') {
+            if (p.shape === 'spark') {
             const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
-            const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
-            radialGrad.addColorStop(0.0, getHslaColor(sparkColor, pct));
-            radialGrad.addColorStop(0.3, getHslaColor(sparkColor, pct * 0.5));
-            radialGrad.addColorStop(1.0, getHslaColor(sparkColor, 0));
-            this.ctx.fillStyle = radialGrad;
+            this.ctx.fillStyle = getHslaColor(sparkColor, pct);
             this.ctx.globalAlpha = 1.0;
             this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             this.ctx.fill();
           } else if (p.shape === 'dust') {
             this.ctx.fillStyle = p.color;
@@ -8490,13 +8492,7 @@ export class WorldRenderer {
             const x2 = p.x + ux * p.size * 6;
             const y2 = p.y + uy * p.size * 6;
 
-            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
-            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
-            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
-            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
-            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
-            
-            this.ctx.strokeStyle = lineGrad;
+            this.ctx.strokeStyle = getHslaColor(p.color, pct * 0.95);
             this.ctx.lineWidth = p.size;
             this.ctx.lineCap = 'round';
             this.ctx.globalAlpha = 1.0;
@@ -13280,7 +13276,6 @@ export class Projectile extends BaseEntity implements IPoolable {
   public customColor: string | null = null;
 
   private lifespan = 0;
-  private onRelease?: (proj: Projectile) => void;
 
   private trail: { x: number; y: number }[] = [];
 
@@ -13298,7 +13293,6 @@ export class Projectile extends BaseEntity implements IPoolable {
     damage: number,
     speed: number,
     lifespan: number,
-    onRelease: (proj: Projectile) => void,
     world: IWorld,
     customColor?: string
   ) {
@@ -13309,7 +13303,6 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.ownerId = ownerId;
     this.damage = damage;
     this.lifespan = lifespan;
-    this.onRelease = onRelease;
     this.world = world;
     this.customColor = customColor || null;
 
@@ -13325,13 +13318,15 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.trail = [];
   }
 
-  public update(dt: number) {
-    if (!this.isActive) return;
+  public update(dt: number): boolean {
+    if (!this.isActive) return false;
 
     this.lifespan -= dt;
     if (this.lifespan <= 0) {
-      this.selfRelease();
-      return;
+      this.releaseEffects();
+      this.isActive = false;
+      this.isDead = true;
+      return true;
     }
 
     this.trail.push({ x: this.position.x, y: this.position.y });
@@ -13367,20 +13362,28 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y += substepY;
 
       if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
 
       if (this.checkProjectileClashes()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
 
       if (this.checkEntityCollisions()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
     }
+
+    return false;
   }
 
   private checkSolidCollisions(): boolean {
@@ -13463,7 +13466,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
         if (isColliding) {
           const incomingDamage = other.damage || 1;
-          this.world.releaseProjectile(other);
+          (other as Projectile).deactivate();
           this.damage -= incomingDamage;
           if (this.damage <= 0) {
             return true;
@@ -13517,7 +13520,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     return false;
   }
 
-  private selfRelease() {
+  private releaseEffects() {
     const isPlayer = this.ownerId === "player";
     const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
     const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
@@ -13538,10 +13541,6 @@ export class Projectile extends BaseEntity implements IPoolable {
       shape: "line",
       turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
     });
-
-    if (this.onRelease) {
-      this.onRelease(this);
-    }
   }
 
   public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
