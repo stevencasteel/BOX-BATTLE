@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Dkc9OMlZ.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BQgmi-Jd.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7205,7 +7205,8 @@ export interface IPhysicsWorld {
     y: number,
     width: number,
     height: number,
-    type: "solid" | "platform" | "hazard"
+    type: "solid" | "platform" | "hazard",
+    outResult?: Rectangle[]
   ): Rectangle[];
 }
 
@@ -7718,8 +7719,6 @@ export class PhysicsWorld implements IPhysicsWorld {
   private platformGrid: Map<number, Rectangle[]> = new Map();
   private hazardGrid: Map<number, Rectangle[]> = new Map();
 
-  private reuseSet = new Set<Rectangle>();
-  private reuseResult: Rectangle[] = [];
 
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = solids;
@@ -7755,7 +7754,8 @@ export class PhysicsWorld implements IPhysicsWorld {
     y: number,
     width: number,
     height: number,
-    type: "solid" | "platform" | "hazard"
+    type: "solid" | "platform" | "hazard",
+    outResult?: Rectangle[]
   ): Rectangle[] {
     const grid = type === "solid" ? this.solidGrid : type === "platform" ? this.platformGrid : this.hazardGrid;
     const fallback = type === "solid" ? this.solids : type === "platform" ? this.onewayPlatforms : this.hazards;
@@ -7772,29 +7772,41 @@ export class PhysicsWorld implements IPhysicsWorld {
     const startY = Math.floor(top / PhysicsWorld.CELL_SIZE);
     const endY = Math.floor(bottom / PhysicsWorld.CELL_SIZE);
 
-    this.reuseSet.clear();
-    this.reuseResult.length = 0;
+    const result = outResult !== undefined ? outResult : [];
+    result.length = 0;
 
-    for (let cx = startX; cx <= endX; cx++) {
-      for (let cy = startY; cy <= endY; cy++) {
-        const key = (cy << 16) | cx;
-        const cellCandidates = grid.get(key);
-        if (cellCandidates) {
-          for (const candidate of cellCandidates) {
-            if (!this.reuseSet.has(candidate)) {
-              this.reuseSet.add(candidate);
-              this.reuseResult.push(candidate);
+    if (startX === endX && startY === endY) {
+      const key = (startY << 16) | startX;
+      const cellCandidates = grid.get(key);
+      if (cellCandidates) {
+        for (let i = 0; i < cellCandidates.length; i++) {
+          result.push(cellCandidates[i]);
+        }
+      }
+    } else {
+      const seen = new Set<Rectangle>();
+      for (let cx = startX; cx <= endX; cx++) {
+        for (let cy = startY; cy <= endY; cy++) {
+          const key = (cy << 16) | cx;
+          const cellCandidates = grid.get(key);
+          if (cellCandidates) {
+            for (let i = 0; i < cellCandidates.length; i++) {
+              const candidate = cellCandidates[i];
+              if (!seen.has(candidate)) {
+                seen.add(candidate);
+                result.push(candidate);
+              }
             }
           }
         }
       }
     }
 
-    if (this.reuseResult.length === 0) {
+    if (result.length === 0) {
       return fallback;
     }
 
-    return this.reuseResult;
+    return result;
   }
 
   public isOverlapping(x: number, y: number, width: number, height: number, rects: Rectangle[]): boolean {
@@ -13197,7 +13209,7 @@ export class Player extends BaseEntity {
 `,"src/entities/Projectile.ts":`import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { IWorld } from "@/core/Interfaces";
+import { IWorld, Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
@@ -13221,6 +13233,8 @@ export class Projectile extends BaseEntity implements IPoolable {
   private trailRing: { x: number; y: number }[] = [];
   private trailHead = 0;
   private trailCount = 0;
+
+  private overlapScratch: Rectangle[] = [];
 
   constructor() {
     super("projectile", null as unknown as IWorld);
@@ -13331,7 +13345,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y,
       this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -13361,7 +13376,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y,
       this.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "platform"
+      "platform",
+      this.overlapScratch
     );
 
     for (const platform of platformCandidates) {
@@ -14704,6 +14720,9 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
+  // Scratch arrays to prevent GC allocations while maintaining re-entrant safety
+  private overlapScratch: Rectangle[] = [];
+
   private readonly maxStepSize: number = UNITS.CCD_STEP_LIMIT_DEFAULT;
   private readonly cornerNudgeThreshold: number = UNITS.CORNER_NUDGE_MAX_OVERLAP;
   private readonly groundDetectionOffset: number = UNITS.GROUND_DETECTION_OFFSET;
@@ -14775,7 +14794,8 @@ export class PhysicsComponent implements IEntityComponent {
       this.owner.position.y,
       this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
       this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -14805,7 +14825,8 @@ export class PhysicsComponent implements IEntityComponent {
       this.owner.position.y,
       this.owner.size.width + UNITS.BROAD_PHASE_PADDING_LARGE,
       this.owner.size.height + UNITS.BROAD_PHASE_PADDING_LARGE,
-      "solid"
+      "solid",
+      this.overlapScratch
     );
 
     for (const solid of solidCandidates) {
@@ -14848,7 +14869,8 @@ export class PhysicsComponent implements IEntityComponent {
         this.owner.position.y,
         this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
         this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        "platform"
+        "platform",
+        this.overlapScratch
       );
 
       for (const platform of platformCandidates) {
@@ -14881,7 +14903,8 @@ export class PhysicsComponent implements IEntityComponent {
         testPosY,
         this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
         this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        "solid"
+        "solid",
+        this.overlapScratch
       );
       for (const solid of solidCandidates) {
         if (this.isOverlapping(this.owner.position.x, testPosY, solid)) {
@@ -14896,7 +14919,8 @@ export class PhysicsComponent implements IEntityComponent {
           testPosY,
           this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
           this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-          "platform"
+          "platform",
+          this.overlapScratch
         );
         for (const platform of platformCandidates) {
           if (this.isOverlapping(this.owner.position.x, testPosY, platform)) {
