@@ -3,7 +3,6 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import {
@@ -60,7 +59,7 @@ export class Boss extends BaseEntity {
     this.stateMachine = new StateMachine();
     this.stateMachine.changeState(this.cooldownState);
 
-    this.unsubHurt = eventBroker.subscribe("BOSS_HURT", ({ sourceX, sourceY, intensity }) => {
+    this.unsubHurt = this.world.events.subscribe("BOSS_HURT", ({ sourceX, sourceY, intensity }) => {
       this.handleHurtReaction(sourceX, sourceY, intensity);
     });
   }
@@ -213,7 +212,7 @@ export class Boss extends BaseEntity {
         this.position.y - halfH < hazard.y + hazard.height;
 
       if (isHit && this.velocity.y >= 0) {
-        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
+        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.isDead) {
           this.velocity.y = -550;

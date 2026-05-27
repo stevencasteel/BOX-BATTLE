@@ -2,7 +2,6 @@ import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
-import { eventBroker } from "@/core/eventBroker";
 
 export interface PhysicsComponentOptions {
   gravity?: number;
@@ -174,7 +173,7 @@ export class PhysicsComponent implements IEntityComponent {
             this.isGrounded = true;
             hasCollided = true;
 
-            eventBroker.publish("PLATFORM_IMPACT", { platform, velocityY: landingVelY, massMultiplier });
+            this.owner.world.events.publish("PLATFORM_IMPACT", { platform, velocityY: landingVelY, massMultiplier });
           }
         }
       }

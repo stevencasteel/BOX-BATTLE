@@ -2,7 +2,6 @@ import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
-import { eventBroker } from "@/core/eventBroker";
 import { setVec } from "@/core/VecUtils";
 
 export abstract class BossState implements IState {
@@ -100,7 +99,7 @@ export class BossMeleeState extends BossState {
   public enter(): void {
     this.owner.velocity.x = 0;
     this.duration = 0.5;
-    eventBroker.publish("BOSS_SWIPED", undefined);
+    this.owner.world.events.publish("BOSS_SWIPED", undefined);
   }
 
   public update(dt: number): void {
@@ -191,7 +190,7 @@ export class BossTelegraphState extends BossState {
     this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
     setVec(this.owner.visualScale, 1.25, 0.75);
     setVec(this.owner.targetVisualScale, 1.15, 0.85);
-    eventBroker.publish("BOSS_TELEGRAPH", undefined);
+    this.owner.world.events.publish("BOSS_TELEGRAPH", undefined);
   }
 
   public update(dt: number): void {
@@ -217,7 +216,7 @@ export class BossLungeState extends BossState {
     this.duration = 0.5;
     setVec(this.owner.visualScale, 1.35, 0.65);
     setVec(this.owner.targetVisualScale, 1.2, 0.8);
-    eventBroker.publish("BOSS_LUNGED", undefined);
+    this.owner.world.events.publish("BOSS_LUNGED", undefined);
   }
 
   public update(dt: number): void {
@@ -246,8 +245,8 @@ export class BossLungeState extends BossState {
 
       const impactSide = physics.isOnWallLeft ? -1 : 1;
       const wallX = this.owner.position.x + impactSide * (this.owner.size.width / 2);
-      eventBroker.publishSpark(wallX, this.owner.position.y, impactSide > 0 ? Math.PI : 0, "hsl(350, 80%, 60%)", true, 15);
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
+      this.owner.world.events.publishSpark(wallX, this.owner.position.y, impactSide > 0 ? Math.PI : 0, "hsl(350, 80%, 60%)", true, 15);
+      this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
     } else {
       this.owner.velocity.x = 0;
       setVec(this.owner.visualScale, 0.8, 1.2);

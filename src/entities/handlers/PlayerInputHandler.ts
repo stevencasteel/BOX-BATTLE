@@ -1,5 +1,4 @@
 import { Player } from "@/entities/Player";
-import { eventBroker } from "@/core/eventBroker";
 import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 import { setVec } from "@/core/VecUtils";
@@ -34,7 +33,7 @@ export class PlayerInputHandler {
         if (TrigLUT.random() < 0.35) {
           const contactX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2) + (TrigLUT.random() * 8 - 4);
           const contactY = this.player.position.y + (this.player.size.height / 2);
-          eventBroker.publishSpark(contactX, contactY, this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15, "hsl(45, 100%, 65%)", false, 1);
+          this.player.world.events.publishSpark(contactX, contactY, this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15, "hsl(45, 100%, 65%)", false, 1);
         }
       }
     }
@@ -54,8 +53,8 @@ export class PlayerInputHandler {
           setVec(this.player.visualScale, 1.0 + 0.28 * factor, 1.0 - 0.28 * factor);
           setVec(this.player.scaleVelocity, 10 * factor, -18 * factor);
           this.player.velocity.x *= (1.0 - 0.8 * factor);
-          eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
-          eventBroker.publish("PLAYER_LANDED", undefined);
+          this.player.world.events.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
+          this.player.world.events.publish("PLAYER_LANDED", undefined);
         }
       }
       this.player.airtimeDuration = 0;
@@ -71,8 +70,8 @@ export class PlayerInputHandler {
     const impactSide = this.player.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.player.position.x + impactSide * (this.player.size.width / 2);
 
-    eventBroker.publishDust(wallX, this.player.position.y, "vertical");
-    eventBroker.publishSpark(wallX, this.player.position.y, impactSide > 0 ? Math.PI : 0, "rgba(255, 255, 255, 0.55)", false, 6);
+    this.player.world.events.publishDust(wallX, this.player.position.y, "vertical");
+    this.player.world.events.publishSpark(wallX, this.player.position.y, impactSide > 0 ? Math.PI : 0, "rgba(255, 255, 255, 0.55)", false, 6);
   }
 
   public updateCoyoteAndWallTimers(dt: number) {
@@ -169,7 +168,7 @@ export class PlayerInputHandler {
       this.player.velocity.y = 180;
       this.player.physics.isGrounded = false;
       this.player.jumpBufferTimer = 0;
-      eventBroker.publish("PLAYER_DROPPED", undefined);
+      this.player.world.events.publish("PLAYER_DROPPED", undefined);
     } else if (
       this.player.inputReceiver.isPressed("MOVE_DOWN") &&
       this.player.physics.isGrounded &&
@@ -190,8 +189,8 @@ export class PlayerInputHandler {
       this.player.dashComponent.resetDashCharge();
 
       const wallX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2);
-      eventBroker.publishDust(wallX, this.player.position.y, "vertical");
-      eventBroker.publish("PLAYER_JUMPED", undefined);
+      this.player.world.events.publishDust(wallX, this.player.position.y, "vertical");
+      this.player.world.events.publish("PLAYER_JUMPED", undefined);
     } else if (this.player.hasDoubleJump) {
       this.player.velocity.y = -this.player.jumpForce;
       this.player.hasDoubleJump = false;
@@ -201,7 +200,7 @@ export class PlayerInputHandler {
       this.player.doubleJumpDiskTimer = 0.22;
       setVec(this.player.doubleJumpDiskPos, this.player.position.x, this.player.position.y + this.player.size.height / 2);
 
-      eventBroker.publish("PLAYER_JUMPED", undefined);
+      this.player.world.events.publish("PLAYER_JUMPED", undefined);
     }
   }
 
@@ -210,8 +209,8 @@ export class PlayerInputHandler {
     this.player.coyoteTimer = 0;
     this.player.jumpBufferTimer = 0;
     setVec(this.player.visualScale, 0.82, 1.18);
-    eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
-    eventBroker.publish("PLAYER_JUMPED", undefined);
+    this.player.world.events.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
+    this.player.world.events.publish("PLAYER_JUMPED", undefined);
   }
 
   public handleJumpRelease() {

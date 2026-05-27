@@ -1,6 +1,5 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/eventBroker";
 import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
@@ -57,7 +56,7 @@ export class DashComponent implements IEntityComponent {
         });
         this.ghostSpawnTimer = 0.025;
 
-        eventBroker.publishSpark(
+        this.owner.world.events.publishSpark(
           this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
           this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
           TrigLUT.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2),
@@ -90,13 +89,13 @@ export class DashComponent implements IEntityComponent {
     this.dashDirectionX = directionX;
     this.dashDirectionY = directionY;
     this.ghostSpawnTimer = 0;
-    eventBroker.publish("PLAYER_DASHED", { direction: directionX });
+    this.owner.world.events.publish("PLAYER_DASHED", { direction: directionX });
   }
 
   public resetDashCharge(): void {
     if (!this.canDash) {
       this.canDash = true;
-      eventBroker.publish("PLAYER_DASH_RECHARGED", undefined);
+      this.owner.world.events.publish("PLAYER_DASH_RECHARGED", undefined);
     }
   }
 }

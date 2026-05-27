@@ -8,7 +8,6 @@ import {
   LancerPatrolState,
   FlyerPatrolState
 } from "./MinionStates";
-import { eventBroker } from "@/core/eventBroker";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
 
@@ -94,9 +93,9 @@ export class Minion extends BaseEntity {
       this.squashPivot = "center";
       this.stateMachine.changeState(new FlyerPatrolState(this));
     }
-    eventBroker.publish("MINION_SPAWNING", undefined);
+    this.world.events.publish("MINION_SPAWNING", undefined);
 
-    this.unsubHurt = eventBroker.subscribe("MINION_HURT", ({ id, sourceX, sourceY, intensity }) => {
+    this.unsubHurt = this.world.events.subscribe("MINION_HURT", ({ id, sourceX, sourceY, intensity }) => {
       if (id === this.id) {
         this.handleHurtReaction(sourceX, sourceY, intensity);
       }
@@ -104,7 +103,7 @@ export class Minion extends BaseEntity {
   }
 
   public startDeathSequence() {
-    eventBroker.publish("MINION_DISSOLVING", undefined);
+    this.world.events.publish("MINION_DISSOLVING", undefined);
     this.isDying = true;
     this.dissolveTimer = 0.5;
     zeroVec(this.velocity);
@@ -116,9 +115,9 @@ export class Minion extends BaseEntity {
           ? "hsl(200, 80%, 65%)"
           : "hsl(215, 20%, 65%)";
 
-    eventBroker.publishSpark(this.position.x, this.position.y, 0, mColor, true, 24);
+    this.world.events.publishSpark(this.position.x, this.position.y, 0, mColor, true, 24);
 
-    eventBroker.publishBlast(this.position.x, this.position.y, mColor);
+    this.world.events.publishBlast(this.position.x, this.position.y, mColor);
   }
 
   public update(dt: number) {
@@ -138,7 +137,7 @@ export class Minion extends BaseEntity {
       if (TrigLUT.random() < 0.5) {
         const angle = TrigLUT.random() * Math.PI * 2;
         const dist = 40 + TrigLUT.random() * 30;
-        eventBroker.publishSpark(
+        this.world.events.publishSpark(
           this.position.x + TrigLUT.cos(angle) * dist,
           this.position.y + TrigLUT.sin(angle) * dist,
           angle + Math.PI,
@@ -165,7 +164,7 @@ export class Minion extends BaseEntity {
             : "hsl(215, 20%, 65%)";
 
       if (TrigLUT.random() < 0.6) {
-        eventBroker.publishSpark(
+        this.world.events.publishSpark(
           this.position.x + (TrigLUT.random() * this.size.width - this.size.width / 2),
           this.position.y + (TrigLUT.random() * this.size.height - this.size.height / 2),
           -Math.PI / 2 + (TrigLUT.random() * 0.4 - 0.2),
@@ -211,12 +210,12 @@ export class Minion extends BaseEntity {
       if (this.minionType === "FLYER") {
         this.exhaustTimer = isTelegraph ? 0.04 : 0.08;
         const sparkColor = isTelegraph ? "hsl(45, 100%, 60%)" : "hsl(200, 80%, 65%)";
-        eventBroker.publishSpark(this.position.x, this.position.y + this.size.height / 2, Math.PI / 2, sparkColor, false, isTelegraph ? 6 : 2);
+        this.world.events.publishSpark(this.position.x, this.position.y + this.size.height / 2, Math.PI / 2, sparkColor, false, isTelegraph ? 6 : 2);
       } else if (this.minionType === "LANCER") {
         if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
           this.exhaustTimer = isTelegraph ? 0.05 : 0.15;
           const scrapeColor = isTelegraph ? "hsl(45, 100%, 60%)" : "rgba(255, 255, 255, 0.4)";
-          eventBroker.publishSpark(
+          this.world.events.publishSpark(
             this.position.x - this.facingDirection * (this.size.width / 2),
             this.position.y + this.size.height / 2,
             TrigLUT.atan2(0.5, -this.facingDirection) + (TrigLUT.random() * 0.3 - 0.15),
@@ -228,7 +227,7 @@ export class Minion extends BaseEntity {
       } else if (this.minionType === "TURRET") {
         if (isTelegraph) {
           this.exhaustTimer = 0.06;
-          eventBroker.publishSpark(
+          this.world.events.publishSpark(
             this.position.x + (TrigLUT.random() * 16 - 8),
             this.position.y - this.size.height / 2,
             -Math.PI / 2 + (TrigLUT.random() * 0.2 - 0.1),
@@ -291,7 +290,7 @@ export class Minion extends BaseEntity {
         this.position.y - halfH < hazard.y + hazard.height;
 
       if (isHit && this.velocity.y >= 0) {
-        eventBroker.publish("PLAYER_SPIKED", { x: this.position.x });
+        this.world.events.publish("PLAYER_SPIKED", { x: this.position.x });
         const damaged = this.health.takeDamage(1);
         if (damaged && !this.isDead) {
           if (this.minionType !== "TURRET" && !this.isDying) {

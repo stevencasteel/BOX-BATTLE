@@ -1,6 +1,5 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/eventBroker";
 import { EntityStatus } from "@/core/Interfaces";
 
 export interface HealthComponentOptions {
@@ -55,13 +54,13 @@ export class HealthComponent implements IEntityComponent {
     this.hitFlashTimer = this.hitFlashDuration;
 
     if (this.owner.id === "player-01") {
-      eventBroker.publish("PLAYER_HURT", {
+      this.owner.world.events.publish("PLAYER_HURT", {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
       });
     } else if (this.owner.id === "boss-01") {
-      eventBroker.publish("BOSS_HURT", {
+      this.owner.world.events.publish("BOSS_HURT", {
         amount,
         currentHealth: this.currentHealth,
         maxHealth: this.maxHealth,
@@ -70,7 +69,7 @@ export class HealthComponent implements IEntityComponent {
         intensity,
       });
     } else if (this.owner.id.startsWith("minion-")) {
-      eventBroker.publish("MINION_HURT", {
+      this.owner.world.events.publish("MINION_HURT", {
         id: this.owner.id,
         amount,
         currentHealth: this.currentHealth,

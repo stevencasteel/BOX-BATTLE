@@ -1,6 +1,5 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { eventBroker } from "@/core/eventBroker";
 import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
@@ -24,17 +23,17 @@ export class FireballComponent implements IEntityComponent {
 
       if (this.chargeTimer >= 0.12 && !this.hasPublishedChargeStart) {
         this.hasPublishedChargeStart = true;
-        eventBroker.publish("CHARGE_START", undefined);
+        this.owner.world.events.publish("CHARGE_START", undefined);
       }
 
       if (this.hasPublishedChargeStart) {
         chargeUpdatePayload.timer = this.chargeTimer;
-        eventBroker.publish("CHARGE_UPDATE", chargeUpdatePayload);
+        this.owner.world.events.publish("CHARGE_UPDATE", chargeUpdatePayload);
       }
 
       if (this.chargeTimer >= UNITS.CHARGE_LVL2_TIME && !this.hasPoppedLvl2) {
         this.hasPoppedLvl2 = true;
-        eventBroker.publish("CHARGE_MAXED", undefined);
+        this.owner.world.events.publish("CHARGE_MAXED", undefined);
       }
 
       const progress = Math.max(0, Math.min(1.0, this.chargeTimer / UNITS.CHARGE_LVL2_TIME));
@@ -60,7 +59,7 @@ export class FireballComponent implements IEntityComponent {
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        eventBroker.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
+        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
       if (isLvl2 && TrigLUT.random() < 0.12) {
@@ -69,8 +68,8 @@ export class FireballComponent implements IEntityComponent {
         const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
         const startY = this.owner.position.y - 12 + TrigLUT.sin(angle) * radius;
 
-        eventBroker.publishSpark(startX, startY, angle + Math.PI, "hsl(190, 100%, 85%)", false, 3, "line", 45);
-        eventBroker.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
+        this.owner.world.events.publishSpark(startX, startY, angle + Math.PI, "hsl(190, 100%, 85%)", false, 3, "line", 45);
+        this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
       }
     }
   }
@@ -88,8 +87,8 @@ export class FireballComponent implements IEntityComponent {
       this.chargeTimer = 0;
       this.hasPoppedLvl2 = false;
       if (this.hasPublishedChargeStart) {
-        eventBroker.publish("CHARGE_STOP", undefined);
-        eventBroker.publish("CHARGE_CANCEL", undefined);
+        this.owner.world.events.publish("CHARGE_STOP", undefined);
+        this.owner.world.events.publish("CHARGE_CANCEL", undefined);
       }
       this.hasPublishedChargeStart = false;
     }
@@ -101,7 +100,7 @@ export class FireballComponent implements IEntityComponent {
     this.hasPoppedLvl2 = false;
 
     if (this.hasPublishedChargeStart) {
-      eventBroker.publish("CHARGE_STOP", undefined);
+      this.owner.world.events.publish("CHARGE_STOP", undefined);
     }
     this.hasPublishedChargeStart = false;
 
@@ -109,7 +108,7 @@ export class FireballComponent implements IEntityComponent {
       this.fire(dirX, dirY, facingDirection);
     } else {
       if (this.chargeTimer >= 0.12) {
-        eventBroker.publish("CHARGE_CANCEL", undefined);
+        this.owner.world.events.publish("CHARGE_CANCEL", undefined);
       }
     }
   }
@@ -133,7 +132,7 @@ export class FireballComponent implements IEntityComponent {
     const spawnX = this.owner.position.x + normalizedDir.x * 30;
     const spawnY = this.owner.position.y + normalizedDir.y * 30;
 
-    eventBroker.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1, dirX: normalizedDir.x, dirY: normalizedDir.y });
+    this.owner.world.events.publish("PLAYER_PROJECTILE_FIRED", { level: isLvl2 ? 2 : 1, dirX: normalizedDir.x, dirY: normalizedDir.y });
 
     const proj = this.owner.world.spawnProjectile(
       spawnX,

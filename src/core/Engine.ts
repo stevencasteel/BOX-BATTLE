@@ -8,7 +8,7 @@ import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
 import { inputProvider } from "@/core/InputProvider";
-import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { eventBroker } from "@/core/eventBroker";
@@ -18,7 +18,7 @@ import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
-import { UNITS } from "@/core/Units";
+import { StateProjectionSystem } from "@/core/StateProjectionSystem";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
 
 export class Engine {
@@ -29,6 +29,7 @@ export class Engine {
   private world: World;
   private battleDirector!: BattleDirector;
   private particleSystem!: ParticleSystem;
+  private stateProjection: StateProjectionSystem;
 
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
@@ -37,15 +38,9 @@ export class Engine {
   private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
   private unsubPlatformImpact!: () => void;
 
-  private cachedPlayerHP: number = -1;
-  private cachedBossHP: number = -1;
-  private cachedHealingCharges: number = -1;
-  private cachedDetermination: number = -1;
-
   public isPaused: boolean = false;
   private accumulator: number = 0;
   private currentScale: number = 1.0;
-  private crisisTimer: number = 0;
   private readonly fixedTimeStep: number = 1 / 60;
 
   private levelConfig: LevelConfig;
@@ -57,6 +52,7 @@ export class Engine {
     this.world = world;
     this.renderer = renderer;
     this.levelConfig = levelConfig;
+    this.stateProjection = new StateProjectionSystem();
 
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
@@ -94,7 +90,7 @@ export class Engine {
     const sessionState = useSessionStore.getState();
     sessionState.setGameResult("PLAYING");
 
-    this.projectState();
+    this.stateProjection.project(this.player, this.boss);
 
     this.particleSystem = new ParticleSystem();
     this.battleDirector = new BattleDirector(() => {});
@@ -160,11 +156,12 @@ export class Engine {
 
     this.battleDirector.cleanup();
     this.battleDirector = new BattleDirector(() => {});
+    this.stateProjection.reset();
 
     const sessionState = useSessionStore.getState();
     sessionState.setGameResult("PLAYING");
 
-    this.projectState();
+    this.stateProjection.project(this.player, this.boss);
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
 
     this.render();
@@ -213,40 +210,6 @@ export class Engine {
     }
   }
 
-  private projectState() {
-    const pHealth = this.player.getComponent(HealthComponent);
-    const bHealth = this.boss.getComponent(HealthComponent);
-
-    const nextPlayerHP = pHealth ? pHealth.currentHealth : UNITS.PLAYER_MAX_HP;
-    const nextBossHP = bHealth ? bHealth.currentHealth : UNITS.BOSS_MAX_HP;
-    const nextHealingCharges = this.player.healingCharges;
-    const nextDetermination = this.player.determinationCounter;
-
-    if (
-      nextPlayerHP !== this.cachedPlayerHP ||
-      nextBossHP !== this.cachedBossHP ||
-      nextHealingCharges !== this.cachedHealingCharges ||
-      nextDetermination !== this.cachedDetermination
-    ) {
-      // Trigger temporary slomo surge only on the exact frame the player transitions to 1 HP
-      if (nextPlayerHP === 1 && this.cachedPlayerHP > 1) {
-        this.crisisTimer = 0.45;
-      }
-
-      this.cachedPlayerHP = nextPlayerHP;
-      this.cachedBossHP = nextBossHP;
-      this.cachedHealingCharges = nextHealingCharges;
-      this.cachedDetermination = nextDetermination;
-
-      useGameplayStore.setState({
-        playerHP: nextPlayerHP,
-        bossHP: nextBossHP,
-        healingCharges: nextHealingCharges,
-        determination: nextDetermination,
-      });
-    }
-  }
-
   private update(dt: number) {
     if (this.isPaused) {
       inputProvider.update();
@@ -258,13 +221,9 @@ export class Engine {
       return;
     }
 
-    // Decrement the crisis adrenaline slow-motion timer
-    if (this.crisisTimer > 0) {
-      this.crisisTimer -= dt;
-    }
+    this.stateProjection.tickCrisisTimer(dt);
 
-    // Smoothly scale simulation time based on the active adrenaline surge timer
-    const targetScale = this.crisisTimer > 0 ? 0.45 : 1.0;
+    const targetScale = this.stateProjection.getCrisisTimer() > 0 ? 0.45 : 1.0;
     this.currentScale += (targetScale - this.currentScale) * 6.0 * dt;
 
     this.accumulator += dt * this.currentScale;
@@ -300,7 +259,7 @@ export class Engine {
       }
     }
     inputProvider.postUpdate();
-    this.projectState();
+    this.stateProjection.project(this.player, this.boss);
   }
 
   private handleMinionCollisions() {
@@ -385,7 +344,7 @@ export class Engine {
       }
     }
     inputProvider.postUpdate();
-    this.projectState();
+    this.stateProjection.project(this.player, this.boss);
   }
 
   private render() {
@@ -407,6 +366,7 @@ export class Engine {
 
   public cleanup() {
     this.battleDirector.cleanup();
+    this.stateProjection.reset();
     this.loop.cleanup();
     this.player.teardown();
     this.boss.teardown();

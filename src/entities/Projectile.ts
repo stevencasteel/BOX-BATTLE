@@ -2,7 +2,6 @@ import { BaseEntity } from "./BaseEntity";
 import { IPoolable } from "@/core/ObjectPool";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
@@ -84,7 +83,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     const sparkChance = isLvl2 ? 0.35 : 0.08;
     if (this.ownerId === "player" && TrigLUT.random() < sparkChance) {
       const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-      eventBroker.publishSpark(this.position.x, this.position.y, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+      this.world.events.publishSpark(this.position.x, this.position.y, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
     }
 
     const dx = this.velocity.x * dt;
@@ -263,11 +262,11 @@ export class Projectile extends BaseEntity implements IPoolable {
     const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
     const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI;
 
-    eventBroker.publishBlast(this.position.x, this.position.y, blastColor);
+    this.world.events.publishBlast(this.position.x, this.position.y, blastColor);
 
     const sparkCount = isPlayer ? (this.damage >= 3 ? 18 : 4) : 8;
     const turbulence = isPlayer && this.damage >= 3 ? 20 : 5;
-    eventBroker.publishSpark(this.position.x, this.position.y, angle, blastColor, false, sparkCount, "line", turbulence);
+    this.world.events.publishSpark(this.position.x, this.position.y, angle, blastColor, false, sparkCount, "line", turbulence);
   }
 
   public draw(ctx: CanvasRenderingContext2D, alpha?: number) {

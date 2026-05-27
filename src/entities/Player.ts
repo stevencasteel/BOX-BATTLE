@@ -7,7 +7,6 @@ import { MeleeComponent } from "@/entities/components/MeleeComponent";
 import { FireballComponent } from "@/entities/components/FireballComponent";
 import { HealComponent } from "@/entities/components/HealComponent";
 import { IWorld } from "@/core/Interfaces";
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
@@ -111,7 +110,7 @@ export class Player extends BaseEntity {
   }
 
   private setupSubscribers() {
-    this.unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+    this.unsubHurt = this.world.events.subscribe("PLAYER_HURT", () => {
       this.hurtTimer = 0.15;
       if (this.healComponent.isHealing) {
         this.healComponent.cancelHealing();
@@ -121,66 +120,66 @@ export class Player extends BaseEntity {
       }
     });
 
-    this.unsubPogo = eventBroker.subscribe("PLAYER_POGOED", () => {
+    this.unsubPogo = this.world.events.subscribe("PLAYER_POGOED", () => {
       this.hasDoubleJump = true;
       this.dashComponent.resetDashCharge();
     });
 
-    this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
-      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(280, 80%, 65%)", true, 18);
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
+    this.unsubHealCancel = this.world.events.subscribe("HEAL_CANCEL", () => {
+      this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(280, 80%, 65%)", true, 18);
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
-    this.unsubChargeCancel = eventBroker.subscribe("CHARGE_CANCEL", () => {
-      eventBroker.publishSpark(this.position.x, this.position.y - 12, 0, "hsl(142, 71%, 58%)", true, 14);
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 2, duration: 0.1 });
+    this.unsubChargeCancel = this.world.events.subscribe("CHARGE_CANCEL", () => {
+      this.world.events.publishSpark(this.position.x, this.position.y - 12, 0, "hsl(142, 71%, 58%)", true, 14);
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 2, duration: 0.1 });
     });
 
-    this.unsubHealComplete = eventBroker.subscribe("HEAL_COMPLETE", () => {
+    this.unsubHealComplete = this.world.events.subscribe("HEAL_COMPLETE", () => {
       this.healingCharges = Math.max(0, this.healingCharges - 1);
-      eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
+      this.world.events.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
 
       const health = this.getComponent(HealthComponent);
       if (health) {
         health.currentHealth = Math.min(health.maxHealth, health.currentHealth + 1);
-        eventBroker.publish("PLAYER_HEALED", {
+        this.world.events.publish("PLAYER_HEALED", {
           amount: 1,
           currentHealth: health.currentHealth,
           maxHealth: health.maxHealth,
         });
       }
 
-      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(280, 100%, 75%)");
+      this.world.events.publishBlast(this.position.x, this.position.y, "hsl(280, 100%, 75%)");
 
-      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(142, 71%, 58%)");
+      this.world.events.publishBlast(this.position.x, this.position.y, "hsl(142, 71%, 58%)");
 
-      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(285, 100%, 80%)", true, 32, "line", 30);
+      this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(285, 100%, 80%)", true, 32, "line", 30);
 
-      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(142, 100%, 80%)", true, 20, "spark");
+      this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(142, 100%, 80%)", true, 20, "spark");
 
       setVec(this.visualScale, 0.90, 1.10);
       setVec(this.scaleVelocity, 6.0, -12.0);
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.35 });
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.35 });
     });
 
-    this.unsubChargeMaxed = eventBroker.subscribe("CHARGE_MAXED", () => {
+    this.unsubChargeMaxed = this.world.events.subscribe("CHARGE_MAXED", () => {
       setVec(this.visualScale, 1.10, 0.90);
       setVec(this.scaleVelocity, -10.0, 10.0);
-      eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.12 });
     });
 
-    this.unsubDamageDealt = eventBroker.subscribe("DETERMINATION_CHANGED", () => {
+    this.unsubDamageDealt = this.world.events.subscribe("DETERMINATION_CHANGED", () => {
       if (this.healingCharges >= this.maxHealingCharges) return;
 
       this.determinationCounter++;
       if (this.determinationCounter >= 5) {
         this.determinationCounter = 0;
         this.healingCharges = Math.min(this.maxHealingCharges, this.healingCharges + 1);
-        eventBroker.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
+        this.world.events.publish("HEALING_CHARGES_CHANGED", { charges: this.healingCharges });
       }
     });
 
-    this.unsubProjectileFired = eventBroker.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
+    this.unsubProjectileFired = this.world.events.subscribe("PLAYER_PROJECTILE_FIRED", ({ level, dirX, dirY }) => {
       const isLvl2 = level === 2;
       const recoilForce = isLvl2 ? 320 : 130;
       const baseLift = isLvl2 ? 150 : 70;
@@ -202,9 +201,9 @@ export class Player extends BaseEntity {
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
 
-      eventBroker.publishBlast(muzzleX, muzzleY, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)");
+      this.world.events.publishBlast(muzzleX, muzzleY, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)");
 
-      eventBroker.publishSpark(muzzleX, muzzleY, TrigLUT.atan2(dirY, dirX), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, isLvl2 ? 16 : 8, "line");
+      this.world.events.publishSpark(muzzleX, muzzleY, TrigLUT.atan2(dirY, dirX), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, isLvl2 ? 16 : 8, "line");
     });
   }
 

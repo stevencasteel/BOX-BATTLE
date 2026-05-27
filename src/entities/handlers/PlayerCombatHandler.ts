@@ -1,5 +1,4 @@
 import { Player } from "@/entities/Player";
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { setVec } from "@/core/VecUtils";
 
@@ -81,7 +80,7 @@ export class PlayerCombatHandler {
           this.player.healComponent.cancelHealing();
         }
 
-        eventBroker.publish("PLAYER_SPIKED", { x: this.player.position.x });
+        this.player.world.events.publish("PLAYER_SPIKED", { x: this.player.position.x });
         const damaged = this.player.health.takeDamage(UNITS.HAZARD_SPIKE_DAMAGE);
         if (damaged && !this.player.isDead) {
           this.player.velocity.y = -550;

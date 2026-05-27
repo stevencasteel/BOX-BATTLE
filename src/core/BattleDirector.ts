@@ -6,49 +6,35 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
 import { saveManager } from "@/core/SaveManager";
-
-interface CinematicEvent {
-  triggerTime: number;
-  fired: boolean;
-  action: () => void;
-}
+import { CinematicSystem } from "@/core/CinematicSystem";
 
 export class BattleDirector {
   private hasTriggeredFirstHit = false;
   private hasTriggeredPhase2 = false;
   private hasTriggeredPhase3 = false;
-  private cinematicActive = false;
-
-  private bossDeathTimer = -1;
-  private bossDeathPos: { x: number; y: number } | null = null;
-
-  private cinematicTimeline = 0;
-  private cinematicQueue: CinematicEvent[] = [];
-
+  private cinematic: CinematicSystem;
   private onBattleEnd: () => void;
 
   constructor(onBattleEnd: () => void) {
     this.onBattleEnd = onBattleEnd;
+    this.cinematic = new CinematicSystem();
   }
 
   public isCinematicActive(): boolean {
-    return this.cinematicActive;
+    return this.cinematic.isActive();
   }
 
   public getDeathVisuals() {
     return {
-      timer: this.bossDeathTimer,
-      pos: this.bossDeathPos,
+      timer: this.cinematic.getDeathTimer(),
+      pos: this.cinematic.getDeathPos(),
     };
   }
 
   public update(dt: number, player: Player, boss: Boss) {
-    if (this.bossDeathTimer >= 0) {
-      this.bossDeathTimer += dt;
-    }
+    this.cinematic.update(dt);
 
-    if (this.cinematicActive) {
-      this.updateCinematicTimeline(dt);
+    if (this.cinematic.isActive()) {
       return;
     }
 
@@ -83,8 +69,8 @@ export class BattleDirector {
 
     const sessionState = useSessionStore.getState();
 
-    if (player.isDead && !this.cinematicActive) {
-      this.startCinematicSequence(
+    if (player.isDead && !this.cinematic.isActive()) {
+      this.cinematic.startSequence(
         player.position,
         () => {
           soundSynth.playPlayerExplosion();
@@ -92,7 +78,6 @@ export class BattleDirector {
         [
           {
             triggerTime: 2.0,
-            fired: false,
             action: () => {
               sessionState.setGameResult("GAMEOVER");
               saveManager.recordLoss();
@@ -100,14 +85,12 @@ export class BattleDirector {
           },
           {
             triggerTime: 2.5,
-            fired: false,
             action: () => {
               eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
             },
           },
           {
             triggerTime: 3.8,
-            fired: false,
             action: () => {
               eventBroker.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
@@ -117,7 +100,6 @@ export class BattleDirector {
           },
           {
             triggerTime: 7.2,
-            fired: false,
             action: () => {
               eventBroker.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
@@ -125,8 +107,8 @@ export class BattleDirector {
           },
         ]
       );
-    } else if (boss.isDead && !this.cinematicActive) {
-      this.startCinematicSequence(
+    } else if (boss.isDead && !this.cinematic.isActive()) {
+      this.cinematic.startSequence(
         boss.position,
         () => {
           soundSynth.playBossExplosion();
@@ -134,7 +116,6 @@ export class BattleDirector {
         [
           {
             triggerTime: 2.0,
-            fired: false,
             action: () => {
               sessionState.setGameResult("VICTORY");
               saveManager.recordWin();
@@ -142,7 +123,6 @@ export class BattleDirector {
           },
           {
             triggerTime: 2.5,
-            fired: false,
             action: () => {
               eventBroker.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
@@ -152,14 +132,12 @@ export class BattleDirector {
           },
           {
             triggerTime: 4.8,
-            fired: false,
             action: () => {
               eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
             },
           },
           {
             triggerTime: 7.2,
-            fired: false,
             action: () => {
               eventBroker.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
@@ -170,42 +148,7 @@ export class BattleDirector {
     }
   }
 
-  private startCinematicSequence(
-    pos: { x: number; y: number },
-    initialExplosion: () => void,
-    events: CinematicEvent[]
-  ) {
-    this.cinematicActive = true;
-    eventBroker.publish("CLEAR_DIALOGUES", undefined);
-    soundSynth.stopChargeDrone();
-    soundSynth.stopHealDrone();
-    initialExplosion();
-
-    this.bossDeathTimer = 0;
-    this.bossDeathPos = { x: pos.x, y: pos.y };
-
-    eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
-
-    this.cinematicTimeline = 0;
-    this.cinematicQueue = events;
-  }
-
-  private updateCinematicTimeline(dt: number) {
-    this.cinematicTimeline += dt;
-
-    for (const event of this.cinematicQueue) {
-      if (!event.fired && this.cinematicTimeline >= event.triggerTime) {
-        event.action();
-        event.fired = true;
-      }
-    }
-  }
-
   public cleanup() {
-    this.cinematicQueue = [];
-    this.cinematicTimeline = 0;
-    this.bossDeathTimer = -1;
-    this.bossDeathPos = null;
-    this.cinematicActive = false;
+    this.cinematic.cleanup();
   }
 }

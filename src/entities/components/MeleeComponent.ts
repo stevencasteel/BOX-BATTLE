@@ -1,7 +1,6 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { eventBroker } from "@/core/eventBroker";
 import { EntityStatus } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
 
@@ -74,7 +73,7 @@ export class MeleeComponent implements IEntityComponent {
       }
     }
 
-    eventBroker.publish("PLAYER_ATTACKED", { direction });
+    this.owner.world.events.publish("PLAYER_ATTACKED", { direction });
   }
 
   private checkMeleeAttackContact(): void {
@@ -133,7 +132,7 @@ export class MeleeComponent implements IEntityComponent {
           );
           if (registeredDamage) {
             this.hasHitEnemyThisSwing = true;
-            eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
+            this.owner.world.events.publish("DETERMINATION_CHANGED", { determination: 1 }); // Trigger determination increment
 
             // Apply blade resistance pushback recoil to the player
             const recoilForce = isCloseRange ? 200 : 90;
@@ -149,9 +148,9 @@ export class MeleeComponent implements IEntityComponent {
             }
 
             if (isCloseRange) {
-              eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
+              this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
-            eventBroker.publishSpark(target.position.x, target.position.y, facing > 0 ? 0 : Math.PI, "hsl(142, 71%, 58%)");
+            this.owner.world.events.publishSpark(target.position.x, target.position.y, facing > 0 ? 0 : Math.PI, "hsl(142, 71%, 58%)");
           }
         }
       }
@@ -198,8 +197,8 @@ export class MeleeComponent implements IEntityComponent {
         if (isDeflected) {
           this.owner.world.releaseProjectile(proj);
           this.hasHitEnemyThisSwing = true;
-          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
-          eventBroker.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
+          this.owner.world.events.publish("DETERMINATION_CHANGED", { determination: 1 });
+          this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.1 });
         }
       }
     }
@@ -235,7 +234,7 @@ export class MeleeComponent implements IEntityComponent {
         const health = target.getComponent(HealthComponent);
         if (health) {
           health.takeDamage(UNITS.PLAYER_MELEE_DAMAGE_BASE);
-          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
+          this.owner.world.events.publish("DETERMINATION_CHANGED", { determination: 1 });
         }
 
         this.applyPogoRebound();
@@ -261,7 +260,7 @@ export class MeleeComponent implements IEntityComponent {
 
         if (isColliding) {
           this.owner.world.releaseProjectile(proj);
-          eventBroker.publish("DETERMINATION_CHANGED", { determination: 1 });
+          this.owner.world.events.publish("DETERMINATION_CHANGED", { determination: 1 });
           this.applyPogoRebound();
           return true;
         }
@@ -295,7 +294,7 @@ export class MeleeComponent implements IEntityComponent {
     this.owner.velocity.y = -this.pogoForce;
     this.owner.position.y -= 2;
     this.hasHitEnemyThisSwing = true;
-    eventBroker.publish("PLAYER_POGOED", undefined);
+    this.owner.world.events.publish("PLAYER_POGOED", undefined);
   }
 
   private gatherAwaitingTargets(): readonly BaseEntity[] {

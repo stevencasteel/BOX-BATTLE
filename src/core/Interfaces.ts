@@ -34,26 +34,36 @@ export interface Particle {
   endColor?: string;
 }
 
+export interface ITransform {
+  position: Vector2D;
+  previousPosition: Vector2D;
+  velocity: Vector2D;
+  size: { width: number; height: number };
+}
+
+export interface IRenderable {
+  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
+  visualScale: Vector2D;
+  targetVisualScale: Vector2D;
+  scaleVelocity: Vector2D;
+  rotation: number;
+  targetRotation: number;
+  rotationVelocity: number;
+  squashPivot: "center" | "feet";
+}
+
 export interface IAbilityUser {
   hasDoubleJump?: boolean;
   healingCharges?: number;
   facingDirection?: number;
 }
 
-export interface IEntity {
+export interface IEntity extends ITransform, IRenderable {
   id: string;
-  position: Vector2D;
-  previousPosition: Vector2D;
-  velocity: Vector2D;
-  size: { width: number; height: number };
   isDead: boolean;
   status: EntityStatus;
   world: IWorld;
-  visualScale?: Vector2D;
-  targetVisualScale?: Vector2D;
-  scaleVelocity?: Vector2D;
   update(dt: number): void;
-  draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
   teardown(): void;
   addComponent<T extends IEntityComponent>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,6 +118,8 @@ export interface IWorld {
   boss: IEntity | null;
   minions: IEntity[];
   physicsWorld: IPhysicsWorld;
+  events: IEventBus;
+  audio: IAudioManager;
   getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
@@ -125,4 +137,16 @@ export interface IWorld {
 
 export interface IDamageRecorder {
   registerDamageDealt(): void;
+}
+
+export interface IEventBus {
+  subscribe(event: string, callback: (payload: any) => void): () => void;
+  publish(event: string, payload: unknown): void;
+  publishSpark(x: number, y: number, angle: number, color?: string, radial?: boolean, count?: number, shape?: "spark" | "line", turbulence?: number): void;
+  publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void;
+  publishBlast(x: number, y: number, color: string): void;
+}
+
+export interface IAudioManager {
+  // Reserved for future audio injection into entity layer
 }

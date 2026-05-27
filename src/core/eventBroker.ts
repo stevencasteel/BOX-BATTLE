@@ -1,4 +1,4 @@
-import { Rectangle } from "./Interfaces";
+import { IEventBus } from "./Interfaces";
 export type GameEventMap = {
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -47,7 +47,7 @@ export type GameEventMap = {
 
 export type EventCallback<T> = (payload: T) => void;
 
-class EventBroker {
+class EventBroker implements IEventBus {
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
 
   private static sparkPayload: {
@@ -58,19 +58,23 @@ class EventBroker {
 
   private static blastPayload: { x: number; y: number; color: string } = { x: 0, y: 0, color: "" };
 
-  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
-    if (!this.listeners[event]) {
-      this.listeners[event] = new Set();
+  public subscribe(event: string, callback: (payload: any) => void): () => void;
+  public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void;
+  public subscribe(event: string, callback: (payload: any) => void): () => void {
+    if (!this.listeners[event as keyof GameEventMap]) {
+      this.listeners[event as keyof GameEventMap] = new Set();
     }
-    const set = this.listeners[event]!;
+    const set = this.listeners[event as keyof GameEventMap]!;
     set.add(callback);
     return () => {
-      this.listeners[event]?.delete(callback);
+      this.listeners[event as keyof GameEventMap]?.delete(callback);
     };
   }
 
-  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void {
-    const set = this.listeners[event];
+  public publish(event: string, payload: unknown): void;
+  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void;
+  public publish(event: string, payload: unknown): void {
+    const set = this.listeners[event as keyof GameEventMap];
     if (set) {
       set.forEach((cb) => cb(payload));
     }
