@@ -130,12 +130,12 @@ export class ParticleSystem {
   }
 
   public update(dt: number) {
-    const active = [...this.pool.getActive()];
+    const active = this.pool.getActive();
     for (let i = active.length - 1; i >= 0; i--) {
       const p = active[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.pool.release(p);
+        this.pool.releaseAt(i);
         continue;
       }
       if (p.drag !== 1.0) {

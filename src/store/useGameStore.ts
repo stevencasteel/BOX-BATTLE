@@ -124,14 +124,6 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       if (hp < current) {
         get().triggerGlitch(150);
         get().resetCombo();
-
-        if (typeof document !== "undefined") {
-          const panel = document.querySelector(".cabinet-status-panel");
-          if (panel) {
-            panel.classList.add("hud-shaking");
-            setTimeout(() => panel.classList.remove("hud-shaking"), 180);
-          }
-        }
       }
     }
   },

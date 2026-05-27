@@ -24,7 +24,6 @@ import { DialogueConsole } from "@/components/DialogueConsole";
 import { TouchOverlay } from "@/components/TouchOverlay";
 import { ChromaticAberrationFilter } from "@/components/ChromaticAberrationFilter";
 import { Cursor } from "@/components/cursor/Cursor";
-import { useHudSubscription } from "@/hooks/useHudSubscription";
 import { useMusicLifecycle } from "@/hooks/useMusicLifecycle";
 import { useFirstGesture } from "@/hooks/useFirstGesture";
 import { useEngineSubscriptions } from "@/hooks/useEngineSubscriptions";
@@ -37,8 +36,6 @@ import "./components/GameArena.css";
 export default function App() {
   const bootStage = useBootSequence();
   const viewportRef = useRef<HTMLDivElement>(null);
-
-  useHudSubscription();
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const transitionActive = useSessionStore((state) => state.transitionActive);

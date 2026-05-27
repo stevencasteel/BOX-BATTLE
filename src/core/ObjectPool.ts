@@ -51,6 +51,22 @@ export class ObjectPool<T extends IPoolable> {
     }
   }
 
+  /**
+   * Fast release using swap-and-pop when index is already known.
+   * Avoids O(N) indexOf searches and array shifts.
+   */
+  public releaseAt(index: number) {
+    if (index >= 0 && index < this.activePool.length) {
+      const instance = this.activePool[index];
+      instance.deactivate();
+      this.inactivePool.push(instance);
+
+      const last = this.activePool[this.activePool.length - 1];
+      this.activePool[index] = last;
+      this.activePool.pop();
+    }
+  }
+
   public getActive(): readonly T[] {
     return this.activePool;
   }

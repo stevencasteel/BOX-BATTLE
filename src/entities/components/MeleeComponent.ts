@@ -164,9 +164,10 @@ export class MeleeComponent implements IEntityComponent {
 
   private swipeIncomingProjectiles(): void {
     const facing = this.owner.facingDirection;
-    const activeProjectiles = [...this.owner.world.getProjectiles()];
+    const activeProjectiles = this.owner.world.getProjectiles();
 
-    for (const proj of activeProjectiles) {
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      const proj = activeProjectiles[i];
       if (proj.isActive && proj.ownerId === "boss") {
         let isDeflected = false;
 

@@ -8,15 +8,362 @@ import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
 import { inputProvider } from "@/core/InputProvider";
+import { UNITS } from "@/core/Units";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
   isPlayingScreen: boolean;
 }
 
+// Subcomponent: Player HP Display (LED Dots)
+function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
+  const playerHP = useGameplayStore((state) => state.playerHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+  const activeHP = isGameOver ? 0 : playerHP;
+
+  const prevHpRef = useRef(activeHP);
+  const [animationClasses, setAnimationClasses] = useState<string[]>(Array(UNITS.PLAYER_MAX_HP).fill(""));
+
+  useEffect(() => {
+    const prevHP = prevHpRef.current;
+    if (activeHP !== prevHP) {
+      const tookDamage = activeHP < prevHP && prevHP !== -1 && !isGameOver;
+      const healed = activeHP > prevHP && prevHP !== -1 && !isGameOver;
+
+      if (soundSynth.initialized) {
+        soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
+      }
+
+      const nextCls = [...animationClasses];
+      for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
+        if (tookDamage && i === activeHP) {
+          nextCls[i] = "led-shaking-die";
+        } else if (healed && i === activeHP - 1) {
+          nextCls[i] = "led-elastic-spring";
+        } else if (tookDamage && i < activeHP) {
+          nextCls[i] = "led-spring-impact";
+        } else {
+          nextCls[i] = "";
+        }
+      }
+      setAnimationClasses(nextCls);
+      prevHpRef.current = activeHP;
+
+      const timer = setTimeout(() => {
+        setAnimationClasses(Array(UNITS.PLAYER_MAX_HP).fill(""));
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeHP, isGameOver, animationClasses]);
+
+  const lowHpStress = activeHP === 1 && !isGameOver;
+
+  if (isTouchDevice) {
+    return (
+      <div id="hud-m-hp-group" className={lowHpStress ? "hud-stress-shiver" : ""} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+          <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
+        </span>
+        <div className="flex-row" style={{ gap: "3px" }}>
+          {[...Array(UNITS.PLAYER_MAX_HP)].map((_, i) => {
+            const isLit = i < activeHP;
+            return (
+              <div
+                key={i}
+                id={`hud-m-php-${i}`}
+                className={`led-dot ${isLit ? "led-green" : ""} ${animationClasses[i]}`}
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  border: "1px solid rgba(0,0,0,0.5)",
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="hud-d-hp-group" className={`hud-panel-block ${lowHpStress ? "hud-stress-shiver" : ""}`} style={{ gap: "4px", position: "relative" }}>
+      <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+        PLAYER HP
+      </span>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${UNITS.PLAYER_MAX_HP}, 1.3vmin)`, gap: "6px", alignItems: "center" }}>
+        {[...Array(UNITS.PLAYER_MAX_HP)].map((_, i) => {
+          const isLit = i < activeHP;
+          return (
+            <div
+              key={i}
+              id={`hud-d-php-${i}`}
+              className={`led-dot ${isLit ? "led-green" : ""} ${animationClasses[i]}`}
+              style={{
+                border: "1px solid rgba(0,0,0,0.5)",
+                width: "100%",
+                height: "1.3vmin",
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Subcomponent: Healing charges & Determination bar
+interface HealingAndDeterminationProps {
+  isTouchDevice: boolean;
+  isPlayingScreen: boolean;
+  tutorialStep: number;
+}
+
+function HealingAndDetermination({
+  isTouchDevice,
+  isPlayingScreen,
+  tutorialStep,
+}: HealingAndDeterminationProps) {
+  const healingCharges = useGameplayStore((state) => state.healingCharges);
+  const determination = useGameplayStore((state) => state.determination);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+
+  const activeHealCharges = isGameOver ? 0 : healingCharges;
+  const activeDet = isGameOver ? 0 : determination;
+
+  const prevChargesRef = useRef(activeHealCharges);
+  const [chargeAnims, setChargeAnims] = useState<string[]>(Array(3).fill(""));
+
+  useEffect(() => {
+    const prev = prevChargesRef.current;
+    if (activeHealCharges !== prev) {
+      const gained = activeHealCharges > prev && prev !== -1;
+      const nextCls = [...chargeAnims];
+      for (let i = 0; i < 3; i++) {
+        if (gained && i === activeHealCharges - 1) {
+          nextCls[i] = "led-elastic-spring";
+        }
+      }
+      setChargeAnims(nextCls);
+      prevChargesRef.current = activeHealCharges;
+      const timer = setTimeout(() => {
+        setChargeAnims(Array(3).fill(""));
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeHealCharges, chargeAnims]);
+
+  const isOverflow = activeHealCharges === 3;
+  const detWidth = (activeDet / 5) * 100 + "%";
+
+  if (isTouchDevice) {
+    return (
+      <>
+        <div style={{ display: "flex", gap: "2px", marginLeft: "2px" }}>
+          {[...Array(3)].map((_, i) => {
+            const isLit = i < activeHealCharges;
+            return (
+              <div
+                key={i}
+                id={`hud-m-heal-${i}`}
+                className={`led-dot ${isLit ? "led-yellow" : ""} ${isOverflow ? "led-overflow-wobble" : ""} ${chargeAnims[i]}`}
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  background: isLit ? undefined : "#07080b",
+                }}
+              />
+            );
+          })}
+        </div>
+        <div
+          id="hud-m-det-container"
+          className="neo-pressed"
+          style={{
+            width: "36px",
+            height: "6px",
+            borderRadius: "3px",
+            padding: "1px",
+            boxSizing: "border-box",
+            overflow: "hidden",
+            background: "#07080b",
+            marginLeft: "4px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <div
+            id="hud-m-det-bar"
+            style={{
+              height: "100%",
+              borderRadius: "1.5px",
+              width: detWidth,
+              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+              background: "hsl(280, 80%, 65%)",
+              boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
+      <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+        {[...Array(3)].map((_, i) => {
+          const isLit = i < activeHealCharges;
+          return (
+            <div
+              key={i}
+              id={`hud-d-heal-${i}`}
+              className={`led-dot ${isLit ? "led-yellow" : ""} ${isOverflow ? "led-overflow-wobble" : ""} ${chargeAnims[i]}`}
+              style={{
+                border: "1px solid rgba(0,0,0,0.5)",
+                width: "10px",
+                height: "10px",
+                borderRadius: "25%",
+              }}
+            />
+          );
+        })}
+      </div>
+      <div
+        id="hud-d-det-container"
+        className={`neo-pressed ${isPlayingScreen && tutorialStep === 4 ? "det-pulse-highlight" : ""}`}
+        style={{
+          gridColumn: "span 3",
+          width: "100%",
+          height: "10px",
+          borderRadius: "2.5px",
+          padding: "1px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          background: "#07080b",
+          transition: "border-color 0.3s ease, box-shadow 0.3s ease"
+        }}
+      >
+        <div
+          id="hud-d-det-bar"
+          style={{
+            height: "100%",
+            borderRadius: "1.5px",
+            width: detWidth,
+            transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+            background: "hsl(280, 80%, 65%)",
+            boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
+          }}
+        />
+      </div>
+      {isPlayingScreen && tutorialStep === 4 && (
+        <div
+          style={{
+            position: "absolute",
+            left: "calc(6.5vmin + 36px)",
+            display: "flex",
+            alignItems: "center",
+            pointerEvents: "none",
+            animation: "crt-pulse 1.2s infinite alternate",
+            whiteSpace: "nowrap"
+          }}
+        >
+          <span
+            style={{
+              fontSize: "8px",
+              color: "hsl(280, 100%, 75%)",
+              fontWeight: "bold",
+              letterSpacing: "0.05em"
+            }}
+          >
+            ◄ STRIKE ENEMIES TO CHARGE
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Subcomponent: Boss HP Bar
+function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
+  const bossHP = useGameplayStore((state) => state.bossHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+  const activeBHP = isGameOver ? 0 : bossHP;
+
+  const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+
+  if (isTouchDevice) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+          <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
+        </span>
+        <div
+          id="hud-m-boss-container"
+          className="neo-pressed"
+          style={{
+            width: "80px",
+            height: "8px",
+            borderRadius: "3px",
+            padding: "1px",
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            id="hud-m-boss-bar"
+            className={activeBHP > 0 ? "led-red" : ""}
+            style={{
+              height: "100%",
+              borderRadius: "1.5px",
+              width: bossWidth,
+              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
+      <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
+        BOSS HP
+      </span>
+      <div
+        id="hud-d-boss-container"
+        className="neo-pressed"
+        style={{
+          width: "160px",
+          height: "10px",
+          borderRadius: "4px",
+          padding: "1px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          id="hud-d-boss-bar"
+          className={activeBHP > 0 ? "led-red" : ""}
+          style={{
+            height: "100%",
+            borderRadius: "2px",
+            width: bossWidth,
+            transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   const [bannerText, setBannerText] = useState<string | null>(null);
   const phaseRef = useRef(1);
+  const [isHurtShaking, setIsHurtShaking] = useState(false);
 
   const { tutorialStep, calibratedKeys, setTutorialStep, calibrateKey, resetTutorial } = useTutorialStore();
 
@@ -32,8 +379,14 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       }, 2800);
     });
 
+    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+      setIsHurtShaking(true);
+      setTimeout(() => setIsHurtShaking(false), 180);
+    });
+
     return () => {
       unsubPhase();
+      unsubHurt();
     };
   }, []);
 
@@ -161,7 +514,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   if (isTouchDevice) {
     return (
       <div
-        className="cabinet-status-panel neo-pressed"
+        className={`cabinet-status-panel neo-pressed ${isHurtShaking ? "hud-shaking" : ""}`}
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -174,66 +527,13 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           borderRadius: "8px",
         }}
       >
-        <div id="hud-m-hp-group" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
-          </span>
-          <div className="flex-row" style={{ gap: "3px" }}>
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                id={`hud-m-php-${i}`}
-                className="led-dot led-green"
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  border: "1px solid rgba(0,0,0,0.5)",
-                }}
-              />
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: "2px", marginLeft: "2px" }}>
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                id={`hud-m-heal-${i}`}
-                className="led-dot"
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  background: "#07080b",
-                }}
-              />
-            ))}
-          </div>
-          <div
-            id="hud-m-det-container"
-            className="neo-pressed"
-            style={{
-              width: "36px",
-              height: "6px",
-              borderRadius: "3px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              background: "#07080b",
-              marginLeft: "4px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              id="hud-m-det-bar"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-                background: "hsl(280, 80%, 65%)",
-                boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
-              }}
-            />
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <PlayerHpDisplay isTouchDevice={isTouchDevice} />
+          <HealingAndDetermination
+            isTouchDevice={isTouchDevice}
+            isPlayingScreen={isPlayingScreen}
+            tutorialStep={tutorialStep}
+          />
         </div>
 
         <AnimatePresence mode="wait">
@@ -273,128 +573,21 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           )}
         </AnimatePresence>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
-          </span>
-          <div
-            id="hud-m-boss-container"
-            className="neo-pressed"
-            style={{
-              width: "80px",
-              height: "8px",
-              borderRadius: "3px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              id="hud-m-boss-bar"
-              className="led-red"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-              }}
-            />
-          </div>
-        </div>
+        <BossHpBar isTouchDevice={isTouchDevice} />
       </div>
     );
   }
 
   return (
-    <div className="cabinet-status-panel neo-pressed">
+    <div className={`cabinet-status-panel neo-pressed ${isHurtShaking ? "hud-shaking" : ""}`}>
+      <PlayerHpDisplay isTouchDevice={isTouchDevice} />
+      
       <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
-        <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
-          PLAYER HP
-        </span>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center" }}>
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              id={`hud-d-php-${i}`}
-              className="led-dot led-green"
-              style={{
-                border: "1px solid rgba(0,0,0,0.5)",
-                width: "100%",
-                height: "1.3vmin",
-              }}
-            />
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
-          <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                id={`hud-d-heal-${i}`}
-                className="led-dot"
-                style={{
-                  border: "1px solid rgba(0,0,0,0.5)",
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "25%",
-                }}
-              />
-            ))}
-          </div>
-          <div
-            id="hud-d-det-container"
-            className={`neo-pressed ${isPlayingScreen && tutorialStep === 4 ? "det-pulse-highlight" : ""}`}
-            style={{
-              gridColumn: "span 3",
-              width: "100%",
-              height: "10px",
-              borderRadius: "2.5px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              background: "#07080b",
-              transition: "border-color 0.3s ease, box-shadow 0.3s ease"
-            }}
-          >
-            <div
-              id="hud-d-det-bar"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-                background: "hsl(280, 80%, 65%)",
-                boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
-              }}
-            />
-          </div>
-          {isPlayingScreen && tutorialStep === 4 && (
-            <div
-              style={{
-                position: "absolute",
-                left: "calc(6.5vmin + 36px)",
-                display: "flex",
-                alignItems: "center",
-                pointerEvents: "none",
-                animation: "crt-pulse 1.2s infinite alternate",
-                whiteSpace: "nowrap"
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "8px",
-                  color: "hsl(280, 100%, 75%)",
-                  fontWeight: "bold",
-                  letterSpacing: "0.05em"
-                }}
-              >
-                ◄ STRIKE ENEMIES TO CHARGE
-              </span>
-            </div>
-          )}
-        </div>
+        <HealingAndDetermination
+          isTouchDevice={isTouchDevice}
+          isPlayingScreen={isPlayingScreen}
+          tutorialStep={tutorialStep}
+        />
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center", minWidth: "350px", position: "relative" }}>
@@ -577,35 +770,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </AnimatePresence>
       </div>
 
-      <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-        <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
-          BOSS HP
-        </span>
-        <div
-          id="hud-d-boss-container"
-          className="neo-pressed"
-          style={{
-            width: "160px",
-            height: "10px",
-            borderRadius: "4px",
-            padding: "1px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            id="hud-d-boss-bar"
-            className="led-red"
-            style={{
-              height: "100%",
-              borderRadius: "2px",
-              width: "0%",
-              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-            }}
-          />
-        </div>
-      </div>
+      <BossHpBar isTouchDevice={isTouchDevice} />
     </div>
   );
 }

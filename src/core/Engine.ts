@@ -299,7 +299,7 @@ export class Engine {
     this.player.velocity = { x: 0, y: 0 };
     this.boss.velocity = { x: 0, y: 0 };
 
-    const activeProjectiles = [...this.pool.getActive()];
+    const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }
@@ -383,7 +383,7 @@ export class Engine {
 
     this.handleMinionCollisions();
 
-    const activeProjectiles = [...this.pool.getActive()];
+    const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }

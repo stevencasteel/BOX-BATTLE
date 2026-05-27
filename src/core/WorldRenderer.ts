@@ -49,12 +49,14 @@ function lerpHsl(startStr: string, endStr: string, pct: number): string {
   
   const result = `hsl(${h}, ${s}%, ${l}%)`;
   lerpCache.set(cacheKey, result);
+  colorCache.set(result, { h, s, l }); // Seed parsed cache for dynamic color
   return result;
 }
 
-function convertToHsla(colorStr: string, alpha: number): string {
-  if (colorStr.startsWith("hsl(")) {
-    return colorStr.replace("hsl(", "hsla(").replace(")", ", " + alpha + ")");
+function getHslaColor(colorStr: string, alpha: number): string {
+  const parsed = parseHsl(colorStr);
+  if (parsed) {
+    return `hsla(${parsed.h}, ${parsed.s}%, ${parsed.l}%, ${alpha})`;
   }
   return colorStr;
 }
@@ -259,9 +261,9 @@ export class WorldRenderer {
           if (p.shape === 'spark') {
             const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
             const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
-            radialGrad.addColorStop(0.0, convertToHsla(sparkColor, pct));
-            radialGrad.addColorStop(0.3, convertToHsla(sparkColor, pct * 0.5));
-            radialGrad.addColorStop(1.0, convertToHsla(sparkColor, 0));
+            radialGrad.addColorStop(0.0, getHslaColor(sparkColor, pct));
+            radialGrad.addColorStop(0.3, getHslaColor(sparkColor, pct * 0.5));
+            radialGrad.addColorStop(1.0, getHslaColor(sparkColor, 0));
             this.ctx.fillStyle = radialGrad;
             this.ctx.globalAlpha = 1.0;
             this.ctx.beginPath();
@@ -285,10 +287,10 @@ export class WorldRenderer {
             const y2 = p.y + uy * p.size * 6;
 
             const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
-            lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
-            lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
-            lineGrad.addColorStop(0.85, convertToHsla(p.color, pct * 0.95));
-            lineGrad.addColorStop(1.0, convertToHsla(p.color, pct * 0.3));
+            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
             
             this.ctx.strokeStyle = lineGrad;
             this.ctx.lineWidth = p.size;
