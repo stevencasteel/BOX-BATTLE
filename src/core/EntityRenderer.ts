@@ -86,7 +86,23 @@ export class EntityRenderer {
 
       this.ctx.save();
       this.ctx.translate(cx, cy);
+
+      const dynamicMeleeGradient = this.ctx.createRadialGradient(
+        0,
+        0,
+        UNITS.MELEE_SWEEP_INNER_RADIUS,
+        0,
+        0,
+        UNITS.MELEE_MAX_REACH
+      );
+      dynamicMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      dynamicMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+      dynamicMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+      dynamicMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+      dynamicMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
       this.ctx.globalAlpha = opacity;
+      this.ctx.fillStyle = dynamicMeleeGradient;
       const startA = facing > 0 ? baseStart : Math.PI - baseStart;
       const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       this.ctx.beginPath();

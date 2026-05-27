@@ -4,6 +4,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
@@ -103,7 +104,7 @@ export class Boss extends BaseEntity {
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = Math.sqrt(dx * dx + dy * dy);
+    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -127,8 +128,8 @@ export class Boss extends BaseEntity {
 
     for (let i = 0; i < projectileCount; i++) {
       const angle = i * angleStep;
-      const dirX = Math.cos(angle);
-      const dirY = Math.sin(angle);
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
 
       this.world.spawnProjectile(
         this.position.x + dirX * 40,
@@ -268,7 +269,7 @@ export class Boss extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 

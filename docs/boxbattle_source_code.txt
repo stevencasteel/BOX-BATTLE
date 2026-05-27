@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 12:26:53 PM
+ [SYSTEM] Generated: 5/27/2026, 12:57:11 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2673,7 +2673,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not construct 2D context.");
 
-    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms, eventBroker, soundSynth);
+    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms, eventBroker, soundSynth, inputProvider);
     const renderer = new WorldRenderer(ctx);
     const engine = new Engine(world, renderer);
     engineRef.current = engine;
@@ -6727,8 +6727,7 @@ export function TitleScreen({
 ────────────────────────────────────────────────────
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { eventBroker } from "@/core/eventBroker";
-import { soundSynth } from "@/core/SoundSynth";
+import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
@@ -6736,15 +6735,19 @@ import { saveManager } from "@/core/SaveManager";
 import { CinematicSystem } from "@/core/CinematicSystem";
 
 export class BattleDirector {
+  private events: IEventBus;
+  private audio: IAudioManager;
   private hasTriggeredFirstHit = false;
   private hasTriggeredPhase2 = false;
   private hasTriggeredPhase3 = false;
   private cinematic: CinematicSystem;
   private onBattleEnd: () => void;
 
-  constructor(onBattleEnd: () => void) {
+  constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
+    this.events = events;
+    this.audio = audio;
     this.onBattleEnd = onBattleEnd;
-    this.cinematic = new CinematicSystem();
+    this.cinematic = new CinematicSystem(events, audio);
   }
 
   public isCinematicActive(): boolean {
@@ -6772,25 +6775,25 @@ export class BattleDirector {
 
       if (bHealth.currentHealth < UNITS.BOSS_MAX_HP && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
+        this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
       if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
+        this.events.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
           text: "You won't beat me! Watch out for my rapid fire!",
         });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
+        this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
       if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
+        this.events.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
           text: "This is my final stand! Prepare yourself!",
         });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
+        this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
     }
 
@@ -6800,7 +6803,7 @@ export class BattleDirector {
       this.cinematic.startSequence(
         player.position,
         () => {
-          soundSynth.playPlayerExplosion();
+          this.audio.playPlayerExplosion();
         },
         [
           {
@@ -6813,13 +6816,13 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
             },
           },
           {
             triggerTime: 3.8,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", {
+              this.events.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
                 text: "You fought well... but I am victorious.",
               });
@@ -6828,7 +6831,7 @@ export class BattleDirector {
           {
             triggerTime: 7.2,
             action: () => {
-              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
             },
           },
@@ -6838,7 +6841,7 @@ export class BattleDirector {
       this.cinematic.startSequence(
         boss.position,
         () => {
-          soundSynth.playBossExplosion();
+          this.audio.playBossExplosion();
         },
         [
           {
@@ -6851,7 +6854,7 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", {
+              this.events.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
                 text: "No... How could I lose this fight...",
               });
@@ -6860,13 +6863,13 @@ export class BattleDirector {
           {
             triggerTime: 4.8,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
             },
           },
           {
             triggerTime: 7.2,
             action: () => {
-              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
             },
           },
@@ -6980,8 +6983,7 @@ export class Camera {
 
 ● ./src/core/CinematicSystem.ts
 ────────────────────────────────────────────────────
-import { eventBroker } from "@/core/eventBroker";
-import { soundSynth } from "@/core/SoundSynth";
+import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -6990,11 +6992,18 @@ interface CinematicEvent {
 }
 
 export class CinematicSystem {
+  private events: IEventBus;
+  private audio: IAudioManager;
   private cinematicActive = false;
   private bossDeathTimer = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
   private cinematicTimeline = 0;
   private cinematicQueue: CinematicEvent[] = [];
+
+  constructor(events: IEventBus, audio: IAudioManager) {
+    this.events = events;
+    this.audio = audio;
+  }
 
   public isActive(): boolean {
     return this.cinematicActive;
@@ -7025,15 +7034,15 @@ export class CinematicSystem {
 
   public startSequence(pos: { x: number; y: number }, initialExplosion: () => void, events: { triggerTime: number; action: () => void }[]): void {
     this.cinematicActive = true;
-    eventBroker.publish("CLEAR_DIALOGUES", undefined);
-    soundSynth.stopChargeDrone();
-    soundSynth.stopHealDrone();
+    this.events.publish("CLEAR_DIALOGUES", undefined);
+    this.audio.stopChargeDrone();
+    this.audio.stopHealDrone();
     initialExplosion();
 
     this.bossDeathTimer = 0;
     this.bossDeathPos = { x: pos.x, y: pos.y };
 
-    eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
+    this.events.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
     this.cinematicTimeline = 0;
     this.cinematicQueue = events.map((e) => ({ ...e, fired: false }));
@@ -7055,17 +7064,14 @@ export class CinematicSystem {
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
-import { inputProvider } from "@/core/InputProvider";
 import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { eventBroker } from "@/core/eventBroker";
 import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
@@ -7116,7 +7122,7 @@ export class Engine {
   }
 
   private init() {
-    this.systems = new SimulationSystems();
+    this.systems = new SimulationSystems(this.world.events, this.world.audio, this.world.input);
     this.systems.setup(
       () => this.player.position.x,
       () => this.boss.position.x,
@@ -7146,8 +7152,8 @@ export class Engine {
 
     this.stateProjection.project(this.player, this.boss);
 
-    this.particleSystem = new ParticleSystem();
-    this.battleDirector = new BattleDirector(() => {});
+    this.particleSystem = new ParticleSystem(this.world.events);
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
 
     this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
       rect,
@@ -7155,7 +7161,7 @@ export class Engine {
       velocityY: 0,
     }));
 
-    this.unsubPlatformImpact = eventBroker.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
+    this.unsubPlatformImpact = this.world.events.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
       const sp = this.springPlatforms.find((s) => s.rect === platform);
       if (sp) {
         sp.velocityY += velocityY * massMultiplier * 0.25;
@@ -7201,22 +7207,16 @@ export class Engine {
     this.boss.stateMachine.changeState(this.boss.cooldownState);
 
     this.particleSystem.cleanup();
-    this.particleSystem = new ParticleSystem();
-
-    for (const sp of this.springPlatforms) {
-      sp.offsetY = 0;
-      sp.velocityY = 0;
-    }
-
+    this.particleSystem = new ParticleSystem(this.world.events);
     this.battleDirector.cleanup();
-    this.battleDirector = new BattleDirector(() => {});
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
     this.stateProjection.reset();
 
     const sessionState = useSessionStore.getState();
     sessionState.setGameResult("PLAYING");
 
     this.stateProjection.project(this.player, this.boss);
-    eventBroker.publish("CLEAR_DIALOGUES", undefined);
+    this.world.events.publish("CLEAR_DIALOGUES", undefined);
 
     this.render();
     requestAnimationFrame(() => {
@@ -7266,12 +7266,12 @@ export class Engine {
 
   private update(dt: number) {
     if (this.isPaused) {
-      inputProvider.update();
-      if (inputProvider.isPauseJustPressed()) {
+      this.world.input.update();
+      if (this.world.input.isPauseJustPressed()) {
         this.isPaused = false;
-        soundSynth.playHitConfirm();
+        this.world.audio.playHitConfirm();
       }
-      inputProvider.postUpdate();
+      this.world.input.postUpdate();
       return;
     }
 
@@ -7312,7 +7312,7 @@ export class Engine {
         this.pool.releaseAt(i);
       }
     }
-    inputProvider.postUpdate();
+    this.world.input.postUpdate();
     this.stateProjection.project(this.player, this.boss);
   }
 
@@ -7349,11 +7349,11 @@ export class Engine {
   }
 
   private fixedUpdate(dt: number) {
-    inputProvider.update();
-    if (inputProvider.isPauseJustPressed()) {
+    this.world.input.update();
+    if (this.world.input.isPauseJustPressed()) {
       this.isPaused = true;
-      soundSynth.playErrorTick();
-      inputProvider.postUpdate();
+      this.world.audio.playErrorTick();
+      this.world.input.postUpdate();
       return;
     }
     if (Camera.hitStopTimer > 0) {
@@ -7397,7 +7397,7 @@ export class Engine {
         this.pool.releaseAt(i);
       }
     }
-    inputProvider.postUpdate();
+    this.world.input.postUpdate();
     this.stateProjection.project(this.player, this.boss);
   }
 
@@ -7532,7 +7532,23 @@ export class EntityRenderer {
 
       this.ctx.save();
       this.ctx.translate(cx, cy);
+
+      const dynamicMeleeGradient = this.ctx.createRadialGradient(
+        0,
+        0,
+        UNITS.MELEE_SWEEP_INNER_RADIUS,
+        0,
+        0,
+        UNITS.MELEE_MAX_REACH
+      );
+      dynamicMeleeGradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+      dynamicMeleeGradient.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+      dynamicMeleeGradient.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+      dynamicMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+      dynamicMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
       this.ctx.globalAlpha = opacity;
+      this.ctx.fillStyle = dynamicMeleeGradient;
       const startA = facing > 0 ? baseStart : Math.PI - baseStart;
       const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       this.ctx.beginPath();
@@ -8143,6 +8159,7 @@ export interface IWorld {
   physicsWorld: IPhysicsWorld;
   events: IEventBus;
   audio: IAudioManager;
+  input: IInputProvider;
   getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
@@ -8171,7 +8188,32 @@ export interface IEventBus {
 }
 
 export interface IAudioManager {
-  // Reserved for future audio injection into entity layer
+  registerCoordinateProviders(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void;
+  stopHealDrone(): void;
+  stopChargeDrone(): void;
+  playHitConfirm(): void;
+  playErrorTick(): void;
+  playPlayerExplosion(): void;
+  playBossExplosion(): void;
+  playDashRecharge(): void;
+  playBossTelegraph(): void;
+  playBossLunge(): void;
+  playBossSwipe(): void;
+  playMenuConfirm(): void;
+  playMenuBack(): void;
+  playSelectTick(): void;
+}
+
+export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
+
+export interface IInputProvider {
+  update(): void;
+  postUpdate(): void;
+  isPauseJustPressed(): boolean;
+  triggerHapticFeedback(strength: "light" | "medium" | "heavy"): void;
+  isPressed(action: Action): boolean;
+  isJustPressed(action: Action): boolean;
+  cleanup(): void;
 }
 
 
@@ -8260,6 +8302,7 @@ export class ObjectPool<T extends IPoolable> {
 ● ./src/core/ParticleRenderer.ts
 ────────────────────────────────────────────────────
 import { Particle } from "./Interfaces";
+import { TrigLUT } from "./TrigLUT";
 
 const colorCache = new Map<string, { h: number; s: number; l: number } | null>();
 const lerpCache = new Map<string, string>();
@@ -8339,7 +8382,7 @@ export class ParticleRenderer {
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
       } else if (p.shape === "line") {
-        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
         let ux = 1;
         let uy = 0;
         if (speed > 0) {
@@ -8383,9 +8426,8 @@ export class ParticleRenderer {
 
 ● ./src/core/ParticleSystem.ts
 ────────────────────────────────────────────────────
-import { Particle } from "./Interfaces";
+import { Particle, IEventBus } from "./Interfaces";
 import { ObjectPool, IPoolable } from "./ObjectPool";
-import { eventBroker } from "./eventBroker";
 import { TrigLUT } from "./TrigLUT";
 
 export class PoolableParticle implements Particle, IPoolable {
@@ -8446,15 +8488,17 @@ export class PoolableParticle implements Particle, IPoolable {
 export class ParticleSystem {
   private pool: ObjectPool<PoolableParticle>;
   private unsubs: (() => void)[] = [];
+  private events: IEventBus;
 
-  constructor() {
+  constructor(events: IEventBus) {
+    this.events = events;
     this.pool = new ObjectPool(() => new PoolableParticle(), 200);
     this.setupListeners();
   }
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
+      this.events.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -8485,7 +8529,7 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
+      this.events.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
         const count = 14;
         const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
@@ -8509,7 +8553,7 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
+      this.events.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
         this.pool.get(x, y, 0, 0, color, 8, 0.16, "ring");
       })
     );
@@ -8525,8 +8569,8 @@ export class ParticleSystem {
         continue;
       }
       if (p.drag !== 1.0) {
-        p.vx *= Math.pow(p.drag, dt * 60);
-        p.vy *= Math.pow(p.drag, dt * 60);
+        p.vx *= p.drag;
+        p.vy *= p.drag;
       }
       if (p.turbulence > 0) {
         const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
@@ -8941,20 +8985,28 @@ export const settingsManager = new SettingsManager();
 
 ● ./src/core/SimulationSystems.ts
 ────────────────────────────────────────────────────
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { Camera } from "@/core/Camera";
-import { soundSynth } from "@/core/SoundSynth";
-import { inputProvider } from "@/core/InputProvider";
+import { TrigLUT } from "@/core/TrigLUT";
+import type { IEventBus, IAudioManager, IInputProvider } from "@/core/Interfaces";
 
 export class SimulationSystems {
+  private events: IEventBus;
+  private audio: IAudioManager;
+  private input: IInputProvider;
   private unsubscribes: (() => void)[] = [];
 
+  constructor(events: IEventBus, audio: IAudioManager, input: IInputProvider) {
+    this.events = events;
+    this.audio = audio;
+    this.input = input;
+  }
+
   public setup(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void {
-    soundSynth.registerCoordinateProviders(getPlayerX, getBossX, getMinionX);
+    this.audio.registerCoordinateProviders(getPlayerX, getBossX, getMinionX);
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_HURT", () => {
+      this.events.subscribe("PLAYER_HURT", () => {
         const px = getPlayerX();
         const bx = getBossX();
         const dx = px - bx;
@@ -8962,98 +9014,97 @@ export class SimulationSystems {
         const dirX = len > 0 ? dx / len : 1;
         Camera.shake(15, 0.3, dirX, 0);
         Camera.triggerHitStop(0.08);
-        inputProvider.triggerHapticFeedback("medium");
+        this.input.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
+      this.events.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
         const bossX = getBossX();
         const dx = bossX - sourceX;
         const dy = 1000 - sourceY;
-        const len = Math.sqrt(dx * dx + dy * dy);
+        const len = TrigLUT.fastSqrt(dx * dx + dy * dy);
         const dirX = len > 0 ? dx / len : -1;
         const dirY = len > 0 ? dy / len : 0;
 
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6, dirX, dirY);
           Camera.triggerHitStop(0.15);
-          inputProvider.triggerHapticFeedback("heavy");
+          this.input.triggerHapticFeedback("heavy");
         } else {
           Camera.shake(8, 0.15, dirX, dirY);
           Camera.triggerHitStop(0.04);
-          inputProvider.triggerHapticFeedback("light");
+          this.input.triggerHapticFeedback("light");
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
+      this.events.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
         const minionX = getMinionX(id);
         const dx = minionX - sourceX;
-        const len = Math.abs(dx);
-        const dirX = len > 0 ? dx / len : 1;
+        const dirX = dx > 0 ? 1 : dx < 0 ? -1 : 1;
 
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15, dirX, 0);
           Camera.triggerHitStop(0.03);
-          inputProvider.triggerHapticFeedback("medium");
+          this.input.triggerHapticFeedback("medium");
         } else {
-          Camera.shake(2, 0.08, dirX, 0);
+          Camera.shake(2, 0.15, dirX, 0);
           Camera.triggerHitStop(0.01);
-          inputProvider.triggerHapticFeedback("light");
+          this.input.triggerHapticFeedback("light");
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_POGOED", () => {
+      this.events.subscribe("PLAYER_POGOED", () => {
         Camera.shake(4, 0.08, 0, 1);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_DASHED", () => {
+      this.events.subscribe("PLAYER_DASHED", () => {
         Camera.triggerHitStop(0.035);
-        inputProvider.triggerHapticFeedback("light");
+        this.input.triggerHapticFeedback("light");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CAMERA_SHAKE", ({ amplitude, duration }) => {
+      this.events.subscribe("CAMERA_SHAKE", ({ amplitude, duration }) => {
         Camera.shake(amplitude, duration);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("HIT_STOP", ({ duration }) => {
+      this.events.subscribe("HIT_STOP", ({ duration }) => {
         Camera.triggerHitStop(duration);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+      this.events.subscribe("CHARGE_UPDATE", ({ timer }) => {
         if (timer >= UNITS.CHARGE_LVL2_TIME) {
-          if (Math.random() < 0.16) {
-            inputProvider.triggerHapticFeedback("light");
+          if (TrigLUT.random() < 0.16) {
+            this.input.triggerHapticFeedback("light");
           }
         } else if (timer >= UNITS.CHARGE_LVL1_TIME) {
-          if (Math.random() < 0.08) {
-            inputProvider.triggerHapticFeedback("light");
+          if (TrigLUT.random() < 0.08) {
+            this.input.triggerHapticFeedback("light");
           }
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_MAXED", () => {
-        inputProvider.triggerHapticFeedback("medium");
+      this.events.subscribe("CHARGE_MAXED", () => {
+        this.input.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_SPIKED", () => {
-        inputProvider.triggerHapticFeedback("heavy");
+      this.events.subscribe("PLAYER_SPIKED", () => {
+        this.input.triggerHapticFeedback("heavy");
       })
     );
   }
@@ -9061,8 +9112,8 @@ export class SimulationSystems {
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
-    soundSynth.stopHealDrone();
-    soundSynth.stopChargeDrone();
+    this.audio.stopHealDrone();
+    this.audio.stopChargeDrone();
   }
 }
 
@@ -9676,7 +9727,7 @@ export function cloneVec(src: Vector2D): Vector2D {
 
 ● ./src/core/World.ts
 ────────────────────────────────────────────────────
-import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager, IInputProvider } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -9689,11 +9740,13 @@ export class World implements IWorld {
   public projectilePool: ObjectPool<Projectile> | null = null;
   public events: IEventBus;
   public audio: IAudioManager;
+  public input: IInputProvider;
 
-  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[], events: IEventBus, audio: IAudioManager) {
+  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[], events: IEventBus, audio: IAudioManager, input: IInputProvider) {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
     this.events = events;
     this.audio = audio;
+    this.input = input;
   }
 
   public getProjectiles(): readonly IProjectile[] {
@@ -11910,19 +11963,6 @@ class EventBroker implements IEventBus {
       set.forEach((cb) => cb(payload));
     }
   }
-    const set = this.listeners[event]!;
-    set.add(callback);
-    return () => {
-      this.listeners[event]?.delete(callback);
-    };
-  }
-
-  public publish<K extends keyof GameEventMap>(event: K, payload: GameEventMap[K]): void {
-    const set = this.listeners[event];
-    if (set) {
-      set.forEach((cb) => cb(payload));
-    }
-  }
 
   public publishSpark(x: number, y: number, angle: number, color?: string, radial?: boolean, count?: number, shape?: "spark" | "line", turbulence?: number): void {
     const p = EventBroker.sparkPayload;
@@ -12506,6 +12546,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import {
   BossCooldownState,
@@ -12605,7 +12646,7 @@ export class Boss extends BaseEntity {
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = Math.sqrt(dx * dx + dy * dy);
+    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -12629,8 +12670,8 @@ export class Boss extends BaseEntity {
 
     for (let i = 0; i < projectileCount; i++) {
       const angle = i * angleStep;
-      const dirX = Math.cos(angle);
-      const dirY = Math.sin(angle);
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
 
       this.world.spawnProjectile(
         this.position.x + dirX * 40,
@@ -12770,7 +12811,7 @@ export class Boss extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
@@ -13279,12 +13320,12 @@ export class Minion extends BaseEntity {
       this.targetRotation = this.facingDirection * 0.21;
     } else if (this.attackState === "TELEGRAPH" && !this.isDying) {
       this.targetRotation = 0;
-      this.rotation = Math.sin(performance.now() * 0.055) * 0.25;
+      this.rotation = TrigLUT.sin(performance.now() * 0.055) * 0.25;
       this.rotationVelocity = 0;
     } else {
       this.targetRotation = Math.sign(this.velocity.x) * 0.12;
       if (this.attackState === "PATROL" && !this.isDying && !this.isSpawning) {
-        this.targetRotation += Math.sin(performance.now() * 0.008 + this.position.x) * 0.04;
+        this.targetRotation += TrigLUT.sin(performance.now() * 0.008 + this.position.x) * 0.04;
       }
     }
 
@@ -13342,7 +13383,7 @@ export class Minion extends BaseEntity {
   public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = Math.sqrt(dx * dx + dy * dy);
+    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -13411,7 +13452,8 @@ export class Minion extends BaseEntity {
       const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
 
       const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
-      const accordionScale = 1.0 - Math.pow(1.0 - firstHalfProgress, 3) * Math.cos(firstHalfProgress * 3.5 * Math.PI);
+      const t = 1.0 - firstHalfProgress;
+      const accordionScale = 1.0 - t * t * t * TrigLUT.cos(firstHalfProgress * 3.5 * Math.PI);
       
       const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
@@ -13565,7 +13607,7 @@ export class Minion extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
@@ -14230,7 +14272,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     const dy = this.velocity.y * dt;
     const maxStepSize = UNITS.CCD_STEP_LIMIT_PROJECTILE;
 
-    const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) / maxStepSize));
+    const steps = Math.max(1, Math.ceil(TrigLUT.fastSqrt(dx * dx + dy * dy) / maxStepSize));
     const substepX = dx / steps;
     const substepY = dy / steps;
 

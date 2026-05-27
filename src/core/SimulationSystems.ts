@@ -1,17 +1,25 @@
-import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { Camera } from "@/core/Camera";
-import { soundSynth } from "@/core/SoundSynth";
-import { inputProvider } from "@/core/InputProvider";
+import { TrigLUT } from "@/core/TrigLUT";
+import type { IEventBus, IAudioManager, IInputProvider } from "@/core/Interfaces";
 
 export class SimulationSystems {
+  private events: IEventBus;
+  private audio: IAudioManager;
+  private input: IInputProvider;
   private unsubscribes: (() => void)[] = [];
 
+  constructor(events: IEventBus, audio: IAudioManager, input: IInputProvider) {
+    this.events = events;
+    this.audio = audio;
+    this.input = input;
+  }
+
   public setup(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void {
-    soundSynth.registerCoordinateProviders(getPlayerX, getBossX, getMinionX);
+    this.audio.registerCoordinateProviders(getPlayerX, getBossX, getMinionX);
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_HURT", () => {
+      this.events.subscribe("PLAYER_HURT", () => {
         const px = getPlayerX();
         const bx = getBossX();
         const dx = px - bx;
@@ -19,98 +27,97 @@ export class SimulationSystems {
         const dirX = len > 0 ? dx / len : 1;
         Camera.shake(15, 0.3, dirX, 0);
         Camera.triggerHitStop(0.08);
-        inputProvider.triggerHapticFeedback("medium");
+        this.input.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
+      this.events.subscribe("BOSS_HURT", ({ currentHealth, sourceX, sourceY }) => {
         const bossX = getBossX();
         const dx = bossX - sourceX;
         const dy = 1000 - sourceY;
-        const len = Math.sqrt(dx * dx + dy * dy);
+        const len = TrigLUT.fastSqrt(dx * dx + dy * dy);
         const dirX = len > 0 ? dx / len : -1;
         const dirY = len > 0 ? dy / len : 0;
 
         if (currentHealth <= 0) {
           Camera.shake(25, 0.6, dirX, dirY);
           Camera.triggerHitStop(0.15);
-          inputProvider.triggerHapticFeedback("heavy");
+          this.input.triggerHapticFeedback("heavy");
         } else {
           Camera.shake(8, 0.15, dirX, dirY);
           Camera.triggerHitStop(0.04);
-          inputProvider.triggerHapticFeedback("light");
+          this.input.triggerHapticFeedback("light");
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
+      this.events.subscribe("MINION_HURT", ({ id, currentHealth, sourceX }) => {
         const minionX = getMinionX(id);
         const dx = minionX - sourceX;
-        const len = Math.abs(dx);
-        const dirX = len > 0 ? dx / len : 1;
+        const dirX = dx > 0 ? 1 : dx < 0 ? -1 : 1;
 
         if (currentHealth <= 0) {
           Camera.shake(4, 0.15, dirX, 0);
           Camera.triggerHitStop(0.03);
-          inputProvider.triggerHapticFeedback("medium");
+          this.input.triggerHapticFeedback("medium");
         } else {
-          Camera.shake(2, 0.08, dirX, 0);
+          Camera.shake(2, 0.15, dirX, 0);
           Camera.triggerHitStop(0.01);
-          inputProvider.triggerHapticFeedback("light");
+          this.input.triggerHapticFeedback("light");
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_POGOED", () => {
+      this.events.subscribe("PLAYER_POGOED", () => {
         Camera.shake(4, 0.08, 0, 1);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_DASHED", () => {
+      this.events.subscribe("PLAYER_DASHED", () => {
         Camera.triggerHitStop(0.035);
-        inputProvider.triggerHapticFeedback("light");
+        this.input.triggerHapticFeedback("light");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CAMERA_SHAKE", ({ amplitude, duration }) => {
+      this.events.subscribe("CAMERA_SHAKE", ({ amplitude, duration }) => {
         Camera.shake(amplitude, duration);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("HIT_STOP", ({ duration }) => {
+      this.events.subscribe("HIT_STOP", ({ duration }) => {
         Camera.triggerHitStop(duration);
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_UPDATE", ({ timer }) => {
+      this.events.subscribe("CHARGE_UPDATE", ({ timer }) => {
         if (timer >= UNITS.CHARGE_LVL2_TIME) {
-          if (Math.random() < 0.16) {
-            inputProvider.triggerHapticFeedback("light");
+          if (TrigLUT.random() < 0.16) {
+            this.input.triggerHapticFeedback("light");
           }
         } else if (timer >= UNITS.CHARGE_LVL1_TIME) {
-          if (Math.random() < 0.08) {
-            inputProvider.triggerHapticFeedback("light");
+          if (TrigLUT.random() < 0.08) {
+            this.input.triggerHapticFeedback("light");
           }
         }
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("CHARGE_MAXED", () => {
-        inputProvider.triggerHapticFeedback("medium");
+      this.events.subscribe("CHARGE_MAXED", () => {
+        this.input.triggerHapticFeedback("medium");
       })
     );
 
     this.unsubscribes.push(
-      eventBroker.subscribe("PLAYER_SPIKED", () => {
-        inputProvider.triggerHapticFeedback("heavy");
+      this.events.subscribe("PLAYER_SPIKED", () => {
+        this.input.triggerHapticFeedback("heavy");
       })
     );
   }
@@ -118,7 +125,7 @@ export class SimulationSystems {
   public teardown(): void {
     this.unsubscribes.forEach((unsub) => unsub());
     this.unsubscribes = [];
-    soundSynth.stopHealDrone();
-    soundSynth.stopChargeDrone();
+    this.audio.stopHealDrone();
+    this.audio.stopChargeDrone();
   }
 }

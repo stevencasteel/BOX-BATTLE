@@ -194,12 +194,12 @@ export class Minion extends BaseEntity {
       this.targetRotation = this.facingDirection * 0.21;
     } else if (this.attackState === "TELEGRAPH" && !this.isDying) {
       this.targetRotation = 0;
-      this.rotation = Math.sin(performance.now() * 0.055) * 0.25;
+      this.rotation = TrigLUT.sin(performance.now() * 0.055) * 0.25;
       this.rotationVelocity = 0;
     } else {
       this.targetRotation = Math.sign(this.velocity.x) * 0.12;
       if (this.attackState === "PATROL" && !this.isDying && !this.isSpawning) {
-        this.targetRotation += Math.sin(performance.now() * 0.008 + this.position.x) * 0.04;
+        this.targetRotation += TrigLUT.sin(performance.now() * 0.008 + this.position.x) * 0.04;
       }
     }
 
@@ -257,7 +257,7 @@ export class Minion extends BaseEntity {
   public fireSingleShotAtPlayer(player: { position: { x: number; y: number } }) {
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = Math.sqrt(dx * dx + dy * dy);
+    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -326,7 +326,8 @@ export class Minion extends BaseEntity {
       const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
 
       const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
-      const accordionScale = 1.0 - Math.pow(1.0 - firstHalfProgress, 3) * Math.cos(firstHalfProgress * 3.5 * Math.PI);
+      const t = 1.0 - firstHalfProgress;
+      const accordionScale = 1.0 - t * t * t * TrigLUT.cos(firstHalfProgress * 3.5 * Math.PI);
       
       const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
@@ -480,7 +481,7 @@ export class Minion extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 

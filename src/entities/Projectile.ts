@@ -90,7 +90,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     const dy = this.velocity.y * dt;
     const maxStepSize = UNITS.CCD_STEP_LIMIT_PROJECTILE;
 
-    const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) / maxStepSize));
+    const steps = Math.max(1, Math.ceil(TrigLUT.fastSqrt(dx * dx + dy * dy) / maxStepSize));
     const substepX = dx / steps;
     const substepY = dy / steps;
 

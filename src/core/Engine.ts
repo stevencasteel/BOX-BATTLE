@@ -1,17 +1,14 @@
 import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { soundSynth } from "@/core/SoundSynth";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
-import { inputProvider } from "@/core/InputProvider";
 import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
-import { eventBroker } from "@/core/eventBroker";
 import { Rectangle, EntityStatus } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
@@ -62,7 +59,7 @@ export class Engine {
   }
 
   private init() {
-    this.systems = new SimulationSystems();
+    this.systems = new SimulationSystems(this.world.events, this.world.audio, this.world.input);
     this.systems.setup(
       () => this.player.position.x,
       () => this.boss.position.x,
@@ -92,8 +89,8 @@ export class Engine {
 
     this.stateProjection.project(this.player, this.boss);
 
-    this.particleSystem = new ParticleSystem();
-    this.battleDirector = new BattleDirector(() => {});
+    this.particleSystem = new ParticleSystem(this.world.events);
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
 
     this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
       rect,
@@ -101,7 +98,7 @@ export class Engine {
       velocityY: 0,
     }));
 
-    this.unsubPlatformImpact = eventBroker.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
+    this.unsubPlatformImpact = this.world.events.subscribe("PLATFORM_IMPACT", ({ platform, velocityY, massMultiplier }) => {
       const sp = this.springPlatforms.find((s) => s.rect === platform);
       if (sp) {
         sp.velocityY += velocityY * massMultiplier * 0.25;
@@ -147,22 +144,16 @@ export class Engine {
     this.boss.stateMachine.changeState(this.boss.cooldownState);
 
     this.particleSystem.cleanup();
-    this.particleSystem = new ParticleSystem();
-
-    for (const sp of this.springPlatforms) {
-      sp.offsetY = 0;
-      sp.velocityY = 0;
-    }
-
+    this.particleSystem = new ParticleSystem(this.world.events);
     this.battleDirector.cleanup();
-    this.battleDirector = new BattleDirector(() => {});
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
     this.stateProjection.reset();
 
     const sessionState = useSessionStore.getState();
     sessionState.setGameResult("PLAYING");
 
     this.stateProjection.project(this.player, this.boss);
-    eventBroker.publish("CLEAR_DIALOGUES", undefined);
+    this.world.events.publish("CLEAR_DIALOGUES", undefined);
 
     this.render();
     requestAnimationFrame(() => {
@@ -212,12 +203,12 @@ export class Engine {
 
   private update(dt: number) {
     if (this.isPaused) {
-      inputProvider.update();
-      if (inputProvider.isPauseJustPressed()) {
+      this.world.input.update();
+      if (this.world.input.isPauseJustPressed()) {
         this.isPaused = false;
-        soundSynth.playHitConfirm();
+        this.world.audio.playHitConfirm();
       }
-      inputProvider.postUpdate();
+      this.world.input.postUpdate();
       return;
     }
 
@@ -258,7 +249,7 @@ export class Engine {
         this.pool.releaseAt(i);
       }
     }
-    inputProvider.postUpdate();
+    this.world.input.postUpdate();
     this.stateProjection.project(this.player, this.boss);
   }
 
@@ -295,11 +286,11 @@ export class Engine {
   }
 
   private fixedUpdate(dt: number) {
-    inputProvider.update();
-    if (inputProvider.isPauseJustPressed()) {
+    this.world.input.update();
+    if (this.world.input.isPauseJustPressed()) {
       this.isPaused = true;
-      soundSynth.playErrorTick();
-      inputProvider.postUpdate();
+      this.world.audio.playErrorTick();
+      this.world.input.postUpdate();
       return;
     }
     if (Camera.hitStopTimer > 0) {
@@ -343,7 +334,7 @@ export class Engine {
         this.pool.releaseAt(i);
       }
     }
-    inputProvider.postUpdate();
+    this.world.input.postUpdate();
     this.stateProjection.project(this.player, this.boss);
   }
 

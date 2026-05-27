@@ -1,5 +1,4 @@
-import { eventBroker } from "@/core/eventBroker";
-import { soundSynth } from "@/core/SoundSynth";
+import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 
 interface CinematicEvent {
   triggerTime: number;
@@ -8,11 +7,18 @@ interface CinematicEvent {
 }
 
 export class CinematicSystem {
+  private events: IEventBus;
+  private audio: IAudioManager;
   private cinematicActive = false;
   private bossDeathTimer = -1;
   private bossDeathPos: { x: number; y: number } | null = null;
   private cinematicTimeline = 0;
   private cinematicQueue: CinematicEvent[] = [];
+
+  constructor(events: IEventBus, audio: IAudioManager) {
+    this.events = events;
+    this.audio = audio;
+  }
 
   public isActive(): boolean {
     return this.cinematicActive;
@@ -43,15 +49,15 @@ export class CinematicSystem {
 
   public startSequence(pos: { x: number; y: number }, initialExplosion: () => void, events: { triggerTime: number; action: () => void }[]): void {
     this.cinematicActive = true;
-    eventBroker.publish("CLEAR_DIALOGUES", undefined);
-    soundSynth.stopChargeDrone();
-    soundSynth.stopHealDrone();
+    this.events.publish("CLEAR_DIALOGUES", undefined);
+    this.audio.stopChargeDrone();
+    this.audio.stopHealDrone();
     initialExplosion();
 
     this.bossDeathTimer = 0;
     this.bossDeathPos = { x: pos.x, y: pos.y };
 
-    eventBroker.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
+    this.events.publish("CAMERA_SHAKE", { amplitude: 30, duration: 1.8 });
 
     this.cinematicTimeline = 0;
     this.cinematicQueue = events.map((e) => ({ ...e, fired: false }));

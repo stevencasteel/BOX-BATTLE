@@ -1,4 +1,4 @@
-import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager } from "./Interfaces";
+import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager, IInputProvider } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
 import { Projectile } from "@/entities/Projectile";
@@ -11,11 +11,13 @@ export class World implements IWorld {
   public projectilePool: ObjectPool<Projectile> | null = null;
   public events: IEventBus;
   public audio: IAudioManager;
+  public input: IInputProvider;
 
-  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[], events: IEventBus, audio: IAudioManager) {
+  constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[], events: IEventBus, audio: IAudioManager, input: IInputProvider) {
     this.physicsWorld = new PhysicsWorld(solids, hazards, onewayPlatforms);
     this.events = events;
     this.audio = audio;
+    this.input = input;
   }
 
   public getProjectiles(): readonly IProjectile[] {

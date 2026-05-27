@@ -1,6 +1,5 @@
-import { Particle } from "./Interfaces";
+import { Particle, IEventBus } from "./Interfaces";
 import { ObjectPool, IPoolable } from "./ObjectPool";
-import { eventBroker } from "./eventBroker";
 import { TrigLUT } from "./TrigLUT";
 
 export class PoolableParticle implements Particle, IPoolable {
@@ -61,15 +60,17 @@ export class PoolableParticle implements Particle, IPoolable {
 export class ParticleSystem {
   private pool: ObjectPool<PoolableParticle>;
   private unsubs: (() => void)[] = [];
+  private events: IEventBus;
 
-  constructor() {
+  constructor(events: IEventBus) {
+    this.events = events;
     this.pool = new ObjectPool(() => new PoolableParticle(), 200);
     this.setupListeners();
   }
 
   private setupListeners() {
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
+      this.events.subscribe("SPAWN_SPARKS", ({ x, y, angle, color, radial, count, turbulence, shape }) => {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
@@ -100,7 +101,7 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
+      this.events.subscribe("SPAWN_DUST", ({ x, y, direction }) => {
         const count = 14;
         const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
@@ -124,7 +125,7 @@ export class ParticleSystem {
     );
 
     this.unsubs.push(
-      eventBroker.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
+      this.events.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
         this.pool.get(x, y, 0, 0, color, 8, 0.16, "ring");
       })
     );
@@ -140,8 +141,8 @@ export class ParticleSystem {
         continue;
       }
       if (p.drag !== 1.0) {
-        p.vx *= Math.pow(p.drag, dt * 60);
-        p.vy *= Math.pow(p.drag, dt * 60);
+        p.vx *= p.drag;
+        p.vy *= p.drag;
       }
       if (p.turbulence > 0) {
         const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;

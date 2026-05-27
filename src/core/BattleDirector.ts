@@ -1,7 +1,6 @@
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { eventBroker } from "@/core/eventBroker";
-import { soundSynth } from "@/core/SoundSynth";
+import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
@@ -9,15 +8,19 @@ import { saveManager } from "@/core/SaveManager";
 import { CinematicSystem } from "@/core/CinematicSystem";
 
 export class BattleDirector {
+  private events: IEventBus;
+  private audio: IAudioManager;
   private hasTriggeredFirstHit = false;
   private hasTriggeredPhase2 = false;
   private hasTriggeredPhase3 = false;
   private cinematic: CinematicSystem;
   private onBattleEnd: () => void;
 
-  constructor(onBattleEnd: () => void) {
+  constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
+    this.events = events;
+    this.audio = audio;
     this.onBattleEnd = onBattleEnd;
-    this.cinematic = new CinematicSystem();
+    this.cinematic = new CinematicSystem(events, audio);
   }
 
   public isCinematicActive(): boolean {
@@ -45,25 +48,25 @@ export class BattleDirector {
 
       if (bHealth.currentHealth < UNITS.BOSS_MAX_HP && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
+        this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
       }
 
       if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
+        this.events.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
           text: "You won't beat me! Watch out for my rapid fire!",
         });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
+        this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
       if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
-        eventBroker.publish("DIALOGUE_TRIGGERED", {
+        this.events.publish("DIALOGUE_TRIGGERED", {
           speaker: "boss",
           text: "This is my final stand! Prepare yourself!",
         });
-        eventBroker.publish("BOSS_PHASE_SHIFT", undefined);
+        this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
     }
 
@@ -73,7 +76,7 @@ export class BattleDirector {
       this.cinematic.startSequence(
         player.position,
         () => {
-          soundSynth.playPlayerExplosion();
+          this.audio.playPlayerExplosion();
         },
         [
           {
@@ -86,13 +89,13 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
             },
           },
           {
             triggerTime: 3.8,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", {
+              this.events.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
                 text: "You fought well... but I am victorious.",
               });
@@ -101,7 +104,7 @@ export class BattleDirector {
           {
             triggerTime: 7.2,
             action: () => {
-              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
             },
           },
@@ -111,7 +114,7 @@ export class BattleDirector {
       this.cinematic.startSequence(
         boss.position,
         () => {
-          soundSynth.playBossExplosion();
+          this.audio.playBossExplosion();
         },
         [
           {
@@ -124,7 +127,7 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", {
+              this.events.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
                 text: "No... How could I lose this fight...",
               });
@@ -133,13 +136,13 @@ export class BattleDirector {
           {
             triggerTime: 4.8,
             action: () => {
-              eventBroker.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
             },
           },
           {
             triggerTime: 7.2,
             action: () => {
-              eventBroker.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("CLEAR_DIALOGUES", undefined);
               this.onBattleEnd();
             },
           },

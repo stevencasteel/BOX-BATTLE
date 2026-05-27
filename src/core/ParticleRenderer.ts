@@ -1,4 +1,5 @@
 import { Particle } from "./Interfaces";
+import { TrigLUT } from "./TrigLUT";
 
 const colorCache = new Map<string, { h: number; s: number; l: number } | null>();
 const lerpCache = new Map<string, string>();
@@ -78,7 +79,7 @@ export class ParticleRenderer {
         this.ctx.globalAlpha = pct;
         this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size * 0.7);
       } else if (p.shape === "line") {
-        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
         let ux = 1;
         let uy = 0;
         if (speed > 0) {

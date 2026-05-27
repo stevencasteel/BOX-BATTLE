@@ -120,6 +120,7 @@ export interface IWorld {
   physicsWorld: IPhysicsWorld;
   events: IEventBus;
   audio: IAudioManager;
+  input: IInputProvider;
   getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
@@ -148,5 +149,30 @@ export interface IEventBus {
 }
 
 export interface IAudioManager {
-  // Reserved for future audio injection into entity layer
+  registerCoordinateProviders(getPlayerX: () => number, getBossX: () => number, getMinionX: (id: string) => number): void;
+  stopHealDrone(): void;
+  stopChargeDrone(): void;
+  playHitConfirm(): void;
+  playErrorTick(): void;
+  playPlayerExplosion(): void;
+  playBossExplosion(): void;
+  playDashRecharge(): void;
+  playBossTelegraph(): void;
+  playBossLunge(): void;
+  playBossSwipe(): void;
+  playMenuConfirm(): void;
+  playMenuBack(): void;
+  playSelectTick(): void;
+}
+
+export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
+
+export interface IInputProvider {
+  update(): void;
+  postUpdate(): void;
+  isPauseJustPressed(): boolean;
+  triggerHapticFeedback(strength: "light" | "medium" | "heavy"): void;
+  isPressed(action: Action): boolean;
+  isJustPressed(action: Action): boolean;
+  cleanup(): void;
 }

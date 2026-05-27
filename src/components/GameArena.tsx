@@ -40,7 +40,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not construct 2D context.");
 
-    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms, eventBroker, soundSynth);
+    const world = new World(defaultLevelConfig.solids, defaultLevelConfig.hazards, defaultLevelConfig.onewayPlatforms, eventBroker, soundSynth, inputProvider);
     const renderer = new WorldRenderer(ctx);
     const engine = new Engine(world, renderer);
     engineRef.current = engine;
