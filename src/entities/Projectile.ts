@@ -12,7 +12,6 @@ export class Projectile extends BaseEntity implements IPoolable {
   public customColor: string | null = null;
 
   private lifespan = 0;
-  private onRelease?: (proj: Projectile) => void;
 
   private trail: { x: number; y: number }[] = [];
 
@@ -30,7 +29,6 @@ export class Projectile extends BaseEntity implements IPoolable {
     damage: number,
     speed: number,
     lifespan: number,
-    onRelease: (proj: Projectile) => void,
     world: IWorld,
     customColor?: string
   ) {
@@ -41,7 +39,6 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.ownerId = ownerId;
     this.damage = damage;
     this.lifespan = lifespan;
-    this.onRelease = onRelease;
     this.world = world;
     this.customColor = customColor || null;
 
@@ -57,13 +54,15 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.trail = [];
   }
 
-  public update(dt: number) {
-    if (!this.isActive) return;
+  public update(dt: number): boolean {
+    if (!this.isActive) return false;
 
     this.lifespan -= dt;
     if (this.lifespan <= 0) {
-      this.selfRelease();
-      return;
+      this.releaseEffects();
+      this.isActive = false;
+      this.isDead = true;
+      return true;
     }
 
     this.trail.push({ x: this.position.x, y: this.position.y });
@@ -99,20 +98,28 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.position.y += substepY;
 
       if (this.checkSolidCollisions() || this.checkOnewayCollisions()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
 
       if (this.checkProjectileClashes()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
 
       if (this.checkEntityCollisions()) {
-        this.selfRelease();
-        return;
+        this.releaseEffects();
+        this.isActive = false;
+        this.isDead = true;
+        return true;
       }
     }
+
+    return false;
   }
 
   private checkSolidCollisions(): boolean {
@@ -195,7 +202,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
         if (isColliding) {
           const incomingDamage = other.damage || 1;
-          this.world.releaseProjectile(other);
+          (other as Projectile).deactivate();
           this.damage -= incomingDamage;
           if (this.damage <= 0) {
             return true;
@@ -249,7 +256,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     return false;
   }
 
-  private selfRelease() {
+  private releaseEffects() {
     const isPlayer = this.ownerId === "player";
     const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
     const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
@@ -270,10 +277,6 @@ export class Projectile extends BaseEntity implements IPoolable {
       shape: "line",
       turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
     });
-
-    if (this.onRelease) {
-      this.onRelease(this);
-    }
   }
 
   public draw(ctx: CanvasRenderingContext2D, alpha?: number) {

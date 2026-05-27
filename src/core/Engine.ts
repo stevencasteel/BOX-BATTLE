@@ -301,7 +301,9 @@ export class Engine {
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      activeProjectiles[i].update(dt);
+      if (activeProjectiles[i].update(dt)) {
+        this.pool.releaseAt(i);
+      }
     }
     inputProvider.postUpdate();
     this.projectState();
@@ -385,11 +387,11 @@ export class Engine {
 
     const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      activeProjectiles[i].update(dt);
+      if (activeProjectiles[i].update(dt)) {
+        this.pool.releaseAt(i);
+      }
     }
-
     inputProvider.postUpdate();
-
     this.projectState();
   }
 

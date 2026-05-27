@@ -258,16 +258,12 @@ export class WorldRenderer {
         for (const p of particles) {
           const pct = p.life / p.maxLife;
 
-          if (p.shape === 'spark') {
+            if (p.shape === 'spark') {
             const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
-            const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
-            radialGrad.addColorStop(0.0, getHslaColor(sparkColor, pct));
-            radialGrad.addColorStop(0.3, getHslaColor(sparkColor, pct * 0.5));
-            radialGrad.addColorStop(1.0, getHslaColor(sparkColor, 0));
-            this.ctx.fillStyle = radialGrad;
+            this.ctx.fillStyle = getHslaColor(sparkColor, pct);
             this.ctx.globalAlpha = 1.0;
             this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             this.ctx.fill();
           } else if (p.shape === 'dust') {
             this.ctx.fillStyle = p.color;
@@ -286,13 +282,7 @@ export class WorldRenderer {
             const x2 = p.x + ux * p.size * 6;
             const y2 = p.y + uy * p.size * 6;
 
-            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
-            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
-            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
-            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
-            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
-            
-            this.ctx.strokeStyle = lineGrad;
+            this.ctx.strokeStyle = getHslaColor(p.color, pct * 0.95);
             this.ctx.lineWidth = p.size;
             this.ctx.lineCap = 'round';
             this.ctx.globalAlpha = 1.0;

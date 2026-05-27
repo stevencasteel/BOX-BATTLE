@@ -45,9 +45,7 @@ export class ObjectPool<T extends IPoolable> {
   public release(instance: T) {
     const index = this.activePool.indexOf(instance);
     if (index !== -1) {
-      this.activePool.splice(index, 1);
-      instance.deactivate();
-      this.inactivePool.push(instance);
+      this.releaseAt(index);
     }
   }
 

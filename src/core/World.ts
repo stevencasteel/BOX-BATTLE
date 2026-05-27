@@ -48,7 +48,6 @@ export class World implements IWorld {
       damage,
       speed,
       lifespan,
-      (p: Projectile) => this.releaseProjectile(p),
       this,
       customColor
     );
