@@ -37,14 +37,15 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     engineRef.current = engine;
     engine.start();
 
+    const vignette = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
+
     const updateVignette = (hp: number) => {
       const isGameOver = useSessionStore.getState().gameResult !== "PLAYING";
-      const overlay = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
-      if (overlay) {
+      if (vignette) {
         if (hp === 1 && !isGameOver) {
-          overlay.classList.add("vignette-pulse");
+          vignette.classList.add("vignette-pulse");
         } else {
-          overlay.classList.remove("vignette-pulse");
+          vignette.classList.remove("vignette-pulse");
         }
       }
     };

@@ -35,7 +35,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
         soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
       }
 
-      const nextCls = [...animationClasses];
+      const nextCls = Array<string>(UNITS.PLAYER_MAX_HP).fill("");
       for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
         if (tookDamage && i === activeHP) {
           nextCls[i] = "led-shaking-die";
@@ -43,8 +43,6 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
           nextCls[i] = "led-elastic-spring";
         } else if (tookDamage && i < activeHP) {
           nextCls[i] = "led-spring-impact";
-        } else {
-          nextCls[i] = "";
         }
       }
       setAnimationClasses(nextCls);
@@ -55,7 +53,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [activeHP, isGameOver, animationClasses]);
+  }, [activeHP, isGameOver]);
 
   const lowHpStress = activeHP === 1 && !isGameOver;
 
@@ -140,7 +138,7 @@ function HealingAndDetermination({
     const prev = prevChargesRef.current;
     if (activeHealCharges !== prev) {
       const gained = activeHealCharges > prev && prev !== -1;
-      const nextCls = [...chargeAnims];
+      const nextCls = Array<string>(3).fill("");
       for (let i = 0; i < 3; i++) {
         if (gained && i === activeHealCharges - 1) {
           nextCls[i] = "led-elastic-spring";
@@ -153,7 +151,7 @@ function HealingAndDetermination({
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [activeHealCharges, chargeAnims]);
+  }, [activeHealCharges]);
 
   const isOverflow = activeHealCharges === 3;
   const detWidth = (activeDet / 5) * 100 + "%";

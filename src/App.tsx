@@ -40,7 +40,6 @@ export default function App() {
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const transitionActive = useSessionStore((state) => state.transitionActive);
   const menuIndex = useSessionStore((state) => state.menuIndex);
-  const gameResult = useSessionStore((state) => state.gameResult);
   const retryCount = useSessionStore((state) => state.retryCount);
 
   const navTo = useSessionStore((state) => state.navTo);
@@ -83,6 +82,20 @@ export default function App() {
     soundSynth.playSelectTick();
   };
 
+  const menuCtxRef = useRef({
+    navTo, setMenuIndex, reloadSaveSlots, resetGameSession,
+    handleSlotAction, toggleCopyMode, toggleEraseMode, resetActions,
+    audio, handleVolumeChange, resetSettings,
+  });
+
+  useEffect(() => {
+    menuCtxRef.current = {
+      navTo, setMenuIndex, reloadSaveSlots, resetGameSession,
+      handleSlotAction, toggleCopyMode, toggleEraseMode, resetActions,
+      audio, handleVolumeChange, resetSettings,
+    };
+  });
+
   useEffect(() => {
     if (!isPlayingScreen) {
       resetDialogues();
@@ -90,33 +103,36 @@ export default function App() {
   }, [isPlayingScreen, resetDialogues]);
 
   useEffect(() => {
-    if ((isPlayingScreen && gameResult === "PLAYING") || currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
+    const cs = useSessionStore.getState();
+    if ((cs.currentScreen === "PLAYING" && cs.gameResult === "PLAYING") || cs.currentScreen === "SOURCE_VIEW" || rebindTarget !== null)
       return;
 
     const handleMenuNavigation = (e: KeyboardEvent) => {
-      const config = screenConfigs[currentScreen];
+      const state = useSessionStore.getState();
+      const ctx = menuCtxRef.current;
+      const config = screenConfigs[state.currentScreen];
       if (!config) return;
 
       const context: MenuContext = {
-        navTo,
-        menuIndex,
-        setMenuIndex,
-        reloadSaveSlots,
-        resetGameSession,
-        handleSlotAction,
-        toggleCopyMode,
-        toggleEraseMode,
-        resetActions,
-        audio,
-        handleVolumeChange,
-        resetSettings,
+        navTo: ctx.navTo,
+        menuIndex: state.menuIndex,
+        setMenuIndex: ctx.setMenuIndex,
+        reloadSaveSlots: ctx.reloadSaveSlots,
+        resetGameSession: ctx.resetGameSession,
+        handleSlotAction: ctx.handleSlotAction,
+        toggleCopyMode: ctx.toggleCopyMode,
+        toggleEraseMode: ctx.toggleEraseMode,
+        resetActions: ctx.resetActions,
+        audio: ctx.audio,
+        handleVolumeChange: ctx.handleVolumeChange,
+        resetSettings: ctx.resetSettings,
         setRebindTarget,
-        gameResult,
+        gameResult: state.gameResult,
       };
 
       const maxIndex = config.getMaxIndex(context);
-      const isHorizontalEndScreen = isPlayingScreen && gameResult !== "PLAYING";
-      const isSoundSliderZone = currentScreen === "SOUND" && menuIndex < 3;
+      const isHorizontalEndScreen = state.currentScreen === "PLAYING" && state.gameResult !== "PLAYING";
+      const isSoundSliderZone = state.currentScreen === "SOUND" && state.menuIndex < 3;
 
       const isMoveForward =
         e.key === "ArrowDown" ||
@@ -133,11 +149,11 @@ export default function App() {
       if (isMoveForward) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((menuIndex + 1) % (maxIndex + 1));
+        ctx.setMenuIndex((state.menuIndex + 1) % (maxIndex + 1));
       } else if (isMoveBackward) {
         e.preventDefault();
         soundSynth.playSelectTick();
-        setMenuIndex((menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
+        ctx.setMenuIndex((state.menuIndex - 1 + (maxIndex + 1)) % (maxIndex + 1));
       } else if (isConfirmKey(e)) {
         e.preventDefault();
         config.onSelect(context);
@@ -164,28 +180,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleMenuNavigation);
     };
-  }, [
-    currentScreen,
-    menuIndex,
-    audio,
-    isCopyMode,
-    isEraseMode,
-    copySourceIndex,
-    slots,
-    rebindTarget,
-    gameResult,
-    isPlayingScreen,
-    navTo,
-    setMenuIndex,
-    reloadSaveSlots,
-    resetGameSession,
-    handleSlotAction,
-    toggleCopyMode,
-    toggleEraseMode,
-    resetActions,
-    handleVolumeChange,
-    resetSettings,
-  ]);
+  }, [currentScreen, rebindTarget]);
 
   if (bootStage === BootStage.NONE) {
     return (
