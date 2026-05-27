@@ -282,7 +282,13 @@ export class WorldRenderer {
             const x2 = p.x + ux * p.size * 6;
             const y2 = p.y + uy * p.size * 6;
 
-            this.ctx.strokeStyle = getHslaColor(p.color, pct * 0.95);
+            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
+            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
+
+            this.ctx.strokeStyle = lineGrad;
             this.ctx.lineWidth = p.size;
             this.ctx.lineCap = 'round';
             this.ctx.globalAlpha = 1.0;

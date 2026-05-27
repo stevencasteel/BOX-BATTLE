@@ -580,9 +580,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className={`cabinet-status-panel neo-pressed ${isHurtShaking ? "hud-shaking" : ""}`}>
-      <PlayerHpDisplay isTouchDevice={isTouchDevice} />
-      
-      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
+      <div className="hud-panel-block" style={{ gap: "4px" }}>
+        <PlayerHpDisplay isTouchDevice={isTouchDevice} />
         <HealingAndDetermination
           isTouchDevice={isTouchDevice}
           isPlayingScreen={isPlayingScreen}
