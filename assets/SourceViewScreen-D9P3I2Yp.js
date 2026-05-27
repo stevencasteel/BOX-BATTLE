@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Cxf_HG2I.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-HbA4U6h2.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -881,7 +881,7 @@ import { isConfirmKey, isBackKey } from "@/core/menuNavigation";
 import { useSaveSlots } from "@/hooks/useSaveSlots";
 import { useAudioSettings } from "@/hooks/useAudioSettings";
 import { useBootSequence, BootStage } from "@/hooks/useBootSequence";
-import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
+import { useGameplayStore, useSessionStore, SCREEN_DEPTHS } from "@/store/useGameStore";
 import { useGameDialogue } from "@/hooks/useGameDialogue";
 import { screenConfigs, MenuContext } from "@/core/screenRoutes";
 
@@ -972,6 +972,23 @@ export default function App() {
       audio, handleVolumeChange, resetSettings,
     };
   });
+
+  const prevScreenRef = useRef(currentScreen);
+  useEffect(() => {
+    const prev = prevScreenRef.current;
+    if (prev !== currentScreen) {
+      if (soundSynth.initialized) {
+        const currentDepth = SCREEN_DEPTHS[prev] ?? 0;
+        const targetDepth = SCREEN_DEPTHS[currentScreen] ?? 0;
+        if (targetDepth < currentDepth) {
+          soundSynth.playMenuBack();
+        } else {
+          soundSynth.playMenuConfirm();
+        }
+      }
+      prevScreenRef.current = currentScreen;
+    }
+  }, [currentScreen]);
 
   useEffect(() => {
     if (!isPlayingScreen) {
@@ -7171,14 +7188,23 @@ export interface IPhysicsWorld {
   ): Rectangle[];
 }
 
-export interface IWorld {
-  player: IEntity | null;
-  boss: IEntity | null;
-  minions: IEntity[];
-  physicsWorld: IPhysicsWorld;
-  events: IEventBus;
-  audio: IAudioManager;
-  input: IInputProvider;
+export interface IEventPublisher {
+  publish(event: string, payload: unknown): void;
+  publishSpark(
+    x: number,
+    y: number,
+    angle: number,
+    color?: string,
+    radial?: boolean,
+    count?: number,
+    shape?: "spark" | "line",
+    turbulence?: number
+  ): void;
+  publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void;
+  publishBlast(x: number, y: number, color: string): void;
+}
+
+export interface IEntityFactory {
   getProjectiles(): readonly IProjectile[];
   releaseProjectile(proj: IProjectile): void;
   spawnProjectile(
@@ -7192,6 +7218,16 @@ export interface IWorld {
     lifespan: number,
     customColor?: string
   ): IProjectile;
+}
+
+export interface IWorld extends IEntityFactory {
+  player: IEntity | null;
+  boss: IEntity | null;
+  minions: IEntity[];
+  physicsWorld: IPhysicsWorld;
+  events: IEventBus;
+  audio: IAudioManager;
+  input: IInputProvider;
 }
 
 export interface IDamageRecorder {
@@ -8119,9 +8155,48 @@ class SoundSynth {
 
   constructor() {
     this.ctxManager = new AudioContextManager();
-    this.sfx = new SFXManager(this.ctxManager, eventBroker, () => useGameplayStore.getState().comboCounter);
+    this.sfx = new SFXManager(
+      this.ctxManager,
+      eventBroker,
+      () => useGameplayStore.getState().comboCounter,
+      () => this.getPlayerXFn?.(),
+      () => this.getBossXFn?.(),
+      (id) => this.getMinionXFn?.(id)
+    );
     this.music = new MusicSequencer(this.ctxManager);
     this.drones = new DroneManager(this.ctxManager, this.music);
+
+    this.setupDroneEventSubscriptions();
+  }
+
+  private setupDroneEventSubscriptions() {
+    eventBroker.subscribe("HEAL_UPDATE", ({ timer }: { timer: number }) => {
+      this.drones.updateHealTimer(timer);
+    });
+
+    eventBroker.subscribe("HEAL_START", () => {
+      this.drones.playHealStart(this.getPlayerX());
+    });
+
+    eventBroker.subscribe("HEAL_CANCEL", () => {
+      this.drones.stopHealDrone();
+    });
+
+    eventBroker.subscribe("HEAL_COMPLETE", () => {
+      this.drones.playHealComplete();
+    });
+
+    eventBroker.subscribe("CHARGE_START", () => {
+      this.drones.playChargeStart(this.getPlayerX());
+    });
+
+    eventBroker.subscribe("CHARGE_UPDATE", ({ timer }: { timer: number }) => {
+      this.drones.updateChargeTimer(timer);
+    });
+
+    eventBroker.subscribe("CHARGE_STOP", () => {
+      this.drones.stopChargeDrone();
+    });
   }
 
   public registerCoordinateProviders(
@@ -9338,10 +9413,10 @@ export class SFXManager {
   private bossSFX: BossSFX;
   private interfaceSFX: InterfaceSFX;
 
-  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, eventBus: IEventBus, getComboCounter: () => number, getPlayerX: () => number | undefined, getBossX: () => number | undefined, getMinionX: (id: string) => number | undefined) {
     this.helper = new SFXHelper(ctxManager);
-    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter);
-    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter);
+    this.playerSFX = new PlayerSFX(ctxManager, this.helper, eventBus, getComboCounter, getPlayerX);
+    this.bossSFX = new BossSFX(ctxManager, this.helper, eventBus, getComboCounter, getBossX, getMinionX);
     this.interfaceSFX = new InterfaceSFX(ctxManager, this.helper);
   }
 
@@ -9426,7 +9501,6 @@ import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
-import { soundSynth } from "@/core/SoundSynth";
 import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
@@ -9435,6 +9509,8 @@ export class BossSFX {
   private helper: SFXHelper;
   private eventBus: IEventBus;
   private getComboCounter: () => number;
+  private getBossX: () => number | undefined;
+  private getMinionX: (id: string) => number | undefined;
   private bossPanner!: Tone.Panner;
   private impactPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
@@ -9451,10 +9527,12 @@ export class BossSFX {
   private lastSpikeTime = 0;
   private spikeSequenceCount = 0;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number, getBossX: () => number | undefined, getMinionX: (id: string) => number | undefined) {
     this.helper = helper;
     this.eventBus = eventBus;
     this.getComboCounter = getComboCounter;
+    this.getBossX = getBossX;
+    this.getMinionX = getMinionX;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -9488,14 +9566,14 @@ export class BossSFX {
 
   private setupSubscriptions() {
     this.eventBus.subscribe("BOSS_HURT", ({ currentHealth }) => {
-      this.playHitConfirm(soundSynth.getBossX(), "boss-01");
+      this.playHitConfirm(this.getBossX(), "boss-01");
       if (currentHealth <= 0) {
-        this.playBossExplosion(soundSynth.getBossX());
+        this.playBossExplosion(this.getBossX());
       }
     });
 
     this.eventBus.subscribe("MINION_HURT", ({ id, currentHealth }) => {
-      const mX = soundSynth.getMinionX(id);
+      const mX = this.getMinionX(id);
       this.playHitConfirm(mX, id);
       if (currentHealth <= 0) {
         this.playMinionDeconstruct(mX);
@@ -9507,7 +9585,7 @@ export class BossSFX {
     });
 
     this.eventBus.subscribe("BOSS_PHASE_SHIFT", () => {
-      this.playBossPhaseShift(soundSynth.getBossX());
+      this.playBossPhaseShift(this.getBossX());
     });
 
     this.eventBus.subscribe("MINION_SPAWNING", () => {
@@ -9519,15 +9597,15 @@ export class BossSFX {
     });
 
     this.eventBus.subscribe("BOSS_SWIPED", () => {
-      this.playBossSwipe(soundSynth.getBossX());
+      this.playBossSwipe(this.getBossX());
     });
 
     this.eventBus.subscribe("BOSS_TELEGRAPH", () => {
-      this.playBossTelegraph(soundSynth.getBossX());
+      this.playBossTelegraph(this.getBossX());
     });
 
     this.eventBus.subscribe("BOSS_LUNGED", () => {
-      this.playBossLunge(soundSynth.getBossX());
+      this.playBossLunge(this.getBossX());
     });
   }
 
@@ -9740,7 +9818,6 @@ import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
 import { SFX_PRESETS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
-import { soundSynth } from "@/core/SoundSynth";
 import { IEventBus } from "@/core/Interfaces";
 
 const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
@@ -9749,6 +9826,7 @@ export class PlayerSFX {
   private helper: SFXHelper;
   private eventBus: IEventBus;
   private getComboCounter: () => number;
+  private getPlayerX: () => number | undefined;
   private playerPanner!: Tone.Panner;
   private hurtPanner!: Tone.Panner;
 
@@ -9773,10 +9851,11 @@ export class PlayerSFX {
   private slashFilterPuff!: Tone.Filter;
   private slashEnvPuff!: Tone.AmplitudeEnvelope;
 
-  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number) {
+  constructor(ctxManager: AudioContextManager, helper: SFXHelper, eventBus: IEventBus, getComboCounter: () => number, getPlayerX: () => number | undefined) {
     this.helper = helper;
     this.eventBus = eventBus;
     this.getComboCounter = getComboCounter;
+    this.getPlayerX = getPlayerX;
     ctxManager.registerOnInit(() => {
       this.init(ctxManager);
       this.setupSubscriptions();
@@ -9853,68 +9932,43 @@ export class PlayerSFX {
 
   private setupSubscriptions() {
     this.eventBus.subscribe("PLAYER_HURT", () => {
-      this.playHurt(soundSynth.getPlayerX());
+      this.playHurt(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_JUMPED", () => {
-      this.playJump(soundSynth.getPlayerX());
+      this.playJump(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_DASHED", () => {
-      this.playDash(soundSynth.getPlayerX());
+      this.playDash(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_POGOED", () => {
-      this.playPogo(soundSynth.getPlayerX());
+      this.playPogo(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_ATTACKED", ({ direction }) => {
-      this.playSlash(direction, soundSynth.getPlayerX());
+      this.playSlash(direction, this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_PROJECTILE_FIRED", ({ level }) => {
       if (level === 2) {
-        this.playFireballLvl2(soundSynth.getPlayerX());
+        this.playFireballLvl2(this.getPlayerX());
       } else {
-        this.playFireballLvl1(soundSynth.getPlayerX());
+        this.playFireballLvl1(this.getPlayerX());
       }
     });
 
     this.eventBus.subscribe("PLAYER_LANDED", () => {
-      this.playLanding(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("HEAL_UPDATE", ({ timer }) => {
-      soundSynth.updateHealTimer(timer);
-    });
-
-    this.eventBus.subscribe("HEAL_START", () => {
-      soundSynth.playHealStart(soundSynth.getPlayerX());
+      this.playLanding(this.getPlayerX());
     });
 
     this.eventBus.subscribe("HEAL_CANCEL", () => {
-      this.playHealCancel(soundSynth.getPlayerX());
-      soundSynth.stopHealDrone();
-    });
-
-    this.eventBus.subscribe("HEAL_COMPLETE", () => {
-      soundSynth.playHealComplete();
+      this.playHealCancel(this.getPlayerX());
     });
 
     this.eventBus.subscribe("PLAYER_DASH_RECHARGED", () => {
-      this.playDashRecharge(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("CHARGE_START", () => {
-      soundSynth.playChargeStart(soundSynth.getPlayerX());
-    });
-
-    this.eventBus.subscribe("CHARGE_UPDATE", ({ timer }) => {
-      soundSynth.updateChargeTimer(timer);
-    });
-
-    this.eventBus.subscribe("CHARGE_STOP", () => {
-      soundSynth.stopChargeDrone();
+      this.playDashRecharge(this.getPlayerX());
     });
   }
 
@@ -14715,10 +14769,6 @@ export class PlayerCombatHandler {
   public checkHazardContact() {
     if (this.player.health.isInvincible() || this.player.isDead) return;
 
-    if (this.player.healComponent.isHealing) {
-      this.player.healComponent.cancelHealing();
-    }
-
     const hit = HazardSystem.checkContact(this.player, this.player.world.physicsWorld);
     if (hit && !this.player.isDead) {
       this.player.physics.isGrounded = false;
@@ -15943,7 +15993,6 @@ export const useCursorStore = create<CursorStore>((set) => ({
   setCursorType: (type) => set({ cursorType: type }),
 }));
 `,"src/store/useGameStore.ts":`import { create } from "zustand";
-import { soundSynth } from "@/core/SoundSynth";
 import { UNITS } from "@/core/Units";
 
 export type ScreenState =
@@ -15957,7 +16006,7 @@ export type ScreenState =
   | "PLAYING";
 export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 
-const SCREEN_DEPTHS: Record<ScreenState, number> = {
+export const SCREEN_DEPTHS: Record<ScreenState, number> = {
   TITLE: 0,
   SAVE_SELECT: 1,
   OPTIONS: 1,
@@ -15989,17 +16038,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   navTo: (screen) => {
     const current = get().currentScreen;
     if (current === screen && screen !== "PLAYING") return;
-
-    if (soundSynth.initialized) {
-      const currentDepth = SCREEN_DEPTHS[current] ?? 0;
-      const targetDepth = SCREEN_DEPTHS[screen] ?? 0;
-
-      if (targetDepth < currentDepth) {
-        soundSynth.playMenuBack();
-      } else {
-        soundSynth.playMenuConfirm();
-      }
-    }
 
     const needsTransition = screen === "PLAYING" || current === "PLAYING";
 
