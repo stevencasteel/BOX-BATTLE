@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 5:00:40 PM
+ [SYSTEM] Generated: 5/27/2026, 5:17:19 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -8185,14 +8185,14 @@ export class ParticleSystem {
         const sparkCount = count || 12;
         for (let i = 0; i < sparkCount; i++) {
           const pAngle = radial
-            ? (i / sparkCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2)
-            : angle + (Math.random() * 0.9 - 0.45);
-          const pSpeed = radial ? 100 + Math.random() * 300 : 160 + Math.random() * 280;
+            ? (i / sparkCount) * Math.PI * 2 + (TrigLUT.random() * 0.4 - 0.2)
+            : angle + (TrigLUT.random() * 0.9 - 0.45);
+          const pSpeed = radial ? 100 + TrigLUT.random() * 300 : 160 + TrigLUT.random() * 280;
 
           const vx = TrigLUT.cos(pAngle) * pSpeed;
           const vy = TrigLUT.sin(pAngle) * pSpeed;
           const pColor = color || "hsl(142, 71%, 58%)";
-          const size = 2.5 + Math.random() * 3.5;
+          const size = 2.5 + TrigLUT.random() * 3.5;
           const life = 0.22;
 
           const drag = 0.94;
@@ -8219,14 +8219,14 @@ export class ParticleSystem {
           const dir = i % 2 === 0 ? 1 : -1;
           
           const pSpeedX = isVertical
-            ? -dir * (4 + Math.random() * 10)
-            : dir * (125 + Math.random() * 160);
+            ? -dir * (4 + TrigLUT.random() * 10)
+            : dir * (125 + TrigLUT.random() * 160);
 
           const pSpeedY = isVertical
-            ? dir * (125 + Math.random() * 160)
-            : -4 - Math.random() * 10;
+            ? dir * (125 + TrigLUT.random() * 160)
+            : -4 - TrigLUT.random() * 10;
 
-          const size = 3.5 + Math.random() * 3.5;
+          const size = 3.5 + TrigLUT.random() * 3.5;
           const life = 0.35;
           const drag = 0.88;
 
@@ -9056,11 +9056,21 @@ export class TrigLUT {
   private static readonly sinTable: Float64Array = new Float64Array(TrigLUT.TABLE_SIZE);
   private static readonly cosTable: Float64Array = new Float64Array(TrigLUT.TABLE_SIZE);
 
+  public static readonly ATAN_TABLE_SIZE = 1024;
+  private static readonly atanTable: Float64Array = new Float64Array(TrigLUT.ATAN_TABLE_SIZE);
+
+  private static prngState: number = Date.now();
+
   static {
     for (let i = 0; i < TrigLUT.TABLE_SIZE; i++) {
       const angle = (i / TrigLUT.TABLE_SIZE) * Math.PI * 2;
       TrigLUT.sinTable[i] = Math.sin(angle);
       TrigLUT.cosTable[i] = Math.cos(angle);
+    }
+
+    for (let i = 0; i < TrigLUT.ATAN_TABLE_SIZE; i++) {
+      const t = i / TrigLUT.ATAN_TABLE_SIZE;
+      TrigLUT.atanTable[i] = Math.atan(t);
     }
   }
 
@@ -9072,6 +9082,47 @@ export class TrigLUT {
   public static cos(radians: number): number {
     const idx = Math.round(radians * TrigLUT.INV_TABLE_SIZE) & (TrigLUT.TABLE_SIZE - 1);
     return TrigLUT.cosTable[idx];
+  }
+
+  public static atan2(y: number, x: number): number {
+    if (x === 0 && y === 0) return 0;
+    const absY = Math.abs(y);
+    const absX = Math.abs(x);
+    const t = absY / (absX + absY);
+    const idx = Math.round(t * TrigLUT.ATAN_TABLE_SIZE) & (TrigLUT.ATAN_TABLE_SIZE - 1);
+    const angle = TrigLUT.atanTable[idx];
+    if (x >= 0) {
+      return y >= 0 ? angle : -angle;
+    } else {
+      return y >= 0 ? Math.PI - angle : angle - Math.PI;
+    }
+  }
+
+  public static seedRandom(seed: number): void {
+    TrigLUT.prngState = seed | 0;
+  }
+
+  public static random(): number {
+    let t = (TrigLUT.prngState += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  public static randomRange(min: number, max: number): number {
+    return min + TrigLUT.random() * (max - min);
+  }
+
+  public static fastSqrt(n: number): number {
+    if (n <= 0) return 0;
+    let x = n;
+    let y = 1;
+    const e = 0.001;
+    while (x - y > e) {
+      x = (x + y) / 2;
+      y = n / x;
+    }
+    return x;
   }
 }
 
@@ -9319,6 +9370,9 @@ export class WorldRenderer {
   private spikePath: Path2D | null = null;
   private staticCacheBuilt = false;
 
+  private attackGradCanvas: HTMLCanvasElement;
+  private particleLineGradCanvas: HTMLCanvasElement;
+
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
 
@@ -9343,6 +9397,31 @@ export class WorldRenderer {
     const staticCtx = this.staticCanvas.getContext("2d");
     if (!staticCtx) throw new Error("Could not create static canvas context");
     this.staticCtx = staticCtx;
+
+    this.attackGradCanvas = document.createElement("canvas");
+    this.attackGradCanvas.width = 128;
+    this.attackGradCanvas.height = 128;
+    const attackCtx = this.attackGradCanvas.getContext("2d")!;
+    const attackGrad = attackCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    attackGrad.addColorStop(0.0, "rgba(255, 255, 255, 0)");
+    attackGrad.addColorStop(0.2, "rgba(255, 255, 255, 1.0)");
+    attackGrad.addColorStop(0.5, "rgba(132, 239, 158, 0.95)");
+    attackGrad.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
+    attackGrad.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+    attackCtx.fillStyle = attackGrad;
+    attackCtx.fillRect(0, 0, 128, 128);
+
+    this.particleLineGradCanvas = document.createElement("canvas");
+    this.particleLineGradCanvas.width = 64;
+    this.particleLineGradCanvas.height = 1;
+    const lineCtx = this.particleLineGradCanvas.getContext("2d")!;
+    const lineGrad = lineCtx.createLinearGradient(0, 0, 64, 0);
+    lineGrad.addColorStop(0.0, "rgba(255,255,255,0)");
+    lineGrad.addColorStop(0.2, "rgba(255,255,255,0.15)");
+    lineGrad.addColorStop(0.85, "rgba(255,255,255,0.95)");
+    lineGrad.addColorStop(1.0, "rgba(255,255,255,0.3)");
+    lineCtx.fillStyle = lineGrad;
+    lineCtx.fillRect(0, 0, 64, 1);
   }
 
   public getCanvas(): HTMLCanvasElement {
@@ -9408,24 +9487,11 @@ export class WorldRenderer {
       ctx.translate(cx, cy);
       ctx.globalAlpha = opacity;
       ctx.fillStyle = this.cachedMeleeGradient;
-
+      const startA = facing > 0 ? baseStart : Math.PI - baseStart;
+      const endA = facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle);
       ctx.beginPath();
-      ctx.arc(
-        0,
-        0,
-        UNITS.MELEE_MAX_REACH,
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing < 0
-      );
-      ctx.arc(
-        0,
-        0,
-        UNITS.MELEE_SWEEP_INNER_RADIUS,
-        facing > 0 ? baseStart + currentSweepAngle : Math.PI - (baseStart + currentSweepAngle),
-        facing > 0 ? baseStart : Math.PI - baseStart,
-        facing > 0
-      );
+      ctx.arc(0, 0, UNITS.MELEE_MAX_REACH, startA, endA, facing < 0);
+      ctx.arc(0, 0, UNITS.MELEE_SWEEP_INNER_RADIUS, endA, startA, facing > 0);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
@@ -9437,20 +9503,16 @@ export class WorldRenderer {
       const currentInnerRadius = 15 + progress * 15;
 
       ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-
+      ctx.globalAlpha = opacity;
+      ctx.translate(cx, cy);
+      const gradScale = currentRadius / 64;
+      ctx.scale(gradScale, gradScale);
       ctx.beginPath();
-      ctx.arc(cx, cy, currentRadius, -Math.PI, 0);
-      ctx.arc(cx, cy, currentInnerRadius, 0, -Math.PI, true);
+      ctx.arc(0, 0, 64, -Math.PI, 0);
+      ctx.arc(0, 0, currentInnerRadius / gradScale, 0, -Math.PI, true);
       ctx.closePath();
-      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(this.attackGradCanvas, -64, -64, 128, 128);
       ctx.restore();
     } else if (player.attackDirection === "down") {
       const cx = drawX;
@@ -9460,20 +9522,16 @@ export class WorldRenderer {
       const currentInnerRadius = 15 + progress * 15;
 
       ctx.save();
-      const gradient = ctx.createRadialGradient(cx, cy, currentInnerRadius, cx, cy, currentRadius);
-      gradient.addColorStop(0.0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.2, `rgba(255, 255, 255, ${opacity})`);
-      gradient.addColorStop(0.5, `rgba(132, 239, 158, ${opacity * 0.95})`);
-      gradient.addColorStop(0.85, `rgba(34, 197, 94, ${opacity * 0.85})`);
-      gradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
-
-      ctx.fillStyle = gradient;
-
+      ctx.globalAlpha = opacity;
+      ctx.translate(cx, cy);
+      const gradScale2 = currentRadius / 64;
+      ctx.scale(gradScale2, gradScale2);
       ctx.beginPath();
-      ctx.arc(cx, cy, currentRadius, 0, Math.PI);
-      ctx.arc(cx, cy, currentInnerRadius, Math.PI, 0, true);
+      ctx.arc(0, 0, 64, 0, Math.PI);
+      ctx.arc(0, 0, currentInnerRadius / gradScale2, Math.PI, 0, true);
       ctx.closePath();
-      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(this.attackGradCanvas, -64, -64, 128, 128);
       ctx.restore();
     }
   }
@@ -11138,8 +11196,9 @@ export const SFX_PRESETS = {
 ────────────────────────────────────────────────────
 import { UNITS } from "@/core/Units";
 import { World } from "@/core/World";
+import { TrigLUT } from "@/core/TrigLUT";
 
-const PSEUDO_RANDOM_LUT = Array.from({ length: 128 }, () => Math.random() * 4 - 2);
+const PSEUDO_RANDOM_LUT = Array.from({ length: 128 }, () => TrigLUT.random() * 4 - 2);
 
 export class CinematicDeathRenderer {
   public static render(
@@ -11183,12 +11242,12 @@ export class CinematicDeathRenderer {
           const startX = px - baseWidth / 2 + (row % 2 === 0 ? 0.3 : -0.3) * offsetVal + (row + 0.5) * (baseWidth / gridCols);
           const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
 
-          const angle = Math.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
+          const angle = TrigLUT.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
           const thrust = activeProgress * 80;
           const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
 
-          const curX = startX + Math.cos(angle) * thrust + (Math.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
-          const curY = startY + Math.sin(angle) * thrust + gravityOffset;
+          const curX = startX + TrigLUT.cos(angle) * thrust + (TrigLUT.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
+          const curY = startY + TrigLUT.sin(angle) * thrust + gravityOffset;
 
           ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
           ctx.globalAlpha = opacity;
@@ -11208,11 +11267,11 @@ export class CinematicDeathRenderer {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = flareAlpha;
 
-        const hLength = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const hLength = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
         const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
         ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
 
-        const vHeight = Math.max(4, 220 * (1.0 - Math.pow(pinchProgress, 3)));
+        const vHeight = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
         const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
         ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
 
@@ -11247,16 +11306,16 @@ export class CinematicDeathRenderer {
       ctx.beginPath();
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
-        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
-        const rayWidth = 18 * Math.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
+        const currentLength = maxRayLength * TrigLUT.sin(explodeProgress * Math.PI * 0.5);
+        const rayWidth = 18 * TrigLUT.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
 
         const p1_angle = angle - (rayWidth / currentLength);
         const p2_angle = angle + (rayWidth / currentLength);
 
-        const x1 = px + Math.cos(p1_angle) * currentLength;
-        const y1 = py + Math.sin(p1_angle) * currentLength;
-        const x2 = px + Math.cos(p2_angle) * currentLength;
-        const y2 = py + Math.sin(p2_angle) * currentLength;
+        const x1 = px + TrigLUT.cos(p1_angle) * currentLength;
+        const y1 = py + TrigLUT.sin(p1_angle) * currentLength;
+        const x2 = px + TrigLUT.cos(p2_angle) * currentLength;
+        const y2 = py + TrigLUT.sin(p2_angle) * currentLength;
 
         ctx.moveTo(px, py);
         ctx.lineTo(x1, y1);
@@ -11270,10 +11329,10 @@ export class CinematicDeathRenderer {
       ctx.beginPath();
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
-        const currentLength = maxRayLength * Math.sin(explodeProgress * Math.PI * 0.5);
+        const currentLength = maxRayLength * TrigLUT.sin(explodeProgress * Math.PI * 0.5);
         ctx.moveTo(px, py);
-        ctx.lineTo(px + Math.cos(angle) * currentLength * 0.8, py + Math.sin(angle) * currentLength * 0.8);
-        ctx.lineTo(px + Math.cos(angle + 0.01) * currentLength * 0.8, py + Math.sin(angle + 0.01) * currentLength * 0.8);
+        ctx.lineTo(px + TrigLUT.cos(angle) * currentLength * 0.8, py + TrigLUT.sin(angle) * currentLength * 0.8);
+        ctx.lineTo(px + TrigLUT.cos(angle + 0.01) * currentLength * 0.8, py + TrigLUT.sin(angle + 0.01) * currentLength * 0.8);
         ctx.closePath();
       }
       ctx.fill();
@@ -11324,8 +11383,8 @@ export class CinematicDeathRenderer {
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
+          const x = px + TrigLUT.cos(angle) * distance;
+          const y = py + TrigLUT.sin(angle) * distance;
           ctx.fillRect(x - 5, y - 5, 10, 10);
         }
 
@@ -11334,8 +11393,8 @@ export class CinematicDeathRenderer {
         for (let i = 0; i < particleCount; i++) {
           const angle = (i / particleCount) * Math.PI * 2 + (i % 2 === 0 ? explodeT * 0.8 : -explodeT * 0.8);
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
-          const x = px + Math.cos(angle) * distance;
-          const y = py + Math.sin(angle) * distance;
+          const x = px + TrigLUT.cos(angle) * distance;
+          const y = py + TrigLUT.sin(angle) * distance;
           ctx.fillRect(x - 2, y - 2, 4, 4);
         }
       }
@@ -11678,8 +11737,15 @@ export type GameEventMap = {
 export type EventCallback<T> = (payload: T) => void;
 
 class EventBroker {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: { [K in keyof GameEventMap]?: Set<EventCallback<any>> } = {};
+
+  private static sparkPayload: {
+    x: number; y: number; angle: number; color?: string; radial?: boolean; count?: number; turbulence?: number; shape?: "spark" | "line";
+  } = { x: 0, y: 0, angle: 0 };
+
+  private static dustPayload: { x: number; y: number; direction?: "horizontal" | "vertical" } = { x: 0, y: 0 };
+
+  private static blastPayload: { x: number; y: number; color: string } = { x: 0, y: 0, color: "" };
 
   public subscribe<K extends keyof GameEventMap>(event: K, callback: EventCallback<GameEventMap[K]>): () => void {
     if (!this.listeners[event]) {
@@ -11697,6 +11763,35 @@ class EventBroker {
     if (set) {
       set.forEach((cb) => cb(payload));
     }
+  }
+
+  public publishSpark(x: number, y: number, angle: number, color?: string, radial?: boolean, count?: number, shape?: "spark" | "line", turbulence?: number): void {
+    const p = EventBroker.sparkPayload;
+    p.x = x;
+    p.y = y;
+    p.angle = angle;
+    p.color = color;
+    p.radial = radial;
+    p.count = count;
+    p.shape = shape;
+    p.turbulence = turbulence;
+    this.publish("SPAWN_SPARKS", p as GameEventMap["SPAWN_SPARKS"]);
+  }
+
+  public publishDust(x: number, y: number, direction?: "horizontal" | "vertical"): void {
+    const p = EventBroker.dustPayload;
+    p.x = x;
+    p.y = y;
+    p.direction = direction;
+    this.publish("SPAWN_DUST", p as GameEventMap["SPAWN_DUST"]);
+  }
+
+  public publishBlast(x: number, y: number, color: string): void {
+    const p = EventBroker.blastPayload;
+    p.x = x;
+    p.y = y;
+    p.color = color;
+    this.publish("SPAWN_BLAST", p as GameEventMap["SPAWN_BLAST"]);
   }
 
   public clear(): void {
@@ -12794,14 +12889,7 @@ export class BossLungeState extends BossState {
 
       const impactSide = physics.isOnWallLeft ? -1 : 1;
       const wallX = this.owner.position.x + impactSide * (this.owner.size.width / 2);
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: wallX,
-        y: this.owner.position.y,
-        angle: impactSide > 0 ? Math.PI : 0,
-        color: "hsl(350, 80%, 60%)",
-        radial: true,
-        count: 15,
-      });
+      eventBroker.publishSpark(wallX, this.owner.position.y, impactSide > 0 ? Math.PI : 0, "hsl(350, 80%, 60%)", true, 15);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 16, duration: 0.3 });
     } else {
       this.owner.velocity.x = 0;
@@ -12850,6 +12938,7 @@ import {
 } from "./MinionStates";
 import { eventBroker } from "@/core/eventBroker";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
@@ -12955,20 +13044,9 @@ export class Minion extends BaseEntity {
           ? "hsl(200, 80%, 65%)"
           : "hsl(215, 20%, 65%)";
 
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x,
-      y: this.position.y,
-      angle: 0,
-      color: mColor,
-      radial: true,
-      count: 24,
-    });
+    eventBroker.publishSpark(this.position.x, this.position.y, 0, mColor, true, 24);
 
-    eventBroker.publish("SPAWN_BLAST", {
-      x: this.position.x,
-      y: this.position.y,
-      color: mColor,
-    });
+    eventBroker.publishBlast(this.position.x, this.position.y, mColor);
   }
 
   public update(dt: number) {
@@ -12985,15 +13063,15 @@ export class Minion extends BaseEntity {
             ? "hsl(200, 80%, 65%)"
             : "hsl(215, 20%, 65%)";
 
-      if (Math.random() < 0.5) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 40 + Math.random() * 30;
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x + Math.cos(angle) * dist,
-          y: this.position.y + Math.sin(angle) * dist,
-          angle: angle + Math.PI,
-          color: mColor,
-        });
+      if (TrigLUT.random() < 0.5) {
+        const angle = TrigLUT.random() * Math.PI * 2;
+        const dist = 40 + TrigLUT.random() * 30;
+        eventBroker.publishSpark(
+          this.position.x + TrigLUT.cos(angle) * dist,
+          this.position.y + TrigLUT.sin(angle) * dist,
+          angle + Math.PI,
+          mColor
+        );
       }
 
       if (this.spawnTimer <= 0) {
@@ -13014,13 +13092,13 @@ export class Minion extends BaseEntity {
             ? "hsl(200, 80%, 65%)"
             : "hsl(215, 20%, 65%)";
 
-      if (Math.random() < 0.6) {
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x + (Math.random() * this.size.width - this.size.width / 2),
-          y: this.position.y + (Math.random() * this.size.height - this.size.height / 2),
-          angle: -Math.PI / 2 + (Math.random() * 0.4 - 0.2),
-          color: mColor,
-        });
+      if (TrigLUT.random() < 0.6) {
+        eventBroker.publishSpark(
+          this.position.x + (TrigLUT.random() * this.size.width - this.size.width / 2),
+          this.position.y + (TrigLUT.random() * this.size.height - this.size.height / 2),
+          -Math.PI / 2 + (TrigLUT.random() * 0.4 - 0.2),
+          mColor
+        );
       }
 
       if (this.dissolveTimer <= 0) {
@@ -13061,35 +13139,31 @@ export class Minion extends BaseEntity {
       if (this.minionType === "FLYER") {
         this.exhaustTimer = isTelegraph ? 0.04 : 0.08;
         const sparkColor = isTelegraph ? "hsl(45, 100%, 60%)" : "hsl(200, 80%, 65%)";
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.position.x,
-          y: this.position.y + this.size.height / 2,
-          angle: Math.PI / 2,
-          color: sparkColor,
-          count: isTelegraph ? 6 : 2
-        });
+        eventBroker.publishSpark(this.position.x, this.position.y + this.size.height / 2, Math.PI / 2, sparkColor, false, isTelegraph ? 6 : 2);
       } else if (this.minionType === "LANCER") {
         if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
           this.exhaustTimer = isTelegraph ? 0.05 : 0.15;
           const scrapeColor = isTelegraph ? "hsl(45, 100%, 60%)" : "rgba(255, 255, 255, 0.4)";
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: this.position.x - this.facingDirection * (this.size.width / 2),
-            y: this.position.y + this.size.height / 2,
-            angle: Math.atan2(0.5, -this.facingDirection) + (Math.random() * 0.3 - 0.15),
-            color: scrapeColor,
-            count: isTelegraph ? 3 : 1
-          });
+          eventBroker.publishSpark(
+            this.position.x - this.facingDirection * (this.size.width / 2),
+            this.position.y + this.size.height / 2,
+            TrigLUT.atan2(0.5, -this.facingDirection) + (TrigLUT.random() * 0.3 - 0.15),
+            scrapeColor,
+            false,
+            isTelegraph ? 3 : 1
+          );
         }
       } else if (this.minionType === "TURRET") {
         if (isTelegraph) {
           this.exhaustTimer = 0.06;
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: this.position.x + (Math.random() * 16 - 8),
-            y: this.position.y - this.size.height / 2,
-            angle: -Math.PI / 2 + (Math.random() * 0.2 - 0.1),
-            color: "hsl(0, 100%, 65%)",
-            count: 2
-          });
+          eventBroker.publishSpark(
+            this.position.x + (TrigLUT.random() * 16 - 8),
+            this.position.y - this.size.height / 2,
+            -Math.PI / 2 + (TrigLUT.random() * 0.2 - 0.1),
+            "hsl(0, 100%, 65%)",
+            false,
+            2
+          );
         }
       }
     }
@@ -13183,7 +13257,7 @@ export class Minion extends BaseEntity {
       const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
       const accordionScale = 1.0 - Math.pow(1.0 - firstHalfProgress, 3) * Math.cos(firstHalfProgress * 3.5 * Math.PI);
       
-      const staticFlicker = Math.random() < 0.04 ? 0.45 : 1.0;
+      const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
 
       const mColor =
@@ -13217,14 +13291,14 @@ export class Minion extends BaseEntity {
           const theta1 = i * step + ringRotation;
           const theta2 = (i + 1) * step + ringRotation;
 
-          const x1 = R * Math.cos(theta1);
-          const y1 = -h + R * Math.sin(theta1) * 0.28;
+          const x1 = R * TrigLUT.cos(theta1);
+          const y1 = -h + R * TrigLUT.sin(theta1) * 0.28;
 
-          const x2 = R * Math.cos(theta2);
-          const y2 = -h + R * Math.sin(theta2) * 0.28;
+          const x2 = R * TrigLUT.cos(theta2);
+          const y2 = -h + R * TrigLUT.sin(theta2) * 0.28;
 
           const midAngle = (theta1 + theta2) / 2;
-          const isBehind = Math.sin(midAngle) < 0;
+          const isBehind = TrigLUT.sin(midAngle) < 0;
 
           const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
           if (isBehind) {
@@ -13238,11 +13312,11 @@ export class Minion extends BaseEntity {
       const strutAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
       for (const angle of strutAngles) {
         const theta = angle + rotation;
-        const x = R * Math.cos(theta);
-        const yBottom = -hBottom + R * Math.sin(theta) * 0.28;
-        const yTop = -hTop + R * Math.sin(theta) * 0.28;
+        const x = R * TrigLUT.cos(theta);
+        const yBottom = -hBottom + R * TrigLUT.sin(theta) * 0.28;
+        const yTop = -hTop + R * TrigLUT.sin(theta) * 0.28;
 
-        const isBehind = Math.sin(theta) < 0;
+        const isBehind = TrigLUT.sin(theta) < 0;
         const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
         if (isBehind) {
           backCageScratch.push(segment);
@@ -13623,6 +13697,7 @@ import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 import { PlayerInputHandler } from "@/entities/handlers/PlayerInputHandler";
 import { PlayerCombatHandler } from "@/entities/handlers/PlayerCombatHandler";
 import { PlayerVisuals } from "@/entities/handlers/PlayerVisuals";
@@ -13739,26 +13814,12 @@ export class Player extends BaseEntity {
     });
 
     this.unsubHealCancel = eventBroker.subscribe("HEAL_CANCEL", () => {
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(280, 80%, 65%)",
-        radial: true,
-        count: 18,
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(280, 80%, 65%)", true, 18);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.15 });
     });
 
     this.unsubChargeCancel = eventBroker.subscribe("CHARGE_CANCEL", () => {
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y - 12,
-        angle: 0,
-        color: "hsl(142, 71%, 58%)",
-        radial: true,
-        count: 14,
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y - 12, 0, "hsl(142, 71%, 58%)", true, 14);
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 2, duration: 0.1 });
     });
 
@@ -13776,38 +13837,13 @@ export class Player extends BaseEntity {
         });
       }
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: this.position.x,
-        y: this.position.y,
-        color: "hsl(280, 100%, 75%)",
-      });
+      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(280, 100%, 75%)");
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: this.position.x,
-        y: this.position.y,
-        color: "hsl(142, 71%, 58%)",
-      });
+      eventBroker.publishBlast(this.position.x, this.position.y, "hsl(142, 71%, 58%)");
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(285, 100%, 80%)",
-        radial: true,
-        count: 32,
-        shape: "line",
-        turbulence: 30
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(285, 100%, 80%)", true, 32, "line", 30);
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: 0,
-        color: "hsl(142, 100%, 80%)",
-        radial: true,
-        count: 20,
-        shape: "spark",
-      });
+      eventBroker.publishSpark(this.position.x, this.position.y, 0, "hsl(142, 100%, 80%)", true, 20, "spark");
 
       setVec(this.visualScale, 0.90, 1.10);
       setVec(this.scaleVelocity, 6.0, -12.0);
@@ -13853,21 +13889,9 @@ export class Player extends BaseEntity {
       const muzzleX = this.position.x + dirX * 30;
       const muzzleY = this.position.y + dirY * 30;
 
-      eventBroker.publish("SPAWN_BLAST", {
-        x: muzzleX,
-        y: muzzleY,
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"
-      });
+      eventBroker.publishBlast(muzzleX, muzzleY, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)");
 
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: muzzleX,
-        y: muzzleY,
-        angle: Math.atan2(dirY, dirX),
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-        radial: false,
-        count: isLvl2 ? 16 : 8,
-        shape: "line"
-      });
+      eventBroker.publishSpark(muzzleX, muzzleY, TrigLUT.atan2(dirY, dirX), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, isLvl2 ? 16 : 8, "line");
     });
   }
 
@@ -13965,6 +13989,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { IWorld, EntityStatus } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
 import { setVec, zeroVec } from "@/core/VecUtils";
 
 const TRAIL_RING_SIZE = 16;
@@ -14042,16 +14067,9 @@ export class Projectile extends BaseEntity implements IPoolable {
 
     const isLvl2 = this.damage >= 3;
     const sparkChance = isLvl2 ? 0.35 : 0.08;
-    if (this.ownerId === "player" && Math.random() < sparkChance) {
-      const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI + (Math.random() * 0.4 - 0.2);
-      eventBroker.publish("SPAWN_SPARKS", {
-        x: this.position.x,
-        y: this.position.y,
-        angle: angle,
-        color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-        count: 1,
-        shape: "line",
-      });
+    if (this.ownerId === "player" && TrigLUT.random() < sparkChance) {
+      const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
+      eventBroker.publishSpark(this.position.x, this.position.y, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
     }
 
     const dx = this.velocity.x * dt;
@@ -14228,24 +14246,13 @@ export class Projectile extends BaseEntity implements IPoolable {
   private releaseEffects() {
     const isPlayer = this.ownerId === "player";
     const blastColor = isPlayer ? (this.damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)") : (this.customColor || "hsl(350, 80%, 60%)");
-    const angle = Math.atan2(this.velocity.y, this.velocity.x) + Math.PI;
+    const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x) + Math.PI;
 
-    eventBroker.publish("SPAWN_BLAST", {
-      x: this.position.x,
-      y: this.position.y,
-      color: blastColor,
-    });
+    eventBroker.publishBlast(this.position.x, this.position.y, blastColor);
 
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: this.position.x,
-      y: this.position.y,
-      angle: angle,
-      color: blastColor,
-      radial: false,
-      count: isPlayer ? (this.damage >= 3 ? 18 : 4) : 8,
-      shape: "line",
-      turbulence: isPlayer && this.damage >= 3 ? 20 : 5,
-    });
+    const sparkCount = isPlayer ? (this.damage >= 3 ? 18 : 4) : 8;
+    const turbulence = isPlayer && this.damage >= 3 ? 20 : 5;
+    eventBroker.publishSpark(this.position.x, this.position.y, angle, blastColor, false, sparkCount, "line", turbulence);
   }
 
   public draw(ctx: CanvasRenderingContext2D, alpha?: number) {
@@ -14359,8 +14366,8 @@ export class Projectile extends BaseEntity implements IPoolable {
       ctx.restore();
     }
 
-    const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    const angle = Math.atan2(this.velocity.y, this.velocity.x);
+    const speed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const angle = TrigLUT.atan2(this.velocity.y, this.velocity.x);
 
     const maxStretchSpeed = 1000;
     const stretchFactor = Math.min(1.5, 1.0 + (speed / maxStretchSpeed) * 0.5);
@@ -14506,6 +14513,7 @@ export class Spawner {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
 export interface GhostFrame {
@@ -14561,14 +14569,14 @@ export class DashComponent implements IEntityComponent {
         });
         this.ghostSpawnTimer = 0.025;
 
-        // Spawn high speed trailing wind resistance lines matching trajectory angle
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
-          y: this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
-          angle: Math.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (Math.random() * 0.4 - 0.2),
-          color: "rgba(255, 255, 255, 0.22)",
-          count: 2,
-        });
+        eventBroker.publishSpark(
+          this.owner.position.x - this.dashDirectionX * (this.owner.size.width / 2),
+          this.owner.position.y - this.dashDirectionY * (this.owner.size.height / 2),
+          TrigLUT.atan2(this.dashDirectionY, this.dashDirectionX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2),
+          "rgba(255, 255, 255, 0.22)",
+          false,
+          2
+        );
       }
 
       if (this.dashTimer <= 0) {
@@ -14612,6 +14620,7 @@ export class DashComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
 const chargeUpdatePayload = { timer: 0 };
@@ -14651,53 +14660,35 @@ export class FireballComponent implements IEntityComponent {
       const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
       const nowTime = performance.now();
 
-      const pulse = Math.sin(nowTime * 0.045) * 0.03 * progress;
-      const shiverX = (Math.random() * 0.012 - 0.006) * progress;
-      const shiverY = (Math.random() * 0.012 - 0.006) * progress;
+      const pulse = TrigLUT.sin(nowTime * 0.045) * 0.03 * progress;
+      const shiverX = (TrigLUT.random() * 0.012 - 0.006) * progress;
+      const shiverY = (TrigLUT.random() * 0.012 - 0.006) * progress;
 
-      this.owner.targetVisualScale = { 
-        x: 1.0 - pulse + shiverX, 
-        y: 1.0 + pulse + shiverY 
-      };
-      this.owner.rotation = Math.sin(nowTime * 0.09) * 0.02 * progress;
+      this.owner.targetVisualScale.x = 1.0 - pulse + shiverX;
+      this.owner.targetVisualScale.y = 1.0 + pulse + shiverY;
+      this.owner.rotation = TrigLUT.sin(nowTime * 0.09) * 0.02 * progress;
 
-      if (Math.random() < 0.3 + progress * 0.5) {
-        const angle = Math.random() * Math.PI * 2;
+      if (TrigLUT.random() < 0.3 + progress * 0.5) {
+        const angle = TrigLUT.random() * Math.PI * 2;
         const radius = 80 - progress * 50;
-        const startX = this.owner.position.x + Math.cos(angle) * radius;
-        const startY = this.owner.position.y - 12 + Math.sin(angle) * radius;
+        const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
+        const startY = this.owner.position.y - 12 + TrigLUT.sin(angle) * radius;
 
         const targetX = this.owner.position.x;
         const targetY = this.owner.position.y - 12;
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: Math.atan2(vy, vx),
-          color: isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)",
-          count: 1,
-          shape: "line",
-          turbulence: 20
-        });
+        eventBroker.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
-      if (isLvl2 && Math.random() < 0.12) {
-        const angle = Math.random() * Math.PI * 2;
+      if (isLvl2 && TrigLUT.random() < 0.12) {
+        const angle = TrigLUT.random() * Math.PI * 2;
         const radius = 60;
-        const startX = this.owner.position.x + Math.cos(angle) * radius;
-        const startY = this.owner.position.y - 12 + Math.sin(angle) * radius;
+        const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
+        const startY = this.owner.position.y - 12 + TrigLUT.sin(angle) * radius;
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: angle + Math.PI,
-          color: "hsl(190, 100%, 85%)",
-          count: 3,
-          shape: "line",
-          turbulence: 45
-        });
+        eventBroker.publishSpark(startX, startY, angle + Math.PI, "hsl(190, 100%, 85%)", false, 3, "line", 45);
         eventBroker.publish("CAMERA_SHAKE", { amplitude: 2.5, duration: 0.08 });
       }
     }
@@ -14750,7 +14741,7 @@ export class FireballComponent implements IEntityComponent {
       finalDirX = facingDirection;
     }
 
-    const mag = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
+    const mag = TrigLUT.fastSqrt(finalDirX * finalDirX + finalDirY * finalDirY);
     const normalizedDir = { x: finalDirX / mag, y: finalDirY / mag };
 
     const isLvl2 = this.chargeTimer >= UNITS.CHARGE_LVL2_TIME;
@@ -14789,6 +14780,7 @@ export class FireballComponent implements IEntityComponent {
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 
 const healUpdatePayload = { timer: 0 };
@@ -14815,73 +14807,47 @@ export class HealComponent implements IEntityComponent {
       const progress = Math.max(0, Math.min(1.0, (this.healDuration - this.healTimer) / this.healDuration));
       const nowTime = performance.now();
 
-      this.owner.visualScale = { 
-        x: 1.0 + Math.sin(nowTime * 0.045) * 0.015 * progress, 
-        y: 1.0 - Math.sin(nowTime * 0.045) * 0.015 * progress 
-      };
+      this.owner.visualScale.x = 1.0 + TrigLUT.sin(nowTime * 0.045) * 0.015 * progress;
+      this.owner.visualScale.y = 1.0 - TrigLUT.sin(nowTime * 0.045) * 0.015 * progress;
 
-      if (Math.random() < 0.2 + progress * 0.4) {
+      if (TrigLUT.random() < 0.2 + progress * 0.4) {
         eventBroker.publish("CAMERA_SHAKE", { amplitude: 0.5 + progress * 3.5, duration: 0.05 });
       }
 
-      if (Math.random() < 0.3 + progress * 0.4) {
-        const spawnX = this.owner.position.x + (Math.random() * 32 - 16);
+      if (TrigLUT.random() < 0.3 + progress * 0.4) {
+        const spawnX = this.owner.position.x + (TrigLUT.random() * 32 - 16);
         const spawnY = this.owner.position.y + this.owner.size.height / 2;
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: spawnX,
-          y: spawnY,
-          angle: -Math.PI / 2 + (Math.random() * 0.15 - 0.075),
-          color: "hsl(280, 85%, 65%)",
-          count: 1,
-          shape: "line"
-        });
+        eventBroker.publishSpark(spawnX, spawnY, -Math.PI / 2 + (TrigLUT.random() * 0.15 - 0.075), "hsl(280, 85%, 65%)", false, 1, "line");
       }
 
       const sparkChance = 0.35 + progress * 0.65;
-      if (Math.random() < sparkChance) {
-        const spawnX = this.owner.position.x + (Math.random() * 44 - 22);
-        const spawnY = this.owner.position.y + this.owner.size.height / 2 - (Math.random() * this.owner.size.height);
-        const angle = -Math.PI / 2 + (Math.random() * 0.3 - 0.15);
+      if (TrigLUT.random() < sparkChance) {
+        const spawnX = this.owner.position.x + (TrigLUT.random() * 44 - 22);
+        const spawnY = this.owner.position.y + this.owner.size.height / 2 - (TrigLUT.random() * this.owner.size.height);
+        const angle = -Math.PI / 2 + (TrigLUT.random() * 0.3 - 0.15);
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: spawnX,
-          y: spawnY,
-          angle: angle,
-          color: progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)",
-          count: Math.random() < 0.2 ? 2 : 1,
-          shape: Math.random() < 0.35 ? "line" : "spark",
-          turbulence: 15 + progress * 40
-        });
+        const sparkColor = progress >= 0.85 ? "hsl(295, 100%, 80%)" : "hsl(280, 85%, 65%)";
+        const sparkCount = TrigLUT.random() < 0.2 ? 2 : 1;
+        const sparkShape = TrigLUT.random() < 0.35 ? "line" as const : "spark" as const;
+        eventBroker.publishSpark(spawnX, spawnY, angle, sparkColor, false, sparkCount, sparkShape, 15 + progress * 40);
       }
 
-      if (Math.random() < 0.25 + progress * 0.45) {
-        const angle = Math.random() * Math.PI * 2;
+      if (TrigLUT.random() < 0.25 + progress * 0.45) {
+        const angle = TrigLUT.random() * Math.PI * 2;
         const radius = 90 - progress * 55;
-        const startX = this.owner.position.x + Math.cos(angle) * radius;
-        const startY = this.owner.position.y - 10 + Math.sin(angle) * radius;
+        const startX = this.owner.position.x + TrigLUT.cos(angle) * radius;
+        const startY = this.owner.position.y - 10 + TrigLUT.sin(angle) * radius;
 
         const targetX = this.owner.position.x;
         const targetY = this.owner.position.y - 10;
         const vx = (targetX - startX) * 4.0;
         const vy = (targetY - startY) * 4.0;
 
-        eventBroker.publish("SPAWN_SPARKS", {
-          x: startX,
-          y: startY,
-          angle: Math.atan2(vy, vx),
-          color: "hsl(280, 100%, 75%)",
-          count: 1,
-          shape: "line",
-          turbulence: 20
-        });
+        eventBroker.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), "hsl(280, 100%, 75%)", false, 1, "line", 20);
       }
 
-      if (Math.random() < 0.08 + progress * 0.15) {
-        eventBroker.publish("SPAWN_DUST", {
-          x: this.owner.position.x,
-          y: this.owner.position.y + this.owner.size.height / 2,
-          direction: "horizontal"
-        });
+      if (TrigLUT.random() < 0.08 + progress * 0.15) {
+        eventBroker.publishDust(this.owner.position.x, this.owner.position.y + this.owner.size.height / 2, "horizontal");
       }
 
       if (this.healTimer <= 0) {
@@ -15209,12 +15175,7 @@ export class MeleeComponent implements IEntityComponent {
             if (isCloseRange) {
               eventBroker.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.15 });
             }
-            eventBroker.publish("SPAWN_SPARKS", {
-              x: target.position.x,
-              y: target.position.y,
-              angle: facing > 0 ? 0 : Math.PI,
-              color: "hsl(142, 71%, 58%)",
-            });
+            eventBroker.publishSpark(target.position.x, target.position.y, facing > 0 ? 0 : Math.PI, "hsl(142, 71%, 58%)");
           }
         }
       }
@@ -15734,6 +15695,7 @@ export class PlayerCombatHandler {
 ────────────────────────────────────────────────────
 import { Player } from "@/entities/Player";
 import { eventBroker } from "@/core/eventBroker";
+import { TrigLUT } from "@/core/TrigLUT";
 import { UNITS } from "@/core/Units";
 import { setVec } from "@/core/VecUtils";
 
@@ -15764,16 +15726,10 @@ export class PlayerInputHandler {
         targetScaleX = 0.85;
         targetScaleY = 1.15;
 
-        if (Math.random() < 0.35) {
-          const contactX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2) + (Math.random() * 8 - 4);
+        if (TrigLUT.random() < 0.35) {
+          const contactX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2) + (TrigLUT.random() * 8 - 4);
           const contactY = this.player.position.y + (this.player.size.height / 2);
-          eventBroker.publish("SPAWN_SPARKS", {
-            x: contactX,
-            y: contactY,
-            angle: this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15,
-            color: "hsl(45, 100%, 65%)",
-            count: 1,
-          });
+          eventBroker.publishSpark(contactX, contactY, this.player.lastWallNormal === 1 ? -0.15 : Math.PI + 0.15, "hsl(45, 100%, 65%)", false, 1);
         }
       }
     }
@@ -15793,7 +15749,7 @@ export class PlayerInputHandler {
           setVec(this.player.visualScale, 1.0 + 0.28 * factor, 1.0 - 0.28 * factor);
           setVec(this.player.scaleVelocity, 10 * factor, -18 * factor);
           this.player.velocity.x *= (1.0 - 0.8 * factor);
-          eventBroker.publish("SPAWN_DUST", { x: this.player.position.x, y: this.player.position.y + this.player.size.height / 2 });
+          eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
           eventBroker.publish("PLAYER_LANDED", undefined);
         }
       }
@@ -15810,14 +15766,8 @@ export class PlayerInputHandler {
     const impactSide = this.player.physics.isOnWallLeft ? -1 : 1;
     const wallX = this.player.position.x + impactSide * (this.player.size.width / 2);
 
-    eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.player.position.y, direction: "vertical" });
-    eventBroker.publish("SPAWN_SPARKS", {
-      x: wallX,
-      y: this.player.position.y,
-      angle: impactSide > 0 ? Math.PI : 0,
-      color: "rgba(255, 255, 255, 0.55)",
-      count: 6,
-    });
+    eventBroker.publishDust(wallX, this.player.position.y, "vertical");
+    eventBroker.publishSpark(wallX, this.player.position.y, impactSide > 0 ? Math.PI : 0, "rgba(255, 255, 255, 0.55)", false, 6);
   }
 
   public updateCoyoteAndWallTimers(dt: number) {
@@ -15935,7 +15885,7 @@ export class PlayerInputHandler {
       this.player.dashComponent.resetDashCharge();
 
       const wallX = this.player.position.x - this.player.lastWallNormal * (this.player.size.width / 2);
-      eventBroker.publish("SPAWN_DUST", { x: wallX, y: this.player.position.y, direction: "vertical" });
+      eventBroker.publishDust(wallX, this.player.position.y, "vertical");
       eventBroker.publish("PLAYER_JUMPED", undefined);
     } else if (this.player.hasDoubleJump) {
       this.player.velocity.y = -this.player.jumpForce;
@@ -15955,7 +15905,7 @@ export class PlayerInputHandler {
     this.player.coyoteTimer = 0;
     this.player.jumpBufferTimer = 0;
     setVec(this.player.visualScale, 0.82, 1.18);
-    eventBroker.publish("SPAWN_DUST", { x: this.player.position.x, y: this.player.position.y + this.player.size.height / 2 });
+    eventBroker.publishDust(this.player.position.x, this.player.position.y + this.player.size.height / 2);
     eventBroker.publish("PLAYER_JUMPED", undefined);
   }
 
@@ -15997,6 +15947,28 @@ const AURA_COLORS = [
   'hsla(290, 100%, 75%, 0.8)',
   'hsla(0, 0%, 100%, 0.95)'
 ];
+
+const chargeGradCache = document.createElement("canvas");
+chargeGradCache.width = 64;
+chargeGradCache.height = 64;
+const chargeGradCtx = chargeGradCache.getContext("2d")!;
+const chargeGrad = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+chargeGrad.addColorStop(0.0, '#ffffff');
+chargeGrad.addColorStop(0.3, 'hsl(142, 100%, 80%)');
+chargeGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
+chargeGradCtx.fillStyle = chargeGrad;
+chargeGradCtx.fillRect(0, 0, 64, 64);
+
+const chargeGradLvl2 = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+chargeGradLvl2.addColorStop(0.0, '#ffffff');
+chargeGradLvl2.addColorStop(0.3, 'hsl(45, 100%, 75%)');
+chargeGradLvl2.addColorStop(1.0, 'rgba(255,255,255,0)');
+const chargeGradLvl2Canvas = document.createElement("canvas");
+chargeGradLvl2Canvas.width = 64;
+chargeGradLvl2Canvas.height = 64;
+const chargeGradLvl2Ctx = chargeGradLvl2Canvas.getContext("2d")!;
+chargeGradLvl2Ctx.fillStyle = chargeGradLvl2;
+chargeGradLvl2Ctx.fillRect(0, 0, 64, 64);
 
 export class PlayerVisuals {
   private player: Player;
@@ -16169,18 +16141,8 @@ export class PlayerVisuals {
       ctx.globalCompositeOperation = "lighter";
 
       const coreRadius = (8 + chargeProgress * 14);
-      const coreGrad = ctx.createRadialGradient(
-        localCenterX, localCenterY, 0,
-        localCenterX, localCenterY, coreRadius
-      );
-      coreGrad.addColorStop(0.0, '#ffffff');
-      coreGrad.addColorStop(0.3, isLvl2 ? 'hsl(45, 100%, 75%)' : 'hsl(142, 100%, 80%)');
-      coreGrad.addColorStop(1.0, 'rgba(255,255,255,0)');
-
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(localCenterX, localCenterY, coreRadius, 0, Math.PI * 2);
-      ctx.fill();
+      const gradCanvas = isLvl2 ? chargeGradLvl2Canvas : chargeGradCache;
+      ctx.drawImage(gradCanvas, localCenterX - coreRadius, localCenterY - coreRadius, coreRadius * 2, coreRadius * 2);
 
       ctx.save();
       ctx.lineCap = "round";
@@ -16193,8 +16155,8 @@ export class PlayerVisuals {
         ctx.lineWidth = isLvl2 ? 1.5 : 1.0;
 
         for (let d = 0; d < dischargeCount; d++) {
-          if (Math.random() < 0.35) {
-            const startAngle = Math.random() * Math.PI * 2;
+          if (TrigLUT.random() < 0.35) {
+            const startAngle = TrigLUT.random() * Math.PI * 2;
             const rMax = (this.player.size.height * 0.35) + 20 * chargeProgress;
 
             ctx.beginPath();
@@ -16205,7 +16167,7 @@ export class PlayerVisuals {
             const steps = 3;
             for (let s = 1; s <= steps; s++) {
               const t = s / steps;
-              const nextAngle = startAngle + (Math.random() * 0.6 - 0.3);
+              const nextAngle = startAngle + (TrigLUT.random() * 0.6 - 0.3);
               const nextRadius = rMax * (1.0 - t);
               const targetX = localCenterX + TrigLUT.cos(nextAngle) * nextRadius;
               const targetY = localCenterY + TrigLUT.sin(nextAngle) * nextRadius;
