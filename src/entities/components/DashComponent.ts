@@ -65,8 +65,8 @@ export class DashComponent implements IEntityComponent {
         this.isDashing = false;
         if (this.dashDirectionX !== 0) {
           this.owner.velocity.x = this.dashDirectionX * this.dashSpeed * 0.65;
-          if ('recoilTimer' in this.owner) {
-            (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.18;
+          if (this.owner.recoilTimer !== undefined) {
+            this.owner.recoilTimer = 0.18;
           }
         }
         if (this.dashDirectionY !== 0) {

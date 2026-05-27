@@ -28,9 +28,11 @@ export class BaseEntity implements IEntity {
 
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
+  public recoilTimer?: number;
+  public physics?: { isGrounded: boolean; gravity?: number };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private components = new Map<any, IEntityComponent>();
+  private components = new Map<new (...args: any[]) => IEntityComponent, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -45,8 +47,7 @@ export class BaseEntity implements IEntity {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     componentClass: new (...args: any[]) => T,
     component: T,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dependencies?: Record<string, any>
+    dependencies?: Record<string, unknown>
   ): T {
     component.setup(this, dependencies);
     this.components.set(componentClass, component);

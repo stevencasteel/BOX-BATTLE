@@ -94,9 +94,10 @@ export class MeleeComponent implements IEntityComponent {
         const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
         const centerReachY = this.owner.position.y;
 
-        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
+        distanceToTarget = this.calculateDistSq(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.width / 2;
+        const reachLimit = this.meleeRangeLimit + target.size.width / 2;
+        const withinReach = distanceToTarget <= reachLimit * reachLimit;
         const withinDirection =
           (facing > 0 && target.position.x >= centerReachX - 25) ||
           (facing < 0 && target.position.x <= centerReachX + 25);
@@ -108,9 +109,10 @@ export class MeleeComponent implements IEntityComponent {
         const centerReachX = this.owner.position.x;
         const centerReachY = this.owner.position.y - this.verticalReachOffset;
 
-        distanceToTarget = this.calculateDistance(target.position.x, target.position.y, centerReachX, centerReachY);
+        distanceToTarget = this.calculateDistSq(target.position.x, target.position.y, centerReachX, centerReachY);
 
-        const withinReach = distanceToTarget <= this.meleeRangeLimit + target.size.height / 2;
+        const reachVertLimit = this.meleeRangeLimit + target.size.height / 2;
+        const withinReach = distanceToTarget <= reachVertLimit * reachVertLimit;
         const withinDirection = target.position.y <= centerReachY + 25;
 
         if (withinReach && withinDirection) {
@@ -121,7 +123,7 @@ export class MeleeComponent implements IEntityComponent {
       if (isWithinSwingArc) {
         const health = target.getComponent(HealthComponent);
         if (health) {
-          const isCloseRange = distanceToTarget <= this.closeRangeThreshold;
+          const isCloseRange = distanceToTarget <= this.closeRangeThreshold * this.closeRangeThreshold;
           const damageAmount = isCloseRange ? UNITS.PLAYER_MELEE_DAMAGE_CLOSE : UNITS.PLAYER_MELEE_DAMAGE_BASE;
 
           const registeredDamage = health.takeDamage(
@@ -137,14 +139,13 @@ export class MeleeComponent implements IEntityComponent {
             const recoilForce = isCloseRange ? 200 : 90;
             this.owner.velocity.x = -facing * recoilForce;
             if (this.owner.getComponent(HealthComponent)?.owner.world.physicsWorld) {
-              const withPhysics = this.owner as unknown as { physics?: { isGrounded: boolean } };
-              const isGrounded = this.owner.velocity.y === 0 || withPhysics.physics?.isGrounded;
+              const isGrounded = this.owner.velocity.y === 0 || this.owner.physics?.isGrounded;
               if (!isGrounded) {
                 this.owner.velocity.y = Math.min(this.owner.velocity.y, -120);
               }
             }
-            if ('recoilTimer' in this.owner) {
-              (this.owner as unknown as { recoilTimer: number }).recoilTimer = 0.15;
+            if (this.owner.recoilTimer !== undefined) {
+              this.owner.recoilTimer = 0.15;
             }
 
             if (isCloseRange) {
@@ -174,9 +175,10 @@ export class MeleeComponent implements IEntityComponent {
         if (this.attackDirection === "side") {
           const centerReachX = this.owner.position.x + facing * this.sideReachOffset;
           const centerReachY = this.owner.position.y;
-          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
+          const distSq = this.calculateDistSq(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + proj.size.width / 2;
+          const projReachLimit = this.meleeRangeLimit + proj.size.width / 2;
+          const withinReach = distSq <= projReachLimit * projReachLimit;
           const withinDirection =
             (facing > 0 && proj.position.x >= centerReachX - 25) ||
             (facing < 0 && proj.position.x <= centerReachX + 25);
@@ -187,9 +189,10 @@ export class MeleeComponent implements IEntityComponent {
         } else if (this.attackDirection === "up") {
           const centerReachX = this.owner.position.x;
           const centerReachY = this.owner.position.y - this.verticalReachOffset;
-          const distance = this.calculateDistance(proj.position.x, proj.position.y, centerReachX, centerReachY);
+          const distSqUp = this.calculateDistSq(proj.position.x, proj.position.y, centerReachX, centerReachY);
 
-          const withinReach = distance <= this.meleeRangeLimit + proj.size.height / 2;
+          const projReachLimitUp = this.meleeRangeLimit + proj.size.height / 2;
+          const withinReach = distSqUp <= projReachLimitUp * projReachLimitUp;
           const withinDirection = proj.position.y <= centerReachY + 25;
 
           if (withinReach && withinDirection) {
@@ -315,9 +318,9 @@ export class MeleeComponent implements IEntityComponent {
     return this.targetsScratchpad;
   }
 
-  private calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+  private calculateDistSq(x1: number, y1: number, x2: number, y2: number): number {
     const dx = x1 - x2;
     const dy = y1 - y2;
-    return Math.sqrt(dx * dx + dy * dy);
+    return dx * dx + dy * dy;
   }
 }

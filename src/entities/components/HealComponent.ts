@@ -3,6 +3,8 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
+const healUpdatePayload = { timer: 0 };
+
 export class HealComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
@@ -19,7 +21,8 @@ export class HealComponent implements IEntityComponent {
     if (this.isHealing) {
       this.owner.velocity.x = 0;
       this.healTimer -= dt;
-      eventBroker.publish("HEAL_UPDATE", { timer: this.healTimer });
+      healUpdatePayload.timer = this.healTimer;
+      eventBroker.publish("HEAL_UPDATE", healUpdatePayload);
 
       const progress = Math.max(0, Math.min(1.0, (this.healDuration - this.healTimer) / this.healDuration));
       const nowTime = performance.now();

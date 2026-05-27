@@ -64,6 +64,10 @@ function getHslaColor(colorStr: string, alpha: number): string {
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private cachedMeleeGradient: CanvasGradient;
+  private staticCanvas: HTMLCanvasElement;
+  private staticCtx: CanvasRenderingContext2D;
+  private spikePath: Path2D | null = null;
+  private staticCacheBuilt = false;
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -82,6 +86,46 @@ export class WorldRenderer {
     this.cachedMeleeGradient.addColorStop(0.85, "rgba(34, 197, 94, 0.85)");
     this.ctx.fillStyle = this.cachedMeleeGradient;
     this.cachedMeleeGradient.addColorStop(1.0, "rgba(34, 197, 94, 0)");
+
+    this.staticCanvas = document.createElement("canvas");
+    this.staticCanvas.width = UNITS.WORLD_SIZE;
+    this.staticCanvas.height = UNITS.WORLD_SIZE;
+    const staticCtx = this.staticCanvas.getContext("2d");
+    if (!staticCtx) throw new Error("Could not create static canvas context");
+    this.staticCtx = staticCtx;
+  }
+
+  private buildStaticCache(
+    solids: Rectangle[],
+    hazards: Rectangle[]
+  ) {
+    if (this.staticCacheBuilt) return;
+    const sctx = this.staticCtx;
+
+    sctx.fillStyle = "#0c0d11";
+    sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+
+    sctx.fillStyle = "#1e1e24";
+    for (const solid of solids) {
+      sctx.fillRect(solid.x, solid.y, solid.width, solid.height);
+      sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      sctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    }
+
+    if (hazards.length > 0) {
+      this.spikePath = new Path2D();
+      for (const hazard of hazards) {
+        const spikeWidth = 25;
+        const spikeCount = Math.floor(hazard.width / spikeWidth);
+        for (let i = 0; i < spikeCount; i++) {
+          this.spikePath.moveTo(hazard.x + i * spikeWidth, 1200);
+          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+        }
+      }
+    }
+
+    this.staticCacheBuilt = true;
   }
 
   private drawPlayerAttackVisual(ctx: CanvasRenderingContext2D, player: Player, alpha: number) {
@@ -193,17 +237,16 @@ export class WorldRenderer {
     springPlatforms: { rect: Rectangle; offsetY: number }[],
     alpha: number
   ) {
-    this.ctx.fillStyle = "#0c0d11";
-    this.ctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+    this.buildStaticCache(solids, hazards);
 
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);
 
-    this.ctx.fillStyle = "#1e1e24";
-    for (const solid of solids) {
-      this.ctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      this.ctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+    this.ctx.drawImage(this.staticCanvas, 0, 0);
+
+    if (this.spikePath) {
+      this.ctx.fillStyle = "hsl(350, 80%, 60%)";
+      this.ctx.fill(this.spikePath);
     }
 
     this.ctx.fillStyle = "#2c3e50";
@@ -218,19 +261,6 @@ export class WorldRenderer {
       this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
       this.ctx.restore();
     }
-
-    this.ctx.fillStyle = "hsl(350, 80%, 60%)";
-    this.ctx.beginPath();
-    for (const hazard of hazards) {
-      const spikeWidth = 25;
-      const spikeCount = Math.floor(hazard.width / spikeWidth);
-      for (let i = 0; i < spikeCount; i++) {
-        this.ctx.moveTo(hazard.x + i * spikeWidth, 1200);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-        this.ctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-      }
-    }
-    this.ctx.fill();
 
     if (world.boss) {
       world.boss.draw(this.ctx, alpha);

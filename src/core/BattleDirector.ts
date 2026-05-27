@@ -177,7 +177,6 @@ export class BattleDirector {
   ) {
     this.cinematicActive = true;
     eventBroker.publish("CLEAR_DIALOGUES", undefined);
-    soundSynth.clearAllSlides();
     soundSynth.stopChargeDrone();
     soundSynth.stopHealDrone();
     initialExplosion();

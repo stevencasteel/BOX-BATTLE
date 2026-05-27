@@ -3,6 +3,8 @@ import { BaseEntity } from "@/entities/BaseEntity";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
+const chargeUpdatePayload = { timer: 0 };
+
 export class FireballComponent implements IEntityComponent {
   public owner!: BaseEntity;
 
@@ -25,7 +27,8 @@ export class FireballComponent implements IEntityComponent {
       }
 
       if (this.hasPublishedChargeStart) {
-        eventBroker.publish("CHARGE_UPDATE", { timer: this.chargeTimer });
+        chargeUpdatePayload.timer = this.chargeTimer;
+        eventBroker.publish("CHARGE_UPDATE", chargeUpdatePayload);
       }
 
       if (this.chargeTimer >= UNITS.CHARGE_LVL2_TIME && !this.hasPoppedLvl2) {

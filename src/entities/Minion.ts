@@ -12,6 +12,10 @@ import { eventBroker } from "@/core/eventBroker";
 
 export type MinionType = "TURRET" | "LANCER" | "FLYER";
 
+interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
+const backCageScratch: CageSegment[] = [];
+const frontCageScratch: CageSegment[] = [];
+
 export class Minion extends BaseEntity {
   private unsubHurt!: () => void;
   public get status(): EntityStatus {
@@ -23,7 +27,7 @@ export class Minion extends BaseEntity {
 
   public minionType: MinionType;
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public stateMachine: StateMachine;
 
   public patrolSpeed: number = 100;
@@ -323,8 +327,8 @@ export class Minion extends BaseEntity {
     const drawY = this.previousPosition.y + (this.position.y - this.previousPosition.y) * alphaVal;
 
     const nowTime = performance.now();
-    const backCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
-    const frontCage: { x1: number; y1: number; x2: number; y2: number; color: string; width: number }[] = [];
+    backCageScratch.length = 0;
+    frontCageScratch.length = 0;
 
     const totalSpawnTime = 1.2;
     const elapsedTime = totalSpawnTime - this.spawnTimer;
@@ -383,9 +387,9 @@ export class Minion extends BaseEntity {
 
           const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
           if (isBehind) {
-            backCage.push(segment);
+            backCageScratch.push(segment);
           } else {
-            frontCage.push(segment);
+            frontCageScratch.push(segment);
           }
         }
       }
@@ -400,9 +404,9 @@ export class Minion extends BaseEntity {
         const isBehind = Math.sin(theta) < 0;
         const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
         if (isBehind) {
-          backCage.push(segment);
+          backCageScratch.push(segment);
         } else {
-          frontCage.push(segment);
+          frontCageScratch.push(segment);
         }
       }
     }
@@ -411,7 +415,7 @@ export class Minion extends BaseEntity {
     ctx.translate(drawX, feetY);
     ctx.rotate(this.rotation);
 
-    const drawCageSegments = (segments: typeof backCage) => {
+    const drawCageSegments = (segments: CageSegment[]) => {
       for (let s = 0; s < segments.length; s++) {
         const seg = segments[s];
         ctx.strokeStyle = seg.color;
@@ -427,7 +431,7 @@ export class Minion extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCageSegments(backCage);
+      drawCageSegments(backCageScratch);
       ctx.restore();
     }
 
@@ -478,7 +482,7 @@ export class Minion extends BaseEntity {
       ctx.save();
       ctx.shadowBlur = 10;
       ctx.lineCap = "round";
-      drawCageSegments(frontCage);
+      drawCageSegments(frontCageScratch);
       ctx.restore();
     }
 

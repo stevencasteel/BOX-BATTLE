@@ -18,7 +18,7 @@ import {
 export class Boss extends BaseEntity {
   private unsubHurt!: () => void;
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public stateMachine: StateMachine;
   public cooldownState!: BossCooldownState;
   public patrolState!: BossPatrolState;

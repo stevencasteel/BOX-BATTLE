@@ -28,8 +28,8 @@ export class TurretPatrolState extends MinionState {
     if (playerValid) {
       const dx = player.position.x - this.owner.position.x;
       const dy = player.position.y - this.owner.position.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 400 && this.owner.shootTimer <= 0) {
+      const distSq = dx * dx + dy * dy;
+      if (distSq < 160000 && this.owner.shootTimer <= 0) {
         this.owner.stateMachine.changeState(new TurretTelegraphState(this.owner));
       }
     }
@@ -165,11 +165,12 @@ export class FlyerPatrolState extends MinionState {
     const targetPos = this.owner.flyerTarget === "A" ? this.owner.pointA : this.owner.pointB;
     const dx = targetPos.x - this.owner.position.x;
     const dy = targetPos.y - this.owner.position.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distSq = dx * dx + dy * dy;
 
-    if (dist < 5) {
+    if (distSq < 25) {
       this.owner.flyerTarget = this.owner.flyerTarget === "A" ? "B" : "A";
     } else {
+      const dist = Math.sqrt(distSq);
       const targetVelX = (dx / dist) * this.owner.patrolSpeed;
       const targetVelY = (dy / dist) * this.owner.patrolSpeed;
       this.owner.velocity.x += (targetVelX - this.owner.velocity.x) * UNITS.MINION_ACCEL * _dt;
@@ -182,8 +183,8 @@ export class FlyerPatrolState extends MinionState {
     if (playerValid) {
       const dxP = player.position.x - this.owner.position.x;
       const dyP = player.position.y - this.owner.position.y;
-      const playerDist = Math.sqrt(dxP * dxP + dyP * dyP);
-      if (playerDist < 480 && this.owner.shootTimer <= 0 && this.owner.volleyCount === 0) {
+      const playerDistSq = dxP * dxP + dyP * dyP;
+      if (playerDistSq < 230400 && this.owner.shootTimer <= 0 && this.owner.volleyCount === 0) {
         this.owner.stateMachine.changeState(new FlyerTelegraphState(this.owner));
       }
     }

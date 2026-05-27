@@ -11,9 +11,16 @@ import { IWorld } from "@/core/Interfaces";
 import { eventBroker } from "@/core/eventBroker";
 import { UNITS } from "@/core/Units";
 
+const AURA_COLORS = [
+  'hsla(280, 90%, 25%, 0.35)',
+  'hsla(285, 95%, 45%, 0.55)',
+  'hsla(290, 100%, 75%, 0.8)',
+  'hsla(0, 0%, 100%, 0.95)'
+];
+
 export class Player extends BaseEntity {
   public health!: HealthComponent;
-  public physics!: PhysicsComponent;
+  declare public physics: PhysicsComponent;
   public inputReceiver!: InputReceiverComponent;
   public dashComponent!: DashComponent;
   public meleeComponent!: MeleeComponent;
@@ -722,16 +729,9 @@ export class Player extends BaseEntity {
           const baseW = this.size.width * (1.15 + progress * 0.75);
           const baseH = this.size.height * (1.1 + progress * 0.55);
 
-          const auraColors = [
-            'hsla(280, 90%, 25%, 0.35)',
-            'hsla(285, 95%, 45%, 0.55)',
-            'hsla(290, 100%, 75%, 0.8)',
-            'hsla(0, 0%, 100%, 0.95)'
-          ];
-
           ctx.globalCompositeOperation = "lighter";
 
-          auraColors.forEach((color, layerIdx) => {
+          AURA_COLORS.forEach((color, layerIdx) => {
             ctx.fillStyle = color;
             ctx.beginPath();
 

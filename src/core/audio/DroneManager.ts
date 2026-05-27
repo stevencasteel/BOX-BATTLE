@@ -27,6 +27,7 @@ export class DroneManager {
   private heartbeatSynth!: Tone.MembraneSynth;
   private heartbeatLoop!: Tone.Loop;
   private isHeartbeatRunning: boolean = false;
+  private healImpactSynth!: Tone.MembraneSynth;
 
   constructor(ctxManager: AudioContextManager, musicSeq: MusicSequencer) {
     this.ctxManager = ctxManager;
@@ -74,6 +75,11 @@ export class DroneManager {
       this.heartbeatSynth.triggerAttackRelease("A0", "8n", time);
       this.heartbeatSynth.triggerAttackRelease("G0", "8n", time + 0.18);
     }, "1.1s");
+
+    this.healImpactSynth = new Tone.MembraneSynth({
+      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
+      oscillator: { type: "sawtooth" }
+    }).connect(this.ctxManager.sfxGain);
   }
 
   public playHealStart(x?: number) {
@@ -159,15 +165,7 @@ export class DroneManager {
       this.musicSeq.musicArpSynth.triggerAttackRelease(note, "2n", now + idx * 0.03);
     });
 
-    const impactSynth = new Tone.MembraneSynth({
-      envelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.4 },
-      oscillator: { type: "sawtooth" }
-    }).connect(this.ctxManager.sfxGain);
-
-    impactSynth.triggerAttackRelease("C1", "2n", now);
-    setTimeout(() => {
-      impactSynth.dispose();
-    }, 2000);
+    this.healImpactSynth.triggerAttackRelease("C1", "2n", now);
   }
 
   public playChargeStart(x?: number) {

@@ -346,7 +346,6 @@ export class Engine {
     if (inputProvider.isPauseJustPressed()) {
       this.isPaused = true;
       soundSynth.playErrorTick();
-      soundSynth.clearAllSlides();
       inputProvider.postUpdate();
       return;
     }

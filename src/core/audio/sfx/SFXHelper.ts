@@ -29,7 +29,7 @@ export class SFXHelper {
   }
 
   private checkThrottle(key: string, limitMs: number): boolean {
-    const now = performance.now();
+    const now = Tone.now() * 1000;
     const last = this.lastTriggerTimes[key] || 0;
     if (now - last < limitMs) {
       return false;

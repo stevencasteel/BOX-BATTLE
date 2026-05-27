@@ -178,10 +178,6 @@ class SoundSynth {
     this.music.stopMusic();
   }
 
-  public clearAllSlides(): void {
-    // Deprecated
-  }
-
   public playHealStart(x?: number): void {
     this.drones.playHealStart(x);
   }
