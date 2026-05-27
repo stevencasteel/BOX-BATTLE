@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BvAD951B.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C17aBVGO.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2852,9 +2852,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className={\`cabinet-status-panel neo-pressed \${isHurtShaking ? "hud-shaking" : ""}\`}>
-      <PlayerHpDisplay isTouchDevice={isTouchDevice} />
-      
-      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
+      <div className="hud-panel-block" style={{ gap: "4px" }}>
+        <PlayerHpDisplay isTouchDevice={isTouchDevice} />
         <HealingAndDetermination
           isTouchDevice={isTouchDevice}
           isPlayingScreen={isPlayingScreen}
@@ -8492,7 +8491,13 @@ export class WorldRenderer {
             const x2 = p.x + ux * p.size * 6;
             const y2 = p.y + uy * p.size * 6;
 
-            this.ctx.strokeStyle = getHslaColor(p.color, pct * 0.95);
+            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
+            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
+
+            this.ctx.strokeStyle = lineGrad;
             this.ctx.lineWidth = p.size;
             this.ctx.lineCap = 'round';
             this.ctx.globalAlpha = 1.0;

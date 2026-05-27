@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 3:31:54 PM
+ [SYSTEM] Generated: 5/27/2026, 3:36:57 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3610,9 +3610,8 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
 
   return (
     <div className={`cabinet-status-panel neo-pressed ${isHurtShaking ? "hud-shaking" : ""}`}>
-      <PlayerHpDisplay isTouchDevice={isTouchDevice} />
-      
-      <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
+      <div className="hud-panel-block" style={{ gap: "4px" }}>
+        <PlayerHpDisplay isTouchDevice={isTouchDevice} />
         <HealingAndDetermination
           isTouchDevice={isTouchDevice}
           isPlayingScreen={isPlayingScreen}
@@ -9435,7 +9434,13 @@ export class WorldRenderer {
             const x2 = p.x + ux * p.size * 6;
             const y2 = p.y + uy * p.size * 6;
 
-            this.ctx.strokeStyle = getHslaColor(p.color, pct * 0.95);
+            const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
+            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
+
+            this.ctx.strokeStyle = lineGrad;
             this.ctx.lineWidth = p.size;
             this.ctx.lineCap = 'round';
             this.ctx.globalAlpha = 1.0;
