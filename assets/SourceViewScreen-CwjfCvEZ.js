@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DfWXYo7Z.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CzD5SzmP.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -900,7 +900,6 @@ import { DialogueConsole } from "@/components/DialogueConsole";
 import { TouchOverlay } from "@/components/TouchOverlay";
 import { ChromaticAberrationFilter } from "@/components/ChromaticAberrationFilter";
 import { Cursor } from "@/components/cursor/Cursor";
-import { useHudSubscription } from "@/hooks/useHudSubscription";
 import { useMusicLifecycle } from "@/hooks/useMusicLifecycle";
 import { useFirstGesture } from "@/hooks/useFirstGesture";
 import { useEngineSubscriptions } from "@/hooks/useEngineSubscriptions";
@@ -913,8 +912,6 @@ import "./components/GameArena.css";
 export default function App() {
   const bootStage = useBootSequence();
   const viewportRef = useRef<HTMLDivElement>(null);
-
-  useHudSubscription();
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const transitionActive = useSessionStore((state) => state.transitionActive);
@@ -2283,15 +2280,362 @@ import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
 import { Action } from "@/core/InputProvider";
 import { soundSynth } from "@/core/SoundSynth";
 import { inputProvider } from "@/core/InputProvider";
+import { UNITS } from "@/core/Units";
 
 interface HudPanelProps {
   isTouchDevice: boolean;
   isPlayingScreen: boolean;
 }
 
+// Subcomponent: Player HP Display (LED Dots)
+function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
+  const playerHP = useGameplayStore((state) => state.playerHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+  const activeHP = isGameOver ? 0 : playerHP;
+
+  const prevHpRef = useRef(activeHP);
+  const [animationClasses, setAnimationClasses] = useState<string[]>(Array(UNITS.PLAYER_MAX_HP).fill(""));
+
+  useEffect(() => {
+    const prevHP = prevHpRef.current;
+    if (activeHP !== prevHP) {
+      const tookDamage = activeHP < prevHP && prevHP !== -1 && !isGameOver;
+      const healed = activeHP > prevHP && prevHP !== -1 && !isGameOver;
+
+      if (soundSynth.initialized) {
+        soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
+      }
+
+      const nextCls = [...animationClasses];
+      for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
+        if (tookDamage && i === activeHP) {
+          nextCls[i] = "led-shaking-die";
+        } else if (healed && i === activeHP - 1) {
+          nextCls[i] = "led-elastic-spring";
+        } else if (tookDamage && i < activeHP) {
+          nextCls[i] = "led-spring-impact";
+        } else {
+          nextCls[i] = "";
+        }
+      }
+      setAnimationClasses(nextCls);
+      prevHpRef.current = activeHP;
+
+      const timer = setTimeout(() => {
+        setAnimationClasses(Array(UNITS.PLAYER_MAX_HP).fill(""));
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeHP, isGameOver, animationClasses]);
+
+  const lowHpStress = activeHP === 1 && !isGameOver;
+
+  if (isTouchDevice) {
+    return (
+      <div id="hud-m-hp-group" className={lowHpStress ? "hud-stress-shiver" : ""} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+          <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
+        </span>
+        <div className="flex-row" style={{ gap: "3px" }}>
+          {[...Array(UNITS.PLAYER_MAX_HP)].map((_, i) => {
+            const isLit = i < activeHP;
+            return (
+              <div
+                key={i}
+                id={\`hud-m-php-\${i}\`}
+                className={\`led-dot \${isLit ? "led-green" : ""} \${animationClasses[i]}\`}
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  border: "1px solid rgba(0,0,0,0.5)",
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="hud-d-hp-group" className={\`hud-panel-block \${lowHpStress ? "hud-stress-shiver" : ""}\`} style={{ gap: "4px", position: "relative" }}>
+      <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
+        PLAYER HP
+      </span>
+      <div style={{ display: "grid", gridTemplateColumns: \`repeat(\${UNITS.PLAYER_MAX_HP}, 1.3vmin)\`, gap: "6px", alignItems: "center" }}>
+        {[...Array(UNITS.PLAYER_MAX_HP)].map((_, i) => {
+          const isLit = i < activeHP;
+          return (
+            <div
+              key={i}
+              id={\`hud-d-php-\${i}\`}
+              className={\`led-dot \${isLit ? "led-green" : ""} \${animationClasses[i]}\`}
+              style={{
+                border: "1px solid rgba(0,0,0,0.5)",
+                width: "100%",
+                height: "1.3vmin",
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Subcomponent: Healing charges & Determination bar
+interface HealingAndDeterminationProps {
+  isTouchDevice: boolean;
+  isPlayingScreen: boolean;
+  tutorialStep: number;
+}
+
+function HealingAndDetermination({
+  isTouchDevice,
+  isPlayingScreen,
+  tutorialStep,
+}: HealingAndDeterminationProps) {
+  const healingCharges = useGameplayStore((state) => state.healingCharges);
+  const determination = useGameplayStore((state) => state.determination);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+
+  const activeHealCharges = isGameOver ? 0 : healingCharges;
+  const activeDet = isGameOver ? 0 : determination;
+
+  const prevChargesRef = useRef(activeHealCharges);
+  const [chargeAnims, setChargeAnims] = useState<string[]>(Array(3).fill(""));
+
+  useEffect(() => {
+    const prev = prevChargesRef.current;
+    if (activeHealCharges !== prev) {
+      const gained = activeHealCharges > prev && prev !== -1;
+      const nextCls = [...chargeAnims];
+      for (let i = 0; i < 3; i++) {
+        if (gained && i === activeHealCharges - 1) {
+          nextCls[i] = "led-elastic-spring";
+        }
+      }
+      setChargeAnims(nextCls);
+      prevChargesRef.current = activeHealCharges;
+      const timer = setTimeout(() => {
+        setChargeAnims(Array(3).fill(""));
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeHealCharges, chargeAnims]);
+
+  const isOverflow = activeHealCharges === 3;
+  const detWidth = (activeDet / 5) * 100 + "%";
+
+  if (isTouchDevice) {
+    return (
+      <>
+        <div style={{ display: "flex", gap: "2px", marginLeft: "2px" }}>
+          {[...Array(3)].map((_, i) => {
+            const isLit = i < activeHealCharges;
+            return (
+              <div
+                key={i}
+                id={\`hud-m-heal-\${i}\`}
+                className={\`led-dot \${isLit ? "led-yellow" : ""} \${isOverflow ? "led-overflow-wobble" : ""} \${chargeAnims[i]}\`}
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  background: isLit ? undefined : "#07080b",
+                }}
+              />
+            );
+          })}
+        </div>
+        <div
+          id="hud-m-det-container"
+          className="neo-pressed"
+          style={{
+            width: "36px",
+            height: "6px",
+            borderRadius: "3px",
+            padding: "1px",
+            boxSizing: "border-box",
+            overflow: "hidden",
+            background: "#07080b",
+            marginLeft: "4px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <div
+            id="hud-m-det-bar"
+            style={{
+              height: "100%",
+              borderRadius: "1.5px",
+              width: detWidth,
+              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+              background: "hsl(280, 80%, 65%)",
+              boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
+            }}
+          />
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
+      <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+        {[...Array(3)].map((_, i) => {
+          const isLit = i < activeHealCharges;
+          return (
+            <div
+              key={i}
+              id={\`hud-d-heal-\${i}\`}
+              className={\`led-dot \${isLit ? "led-yellow" : ""} \${isOverflow ? "led-overflow-wobble" : ""} \${chargeAnims[i]}\`}
+              style={{
+                border: "1px solid rgba(0,0,0,0.5)",
+                width: "10px",
+                height: "10px",
+                borderRadius: "25%",
+              }}
+            />
+          );
+        })}
+      </div>
+      <div
+        id="hud-d-det-container"
+        className={\`neo-pressed \${isPlayingScreen && tutorialStep === 4 ? "det-pulse-highlight" : ""}\`}
+        style={{
+          gridColumn: "span 3",
+          width: "100%",
+          height: "10px",
+          borderRadius: "2.5px",
+          padding: "1px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          background: "#07080b",
+          transition: "border-color 0.3s ease, box-shadow 0.3s ease"
+        }}
+      >
+        <div
+          id="hud-d-det-bar"
+          style={{
+            height: "100%",
+            borderRadius: "1.5px",
+            width: detWidth,
+            transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+            background: "hsl(280, 80%, 65%)",
+            boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
+          }}
+        />
+      </div>
+      {isPlayingScreen && tutorialStep === 4 && (
+        <div
+          style={{
+            position: "absolute",
+            left: "calc(6.5vmin + 36px)",
+            display: "flex",
+            alignItems: "center",
+            pointerEvents: "none",
+            animation: "crt-pulse 1.2s infinite alternate",
+            whiteSpace: "nowrap"
+          }}
+        >
+          <span
+            style={{
+              fontSize: "8px",
+              color: "hsl(280, 100%, 75%)",
+              fontWeight: "bold",
+              letterSpacing: "0.05em"
+            }}
+          >
+            ◄ STRIKE ENEMIES TO CHARGE
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Subcomponent: Boss HP Bar
+function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
+  const bossHP = useGameplayStore((state) => state.bossHP);
+  const gameResult = useSessionStore((state) => state.gameResult);
+  const isGameOver = gameResult !== "PLAYING";
+  const activeBHP = isGameOver ? 0 : bossHP;
+
+  const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+
+  if (isTouchDevice) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+          <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
+        </span>
+        <div
+          id="hud-m-boss-container"
+          className="neo-pressed"
+          style={{
+            width: "80px",
+            height: "8px",
+            borderRadius: "3px",
+            padding: "1px",
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            id="hud-m-boss-bar"
+            className={activeBHP > 0 ? "led-red" : ""}
+            style={{
+              height: "100%",
+              borderRadius: "1.5px",
+              width: bossWidth,
+              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
+      <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
+        BOSS HP
+      </span>
+      <div
+        id="hud-d-boss-container"
+        className="neo-pressed"
+        style={{
+          width: "160px",
+          height: "10px",
+          borderRadius: "4px",
+          padding: "1px",
+          boxSizing: "border-box",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          id="hud-d-boss-bar"
+          className={activeBHP > 0 ? "led-red" : ""}
+          style={{
+            height: "100%",
+            borderRadius: "2px",
+            width: bossWidth,
+            transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   const [bannerText, setBannerText] = useState<string | null>(null);
   const phaseRef = useRef(1);
+  const [isHurtShaking, setIsHurtShaking] = useState(false);
 
   const { tutorialStep, calibratedKeys, setTutorialStep, calibrateKey, resetTutorial } = useTutorialStore();
 
@@ -2307,8 +2651,14 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
       }, 2800);
     });
 
+    const unsubHurt = eventBroker.subscribe("PLAYER_HURT", () => {
+      setIsHurtShaking(true);
+      setTimeout(() => setIsHurtShaking(false), 180);
+    });
+
     return () => {
       unsubPhase();
+      unsubHurt();
     };
   }, []);
 
@@ -2436,7 +2786,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
   if (isTouchDevice) {
     return (
       <div
-        className="cabinet-status-panel neo-pressed"
+        className={\`cabinet-status-panel neo-pressed \${isHurtShaking ? "hud-shaking" : ""}\`}
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -2449,66 +2799,13 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           borderRadius: "8px",
         }}
       >
-        <div id="hud-m-hp-group" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-green)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Heart size={10} fill="var(--signal-green)" style={{ flexShrink: 0 }} /> HP
-          </span>
-          <div className="flex-row" style={{ gap: "3px" }}>
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                id={\`hud-m-php-\${i}\`}
-                className="led-dot led-green"
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  border: "1px solid rgba(0,0,0,0.5)",
-                }}
-              />
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: "2px", marginLeft: "2px" }}>
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                id={\`hud-m-heal-\${i}\`}
-                className="led-dot"
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  background: "#07080b",
-                }}
-              />
-            ))}
-          </div>
-          <div
-            id="hud-m-det-container"
-            className="neo-pressed"
-            style={{
-              width: "36px",
-              height: "6px",
-              borderRadius: "3px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              background: "#07080b",
-              marginLeft: "4px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              id="hud-m-det-bar"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-                background: "hsl(280, 80%, 65%)",
-                boxShadow: "0 0 4px rgba(168, 85, 24, 0.8)",
-              }}
-            />
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <PlayerHpDisplay isTouchDevice={isTouchDevice} />
+          <HealingAndDetermination
+            isTouchDevice={isTouchDevice}
+            isPlayingScreen={isPlayingScreen}
+            tutorialStep={tutorialStep}
+          />
         </div>
 
         <AnimatePresence mode="wait">
@@ -2548,128 +2845,21 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
           )}
         </AnimatePresence>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Skull size={10} style={{ flexShrink: 0 }} /> BOSS
-          </span>
-          <div
-            id="hud-m-boss-container"
-            className="neo-pressed"
-            style={{
-              width: "80px",
-              height: "8px",
-              borderRadius: "3px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              id="hud-m-boss-bar"
-              className="led-red"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-              }}
-            />
-          </div>
-        </div>
+        <BossHpBar isTouchDevice={isTouchDevice} />
       </div>
     );
   }
 
   return (
-    <div className="cabinet-status-panel neo-pressed">
+    <div className={\`cabinet-status-panel neo-pressed \${isHurtShaking ? "hud-shaking" : ""}\`}>
+      <PlayerHpDisplay isTouchDevice={isTouchDevice} />
+      
       <div id="hud-d-hp-group" className="hud-panel-block" style={{ gap: "4px", position: "relative" }}>
-        <span className="hud-panel-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
-          PLAYER HP
-        </span>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center" }}>
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              id={\`hud-d-php-\${i}\`}
-              className="led-dot led-green"
-              style={{
-                border: "1px solid rgba(0,0,0,0.5)",
-                width: "100%",
-                height: "1.3vmin",
-              }}
-            />
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
-          <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                id={\`hud-d-heal-\${i}\`}
-                className="led-dot"
-                style={{
-                  border: "1px solid rgba(0,0,0,0.5)",
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "25%",
-                }}
-              />
-            ))}
-          </div>
-          <div
-            id="hud-d-det-container"
-            className={\`neo-pressed \${isPlayingScreen && tutorialStep === 4 ? "det-pulse-highlight" : ""}\`}
-            style={{
-              gridColumn: "span 3",
-              width: "100%",
-              height: "10px",
-              borderRadius: "2.5px",
-              padding: "1px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              background: "#07080b",
-              transition: "border-color 0.3s ease, box-shadow 0.3s ease"
-            }}
-          >
-            <div
-              id="hud-d-det-bar"
-              style={{
-                height: "100%",
-                borderRadius: "1.5px",
-                width: "0%",
-                transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-                background: "hsl(280, 80%, 65%)",
-                boxShadow: "0 0 4px rgba(168, 85, 247, 0.8)",
-              }}
-            />
-          </div>
-          {isPlayingScreen && tutorialStep === 4 && (
-            <div
-              style={{
-                position: "absolute",
-                left: "calc(6.5vmin + 36px)",
-                display: "flex",
-                alignItems: "center",
-                pointerEvents: "none",
-                animation: "crt-pulse 1.2s infinite alternate",
-                whiteSpace: "nowrap"
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "8px",
-                  color: "hsl(280, 100%, 75%)",
-                  fontWeight: "bold",
-                  letterSpacing: "0.05em"
-                }}
-              >
-                ◄ STRIKE ENEMIES TO CHARGE
-              </span>
-            </div>
-          )}
-        </div>
+        <HealingAndDetermination
+          isTouchDevice={isTouchDevice}
+          isPlayingScreen={isPlayingScreen}
+          tutorialStep={tutorialStep}
+        />
       </div>
 
       <div className="hud-panel-block" style={{ alignItems: "center", justifyContent: "center", minWidth: "350px", position: "relative" }}>
@@ -2852,35 +3042,7 @@ export function HudPanel({ isTouchDevice, isPlayingScreen }: HudPanelProps) {
         </AnimatePresence>
       </div>
 
-      <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
-        <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
-          BOSS HP
-        </span>
-        <div
-          id="hud-d-boss-container"
-          className="neo-pressed"
-          style={{
-            width: "160px",
-            height: "10px",
-            borderRadius: "4px",
-            padding: "1px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            id="hud-d-boss-bar"
-            className="led-red"
-            style={{
-              height: "100%",
-              borderRadius: "2px",
-              width: "0%",
-              transition: "width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)",
-            }}
-          />
-        </div>
-      </div>
+      <BossHpBar isTouchDevice={isTouchDevice} />
     </div>
   );
 }
@@ -6274,7 +6436,7 @@ export class Engine {
     this.player.velocity = { x: 0, y: 0 };
     this.boss.velocity = { x: 0, y: 0 };
 
-    const activeProjectiles = [...this.pool.getActive()];
+    const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }
@@ -6358,7 +6520,7 @@ export class Engine {
 
     this.handleMinionCollisions();
 
-    const activeProjectiles = [...this.pool.getActive()];
+    const activeProjectiles = this.pool.getActive();
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       activeProjectiles[i].update(dt);
     }
@@ -6982,6 +7144,22 @@ export class ObjectPool<T extends IPoolable> {
     }
   }
 
+  /**
+   * Fast release using swap-and-pop when index is already known.
+   * Avoids O(N) indexOf searches and array shifts.
+   */
+  public releaseAt(index: number) {
+    if (index >= 0 && index < this.activePool.length) {
+      const instance = this.activePool[index];
+      instance.deactivate();
+      this.inactivePool.push(instance);
+
+      const last = this.activePool[this.activePool.length - 1];
+      this.activePool[index] = last;
+      this.activePool.pop();
+    }
+  }
+
   public getActive(): readonly T[] {
     return this.activePool;
   }
@@ -7123,12 +7301,12 @@ export class ParticleSystem {
   }
 
   public update(dt: number) {
-    const active = [...this.pool.getActive()];
+    const active = this.pool.getActive();
     for (let i = active.length - 1; i >= 0; i--) {
       const p = active[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.pool.release(p);
+        this.pool.releaseAt(i);
         continue;
       }
       if (p.drag !== 1.0) {
@@ -8075,12 +8253,14 @@ function lerpHsl(startStr: string, endStr: string, pct: number): string {
   
   const result = \`hsl(\${h}, \${s}%, \${l}%)\`;
   lerpCache.set(cacheKey, result);
+  colorCache.set(result, { h, s, l }); // Seed parsed cache for dynamic color
   return result;
 }
 
-function convertToHsla(colorStr: string, alpha: number): string {
-  if (colorStr.startsWith("hsl(")) {
-    return colorStr.replace("hsl(", "hsla(").replace(")", ", " + alpha + ")");
+function getHslaColor(colorStr: string, alpha: number): string {
+  const parsed = parseHsl(colorStr);
+  if (parsed) {
+    return \`hsla(\${parsed.h}, \${parsed.s}%, \${parsed.l}%, \${alpha})\`;
   }
   return colorStr;
 }
@@ -8285,9 +8465,9 @@ export class WorldRenderer {
           if (p.shape === 'spark') {
             const sparkColor = (p.startColor && p.endColor) ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
             const radialGrad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 1.5);
-            radialGrad.addColorStop(0.0, convertToHsla(sparkColor, pct));
-            radialGrad.addColorStop(0.3, convertToHsla(sparkColor, pct * 0.5));
-            radialGrad.addColorStop(1.0, convertToHsla(sparkColor, 0));
+            radialGrad.addColorStop(0.0, getHslaColor(sparkColor, pct));
+            radialGrad.addColorStop(0.3, getHslaColor(sparkColor, pct * 0.5));
+            radialGrad.addColorStop(1.0, getHslaColor(sparkColor, 0));
             this.ctx.fillStyle = radialGrad;
             this.ctx.globalAlpha = 1.0;
             this.ctx.beginPath();
@@ -8311,10 +8491,10 @@ export class WorldRenderer {
             const y2 = p.y + uy * p.size * 6;
 
             const lineGrad = this.ctx.createLinearGradient(x1, y1, x2, y2);
-            lineGrad.addColorStop(0.0, convertToHsla(p.color, 0));
-            lineGrad.addColorStop(0.2, convertToHsla(p.color, pct * 0.15));
-            lineGrad.addColorStop(0.85, convertToHsla(p.color, pct * 0.95));
-            lineGrad.addColorStop(1.0, convertToHsla(p.color, pct * 0.3));
+            lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
+            lineGrad.addColorStop(0.2, getHslaColor(p.color, pct * 0.15));
+            lineGrad.addColorStop(0.85, getHslaColor(p.color, pct * 0.95));
+            lineGrad.addColorStop(1.0, getHslaColor(p.color, pct * 0.3));
             
             this.ctx.strokeStyle = lineGrad;
             this.ctx.lineWidth = p.size;
@@ -10785,7 +10965,8 @@ export class BaseEntity implements IEntity {
   public startDeathSequence?(): void;
   public registerDamageDealt?(): void;
 
-  private components = new Map<string, IEntityComponent>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private components = new Map<any, IEntityComponent>();
 
   constructor(id: string, world: IWorld) {
     this.id = id;
@@ -10804,13 +10985,13 @@ export class BaseEntity implements IEntity {
     dependencies?: Record<string, any>
   ): T {
     component.setup(this, dependencies);
-    this.components.set(componentClass.name, component);
+    this.components.set(componentClass, component);
     return component;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getComponent<T extends IEntityComponent>(componentClass: new (...args: any[]) => T): T | null {
-    const component = this.components.get(componentClass.name);
+    const component = this.components.get(componentClass);
     return (component as T) || null;
   }
 
@@ -14279,9 +14460,10 @@ export class MeleeComponent implements IEntityComponent {
 
   private swipeIncomingProjectiles(): void {
     const facing = this.owner.facingDirection;
-    const activeProjectiles = [...this.owner.world.getProjectiles()];
+    const activeProjectiles = this.owner.world.getProjectiles();
 
-    for (const proj of activeProjectiles) {
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      const proj = activeProjectiles[i];
       if (proj.isActive && proj.ownerId === "boss") {
         let isDeflected = false;
 
@@ -14967,201 +15149,6 @@ export function useGameDialogue() {
     resetDialogues,
   };
 }
-`,"src/hooks/useHudSubscription.ts":`import { useEffect } from "react";
-import { useGameplayStore, useSessionStore } from "@/store/useGameStore";
-import { soundSynth } from "@/core/SoundSynth";
-import { UNITS } from "@/core/Units";
-
-export function useHudSubscription() {
-  useEffect(() => {
-    let lastHP = -1;
-    let lastHealCharges = -1;
-    let lastDet = -1;
-    let lastBHP = -1;
-    let lastResult = "PLAYING";
-
-    const updateHUD = () => {
-      const { playerHP, bossHP, healingCharges, determination } = useGameplayStore.getState();
-      const { gameResult } = useSessionStore.getState();
-
-      const isGameOver = gameResult !== "PLAYING";
-
-      const activeHP = isGameOver ? 0 : playerHP;
-      const activeHealCharges = isGameOver ? 0 : healingCharges;
-      const activeDet = isGameOver ? 0 : determination;
-      const activeBHP = isGameOver ? 0 : bossHP;
-
-      if (activeHP !== lastHP || isGameOver !== (lastResult !== "PLAYING")) {
-        const tookDamage = activeHP < lastHP && lastHP !== -1 && !isGameOver;
-        const healed = activeHP > lastHP && lastHP !== -1 && !isGameOver;
-
-        if (soundSynth.initialized) {
-          soundSynth.setLowHPStatus(activeHP === 1 && !isGameOver);
-        }
-
-        const groupD = document.getElementById("hud-d-hp-group");
-        const groupM = document.getElementById("hud-m-hp-group");
-        
-        if (activeHP === 1 && !isGameOver) {
-          groupD?.classList.add("hud-stress-shiver");
-          groupM?.classList.add("hud-stress-shiver");
-        } else {
-          groupD?.classList.remove("hud-stress-shiver");
-          groupM?.classList.remove("hud-stress-shiver");
-        }
-
-        for (let i = 0; i < UNITS.PLAYER_MAX_HP; i++) {
-          const isLit = i < activeHP;
-          const dotD = document.getElementById("hud-d-php-" + i);
-          const dotM = document.getElementById("hud-m-php-" + i);
-
-          if (dotD) {
-            const wasLit = dotD.classList.contains("led-green");
-            if (isLit) {
-              dotD.classList.add("led-green");
-              if (tookDamage) {
-                dotD.classList.remove("led-spring-impact");
-                void dotD.offsetWidth;
-                dotD.classList.add("led-spring-impact");
-              } else if (healed) {
-                dotD.classList.remove("led-elastic-spring");
-                void dotD.offsetWidth;
-                dotD.classList.add("led-elastic-spring");
-              }
-            } else {
-              dotD.classList.remove("led-green");
-              dotD.classList.remove("led-spring-impact");
-              dotD.classList.remove("led-elastic-spring");
-              if (wasLit && tookDamage) {
-                dotD.classList.add("led-shaking-die");
-                setTimeout(() => dotD.classList.remove("led-shaking-die"), 450);
-              }
-            }
-          }
-
-          if (dotM) {
-            const wasLit = dotM.classList.contains("led-green");
-            if (isLit) {
-              dotM.classList.add("led-green");
-              if (tookDamage) {
-                dotM.classList.remove("led-spring-impact");
-                void dotM.offsetWidth;
-                dotM.classList.add("led-spring-impact");
-              } else if (healed) {
-                dotM.classList.remove("led-elastic-spring");
-                void dotM.offsetWidth;
-                dotM.classList.add("led-elastic-spring");
-              }
-            } else {
-              dotM.classList.remove("led-green");
-              dotM.classList.remove("led-spring-impact");
-              dotM.classList.remove("led-elastic-spring");
-              if (wasLit && tookDamage) {
-                dotM.classList.add("led-shaking-die");
-                setTimeout(() => dotM.classList.remove("led-shaking-die"), 450);
-              }
-            }
-          }
-        }
-        lastHP = activeHP;
-      }
-
-      if (activeHealCharges !== lastHealCharges) {
-        const gainedCharge = activeHealCharges > lastHealCharges && lastHealCharges !== -1;
-
-        for (let i = 0; i < 3; i++) {
-          const isLit = i < activeHealCharges;
-          const dotD = document.getElementById("hud-d-heal-" + i);
-          const dotM = document.getElementById("hud-m-heal-" + i);
-          if (dotD) {
-            const wasLit = dotD.classList.contains("led-yellow");
-            if (isLit) {
-              dotD.classList.add("led-yellow");
-              if (!wasLit && gainedCharge) {
-                dotD.classList.remove("led-elastic-spring");
-                void dotD.offsetWidth;
-                dotD.classList.add("led-elastic-spring");
-              }
-            } else {
-              dotD.classList.remove("led-yellow");
-              dotD.classList.remove("led-elastic-spring");
-            }
-
-            if (activeHealCharges === 3) {
-              dotD.classList.add("led-overflow-wobble");
-            } else {
-              dotD.classList.remove("led-overflow-wobble");
-            }
-          }
-          if (dotM) {
-            const wasLit = dotM.classList.contains("led-yellow");
-            if (isLit) {
-              dotM.classList.add("led-yellow");
-              if (!wasLit && gainedCharge) {
-                dotM.classList.remove("led-elastic-spring");
-                void dotM.offsetWidth;
-                dotM.classList.add("led-elastic-spring");
-              }
-            } else {
-              dotM.classList.remove("led-yellow");
-              dotM.classList.remove("led-elastic-spring");
-            }
-
-            if (activeHealCharges === 3) {
-              dotM.classList.add("led-overflow-wobble");
-            } else {
-              dotM.classList.remove("led-overflow-wobble");
-            }
-          }
-        }
-        lastHealCharges = activeHealCharges;
-      }
-
-      if (activeDet !== lastDet) {
-        const detD = document.getElementById("hud-d-det-bar");
-        const detM = document.getElementById("hud-m-det-bar");
-        const detWidth = (activeDet / 5) * 100 + "%";
-        if (detD) detD.style.width = detWidth;
-        if (detM) detM.style.width = detWidth;
-        lastDet = activeDet;
-      }
-
-      if (activeBHP !== lastBHP) {
-        const bossD = document.getElementById("hud-d-boss-bar");
-        const bossM = document.getElementById("hud-m-boss-bar");
-        const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
-        if (bossD) {
-          bossD.style.width = bossWidth;
-          if (activeBHP > 0) bossD.classList.add("led-red");
-          else bossD.classList.remove("led-red");
-        }
-        if (bossM) {
-          bossM.style.width = bossWidth;
-          if (activeBHP > 0) bossM.classList.add("led-red");
-          else bossM.classList.remove("led-red");
-        }
-        lastBHP = activeBHP;
-      }
-
-      lastResult = gameResult;
-    };
-
-    const unsubGameplay = useGameplayStore.subscribe(() => {
-      updateHUD();
-    });
-
-    const unsubSession = useSessionStore.subscribe(() => {
-      updateHUD();
-    });
-
-    updateHUD();
-
-    return () => {
-      unsubGameplay();
-      unsubSession();
-    };
-  }, []);
-}
 `,"src/hooks/useMusicLifecycle.ts":`import { useEffect } from "react";
 import { soundSynth } from "@/core/SoundSynth";
 
@@ -15726,14 +15713,6 @@ export const useGameplayStore = create<GameplayState>((set, get) => ({
       if (hp < current) {
         get().triggerGlitch(150);
         get().resetCombo();
-
-        if (typeof document !== "undefined") {
-          const panel = document.querySelector(".cabinet-status-panel");
-          if (panel) {
-            panel.classList.add("hud-shaking");
-            setTimeout(() => panel.classList.remove("hud-shaking"), 180);
-          }
-        }
       }
     }
   },
