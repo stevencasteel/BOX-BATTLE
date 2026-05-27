@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-hab_ajQt.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DJFQYDEA.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1932,6 +1932,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     engineRef.current = engine;
     engine.start();
 
+    useSessionStore.getState().setGameResult("PLAYING");
+
     const vignette = canvas.parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
 
     const updateVignette = (hp: number) => {
@@ -1963,10 +1965,45 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     const initialHP = useGameplayStore.getState().playerHP;
     updateVignette(initialHP);
 
+    const unsubStateProjected = eventBroker.subscribe("STATE_PROJECTED", (payload) => {
+      useGameplayStore.setState({
+        playerHP: payload.playerHP,
+        bossHP: payload.bossHP,
+        healingCharges: payload.healingCharges,
+        determination: payload.determination,
+      });
+    });
+
+    const unsubGameOver = eventBroker.subscribe("GAME_OVER", () => {
+      useSessionStore.getState().setGameResult("GAMEOVER");
+    });
+
+    const unsubVictory = eventBroker.subscribe("VICTORY", () => {
+      useSessionStore.getState().setGameResult("VICTORY");
+    });
+
+    const unsubRecordLoss = eventBroker.subscribe("RECORD_LOSS", () => {
+      saveManager.recordLoss();
+    });
+
+    const unsubRecordWin = eventBroker.subscribe("RECORD_WIN", () => {
+      saveManager.recordWin();
+    });
+
+    const unsubSessionReset = eventBroker.subscribe("SESSION_RESET", () => {
+      useSessionStore.getState().setGameResult("PLAYING");
+    });
+
     return () => {
       unsubHurt();
       unsubHealed();
       unsubSession();
+      unsubStateProjected();
+      unsubGameOver();
+      unsubVictory();
+      unsubRecordLoss();
+      unsubRecordWin();
+      unsubSessionReset();
       engine.cleanup();
       engineRef.current = null;
     };
@@ -5872,9 +5909,7 @@ export function TitleScreen({
 import { Boss } from "@/entities/Boss";
 import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
-import { useSessionStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
-import { saveManager } from "@/core/SaveManager";
 import { CinematicSystem } from "@/core/CinematicSystem";
 
 export class BattleDirector {
@@ -5940,8 +5975,6 @@ export class BattleDirector {
       }
     }
 
-    const sessionState = useSessionStore.getState();
-
     if (player.isDead && !this.cinematic.isActive()) {
       this.cinematic.startSequence(
         player.position,
@@ -5952,8 +5985,8 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              sessionState.setGameResult("GAMEOVER");
-              saveManager.recordLoss();
+              this.events.publish("GAME_OVER", undefined);
+              this.events.publish("RECORD_LOSS", undefined);
             },
           },
           {
@@ -5990,8 +6023,8 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              sessionState.setGameResult("VICTORY");
-              saveManager.recordWin();
+              this.events.publish("VICTORY", undefined);
+              this.events.publish("RECORD_WIN", undefined);
             },
           },
           {
@@ -6196,7 +6229,6 @@ import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
 import { Spawner } from "@/entities/Spawner";
-import { useSessionStore } from "@/store/useGameStore";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
@@ -6243,7 +6275,7 @@ export class Engine {
     this.world = world;
     this.renderer = renderer;
     this.levelConfig = levelConfig;
-    this.stateProjection = new StateProjectionSystem();
+    this.stateProjection = new StateProjectionSystem(this.world.events);
     this.minionCollisionSystem = new MinionCollisionSystem();
     this.entityResetService = new EntityResetService();
 
@@ -6279,9 +6311,6 @@ export class Engine {
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
     Camera.reset();
-
-    const sessionState = useSessionStore.getState();
-    sessionState.setGameResult("PLAYING");
 
     this.stateProjection.project(this.player, this.boss);
 
@@ -6345,8 +6374,7 @@ export class Engine {
     this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
     this.stateProjection.reset();
 
-    const sessionState = useSessionStore.getState();
-    sessionState.setGameResult("PLAYING");
+    this.world.events.publish("SESSION_RESET", undefined);
 
     this.stateProjection.project(this.player, this.boss);
     this.world.events.publish("CLEAR_DIALOGUES", undefined);
@@ -7120,6 +7148,10 @@ export type GameEventMap = {
   REQUEST_RETRY: void;
   REQUEST_MENU: void;
   PLATFORM_IMPACT: { platform: Rectangle; velocityY: number; massMultiplier: number };
+  STATE_PROJECTED: { playerHP: number; bossHP: number; healingCharges: number; determination: number };
+  RECORD_LOSS: void;
+  RECORD_WIN: void;
+  SESSION_RESET: void;
 };
 
 export type EventCallback<T> = (payload: T) => void;
@@ -8475,8 +8507,8 @@ export class StateMachine {
 `,"src/core/StateProjectionSystem.ts":`import { HealthComponent } from "@/entities/components/HealthComponent";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
-import { useGameplayStore } from "@/store/useGameStore";
 import { UNITS } from "@/core/Units";
+import type { IEventBus } from "@/core/Interfaces";
 
 export class StateProjectionSystem {
   private cachedPlayerHP: number = -1;
@@ -8484,6 +8516,11 @@ export class StateProjectionSystem {
   private cachedHealingCharges: number = -1;
   private cachedDetermination: number = -1;
   private crisisTimer: number = 0;
+  private events: IEventBus;
+
+  constructor(events: IEventBus) {
+    this.events = events;
+  }
 
   public getCrisisTimer(): number {
     return this.crisisTimer;
@@ -8527,7 +8564,7 @@ export class StateProjectionSystem {
       this.cachedHealingCharges = nextHealingCharges;
       this.cachedDetermination = nextDetermination;
 
-      useGameplayStore.setState({
+      this.events.publish("STATE_PROJECTED", {
         playerHP: nextPlayerHP,
         bossHP: nextBossHP,
         healingCharges: nextHealingCharges,
